@@ -34,8 +34,8 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation). The Java and Web skeletons exist and are verified; the CLI and Python
-skeletons are not added yet.
+Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are verified; CI, GitHub
+community configuration, and the localization tooling are not added yet.
 
 Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
 
@@ -66,6 +66,17 @@ cargo build --workspace
 
 On this Windows host, set `CARGO_TARGET_DIR` to an ASCII path before running Cargo (see
 `docs/development/environment.md`).
+
+Verified Python SDK commands (2026-11-16, Python 3.12.10), run from `sdk/python/`:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev]"
+.venv\Scripts\python -m ruff check .
+.venv\Scripts\python -m ruff format --check .
+.venv\Scripts\python -m mypy
+.venv\Scripts\python -m pytest   # 13 tests
+```
 
 On Windows, Gradle test workers cannot load test classes when the absolute repository path contains
 non-ASCII characters. This machine's path contains `ドキュメント`; create an ASCII junction and run
