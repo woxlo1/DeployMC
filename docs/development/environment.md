@@ -28,7 +28,14 @@ The following versions were executed and verified on 2026-11-16.
 | winget | 1.29.380 | Available |
 | Scoop | Available | Used for user-scope tool installation |
 
-Gradle is intentionally **not** installed globally. The repository uses the Gradle Wrapper.
+Gradle is intentionally **not** installed globally. The repository uses the Gradle Wrapper (8.10.2,
+`bin` distribution, verified on 2026-11-16). `.\gradlew.bat build` completes successfully and runs 32
+Java tests with zero failures; `.\gradlew.bat verifyJava8` confirms production classes target Java 8
+bytecode.
+
+Rust is installed through Scoop (`rustup-gnu`), with `CARGO_HOME` and `RUSTUP_HOME` under
+`%USERPROFILE%\scoop\persist\rustup-gnu`. Shells started before the installation may not see `cargo`
+on `PATH`; open a new terminal, or set both variables and use the absolute `cargo.exe` path.
 
 ## Missing or unavailable at inspection
 
@@ -60,15 +67,32 @@ Gradle is intentionally **not** installed globally. The repository uses the Grad
 3. **GNU Rust toolchain locally.** Local `cargo` builds target `x86_64-pc-windows-gnu`. CI must cover
    the MSVC target as the primary Windows release target.
 4. **Long paths on Windows.** Path length must be considered in the sandbox design and tests.
+5. **Non-ASCII repository path breaks Gradle test workers.** The repository lives under
+   `...\ドキュメント\IdeaProjects\...`. Gradle passes the test-worker classpath through a temporary
+   argument file whose encoding does not match the Java launcher on this host, so test classes fail
+   with `ClassNotFoundException` when Gradle runs from the real path. CI uses ASCII paths and is not
+   affected. Locally, create an ASCII junction and run Gradle through it:
+
+   ```powershell
+   cmd /c mklink /J C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii "C:\Users\satos\OneDrive\ドキュメント\IdeaProjects\tororo1066\DeployMC"
+   cd C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii
+   .\gradlew.bat build
+   ```
+
+   Verified on 2026-11-16: tests fail with the real path and pass through the junction.
+6. **OneDrive and Gradle caches.** Keep `.gradle/` and `build/` out of problem reports; delete them
+   only after stopping the Gradle daemon (`.\gradlew.bat --stop`).
 
 ## GitHub configuration status
 
 - Repository visibility: public
 - Default branch: `main`
 - Discussions: enabled
-- Milestone `0.1.0`: created
+- Milestones: `0.1.0` and `0.2.0` created
 - Label taxonomy: initial set created
-- Branch protection: to be configured after the bootstrap commit (requires an existing `main` branch)
+- Branch protection on `main`: enabled with linear history, no force pushes, no branch deletion,
+  admin enforcement, and zero required approvals
+- Issue forms, PR template, CODEOWNERS, Dependabot, and CI workflows: pending (WP-0.7 and WP-0.8)
 
 ## Reproducing the inspection
 
