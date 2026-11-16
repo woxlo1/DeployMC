@@ -60,6 +60,20 @@ The complete development specification lives in
 - DeployMC does not replace a backup system for worlds and player data.
 - DeployMC does not make a hostile team member harmless. JAR deployment is code execution.
 
+## Compatibility
+
+No Minecraft version, server platform, or Java runtime combination has been tested yet. DeployMC
+intends to assign support tiers only from evidence produced by a real compatibility harness:
+
+| Tier | Meaning | Current entries |
+|---|---|---|
+| Tier 1 | Tested on every pull request with a real server | none |
+| Tier 2 | Tested on a schedule | none |
+| Tier 3 | Best effort; may work but is untested | none |
+
+Until then, treat every platform statement in this repository as a design goal, not a supported
+configuration.
+
 ## Project status and documentation
 
 The governance, contribution, and operations documents are being added in Phase 0. Until they are
