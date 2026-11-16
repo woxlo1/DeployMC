@@ -1,5 +1,7 @@
 # DeployMC
 
+English · [日本語](docs/i18n/README.ja.md)
+
 **Secure, collaborative plugin deployment and file management for Minecraft servers, with a first-class public API.**
 
 > **Status: pre-alpha (0.1.0 foundation).** DeployMC is at the very beginning of development.
@@ -64,6 +66,8 @@ The governance, contribution, and operations documents are being added in Phase 
 merged, the authoritative source is the
 [development specification](docs/development/DeployMC_Complete_Master_Development_Specification.md).
 Development tracking documents live under [`docs/development/`](docs/development/).
+Translation workflow and message-catalog rules are documented in
+[`TRANSLATING.md`](TRANSLATING.md).
 
 ## License
 
