@@ -35,7 +35,8 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 ## Repository state
 
 Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are verified, along with the
-localization tooling and Japanese README. CI and GitHub community configuration are not added yet.
+localization tooling, core project documents, and Japanese README. CI and GitHub community
+configuration are not added yet.
 
 Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
 
