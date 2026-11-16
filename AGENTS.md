@@ -34,15 +34,26 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation). Build and test commands will be added here by WP-0.6 once the Gradle, Web, CLI,
-and Python skeletons exist. Do not document a command before it has been executed successfully.
+Phase 0 (foundation). The Java build skeleton exists and is verified; the Web, CLI, and Python
+skeletons are not added yet.
 
-Verified commands at bootstrap:
+Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
 
 ```powershell
-git status
-git log --oneline --decorate -10
+.\gradlew.bat build            # compiles all Java modules, runs 32 Java tests, runs Spotless check
+.\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
+.\gradlew.bat spotlessApply    # formats Java sources and repository text files
 ```
+
+On Windows, Gradle test workers cannot load test classes when the absolute repository path contains
+non-ASCII characters. This machine's path contains `ドキュメント`; create an ASCII junction and run
+Gradle through it (see `docs/development/environment.md`):
+
+```powershell
+cmd /c mklink /J C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii "<repository path>"
+```
+
+Do not document a command here before it has been executed successfully.
 
 ## Where things live
 
