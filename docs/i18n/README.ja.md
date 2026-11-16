@@ -1,7 +1,7 @@
 <!--
 Translation status
 - Source: README.md
-- Source commit: 680b321
+- Source commit: dc3c411
 - Completeness: complete draft
 - Review: AI-assisted draft, not reviewed by a native speaker
 - Reviewer: none
@@ -74,10 +74,19 @@ DeployMC は、プラグインディレクトリだけを対象にした、狭�
 
 ## プロジェクトの状態と文書
 
-ガバナンス、コントリビューション、運用手順の文書はフェーズ 0 で追加しています。それらが
-マージされるまでは、
-[開発仕様](../development/DeployMC_Complete_Master_Development_Specification.md)が正式な情報源です。
+ガバナンス、コントリビューション、運用の文書はリポジトリ直下にあります。開発仕様（
+[DeployMC_Complete_Master_Development_Specification.md](../development/DeployMC_Complete_Master_Development_Specification.md)）が正式な情報源です。
 開発の進捗文書は [`docs/development/`](../development/) にあります。
+
+## コミュニティとコントリビューション
+
+- [コントリビューションガイド](../../CONTRIBUTING.md) — セットアップ、ビルドコマンド、コミットとプルリクエストのルール
+- [行動規範](../../CODE_OF_CONDUCT.md)
+- [セキュリティポリシー](../../SECURITY.md) — **脆弱性は公開 Issue ではなく非公開で報告してください**
+- [サポート](../../SUPPORT.md) — 質問先、記載すべき情報、対応目標
+- [ロードマップ](../../ROADMAP.md) — フェーズの順序とマイルストーンのバージョン（日程ではありません）
+- [ガバナンス](../../GOVERNANCE.md) — 現在の意思決定方法
+- [作者](../../AUTHORS.md) と [変更履歴](../../CHANGELOG.md)
 
 ## ライセンス
 
