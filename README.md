@@ -69,6 +69,16 @@ Development tracking documents live under [`docs/development/`](docs/development
 Translation workflow and message-catalog rules are documented in
 [`TRANSLATING.md`](TRANSLATING.md).
 
+## Community and contributing
+
+- [Contributing guide](CONTRIBUTING.md) — setup, build commands, commit and pull request rules
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md) — **report vulnerabilities privately, never in a public issue**
+- [Support](SUPPORT.md) — where to ask, what to include, response targets
+- [Roadmap](ROADMAP.md) — phase order and milestone versions, not a schedule
+- [Governance](GOVERNANCE.md) — how decisions are made today
+- [Authors](AUTHORS.md) and [Changelog](CHANGELOG.md)
+
 ## License
 
 DeployMC is licensed under the [Apache License 2.0](LICENSE).
