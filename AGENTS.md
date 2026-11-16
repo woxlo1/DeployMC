@@ -34,8 +34,8 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are verified; CI, GitHub
-community configuration, and the localization tooling are not added yet.
+Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are verified, along with the
+localization tooling and Japanese README. CI and GitHub community configuration are not added yet.
 
 Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
 
@@ -76,6 +76,14 @@ python -m venv .venv
 .venv\Scripts\python -m ruff format --check .
 .venv\Scripts\python -m mypy
 .venv\Scripts\python -m pytest   # 13 tests
+```
+
+Verified i18n commands (2026-11-16, Node.js 24.13.1), run from the repository root:
+
+```powershell
+node tools/i18n/check                        # 0 errors, 0 warnings
+node --test tools/i18n/test/check.test.cjs   # 7 tests
+node tools/i18n/check --write-status         # regenerates docs/i18n/STATUS.md
 ```
 
 On Windows, Gradle test workers cannot load test classes when the absolute repository path contains
