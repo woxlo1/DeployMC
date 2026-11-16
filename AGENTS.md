@@ -34,7 +34,7 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation). The Java build skeleton exists and is verified; the Web, CLI, and Python
+Phase 0 (foundation). The Java and Web skeletons exist and are verified; the CLI and Python
 skeletons are not added yet.
 
 Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
@@ -43,6 +43,16 @@ Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolcha
 .\gradlew.bat build            # compiles all Java modules, runs 32 Java tests, runs Spotless check
 .\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
 .\gradlew.bat spotlessApply    # formats Java sources and repository text files
+```
+
+Verified Web commands (2026-11-16, Node.js 24.13.1, pnpm 9.15.4), run from `web/`:
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm format:check
+pnpm test                      # 13 Vitest tests
+pnpm build                     # tsc --noEmit, then Vite production build
 ```
 
 On Windows, Gradle test workers cannot load test classes when the absolute repository path contains
