@@ -1,0 +1,70 @@
+# Java / Gradle
+.gradle/
+build/
+out/
+bin/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!tests/fixtures/**/*.jar
+hs_err_pid*
+replay_pid*
+kotlin-daemon.*
+
+# Node / Web
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+.eslintcache
+
+# Rust
+target/
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+htmlcov/
+.coverage
+
+# IDE and OS
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.local
+.deploymc/
+
+# Minecraft compatibility harness work directories
+tests/compat-matrix/work/
+tests/compat-matrix/cache/
+server.jar
+paper.jar
+eula.txt
+world/
+world_nether/
+world_the_end/
+logs/
+crash-reports/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
