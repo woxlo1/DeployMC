@@ -158,7 +158,9 @@ Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `buil
   compatibility, security, or localization impact.
 - Never claim a command passed unless you ran it. Paste the exact commands and results.
 - Keep the branch linear and merge with rebase so each commit stays meaningful.
-- A pull request must be green in CI and have no unresolved review conversations before merge.
+- A pull request must be green in CI and have no unresolved review conversations before merge. The
+  workflows and their local equivalents are documented in
+  [docs/development/ci.md](docs/development/ci.md).
 
 ## Review procedure
 
