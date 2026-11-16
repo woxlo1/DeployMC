@@ -55,6 +55,18 @@ pnpm test                      # 13 Vitest tests
 pnpm build                     # tsc --noEmit, then Vite production build
 ```
 
+Verified CLI commands (2026-11-16, Rust 1.100.0 GNU toolchain), run from `cli/`:
+
+```powershell
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace         # 4 unit tests
+cargo build --workspace
+```
+
+On this Windows host, set `CARGO_TARGET_DIR` to an ASCII path before running Cargo (see
+`docs/development/environment.md`).
+
 On Windows, Gradle test workers cannot load test classes when the absolute repository path contains
 non-ASCII characters. This machine's path contains `ドキュメント`; create an ASCII junction and run
 Gradle through it (see `docs/development/environment.md`):

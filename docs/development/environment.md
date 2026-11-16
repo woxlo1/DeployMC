@@ -80,7 +80,18 @@ on `PATH`; open a new terminal, or set both variables and use the absolute `carg
    ```
 
    Verified on 2026-11-16: tests fail with the real path and pass through the junction.
-6. **OneDrive and Gradle caches.** Keep `.gradle/` and `build/` out of problem reports; delete them
+6. **Non-ASCII repository path breaks the MinGW linker.** The Rust GNU toolchain builds with
+   `x86_64-w64-mingw32-gcc`, whose `ld` cannot open object files under the Japanese path. Set
+   `CARGO_TARGET_DIR` to an ASCII directory before running Cargo:
+
+   ```powershell
+   $env:CARGO_TARGET_DIR = "C:\Users\satos\AppData\Local\Temp\opencode\deploymc-cli-target"
+   cargo test --workspace
+   ```
+
+   Verified on 2026-11-16: linking fails with the default target directory and passes with an ASCII
+   `CARGO_TARGET_DIR`. CI uses the MSVC toolchain on Windows and GNU/Linux elsewhere.
+7. **OneDrive and Gradle caches.** Keep `.gradle/` and `build/` out of problem reports; delete them
    only after stopping the Gradle daemon (`.\gradlew.bat --stop`).
 
 ## GitHub configuration status
