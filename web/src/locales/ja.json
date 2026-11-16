@@ -1,0 +1,17 @@
+{
+  "@meta": {
+    "locale": "ja",
+    "reviewStatus": "machine-translated-draft",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "sourceCommit": "README.md",
+    "notes": "AI-assisted draft. Not reviewed by a native speaker yet."
+  },
+  "app.title": "DeployMC",
+  "app.tagline": "Minecraft サーバー向けの、安全で協調的なプラグイン配備ツール。",
+  "app.status.preAlpha": "プレアルファ：基盤開発中です。",
+  "app.language": "言語",
+  "language.en": "English",
+  "language.ja": "日本語",
+  "app.plugins.count": "{count, plural, other {# 個のプラグイン}}"
+}

@@ -1,0 +1,16 @@
+{
+  "@meta": {
+    "locale": "en",
+    "reviewStatus": "source",
+    "reviewedBy": "woxlo1",
+    "reviewedAt": "2026-11-16",
+    "sourceCommit": "README.md"
+  },
+  "app.title": "DeployMC",
+  "app.tagline": "Secure, collaborative plugin deployment for Minecraft servers.",
+  "app.status.preAlpha": "Pre-alpha: foundation work in progress.",
+  "app.language": "Language",
+  "language.en": "English",
+  "language.ja": "日本語",
+  "app.plugins.count": "{count, plural, one {# plugin} other {# plugins}}"
+}
