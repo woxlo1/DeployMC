@@ -68,10 +68,11 @@ subprojects {
 tasks.register("verifyJava8") {
     group = "verification"
     description = "Checks that production class files target Java 8 bytecode."
+    val classDirectories = subprojects.map { it.layout.buildDirectory.dir("classes/java/main") }
     dependsOn(subprojects.map { it.tasks.named("classes") })
+    inputs.files(classDirectories).withPropertyName("classDirectories")
     doLast {
-        subprojects.forEach { project ->
-            val classesDir = project.layout.buildDirectory.dir("classes/java/main").get().asFile
+        inputs.files.files.forEach { classesDir ->
             if (!classesDir.exists()) {
                 return@forEach
             }
