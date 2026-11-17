@@ -6,7 +6,8 @@ when its acceptance criteria are met and verified; features listed here are not 
 
 The normative detail lives in the
 [master development specification](docs/development/DeployMC_Complete_Master_Development_Specification.md).
-Current implementation status is tracked in [`docs/development/`](docs/development/).
+Current implementation status is tracked in
+[`docs/development/implementation-status.md`](docs/development/implementation-status.md).
 
 ## Current state: Phase 0 — Project foundation (0.1.0)
 
@@ -17,9 +18,15 @@ Phase 0 is in progress. Verified today:
 - Rust CLI skeleton and Python SDK skeleton with their own lint and test gates.
 - Message-catalog checker, generated translation status, and an AI-assisted Japanese README.
 - Core project documents in this repository.
+- CI, lint, CodeQL, dependency-review, and Scorecard workflows, plus enforced branch protection.
+- Architecture documents, ADR-0001 through ADR-0014, a threat-model draft, and the support-matrix
+  design.
 
-Not yet done in Phase 0: CI workflows, issue forms and community automation, architecture documents
-and ADRs, specification skeletons, and the tracking and handoff documents.
+Not yet done in Phase 0: issue forms and community automation, the REST/AsyncAPI/configuration
+specification skeletons, and the compatibility harness.
+
+No DeployMC feature runs inside a Minecraft server yet. The current matrix has no Tier 1, 2, or 3
+entry.
 
 ## Phase 0 — Project foundation (0.1.0)
 

@@ -18,7 +18,10 @@ English · [日本語](docs/i18n/README.ja.md)
 | Area | Status |
 |---|---|
 | Repository, governance, and development documentation | In progress (Phase 0) |
-| Specifications (REST, WebSocket, configuration) | In progress (Phase 0) |
+| Build skeletons for Java, Web, CLI, and the Python SDK | Buildable; no product features |
+| Architecture baseline and architecture decision records | Drafted (Phase 0) |
+| CI workflows and branch protection | Working on `main` |
+| Specifications (REST, WebSocket, configuration) | Not started (Phase 0) |
 | Plugin runtime, API, Web UI, CLI, SDKs | Not started (Phase 1+) |
 
 A more detailed, always current status is maintained in
@@ -49,7 +52,15 @@ Private keys, SSH access, and the host file system are explicitly out of scope.
 
 ## Architecture
 
-The planned architecture is documented in [`docs/architecture/overview.md`](docs/architecture/overview.md).
+The planned architecture is documented in
+[`docs/architecture/overview.md`](docs/architecture/overview.md), with companion documents for
+the [platform SPI](docs/architecture/platform-spi.md),
+[deployment state machine](docs/architecture/deployment-state-machine.md),
+[threading model](docs/architecture/threading-model.md), and
+[API layering](docs/architecture/api-layering.md). Significant decisions are recorded as
+[architecture decision records](docs/adr/README.md), and the security posture is described in the
+[draft threat model](specification/security/threat-model.md).
+
 The complete development specification lives in
 [`docs/development/DeployMC_Complete_Master_Development_Specification.md`](docs/development/DeployMC_Complete_Master_Development_Specification.md).
 
@@ -72,7 +83,8 @@ intends to assign support tiers only from evidence produced by a real compatibil
 | Tier 3 | Best effort; may work but is untested | none |
 
 Until then, treat every platform statement in this repository as a design goal, not a supported
-configuration.
+configuration. The rules for earning a tier, the evidence each entry must record, and the blocking
+gaps are defined in [`docs/compatibility/support-matrix.md`](docs/compatibility/support-matrix.md).
 
 ## Project status and documentation
 
