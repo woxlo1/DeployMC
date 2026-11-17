@@ -33,11 +33,11 @@ These are configured in GitHub, not in a workflow file:
 
 These gates depend on files that do not exist yet and will be added once their work packages land:
 
-- Documentation link check (needs the architecture and tracking documents).
+- Documentation link check (the architecture, ADR, compatibility, and status documents now exist,
+  but no link checker is configured yet).
 - Spelling check for English prose.
 - OpenAPI/AsyncAPI lint and breaking-change detection (needs the specification skeletons).
 - Compatibility harness and real-server smoke test.
-- Secret scanning is enabled through GitHub repository settings rather than a workflow.
 
 ## Local equivalents
 

@@ -1,6 +1,8 @@
 # AGENTS.md - DeployMC
 
-Read this file and `docs/development/HANDOFF.md` before doing anything.
+Read this file before doing anything. For current state, read
+`docs/development/implementation-status.md`; for intended design, read
+`docs/architecture/overview.md` and the master specification.
 
 ## Mission
 
@@ -28,16 +30,19 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 12. No secrets, real tokens, or real hostnames in the repository. Use obviously fake examples.
 13. Verify time-sensitive facts (versions, Cloudflare behavior, GitHub criteria) against official
     documentation and record evidence with access dates.
-14. Update `docs/development/{project-status,implementation-status,compat-status,i18n-status,HANDOFF}.md`
-    at the end of each session.
+14. Update `docs/development/implementation-status.md` when what works changes, and record
+    open decisions in `docs/development/decisions-pending.md`.
 15. Talk to the project owner in Japanese. Repository content is English except localized content.
 
 ## Repository state
 
 Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are verified, along with the
 localization tooling, core project documents, and Japanese README. Build/test, lint, i18n, CodeQL,
-dependency review, and Scorecard workflows are added; community configuration, documentation and
-specification skeletons, and tracking documents are not added yet.
+dependency review, and Scorecard workflows run in CI, and branch protection with required checks is
+enforced on `main`. The architecture documents, ADR set, threat-model draft, support-matrix design,
+and implementation-status page are drafted. The REST/AsyncAPI/configuration specifications, issue
+forms, and the compatibility harness are not written yet. No DeployMC feature runs inside a
+Minecraft server.
 
 Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
 

@@ -13,6 +13,7 @@ here with their date and outcome, then reflected in the relevant ADR or configur
 | 2026-11-16 | AI co-author trailer | Use the OpenCode trailer when OpenCode contributes to a commit |
 | 2026-11-16 | Development tracking | Use GitHub Issues, milestones, and labels |
 | 2026-11-16 | Initial language priority | English canonical, Japanese first translation |
+| 2026-11-17 | Branch protection and required checks | Enabled on `main`: linear history, no force-push or deletion, conversation resolution applies to admins, 15 required checks with `strict` (see [ci.md](ci.md)) |
 
 ## Open
 
@@ -24,7 +25,6 @@ the related decisions are finalized.
 | D-001 | What is the owner's real server hosting setup (bare Paper, Pterodactyl, Docker, systemd, Windows service) and which Minecraft versions are in use? | Phase 1 compatibility priorities | Tier 1 matrix order and restart-mode defaults may not match real usage |
 | D-002 | Does the owner have a Cloudflare plan and a domain usable for Tunnel/Access verification? | Phase 3 Cloudflare guide | Parts of the guide can only be marked unverified |
 | D-003 | Which distribution accounts exist (Modrinth, Hangar, SpigotMC, Maven Central, npm, PyPI, crates.io)? | Phase 7+ distribution | Publication steps cannot be executed or verified |
-| D-004 | Is the owner able to configure GitHub branch protection and required checks? | Immediately after bootstrap | Protection may need to be documented as a manual step |
 | D-005 | Should languages beyond Japanese be started before native reviewers exist? | Phase 0 i18n and later | Machine-translated content must be labeled and not presented as reviewed |
 | D-006 | Should a Discord server be created now, or should Discussions be the only community channel initially? | Phase 0 community setup | Community links in the README remain Discussions-only |
 | D-007 | What weekly time budget should the public roadmap assume? | Roadmap publication | Roadmap communication may be unrealistic |
