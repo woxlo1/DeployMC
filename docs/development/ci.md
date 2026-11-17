@@ -13,6 +13,19 @@ SHA, workflows use least-privilege `permissions`, and concurrent runs for the sa
 | `dependency-review.yml` | Pull request | Fails on newly introduced dependencies with high or critical advisories |
 | `scorecard.yml` | Weekly schedule, push to `main`, branch protection changes, manual | OpenSSF Scorecard, published to code scanning |
 
+## Repository settings
+
+These are configured in GitHub, not in a workflow file:
+
+- Private vulnerability reporting is enabled; `SECURITY.md` links to it.
+- Dependabot alerts and the dependency graph are enabled (`PUT /repos/{owner}/{repo}/vulnerability-alerts`).
+  Dependency review fails closed when the graph is unavailable.
+- Secret scanning and push protection are enabled.
+- `main` requires linear history and forbids force-pushes and deletion.
+- Required status checks are **not configured yet**. They will be enabled after this workflow set has
+  produced a green run on `main`, so a brand-new workflow cannot block every pull request before it
+  has ever run.
+
 ## Not yet enabled
 
 These gates depend on files that do not exist yet and will be added once their work packages land:
