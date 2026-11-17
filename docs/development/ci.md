@@ -21,10 +21,13 @@ These are configured in GitHub, not in a workflow file:
 - Dependabot alerts and the dependency graph are enabled (`PUT /repos/{owner}/{repo}/vulnerability-alerts`).
   Dependency review fails closed when the graph is unavailable.
 - Secret scanning and push protection are enabled.
-- `main` requires linear history and forbids force-pushes and deletion.
-- Required status checks are **not configured yet**. They will be enabled after this workflow set has
-  produced a green run on `main`, so a brand-new workflow cannot block every pull request before it
-  has ever run.
+- `main` requires linear history, forbids force-pushes and deletion, requires conversation resolution,
+  and applies every rule to administrators.
+- Required status checks are enforced with `strict` (the branch must be up to date):
+  `Java (ubuntu-latest)`, `Java (windows-latest)`, `Web`, `CLI (ubuntu-latest)`,
+  `CLI (windows-latest)`, `CLI (macos-latest)`, `Python (ubuntu-latest)`, `Python (windows-latest)`,
+  `i18n`, `Commit messages`, `Pull request title`, `Dependency review`, `Analyze (java-kotlin)`,
+  `Analyze (javascript-typescript)`, and `Analyze (python)`.
 
 ## Not yet enabled
 
