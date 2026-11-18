@@ -1,0 +1,25 @@
+{
+  "name": "@deploymc/spec-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lint and validation for the DeployMC specifications.",
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "npm run lint:openapi && npm run lint:asyncapi && npm run lint:config && npm run lint:state-machine",
+    "lint:openapi": "redocly lint ../../specification/api/openapi.yaml --config redocly.yaml",
+    "lint:asyncapi": "asyncapi validate ../../specification/api/asyncapi.yaml",
+    "lint:config": "node check-config.cjs ../../specification/config/example.config.yaml",
+    "lint:state-machine": "node check-state-machine.cjs",
+    "test": "node --test test/check-config.test.cjs test/check-state-machine.test.cjs"
+  },
+  "devDependencies": {
+    "@asyncapi/cli": "6.3.1",
+    "@redocly/cli": "2.79.0",
+    "ajv": "8.20.0",
+    "yaml": "2.9.1"
+  }
+}
