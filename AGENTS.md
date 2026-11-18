@@ -40,9 +40,13 @@ Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are ver
 localization tooling, core project documents, and Japanese README. Build/test, lint, i18n, CodeQL,
 dependency review, and Scorecard workflows run in CI, and branch protection with required checks is
 enforced on `main`. The architecture documents, ADR set, threat-model draft, support-matrix design,
-and implementation-status page are drafted. The REST/AsyncAPI/configuration specifications, issue
-forms, and the compatibility harness are not written yet. No DeployMC feature runs inside a
-Minecraft server.
+implementation-status page, REST/AsyncAPI/configuration specifications, and GitHub community forms
+exist. The compatibility harness is not written yet. No DeployMC feature runs inside a Minecraft
+server.
+
+To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
+root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
+individual commands below are for investigating one toolchain.
 
 Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
 
