@@ -1,0 +1,72 @@
+name: Translation help or review
+description: Contribute or review a translated document or message catalog
+title: "[Translation]: "
+labels: ["area:i18n", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read [TRANSLATING.md](../../TRANSLATING.md) first. English is canonical. Do not translate
+        error codes, configuration keys, API field names, command names, permission identifiers, or
+        file paths. The i18n checker validates placeholders and plural branches; it does not review
+        wording.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Japanese
+        - Simplified Chinese
+        - Korean
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What do you need?
+      options:
+        - Review an existing translation
+        - Fix a specific string
+        - Add a missing translated document
+        - Add a new language catalog
+        - Report a placeholder or plural problem
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: files
+    attributes:
+      label: Files or keys
+      description: "For example: docs/i18n/README.ja.md, or web/src/locales/ja.json:deploy.start."
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: English source text
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed translation or correction
+      description: Include a literal back-translation if the wording is ambiguous.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Checks you ran
+      description: |
+        If you changed a catalog, include the result of `node tools/i18n/check`. Write "not run"
+        if you did not run it; that is fine for a review request.
+    validations:
+      required: false
+  - type: checkboxes
+    id: policy
+    attributes:
+      label: Review status
+      options:
+        - label: I will mark machine-translated drafts as unreviewed until a real review happens
+          required: true

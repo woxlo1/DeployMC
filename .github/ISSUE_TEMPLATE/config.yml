@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/woxlo1/DeployMC/security/advisories/new
+    about: Use private vulnerability reporting. Do not disclose details in a public issue or discussion.
+  - name: Ask a question or share an idea
+    url: https://github.com/woxlo1/DeployMC/discussions
+    about: GitHub Discussions, enabled but currently without posts. See SUPPORT.md for response targets.
+  - name: Read the support guide
+    url: https://github.com/woxlo1/DeployMC/blob/main/SUPPORT.md
+    about: What to include, what is not supported, and aspirational response targets.
+  - name: Translation instructions
+    url: https://github.com/woxlo1/DeployMC/blob/main/TRANSLATING.md
+    about: How to add or review a translation, including the required status headers.

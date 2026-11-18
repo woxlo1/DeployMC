@@ -1,0 +1,54 @@
+name: Documentation issue
+description: Report inaccurate, missing, stale, or hard-to-follow documentation
+title: "[Docs]: "
+labels: ["type:docs", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        DeployMC is pre-alpha: documentation that says a feature is not implemented may be correct.
+        Please check [implementation status](../../docs/development/implementation-status.md) and the
+        [README](../../README.md) before reporting a missing feature as a documentation error.
+  - type: input
+    id: location
+    attributes:
+      label: Page or file
+      description: "Path in the repository, or the published URL."
+      placeholder: "docs/development/ci.md"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - Factually wrong or stale
+        - Missing information
+        - Broken link
+        - Confusing or contradictory
+        - Typo or formatting
+        - Translation problem (use the translation form instead if possible)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: What does it say now?
+      description: Quote the relevant sentence or link.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should it say?
+      description: A concrete correction is more useful than "this is wrong".
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context or consequences
+      description: "Who would be misled, and what did you try because of it?"
+    validations:
+      required: false

@@ -1,0 +1,62 @@
+name: Feature request
+description: Propose a new capability or a change to planned behavior
+title: "[Feature]: "
+labels: ["type:feature", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [README](../../README.md) and the
+        [master specification](../../docs/development/DeployMC_Complete_Master_Development_Specification.md)
+        first. If the behavior is already planned, add context to the existing discussion
+        instead of opening a duplicate. DeployMC is pre-alpha and scope is deliberately narrow.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the real workflow and who is blocked. Avoid proposing an implementation first.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should DeployMC do? Include the user-visible result, not only an internal API.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: false
+      options:
+        - Sandbox and files
+        - Snapshots and history
+        - Deployment and rollback
+        - Console
+        - Authentication, RBAC, or audit
+        - REST or WebSocket API
+        - Web UI
+        - CLI
+        - SDK or Java API
+        - Compatibility or build
+        - Documentation or i18n
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and non-goals
+      description: What else could solve this, and what should DeployMC explicitly not do?
+    validations:
+      required: false
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope checks
+      options:
+        - label: This is not a general-purpose remote shell, SFTP server, or hosting panel
+          required: true
+        - label: I understand that a JAR deployment is code execution and needs trust controls
+          required: true
