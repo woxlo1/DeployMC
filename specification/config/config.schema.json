@@ -1,0 +1,818 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/woxlo1/DeployMC/raw/main/specification/config/config.schema.json",
+  "title": "DeployMC configuration",
+  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: specification only (2026-11-17). No configuration loader implements this schema yet.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["config-version"],
+  "properties": {
+    "config-version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Configuration format version. A loader that does not know the version refuses to start and asks the operator to migrate.",
+      "x-deploymc-hot-reload": false
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+      "default": "en",
+      "description": "Default language for console and in-game messages. The Web UI and API negotiate their own language.",
+      "x-deploymc-hot-reload": true
+    },
+    "bind": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "HTTP and WebSocket listener.",
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "default": "127.0.0.1",
+          "description": "Listen address. Loopback is the only default. A non-loopback address requires `allow-non-loopback: true` and logs a startup warning.",
+          "x-deploymc-hot-reload": false
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 8080,
+          "description": "Listen port.",
+          "x-deploymc-hot-reload": false
+        },
+        "allow-non-loopback": {
+          "type": "boolean",
+          "default": false,
+          "description": "Must be `true` to bind a non-loopback address. Exposing the port without Cloudflare Tunnel or another TLS terminator is unsupported.",
+          "x-deploymc-hot-reload": false
+        },
+        "trusted-proxies": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 64,
+          "default": [],
+          "items": {
+            "type": "string",
+            "description": "IPv4/IPv6 address or CIDR block whose forwarded headers are trusted. Forwarded headers from any other source are ignored."
+          },
+          "description": "Proxies whose `X-Forwarded-For`, `CF-Connecting-IP`, and similar headers are believed. Empty means trust direct peer addresses only.",
+          "x-deploymc-hot-reload": false
+        }
+      },
+      "if": {
+        "required": ["address"],
+        "properties": {
+          "address": {
+            "enum": ["127.0.0.1", "::1", "localhost"]
+          }
+        }
+      },
+      "then": true,
+      "else": {
+        "required": ["allow-non-loopback"],
+        "properties": {
+          "allow-non-loopback": {
+            "const": true
+          }
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Authentication provider selection. Unauthenticated access is never an option.",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["cloudflare", "token", "local-onetime"],
+          "default": "cloudflare",
+          "description": "`cloudflare` verifies Cloudflare Access JWTs. `token` accepts DeployMC-native API tokens. `local-onetime` issues a short-lived token printed only to the server console.",
+          "x-deploymc-hot-reload": false
+        },
+        "cloudflare": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "team-domain": {
+              "type": "string",
+              "maxLength": 253,
+              "pattern": "^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$",
+              "default": "",
+              "description": "Cloudflare Zero Trust team domain, for example `myteam.cloudflareaccess.com`. Required in `cloudflare` mode; the JWKS URL is derived from it.",
+              "x-deploymc-hot-reload": false
+            },
+            "audience": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "maxItems": 16,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                }
+              ],
+              "description": "Access application AUD tag or tags. A token whose `aud` matches none of them is rejected.",
+              "x-deploymc-hot-reload": false
+            },
+            "clock-skew-seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 300,
+              "default": 60,
+              "description": "Allowed clock skew for `exp`, `nbf`, and `iat`. A larger value weakens replay protection.",
+              "x-deploymc-hot-reload": true
+            },
+            "jwks-cache-max-age-seconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 86400,
+              "default": 3600,
+              "description": "Normal JWKS cache lifetime. Refresh happens before expiry, not on every request.",
+              "x-deploymc-hot-reload": true
+            },
+            "jwks-max-stale-seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 604800,
+              "default": 86400,
+              "description": "Hard limit on serving from a cached JWKS while the endpoint is unreachable. Beyond it authentication fails closed with `auth.jwks-unavailable`. `0` disables stale use.",
+              "x-deploymc-hot-reload": true
+            },
+            "require-shared-secret-header": {
+              "type": "string",
+              "maxLength": 128,
+              "pattern": "^$|^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+              "default": "",
+              "description": "Optional defense in depth: a header name that must be present on every request in `cloudflare` mode. The header value is checked against the secret store, never against this file. Empty disables the check.",
+              "x-deploymc-hot-reload": false
+            }
+          },
+          "if": {
+            "properties": {
+              "require-shared-secret-header": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["require-shared-secret-header"]
+          },
+          "then": {
+            "properties": {
+              "require-shared-secret-header": {
+                "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+              }
+            }
+          }
+        },
+        "token": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "default-ttl-days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3650,
+              "default": 90,
+              "description": "Default lifetime of a newly created API token. It can never exceed `max-ttl-days`.",
+              "x-deploymc-hot-reload": true
+            },
+            "max-ttl-days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3650,
+              "default": 365,
+              "description": "Upper bound for token lifetime. A request above it is clamped and the response states the effective value.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        },
+        "local-onetime": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ttl-minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60,
+              "default": 15,
+              "description": "Lifetime of a console-issued one-time token.",
+              "x-deploymc-hot-reload": true
+            },
+            "max-attempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 5,
+              "description": "Failed redemption attempts before the token is burned.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "cloudflare"
+              }
+            },
+            "required": ["mode"]
+          },
+          "then": {
+            "required": ["cloudflare"],
+            "properties": {
+              "cloudflare": {
+                "required": ["team-domain", "audience"],
+                "properties": {
+                  "team-domain": {
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sandbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Editable file tree exposed by the file API. The sandbox root is always inside the server's `plugins` directory.",
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "default": ".",
+          "description": "Sandbox root, relative to the server's `plugins` directory. Absolute paths and paths escaping `plugins` are rejected.",
+          "x-deploymc-hot-reload": false
+        },
+        "protected-paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 256,
+          "default": [".deploymc/**", "DeployMC/**"],
+          "items": {
+            "$ref": "#/$defs/pathGlob"
+          },
+          "description": "Paths that are never writable through the API, even for an admin. Read access is also denied unless explicitly granted locally.",
+          "x-deploymc-hot-reload": true
+        },
+        "deny-patterns": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 256,
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/pathGlob"
+          },
+          "description": "Additional paths hidden from and unwritable through the API. Deny rules always win over allow rules.",
+          "x-deploymc-hot-reload": true
+        },
+        "max-file-size-mb": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024,
+          "default": 10,
+          "description": "Largest single editable text file. Larger files are still downloadable.",
+          "x-deploymc-hot-reload": true
+        },
+        "max-upload-size-mb": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096,
+          "default": 64,
+          "description": "Largest upload accepted in one request. A role limit can only lower it.",
+          "x-deploymc-hot-reload": true
+        },
+        "max-list-entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "default": 5000,
+          "description": "Maximum directory entries returned to one listing before pagination.",
+          "x-deploymc-hot-reload": true
+        },
+        "follow-symlinks": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether symlinks inside the sandbox are followed. Enabling this weakens containment; the default must not be changed casually.",
+          "x-deploymc-hot-reload": false
+        }
+      }
+    },
+    "snapshots": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Content-addressed snapshot store. A snapshot older than any retention limit is still kept while a deployment needs it.",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "default": ".deploymc/history",
+          "description": "Snapshot store directory, relative to `plugins`. It is always excluded from the editable sandbox.",
+          "x-deploymc-hot-reload": false
+        },
+        "retention": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max-versions-per-file": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 50,
+              "description": "Newest snapshot records kept per path.",
+              "x-deploymc-hot-reload": true
+            },
+            "max-age-days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3650,
+              "default": 90,
+              "description": "Age after which a snapshot may be pruned.",
+              "x-deploymc-hot-reload": true
+            },
+            "max-total-size-mb": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576,
+              "default": 2048,
+              "description": "Size budget for the snapshot store. Pruning stops before any snapshot needed by an active deployment.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        }
+      }
+    },
+    "deploy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Deployment pipeline, restart, verification, rollback, approval, and JAR policy.",
+      "properties": {
+        "staging-directory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "default": ".deploymc/staging",
+          "description": "Upload staging directory, relative to `plugins`. Never inside the editable sandbox.",
+          "x-deploymc-hot-reload": false
+        },
+        "restart": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["shutdown-only", "spigot-restart-script", "none"],
+              "default": "shutdown-only",
+              "description": "How a deployment restart is performed. `shutdown-only` depends on an external supervisor; `none` never claims a restart happened.",
+              "x-deploymc-hot-reload": false
+            },
+            "countdown-seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600,
+              "default": 30,
+              "description": "Player-visible countdown before a requested restart.",
+              "x-deploymc-hot-reload": true
+            },
+            "save-before-restart": {
+              "type": "boolean",
+              "default": true,
+              "description": "Request a world save before shutting down. A failed save blocks the restart.",
+              "x-deploymc-hot-reload": true
+            },
+            "min-interval-minutes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1440,
+              "default": 5,
+              "description": "Minimum time between restarts. A request inside the window is rejected, not queued silently.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout-seconds": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 1800,
+              "default": 180,
+              "description": "Total budget for post-restart checks. Exceeding it fails verification and triggers rollback.",
+              "x-deploymc-hot-reload": true
+            },
+            "require-plugin-enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Fail verification when the deployed plugin is present but not enabled and the platform can report enablement. When the capability is missing the check is reported as not run, not as a pass.",
+              "x-deploymc-hot-reload": true
+            },
+            "fail-patterns": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 100,
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/regex"
+              },
+              "description": "Console patterns that fail verification when observed in the deployment window.",
+              "x-deploymc-hot-reload": true
+            },
+            "success-patterns": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 100,
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/regex"
+              },
+              "description": "Console patterns that must appear for verification to pass. Empty means no positive pattern requirement.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        },
+        "rollback": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "automatic": {
+              "type": "boolean",
+              "default": true,
+              "description": "Roll back automatically when verification fails. Disabling it leaves the failed state for an operator but never reports success.",
+              "x-deploymc-hot-reload": true
+            },
+            "max-attempts": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 2,
+              "description": "Automatic rollback attempts before the transaction enters `SAFE_STATE`.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        },
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": {
+              "type": "boolean",
+              "default": false,
+              "description": "Require an approver before applying a deployment. The requester can never approve their own deployment.",
+              "x-deploymc-hot-reload": true
+            },
+            "approver-roles": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 64,
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/roleName"
+              },
+              "description": "Roles allowed to approve. Required and non-empty when `required` is true.",
+              "x-deploymc-hot-reload": true
+            }
+          },
+          "if": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            },
+            "required": ["required"]
+          },
+          "then": {
+            "required": ["approver-roles"],
+            "properties": {
+              "approver-roles": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        "jar-policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "require-descriptor": {
+              "type": "boolean",
+              "default": true,
+              "description": "Reject a JAR without a readable plugin descriptor (`plugin.yml`, `paper-plugin.yml`, `bungee.yml`, or `velocity-plugin.json`).",
+              "x-deploymc-hot-reload": true
+            },
+            "hash-allowlist-file": {
+              "type": "string",
+              "maxLength": 1024,
+              "default": "",
+              "description": "Host-local file with allowed SHA-256 hashes, one per line. Empty disables the allowlist. The path is never exposed through the API.",
+              "x-deploymc-hot-reload": true
+            },
+            "hash-denylist-file": {
+              "type": "string",
+              "maxLength": 1024,
+              "default": "",
+              "description": "Host-local file with denied SHA-256 hashes, one per line. A denied hash always wins over an allowed one.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        }
+      }
+    },
+    "console": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable console capture and command dispatch. Disabling it removes the console capabilities from the API.",
+          "x-deploymc-hot-reload": false
+        },
+        "buffer-lines": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 100000,
+          "default": 5000,
+          "description": "Ring-buffer size for late joiners and reconnect backfill.",
+          "x-deploymc-hot-reload": true
+        },
+        "command-policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Command dispatch policy. Evaluation order is deny, then confirm, then allow. A command matching no allow pattern is denied.",
+          "properties": {
+            "allow": {
+              "type": "array",
+              "uniqueItems": true,
+              "minItems": 1,
+              "maxItems": 256,
+              "default": ["*"],
+              "items": {
+                "$ref": "#/$defs/commandPattern"
+              },
+              "x-deploymc-hot-reload": true
+            },
+            "deny": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 256,
+              "default": ["stop", "op *", "deop *"],
+              "items": {
+                "$ref": "#/$defs/commandPattern"
+              },
+              "description": "Denied commands. Deny always wins, including over `*`.",
+              "x-deploymc-hot-reload": true
+            },
+            "confirm": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 256,
+              "default": ["reload", "whitelist *"],
+              "items": {
+                "$ref": "#/$defs/commandPattern"
+              },
+              "description": "Commands that require an explicit confirmation in the client before dispatch. The server still re-checks permission and policy.",
+              "x-deploymc-hot-reload": true
+            }
+          }
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "default": ".deploymc/audit",
+          "description": "Audit log directory, relative to `plugins`. The audit log is never writable through the API.",
+          "x-deploymc-hot-reload": false
+        },
+        "rotate-size-mb": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024,
+          "default": 50,
+          "description": "Size at which the current audit file is rotated and continued with a hash-chain link.",
+          "x-deploymc-hot-reload": true
+        },
+        "retention-days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3650,
+          "default": 365,
+          "description": "Age after which rotated audit files may be deleted. The active file is never deleted.",
+          "x-deploymc-hot-reload": true
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rate-limit-per-minute": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "default": 300,
+          "description": "Per-identity request budget per minute. A per-role limit can only lower it.",
+          "x-deploymc-hot-reload": true
+        },
+        "max-websocket-connections": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 50,
+          "description": "Concurrent WebSocket connections. Excess upgrade attempts are rejected with `server.busy` rather than queued indefinitely.",
+          "x-deploymc-hot-reload": false
+        }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "maxProperties": 256,
+      "default": {},
+      "patternProperties": {
+        "^[a-z][a-z0-9-]{0,63}$": {
+          "$ref": "#/$defs/role"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Role definitions, keyed by role name. `admin`, `developer`, `observer`, and `ci-deployer` are conventional names, not built-ins.",
+      "x-deploymc-hot-reload": true
+    },
+    "users": {
+      "type": "object",
+      "maxProperties": 10000,
+      "default": {},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["roles"],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/$defs/roleName"
+            },
+            "description": "Roles granted to this identity. Every name must exist in `roles`."
+          }
+        }
+      },
+      "propertyNames": {
+        "minLength": 1,
+        "maxLength": 320,
+        "description": "Verified identity: an email address, a service-token common name, or a DeployMC token owner id. It is never taken from an unverified header."
+      },
+      "description": "Identity-to-role mapping. An identity absent from this map gets `default-role`.",
+      "x-deploymc-hot-reload": true
+    },
+    "default-role": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "default": "none",
+      "description": "Role for an identity that is not listed in `users`. `none` denies all access and is the only safe default. Any other value must name a role in `roles`.",
+      "x-deploymc-hot-reload": true
+    },
+    "webhooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow-private-targets": {
+          "type": "boolean",
+          "default": false,
+          "description": "Permit webhook targets that resolve to private, loopback, link-local, or otherwise non-public addresses. The default blocks them to prevent SSRF.",
+          "x-deploymc-hot-reload": true
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Anonymous usage statistics. Opt-in only; no identity, path, file name, or server address is collected.",
+          "x-deploymc-hot-reload": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "roleName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "permission": {
+      "type": "string",
+      "pattern": "^(?:\\*|[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+)$",
+      "maxLength": 128,
+      "description": "Flat dotted permission identifier such as `files.write` or `deployments.create.jar`. `*` is allowed only as a whole grant for an administrative role."
+    },
+    "pathGlob": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+      "description": "Sandbox-relative glob. Absolute paths, backslashes, NUL, and `..` segments are rejected. `*` matches within one segment; `**` matches across segments."
+    },
+    "regex": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "Regular expression evaluated with a bounded matcher. A pattern that fails to compile fails configuration validation."
+    },
+    "commandPattern": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^/?(?:[A-Za-z0-9_.:-]+(?: [^\\r\\n\\u0000]*)?|\\*)$",
+      "description": "Command pattern without a leading slash, for example `whitelist *`. A trailing `*` matches any argument tail; a bare `*` matches every command."
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["permissions"],
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/permission"
+          },
+          "description": "Granted permissions. A permission without a path scope applies to the whole sandbox minus protected paths."
+        },
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allow": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 256,
+              "items": {
+                "$ref": "#/$defs/pathGlob"
+              },
+              "description": "Path scopes this role may touch. Empty means no path-scoped permission is granted."
+            },
+            "deny": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 256,
+              "items": {
+                "$ref": "#/$defs/pathGlob"
+              },
+              "description": "Path scopes denied to this role. Deny wins over allow and over the sandbox default."
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max-upload-mb": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4096,
+              "description": "Per-role upload limit. It can only lower `sandbox.max-upload-size-mb`."
+            },
+            "rate-limit-per-minute": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "description": "Per-role request budget. It can only lower `limits.rate-limit-per-minute`."
+            }
+          }
+        }
+      }
+    }
+  }
+}
