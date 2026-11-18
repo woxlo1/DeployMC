@@ -53,6 +53,22 @@ Also useful: `gh` for GitHub operations, Docker for the later compatibility harn
 Clone the repository and work on a branch. `main` is protected; every change arrives through a pull
 request.
 
+### Verify everything with one command
+
+After installing the tools above, run every language toolchain from the repository root:
+
+```powershell
+node tools/build/verify-all.cjs
+```
+
+This runs the Java, Web, CLI, Python, specification, and i18n checks in sequence and reports a
+`PASS`/`FAIL` line for each. Use `node tools/build/verify-all.cjs --only=java,web` for a subset. The
+script applies the Windows non-ASCII path workarounds automatically and is documented in
+[`tools/build/README.md`](tools/build/README.md). CI remains the merge authority; a local pass does
+not replace the required checks on the pull request.
+
+The individual commands below are still useful when investigating a single failing toolchain.
+
 ### Java
 
 ```powershell

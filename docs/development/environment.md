@@ -1,6 +1,6 @@
 # Development Environment
 
-- Last updated: 2026-11-16
+- Last updated: 2026-11-18
 - Repository: `https://github.com/woxlo1/DeployMC`
 - Work path: `C:\Users\satos\OneDrive\ドキュメント\IdeaProjects\tororo1066\DeployMC`
 - Shell: PowerShell on Windows
@@ -58,6 +58,10 @@ on `PATH`; open a new terminal, or set both variables and use the absolute `carg
 
 ## Local constraints and risks
 
+The workarounds in items 5, 6, and 8 are applied automatically by `node tools/build/verify-all.cjs`
+(see [`tools/build/README.md`](../../tools/build/README.md)). The manual commands below are for when
+you run a single toolchain directly.
+
 1. **OneDrive synchronization.** The repository is inside a OneDrive-synced directory. OneDrive can
    transiently lock files, which may interfere with Gradle builds and Windows JAR-replacement tests.
    The owner chose to keep this path; if file-lock failures appear, moving to a non-synced directory
@@ -79,7 +83,8 @@ on `PATH`; open a new terminal, or set both variables and use the absolute `carg
    .\gradlew.bat build
    ```
 
-   Verified on 2026-11-16: tests fail with the real path and pass through the junction.
+   Verified on 2026-11-16: tests fail with the real path and pass through the junction. The
+   verification script uses `%TEMP%\deploymc-ascii` for the same purpose and creates it on first use.
 6. **Non-ASCII repository path breaks the MinGW linker.** The Rust GNU toolchain builds with
    `x86_64-w64-mingw32-gcc`, whose `ld` cannot open object files under the Japanese path. Set
    `CARGO_TARGET_DIR` to an ASCII directory before running Cargo:
@@ -90,9 +95,19 @@ on `PATH`; open a new terminal, or set both variables and use the absolute `carg
    ```
 
    Verified on 2026-11-16: linking fails with the default target directory and passes with an ASCII
-   `CARGO_TARGET_DIR`. CI uses the MSVC toolchain on Windows and GNU/Linux elsewhere.
+   `CARGO_TARGET_DIR`. CI uses the MSVC toolchain on Windows and GNU/Linux elsewhere. The
+   verification script sets this variable automatically when the checkout path is non-ASCII.
 7. **OneDrive and Gradle caches.** Keep `.gradle/` and `build/` out of problem reports; delete them
-   only after stopping the Gradle daemon (`.\gradlew.bat --stop`).
+   only after stopping the Gradle daemon (`.\gradlew.bat --stop`). OneDrive can also leave a transient
+   lock on `build/reports/` or `build/test-results/`, making a later `test` task fail while deleting
+   its old output; stopping the daemon and removing the module `build/` directories clears it.
+8. **Gradle configuration cache and Spotless on repeated local runs.** `gradle.properties` enables
+   `org.gradle.configuration-cache=true`. Spotless caches formatting state inside the JVM and that
+   cache goes stale when Gradle reuses the configuration cache across local JVMs, producing
+   `Spotless JVM-local cache is stale` ([diffplug/spotless#987](https://github.com/diffplug/spotless/issues/987)).
+   For a local verification run, pass `--no-configuration-cache` to `gradlew`; the verification script
+   does this automatically. CI uses a fresh runner and is not affected. Do not change
+   `gradle.properties` to work around this local-only issue.
 
 ## GitHub configuration status
 
@@ -103,7 +118,9 @@ on `PATH`; open a new terminal, or set both variables and use the absolute `carg
 - Label taxonomy: initial set created
 - Branch protection on `main`: enabled with linear history, no force pushes, no branch deletion,
   admin enforcement, and zero required approvals
-- Issue forms, PR template, CODEOWNERS, Dependabot, and CI workflows: pending (WP-0.7 and WP-0.8)
+- Issue forms, PR template, CODEOWNERS, Dependabot, and CI workflows: configured; see
+  [community configuration](community.md) (WP-0.7 and WP-0.8)
+- One-command local verification: `node tools/build/verify-all.cjs` (WP-0.6)
 
 ## Reproducing the inspection
 

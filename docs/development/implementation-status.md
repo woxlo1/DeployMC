@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0, work package WP-0.8).
+Last updated: 2026-11-18 (Phase 0, work package WP-0.6).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -30,11 +30,15 @@ These were actually run, not just written. Commands are the ones documented in
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
+| One-command local verification | All six toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all six reported `PASS` |
 | CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
 
-The most recent verified full run before this update was CI run
-[44251355610](https://github.com/woxlo1/DeployMC/actions/runs/44251355610) on `main` at
-`3ddf583`. That run covers the skeletons and specification checks, not product features.
+The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
+`build/verify-all`, which reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`.
+The most recent verified full CI run on `main` was
+[44251355610](https://github.com/woxlo1/DeployMC/actions/runs/44251355610) at `3ddf583`. Both cover
+the skeletons and checks, not product features. The one-command tool is documented in
+[`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
 
 ## Repository configuration, not a product feature
 
@@ -96,6 +100,7 @@ The following are documented as intended behavior. They are **not** code.
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |
 | `sdk/typescript/`, `sdk/java/` | Not created |
+| `tools/build/` | One-command local verification for all six toolchains; Windows path workarounds |
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
 | `specification/` | REST, WebSocket, error, config, audit, and deployment skeletons; threat model draft |
@@ -103,10 +108,11 @@ The following are documented as intended behavior. They are **not** code.
 
 ## How to verify this page
 
-From the repository root, run the commands in [AGENTS.md](../../AGENTS.md). On Windows, run
-Gradle through the documented ASCII path because the checkout path contains non-ASCII
-characters. If a command on this page fails, this page is wrong and must be corrected in the
-same change that fixes or breaks it.
+From the repository root, run `node tools/build/verify-all.cjs` to check every toolchain at once, or
+the individual commands in [AGENTS.md](../../AGENTS.md) and [CONTRIBUTING.md](../../CONTRIBUTING.md).
+On Windows the script handles the ASCII path and Cargo target workarounds described in
+[environment.md](environment.md). If a command on this page fails, this page is wrong and must be
+corrected in the same change that fixes or breaks it.
 
 ## Related documents
 

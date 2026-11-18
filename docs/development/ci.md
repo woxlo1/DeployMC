@@ -45,6 +45,14 @@ These gates depend on files that do not exist yet and will be added once their w
 
 ## Local equivalents
 
+Run every language toolchain at once with `node tools/build/verify-all.cjs` from the repository root.
+It mirrors the commands below, reports a `PASS`/`FAIL` line per toolchain, and applies the Windows
+non-ASCII path workarounds. Use `--only=java,web,...` for a subset. See
+[`tools/build/README.md`](../../tools/build/README.md) for details. A local pass does not replace the
+required checks on a pull request.
+
+Individual commands, useful for investigating one failure:
+
 | CI job | Local command |
 |---|---|
 | Java | `.\gradlew.bat build verifyJava8` |
