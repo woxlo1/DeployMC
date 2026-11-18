@@ -11,12 +11,15 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   green runs are documented on the issue and PR.
 - WP-0.10 (issue #10) adds this tracking document set: project, compatibility, i18n, quality,
   risks, v1 checklist, and handoff.
+- WP-1.1 (issue #41) adds `CapabilityCatalog` and `CapabilityDefinition` in `core`, plus a
+  `FakePlatformAdapter` test double and 16 new tests. `.\gradlew.bat build verifyJava8` passed on
+  2026-11-18 through the ASCII junction: 48 Java tests, 0 failures, Java 8 bytecode check passed.
 
 ## In flight
 
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 91. Milestones `0.1.0` through `0.10.0` exist.
-- No feature branch is in flight for another work package at this point.
+- `feature/wp-1.1-platform-spi` carries the WP-1.1 work described above until it is merged.
 
 ## Blocked
 
@@ -26,9 +29,8 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Merge the WP-0.10 PR after CI is green and close #10.
-2. Continue in owner order: category 2 beginning with #41 (WP-1.1 Platform SPI), then #42, #43,
-   #44, #45, #46, #47, #48, #49.
+1. Merge the WP-1.1 PR after CI is green; #41 closes automatically.
+2. Continue in owner order: #42 (WP-1.2 minimal Bukkit-family adapter), then #43-#49.
 3. Then category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130).
 4. Update project status, implementation status, and this handoff at the end of each session.
 
