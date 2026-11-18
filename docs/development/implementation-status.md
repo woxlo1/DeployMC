@@ -45,13 +45,12 @@ These were actually run, not just written. Commands are the ones documented in
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
 `feature/wp-1.4-static-assets`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
 and `i18n`. Web now runs before Java in that script and in the CI Java job because the plugin build
-packages `web/dist` into the JAR. The WP-1.3 post-merge `main` CI run
-[44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147) passed every job, CodeQL
-[44281228983](https://github.com/woxlo1/DeployMC/actions/runs/44281228983) passed all three
-languages, and Scorecard [44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021)
-passed. Those runs predate WP-1.4; the WP-1.4 pull request checks are recorded in project status.
-These runs cover build and unit checks, not a real server. The one-command tool is documented in
-[`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
+packages `web/dist` into the JAR. WP-1.4 was merged in PR #137 at `4548b4b`; the post-merge `main`
+CI run [44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524) passed every job,
+CodeQL [44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587) passed all three
+languages, and Scorecard [44285715509](https://github.com/woxlo1/DeployMC/actions/runs/44285715509)
+passed. These runs cover build and unit checks, not a real server. The one-command tool is documented
+in [`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
 
 ## Repository configuration, not a product feature
 
