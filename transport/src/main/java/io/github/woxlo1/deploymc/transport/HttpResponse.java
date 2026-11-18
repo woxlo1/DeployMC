@@ -35,6 +35,14 @@ public final class HttpResponse {
     return new HttpResponse(status, headers, json.getBytes(StandardCharsets.UTF_8));
   }
 
+  public static HttpResponse of(int status, String contentType, byte[] body) {
+    Objects.requireNonNull(contentType, "contentType");
+    Objects.requireNonNull(body, "body");
+    Map<String, List<String>> headers = new LinkedHashMap<>();
+    headers.put("content-type", singleton(contentType));
+    return new HttpResponse(status, headers, body);
+  }
+
   public static HttpResponse error(int status, String code) {
     return json(status, "{\"code\":\"" + code + "\"}");
   }

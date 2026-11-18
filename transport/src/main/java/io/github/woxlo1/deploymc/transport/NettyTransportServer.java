@@ -273,10 +273,14 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("X-Frame-Options", "DENY");
     headers.set("Referrer-Policy", "no-referrer");
-    headers.set(HttpHeaderNames.CACHE_CONTROL, "no-store");
+    if (!headers.contains(HttpHeaderNames.CACHE_CONTROL)) {
+      headers.set(HttpHeaderNames.CACHE_CONTROL, "no-store");
+    }
     headers.set("Cross-Origin-Opener-Policy", "same-origin");
     headers.set("Cross-Origin-Resource-Policy", "same-origin");
-    headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+    if (!headers.contains("Content-Security-Policy")) {
+      headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+    }
   }
 
   private HttpRequest toInternal(FullHttpRequest request, String id) {
