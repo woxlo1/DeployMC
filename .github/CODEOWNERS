@@ -1,0 +1,5 @@
+# DeployMC has one maintainer. CODEOWNERS records that ownership explicitly; it does not
+# add a review gate because branch protection requires 0 approving reviews (see docs/development/ci.md).
+
+# Default owner for every file in the repository.
+* @woxlo1
