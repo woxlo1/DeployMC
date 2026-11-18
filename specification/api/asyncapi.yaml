@@ -1,0 +1,472 @@
+asyncapi: 3.1.0
+
+info:
+  title: DeployMC WebSocket API
+  version: 0.1.0
+  description: |
+    Normative WebSocket contract for DeployMC console, deployment, file, and presence
+    events. The WebSocket endpoint upgrades from the same loopback listener as the
+    REST API and uses the same authentication modes.
+
+    **Status: skeleton.** The envelope, event names, and initial channels are
+    defined; no WebSocket server is implemented. The concrete schema of file,
+    snapshot, and deployment resources is added with their REST resources.
+
+    Rules:
+
+    - Authentication and `Origin` validation happen at upgrade time. A connection
+      that fails authentication is closed before any event is delivered.
+    - Every server message uses the envelope fields `id`, `type`, `sequence`,
+      `protocolVersion`, and `timestamp`.
+    - `sequence` is per connection and increases by one. A client that detects a gap
+      asks for the current resource state; event replay is best effort.
+    - Slow clients are isolated with a bounded per-connection queue. On overflow the
+      server drops messages and sends `console.gap` (console) or `events.gap`
+      (other channels) rather than blocking the producer.
+    - Events never contain file contents, tokens, secrets, or absolute host paths.
+  license:
+    name: Apache License 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+x-deploymc-implementation-status: not-implemented
+
+defaultContentType: application/json
+
+servers:
+  loopback:
+    host: '127.0.0.1:8080'
+    protocol: ws
+    protocolVersion: '13'
+    pathname: /api/v1/ws
+    description: |
+      Default loopback endpoint. In `cloudflare` mode the connection normally arrives
+      through Cloudflare Tunnel. Direct local connections are still authenticated;
+      there is no unauthenticated WebSocket mode.
+    security:
+      - $ref: '#/components/securitySchemes/cloudflareAccess'
+      - $ref: '#/components/securitySchemes/bearerAuth'
+    bindings:
+      ws:
+        headers:
+          type: object
+          additionalProperties: false
+          properties:
+            Origin:
+              type: string
+              description: Validated against the configured allowed origins.
+
+channels:
+  events:
+    address: /api/v1/ws
+    title: Event multiplex
+    description: |
+      One WebSocket connection carries all subscribed channels. The client sends
+      control messages to subscribe or unsubscribe; the server sends envelope-shaped
+      events. Unsubscribed event types are never sent.
+    messages:
+      subscribe:
+        $ref: '#/components/messages/Subscribe'
+      unsubscribe:
+        $ref: '#/components/messages/Unsubscribe'
+      ping:
+        $ref: '#/components/messages/Ping'
+      consoleLine:
+        $ref: '#/components/messages/ConsoleLine'
+      consoleGap:
+        $ref: '#/components/messages/ConsoleGap'
+      eventsGap:
+        $ref: '#/components/messages/EventsGap'
+      deploymentEvent:
+        $ref: '#/components/messages/DeploymentEvent'
+      fileChanged:
+        $ref: '#/components/messages/FileChanged'
+      presenceChanged:
+        $ref: '#/components/messages/PresenceChanged'
+      serverNotice:
+        $ref: '#/components/messages/ServerNotice'
+
+operations:
+  receiveEvents:
+    action: receive
+    title: Receive server events
+    summary: Server-to-client events for every subscribed channel.
+    channel:
+      $ref: '#/channels/events'
+    messages:
+      - $ref: '#/channels/events/messages/consoleLine'
+      - $ref: '#/channels/events/messages/consoleGap'
+      - $ref: '#/channels/events/messages/eventsGap'
+      - $ref: '#/channels/events/messages/deploymentEvent'
+      - $ref: '#/channels/events/messages/fileChanged'
+      - $ref: '#/channels/events/messages/presenceChanged'
+      - $ref: '#/channels/events/messages/serverNotice'
+  sendControl:
+    action: send
+    title: Send client control messages
+    summary: Subscribe, unsubscribe, and keepalive messages.
+    channel:
+      $ref: '#/channels/events'
+    messages:
+      - $ref: '#/channels/events/messages/subscribe'
+      - $ref: '#/channels/events/messages/unsubscribe'
+      - $ref: '#/channels/events/messages/ping'
+
+components:
+  securitySchemes:
+    cloudflareAccess:
+      type: httpApiKey
+      name: Cf-Access-Jwt-Assertion
+      in: header
+      description: |
+        Cloudflare Access JWT, verified at upgrade time. The plain email header is
+        never trusted. A failed verification closes the connection.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: DeployMC API token
+      description: |
+        DeployMC-native API token sent in the `Authorization` header at upgrade time.
+        The token is scoped by permission and path; a token never exceeds its owner.
+
+  messages:
+    Subscribe:
+      name: subscribe
+      title: Subscribe
+      summary: Add one or more channels to this connection.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SubscribeMessage'
+      examples:
+        - name: subscribeConsole
+          payload:
+            type: subscribe
+            id: 01J00000000000000000000001
+            channels: [console]
+    Unsubscribe:
+      name: unsubscribe
+      title: Unsubscribe
+      summary: Remove one or more channels from this connection.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UnsubscribeMessage'
+    Ping:
+      name: ping
+      title: Ping
+      summary: Client keepalive. The server responds with a server notice or pong event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PingMessage'
+    ConsoleLine:
+      name: consoleLine
+      title: Console line
+      summary: One captured server log line.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConsoleLineEvent'
+    ConsoleGap:
+      name: consoleGap
+      title: Console gap
+      summary: Console messages were dropped because the client could not keep up.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConsoleGapEvent'
+    EventsGap:
+      name: eventsGap
+      title: Event gap
+      summary: Non-console events were dropped; fetch current resource state.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EventsGapEvent'
+    DeploymentEvent:
+      name: deploymentEvent
+      title: Deployment state change
+      summary: A deployment entered a new state.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeploymentEvent'
+    FileChanged:
+      name: fileChanged
+      title: File changed
+      summary: A file within the sandbox was created, modified, renamed, or deleted.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/FileChangedEvent'
+    PresenceChanged:
+      name: presenceChanged
+      title: Presence changed
+      summary: A user opened or closed an editing view for a path.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PresenceChangedEvent'
+    ServerNotice:
+      name: serverNotice
+      title: Server notice
+      summary: Lifecycle notice such as shutdown, restart, or a pong response.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServerNoticeEvent'
+
+  schemas:
+    EnvelopeBase:
+      type: object
+      required: [id, sequence, protocolVersion, timestamp]
+      properties:
+        id:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: Unique message id. Clients use it for de-duplication on reconnect.
+        sequence:
+          type: integer
+          minimum: 0
+          description: Per-connection sequence number. Increases by one per server event.
+        protocolVersion:
+          type: string
+          const: '1'
+        timestamp:
+          type: string
+          format: date-time
+          description: RFC 3339 UTC timestamp with an explicit offset.
+
+    ConsoleLinePayload:
+      type: object
+      required: [level, message]
+      properties:
+        level:
+          type: string
+          maxLength: 32
+          examples: [INFO, WARN, ERROR]
+        loggerName:
+          type: string
+          maxLength: 256
+        threadName:
+          type: string
+          maxLength: 256
+        message:
+          type: string
+          maxLength: 16384
+        truncated:
+          type: boolean
+          default: false
+
+    ConsoleLineEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: console.line
+            payload:
+              $ref: '#/components/schemas/ConsoleLinePayload'
+
+    ConsoleGapEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: console.gap
+            payload:
+              type: object
+              required: [dropped]
+              properties:
+                dropped:
+                  type: integer
+                  minimum: 1
+                lastDeliveredSequence:
+                  type: integer
+                  minimum: 0
+
+    EventsGapEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: events.gap
+            payload:
+              type: object
+              required: [dropped]
+              properties:
+                dropped:
+                  type: integer
+                  minimum: 1
+                channels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [deployments, files, presence]
+                lastDeliveredSequence:
+                  type: integer
+                  minimum: 0
+
+    DeploymentEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: deployment.state
+            payload:
+              type: object
+              required: [deploymentId, from, to, reasonCode]
+              properties:
+                deploymentId:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                from:
+                  type: string
+                  maxLength: 64
+                to:
+                  type: string
+                  maxLength: 64
+                reasonCode:
+                  type: string
+                  pattern: '^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$'
+                actor:
+                  type: string
+                  maxLength: 256
+                  description: Identity display name or `system`. Never a credential.
+
+    FileChangedEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: file.changed
+            payload:
+              type: object
+              required: [path, change]
+              properties:
+                path:
+                  type: string
+                  maxLength: 4096
+                  description: Sandbox-relative path. Never an absolute host path.
+                change:
+                  type: string
+                  enum: [created, modified, deleted, renamed]
+                revision:
+                  type: string
+                  maxLength: 128
+                previousPath:
+                  type: string
+                  maxLength: 4096
+                  description: Present only for a rename.
+                actor:
+                  type: string
+                  maxLength: 256
+
+    PresenceChangedEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: presence.changed
+            payload:
+              type: object
+              required: [path, state]
+              properties:
+                path:
+                  type: string
+                  maxLength: 4096
+                state:
+                  type: string
+                  enum: [viewing, editing, idle]
+                displayName:
+                  type: string
+                  maxLength: 256
+
+    ServerNoticeEvent:
+      allOf:
+        - $ref: '#/components/schemas/EnvelopeBase'
+        - type: object
+          required: [type, payload]
+          properties:
+            type:
+              type: string
+              const: server.notice
+            payload:
+              type: object
+              required: [notice]
+              properties:
+                notice:
+                  type: string
+                  enum: [pong, shutting-down, restarting, rate-limited]
+                detail:
+                  type: string
+                  maxLength: 512
+                retryAfterSeconds:
+                  type: integer
+                  minimum: 0
+
+    SubscribeMessage:
+      type: object
+      additionalProperties: false
+      required: [type, id, channels]
+      properties:
+        type:
+          type: string
+          const: subscribe
+        id:
+          type: string
+          minLength: 8
+          maxLength: 128
+        channels:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum: [console, deployments, files, presence]
+        filters:
+          type: object
+          description: Channel-specific filters. The concrete shape is defined with each channel.
+          additionalProperties: true
+
+    UnsubscribeMessage:
+      type: object
+      additionalProperties: false
+      required: [type, id, channels]
+      properties:
+        type:
+          type: string
+          const: unsubscribe
+        id:
+          type: string
+          minLength: 8
+          maxLength: 128
+        channels:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum: [console, deployments, files, presence]
+
+    PingMessage:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          const: ping
+        id:
+          type: string
+          minLength: 8
+          maxLength: 128
