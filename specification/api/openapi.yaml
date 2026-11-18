@@ -1,0 +1,654 @@
+openapi: 3.1.0
+
+info:
+  title: DeployMC API
+  version: 0.1.0
+  summary: Authenticated REST API for DeployMC.
+  description: |
+    Normative REST contract for DeployMC. The API is served by the DeployMC plugin,
+    binds to `127.0.0.1` by default, and is normally exposed through Cloudflare Tunnel
+    and authenticated by Cloudflare Access.
+
+    **Status: skeleton.** Only the server resource, health endpoints, and shared
+    components are defined here. File, snapshot, deployment, console, and audit
+    resources are added by later work packages. No endpoint in this document is
+    implemented yet.
+
+    Rules that apply to every operation:
+
+    - There is no unauthenticated endpoint except `/healthz` and `/readyz`.
+    - Errors use RFC 9457 Problem Details with a stable machine-readable `code`.
+    - Human-readable `title` and `detail` are localized through `Accept-Language`
+      and are never used for program logic.
+    - Existing resources use `ETag`/`If-Match`. A missing precondition on a
+      destructive write is an error, not a blind overwrite.
+    - List resources use cursor pagination with a documented limit.
+    - Requests and responses carry a request id for correlation.
+    - Breaking changes require a new major API version. Additive changes are
+      allowed within `v1`.
+
+    The specification is the source of truth. Behavior changes start here, then in
+    the server, clients, and contract tests.
+  license:
+    name: Apache License 2.0
+    identifier: Apache-2.0
+  contact:
+    name: DeployMC maintainers
+    url: https://github.com/woxlo1/DeployMC
+
+x-deploymc-implementation-status: not-implemented
+
+servers:
+  - url: http://127.0.0.1:8080
+    description: |
+      Default loopback bind. Binding to another interface requires an explicit
+      configuration change and emits a startup warning. TLS is normally terminated
+      at Cloudflare; local TLS is optional and not part of this skeleton.
+
+tags:
+  - name: Health
+    description: Unauthenticated liveness and readiness probes. They reveal no sensitive data.
+  - name: Server
+    description: Information about the running DeployMC and Minecraft server.
+
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Liveness probe
+      description: |
+        Returns `200` when the plugin process is alive and its internal lifecycle has
+        started. It does not prove that the transport, data directory, or platform
+        adapter are ready. No authentication and no sensitive fields.
+      security: []
+      responses:
+        '200':
+          description: The process is alive.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /readyz:
+    get:
+      operationId: getReadiness
+      tags: [Health]
+      summary: Readiness probe
+      description: |
+        Returns `200` only after configuration validation, data-lock acquisition,
+        snapshot-store recovery, authentication initialization, and transport bind
+        have completed. Returns `503` with per-check results while starting, after a
+        fatal initialization error, or while shutting down.
+
+        No authentication and no sensitive fields; checks report status, not
+        configuration values.
+      security: []
+      responses:
+        '200':
+          description: The instance is ready to serve API requests.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+        '503':
+          description: The instance is not ready. The body lists the failing checks.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+
+  /api/v1/server:
+    get:
+      operationId: getServer
+      tags: [Server]
+      summary: Get server and DeployMC information
+      description: |
+        Returns the DeployMC version, API version, detected platform information, and
+        the capability map for the current runtime.
+
+        A capability key that is absent from the map has the state `UNKNOWN`. Clients
+        must treat `UNKNOWN` as unavailable for safety-sensitive operations and must
+        degrade visibly instead of claiming success.
+
+        The response is derived from immutable value objects and is safe to cache
+        within the lifetime of one server process. The `ETag` changes when the
+        capability map or platform information changes.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current server information.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerInfo'
+        '304':
+          description: The supplied `If-None-Match` matches the current representation.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+components:
+  securitySchemes:
+    cloudflareAccess:
+      type: apiKey
+      in: header
+      name: Cf-Access-Jwt-Assertion
+      description: |
+        Cloudflare Access JWT. Used in `cloudflare` authentication mode.
+
+        The plain `Cf-Access-Authenticated-User-Email` header is never trusted.
+        The JWT signature, `iss`, `aud`, `exp`, `nbf`, and `iat` are verified against
+        the configured team JWKS with an algorithm allow-list. Verification failure
+        is a `401`, never a fallback to another identity source.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: DeployMC API token
+      description: |
+        DeployMC-native API token, sent as `Authorization: Bearer <token>`. Used in
+        `token` authentication mode and for the short-lived `local-onetime` token.
+
+        Tokens are high-entropy, shown once, stored only as a hash, scoped by
+        permission and path, and can expire or be revoked. A token never exceeds the
+        permissions of its owner.
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: deploymc_session
+      description: |
+        Reserved for a possible cookie-based browser session. If used, the cookie is
+        `HttpOnly`, `SameSite`, `Secure` when applicable, rotated, and combined with
+        CSRF protection for state-changing requests. Not enabled by this skeleton.
+
+  headers:
+    ETag:
+      description: |
+        Opaque revision identifier for the representation. Clients send it in
+        `If-Match` for writes and `If-None-Match` for conditional reads. The exact
+        format is an implementation detail; the current design uses
+        `sha256-<lowercase hex>` for file content and a derived value for aggregate
+        resources.
+      schema:
+        type: string
+        pattern: '^"[^"]+"$|^W/"([^"]+)"$'
+    RequestId:
+      description: Correlation id assigned by the transport. Always present on API responses.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+    RateLimitLimit:
+      description: Request quota for the current window.
+      schema:
+        type: integer
+        minimum: 0
+    RateLimitRemaining:
+      description: Requests remaining in the current window.
+      schema:
+        type: integer
+        minimum: 0
+    RateLimitReset:
+      description: Seconds until the current window resets.
+      schema:
+        type: integer
+        minimum: 0
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 0
+    Location:
+      description: Absolute or root-relative URL of a created or moved resource.
+      schema:
+        type: string
+        format: uri-reference
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: |
+        Opaque pagination cursor returned as `nextCursor` by a previous request.
+        Clients must not parse or construct cursors. An invalid cursor is a
+        `request.invalid-cursor` error.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 512
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: |
+        Maximum number of items to return. The server clamps values above its
+        documented maximum instead of rejecting them; the effective maximum is
+        reported in the response.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: |
+        Required for destructive or overwriting operations on an existing resource.
+        A missing precondition is an error. A stale value returns `412` with the
+        current revision, never a silent overwrite.
+      schema:
+        type: string
+        minLength: 1
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: Returns `304` when the supplied revision matches the current one.
+      schema:
+        type: string
+        minLength: 1
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Client-generated key that makes a create operation safe to retry. Repeating
+        the same key with the same payload returns the original result. Reusing a key
+        with a different payload is a conflict.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 255
+
+  responses:
+    BadRequest:
+      description: The request is malformed or fails validation.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: Authentication is required or the supplied credential is invalid.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        WWW-Authenticate:
+          description: Authentication challenge. Omitted when disclosure would help an attacker.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: The identity is authenticated but not allowed to perform this action.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: The resource does not exist or is not visible to this identity.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: The request conflicts with the current state.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PreconditionFailed:
+      description: The supplied revision does not match the current revision.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        ETag:
+          $ref: '#/components/headers/ETag'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    TooManyRequests:
+      description: A rate limit was exceeded.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+        RateLimit-Limit:
+          $ref: '#/components/headers/RateLimitLimit'
+        RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimitRemaining'
+        RateLimit-Reset:
+          $ref: '#/components/headers/RateLimitReset'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InternalError:
+      description: An unexpected server error. Details are not disclosed in the response.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ServiceUnavailable:
+      description: The server is not ready, is shutting down, or is overloaded.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+      examples:
+        - status: ok
+
+    Readiness:
+      type: object
+      additionalProperties: false
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+          enum: [ready, starting, not-ready, shutting-down]
+        checks:
+          type: array
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/ReadinessCheck'
+      examples:
+        - status: ready
+          checks:
+            - name: configuration
+              status: pass
+            - name: data-lock
+              status: pass
+            - name: snapshot-store
+              status: pass
+            - name: authentication
+              status: pass
+            - name: transport
+              status: pass
+
+    ReadinessCheck:
+      type: object
+      additionalProperties: false
+      required: [name, status]
+      properties:
+        name:
+          type: string
+          pattern: '^[a-z][a-z0-9-]{1,63}$'
+        status:
+          type: string
+          enum: [pass, fail, skipped]
+        detail:
+          type: string
+          maxLength: 512
+          description: Non-sensitive explanation. Never contains configuration values or secrets.
+
+    PlatformInfo:
+      type: object
+      additionalProperties: false
+      required: [softwareName, softwareVersion, minecraftVersion, javaVersion, operatingSystem]
+      properties:
+        softwareName:
+          type: string
+          minLength: 1
+          maxLength: 64
+          examples: [Paper, Folia, Spigot, Velocity, BungeeCord, Standalone]
+        softwareVersion:
+          type: string
+          minLength: 1
+          maxLength: 128
+          examples: ['1.21.4']
+        minecraftVersion:
+          type: string
+          minLength: 1
+          maxLength: 64
+          examples: ['1.21.4']
+        javaVersion:
+          type: string
+          minLength: 1
+          maxLength: 64
+          examples: ['21.0.5']
+        operatingSystem:
+          type: string
+          minLength: 1
+          maxLength: 128
+          examples: [Linux, Windows 11]
+
+    CapabilityState:
+      type: string
+      enum: [AVAILABLE, UNAVAILABLE, UNKNOWN]
+      description: |
+        State of a platform capability. `UNKNOWN` must be treated as unavailable for
+        safety-sensitive operations. A missing map key means `UNKNOWN`.
+
+    Capabilities:
+      type: object
+      description: |
+        Capability states for the current runtime. Keys are stable strings defined by
+        `CapabilityKeys`; clients must ignore unknown keys and must not invent keys.
+      propertyNames:
+        # Capability keys are dotted where they form a namespace (log.capture) but
+        # a few stable keys are a single hyphenated name (update-folder).
+        pattern: '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)*$'
+      additionalProperties:
+        $ref: '#/components/schemas/CapabilityState'
+      examples:
+        - log.capture: AVAILABLE
+          log.capture.structured: AVAILABLE
+          command.dispatch: AVAILABLE
+          command.output: UNKNOWN
+          server.save: AVAILABLE
+          server.shutdown: AVAILABLE
+          server.restart.script: UNAVAILABLE
+          plugins.enumerate: AVAILABLE
+          plugins.enable-state: AVAILABLE
+          plugins.load-errors: UNKNOWN
+          update-folder: AVAILABLE
+          scheduler.region: UNAVAILABLE
+          players.locale: AVAILABLE
+          players.broadcast: AVAILABLE
+
+    ServerInfo:
+      type: object
+      additionalProperties: false
+      required: [deployMcVersion, apiVersion, platform, capabilities]
+      properties:
+        deployMcVersion:
+          type: string
+          pattern: '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$'
+          examples: ['0.1.0']
+        apiVersion:
+          type: string
+          pattern: '^v[0-9]+$'
+          examples: [v1]
+        platform:
+          $ref: '#/components/schemas/PlatformInfo'
+        capabilities:
+          $ref: '#/components/schemas/Capabilities'
+      examples:
+        - deployMcVersion: 0.1.0
+          apiVersion: v1
+          platform:
+            softwareName: Paper
+            softwareVersion: '1.21.4'
+            minecraftVersion: '1.21.4'
+            javaVersion: '21.0.5'
+            operatingSystem: Linux
+          capabilities:
+            log.capture: AVAILABLE
+            log.capture.structured: AVAILABLE
+            command.dispatch: AVAILABLE
+            server.restart.script: UNAVAILABLE
+            scheduler.region: UNAVAILABLE
+            update-folder: AVAILABLE
+
+    Problem:
+      type: object
+      description: |
+        RFC 9457 Problem Details with DeployMC extensions. `code` is stable and is the
+        only field clients may branch on. `title` and `detail` are localized prose.
+      additionalProperties: true
+      required: [type, title, status, code, requestId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: |
+            URI reference identifying the problem type. DeployMC uses
+            `urn:deploymc:error:<code>`; `about:blank` is allowed when no specific
+            type exists.
+          examples: ['urn:deploymc:error:auth.required']
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+          maxLength: 2000
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          pattern: '^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$'
+          description: |
+            Stable, machine-readable error code. Never localized and never reused for
+            a different meaning. The initial catalog is `specification/api/errors.md`.
+          examples: [auth.required, files.revision-conflict]
+        requestId:
+          type: string
+          minLength: 8
+          maxLength: 128
+        retryable:
+          type: boolean
+          default: false
+          description: Whether retrying the same request later may succeed.
+        errors:
+          type: array
+          maxItems: 100
+          description: Field- or path-level validation problems.
+          items:
+            $ref: '#/components/schemas/ProblemIssue'
+      examples:
+        - type: urn:deploymc:error:files.revision-conflict
+          title: Revision conflict
+          status: 412
+          detail: The file changed since the supplied revision.
+          code: files.revision-conflict
+          requestId: 01J00000000000000000000000
+          retryable: false
+          errors:
+            - pointer: /path
+              code: files.revision-mismatch
+              detail: Expected sha256-a1b2..., found sha256-c3d4...
+
+    ProblemIssue:
+      type: object
+      additionalProperties: false
+      required: [pointer, code]
+      properties:
+        pointer:
+          type: string
+          maxLength: 1024
+          description: |
+            Location of the problem. For JSON bodies this is a JSON Pointer; for files
+            it is a sandbox-relative path. It never contains an absolute host path.
+        code:
+          type: string
+          pattern: '^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$'
+        detail:
+          type: string
+          maxLength: 1000
+
+    Page:
+      type: object
+      description: |
+        Cursor-paginated list envelope. Concrete list operations will replace the
+        free-form `items` schema with a typed item; the pagination fields are stable.
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: {}
+        nextCursor:
+          type: [string, 'null']
+          maxLength: 512
+          description: Cursor for the next page, or `null` on the last page.
+        total:
+          type: integer
+          minimum: 0
+          description: Optional exact count. Omitted when counting would be unbounded.
