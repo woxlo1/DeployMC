@@ -103,5 +103,6 @@ The owner chose Apache-2.0 on 2026-11-16 after the license comparison was presen
 ## References
 
 - Master specification, section 10.2 and WP-0.2.
+- [License comparison](../research/license-comparison.md).
 - [docs/development/decisions-pending.md](../development/decisions-pending.md).
 - `LICENSE`, `CONTRIBUTING.md`, `sdk/python/pyproject.toml`, `cli/Cargo.toml`.

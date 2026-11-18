@@ -21,9 +21,11 @@ Phase 0 is in progress. Verified today:
 - CI, lint, CodeQL, dependency-review, and Scorecard workflows, plus enforced branch protection.
 - Architecture documents, ADR-0001 through ADR-0014, a threat-model draft, and the support-matrix
   design.
+- Source-linked naming, competitive, and license research in `docs/research/`.
 
-Not yet done in Phase 0: issue forms and community automation, the REST/AsyncAPI/configuration
-specification skeletons, and the compatibility harness.
+Issue forms and community automation, the REST/AsyncAPI/configuration specification skeletons, and
+the naming, competitive, and license research are complete. Not yet done in Phase 0: the
+compatibility harness.
 
 No DeployMC feature runs inside a Minecraft server yet. The current matrix has no Tier 1, 2, or 3
 entry.

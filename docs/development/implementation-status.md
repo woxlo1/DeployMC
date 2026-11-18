@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0, work package WP-0.6).
+Last updated: 2026-11-18 (Phase 0, work packages WP-0.6 and WP-0.2).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -32,6 +32,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
 | One-command local verification | All six toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all six reported `PASS` |
 | CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
+| Research documents | Naming check, competitive analysis, and license comparison with source links and access dates | `docs/research/*.md` |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
 `build/verify-all`, which reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`.
@@ -47,6 +48,12 @@ file, Dependabot update configuration, a label source-of-truth TSV, and a label 
 are GitHub configuration files; they do not make DeployMC run. They are described in
 [community configuration](community.md). The label sync workflow is configured to run on `main`
 after this work is merged; its first run is not evidence in this status page.
+
+WP-0.2 added three source-linked research documents:
+[naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
+and [license comparison](../research/license-comparison.md). They record desk research with
+access date 2026-11-18. They do not claim product originality, hands-on competitor testing, or
+legal review. The license decision itself was already accepted in [ADR-0013](../adr/ADR-0013-license.md).
 
 ## Designed but not implemented
 
@@ -96,6 +103,7 @@ The following are documented as intended behavior. They are **not** code.
 | `transport/` | `HttpBindConfig` value object only; no server |
 | `platform/bukkit/`, `platform/standalone/` | Build placeholders |
 | `plugin/` | Shadow aggregator; produces an empty scaffold JAR |
+| `docs/research/` | Naming, competitive, and license research documents; no hands-on tests |
 | `web/` | Buildable React skeleton; no product screens |
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |
@@ -117,6 +125,7 @@ corrected in the same change that fixes or breaks it.
 ## Related documents
 
 - [Roadmap](../../ROADMAP.md)
+- [Research index](../research/README.md)
 - [CI and enforced checks](ci.md)
 - [Community configuration](community.md)
 - [Pending decisions](decisions-pending.md)
