@@ -1,7 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-18 (Phase 1, WP-1.4 implemented locally; PR pending). Verified against `main`
-at `8d00fa9`.
+Last updated: 2026-11-18 (Phase 1, WP-1.4 merged; WP-1.5 next). Verified against `main` at
+`4548b4b`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -16,36 +16,41 @@ This is the session-level status page. For per-component facts use
   and implementation, was merged in PR #135 at `dbb32ae`; the issue closed automatically. WP-1.1
   was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134 with issue #42 closed.
   The post-WP-1.3 documentation PR #136 merged at `8d00fa9`. WP-1.4 (issue #44), static asset
-  serving from the JAR, is implemented on `feature/wp-1.4-static-assets`; its pull request is
-  pending, so no merge or pull-request CI result is claimed here.
+  serving from the JAR, was merged in PR #137 at `4548b4b`; the issue closed automatically. The next
+  work package is WP-1.5 (issue #45).
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-18 before the WP-1.4 pull request was opened:
+Verified GitHub state on 2026-11-18 after PR #137 was merged:
 
 ```text
 git log -1 --oneline
-8d00fa9 docs(docs): refresh post-WP-1.3 project status (#136)
+4548b4b feat(transport): serve embedded web assets safely (#137)
 
-gh pr view 136 --json state,mergeCommit
-state=MERGED mergeCommit=8d00fa9
+gh pr view 137 --json state,mergeCommit,url
+state=MERGED mergeCommit=4548b4b433c2cb90eda92225c57b586b6e1e64e0
+url=https://github.com/woxlo1/DeployMC/pull/137
+
+gh issue view 44 --json state
+state=CLOSED
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
-open issues: 87
+open issues: 86
 ```
 
-Post-merge `main` workflows for WP-1.3 passed: CI
-[44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147), CodeQL
-[44281228983](https://github.com/woxlo1/DeployMC/actions/runs/44281228983), and Scorecard
-[44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021). PR #136 also passed all
-required checks before merge, including CI run
-[44282091787](https://github.com/woxlo1/DeployMC/actions/runs/44282091787) and CodeQL run
-[44282091768](https://github.com/woxlo1/DeployMC/actions/runs/44282091768).
+All 17 required pull-request checks passed before the merge, including CI run
+[44285175619](https://github.com/woxlo1/DeployMC/actions/runs/44285175619) and CodeQL run
+[44285175613](https://github.com/woxlo1/DeployMC/actions/runs/44285175613). Post-merge `main`
+workflows for WP-1.4 all passed: CI
+[44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524), CodeQL
+[44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587), and Scorecard
+[44285715509](https://github.com/woxlo1/DeployMC/actions/runs/44285715509). Earlier passing runs for
+WP-1.3 and PR #136 are recorded in the repository history.
 
-## WP-1.4 local verification
+## WP-1.4 verification
 
 These commands were run on 2026-11-18 before opening the pull request:
 
@@ -60,8 +65,9 @@ jar tf plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar
   -> deploymc-web/index.html, hashed JS/CSS, source map, and .gz/.br variants
 ```
 
-The Java build now requires `web/dist`; CI and `verify-all.cjs` build Web first. Browser rendering,
-real-server load, and product routes remain unverified.
+The Java build now requires `web/dist`; CI and `verify-all.cjs` build Web first. The same Web-first
+order passed on both CI operating systems after merge. Browser rendering, real-server load, and
+product routes remain unverified.
 
 ## Known limitations
 
@@ -82,10 +88,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43 (all done) -> category 2 (#44-#114, #44 implemented
-locally with its PR pending) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5
-(#124-#130). Start the next item only when earlier items are complete or the owner explicitly
-approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44 (all done) -> category 2 (#45-#114, #45
+starting) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start the
+next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 

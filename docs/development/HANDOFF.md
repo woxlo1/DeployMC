@@ -30,14 +30,15 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   0 failures, Java 8 bytecode check passed. `node tools/build/verify-all.cjs` reported `PASS`
   for all six toolchains. Post-merge `main` CI, CodeQL, and Scorecard runs all passed. No Minecraft
   server was started and no product routes are registered.
-- WP-1.4 (issue #44) is implemented on `feature/wp-1.4-static-assets` with its pull request pending.
-  `StaticAssetHandler` serves only `deploymc-web/` classpath resources with safe decoding, traversal
-  rejection, SPA fallback that never shadows `/api`, correct content types, hashed-asset immutable
-  caching, worker-capable HTML CSP, and precompressed `.br`/`.gz` variants. The Web build now
-  generates those variants, the plugin build packages `web/dist` under `deploymc-web/`, and CI plus
-  `verify-all.cjs` build Web before Java. Verified locally with `gradlew build verifyJava8 --console=plain`
-  (93 Java tests, 0 failures), `pnpm test` (14 tests), `node tools/build/verify-all.cjs` (all six
-  toolchains `PASS`), and JAR entry inspection. No browser, real server, or product route was tested.
+- WP-1.4 (issue #44) was completed in PR #137 and merged at `4548b4b`; the issue closed. `StaticAssetHandler`
+  serves only `deploymc-web/` classpath resources with safe decoding, traversal rejection, SPA fallback
+  that never shadows `/api`, correct content types, hashed-asset immutable caching, worker-capable HTML
+  CSP, and precompressed `.br`/`.gz` variants. The Web build now generates those variants, the plugin
+  build packages `web/dist` under `deploymc-web/`, and CI plus `verify-all.cjs` build Web before Java.
+  Verified locally with `gradlew build verifyJava8 --console=plain` (93 Java tests, 0 failures),
+  `pnpm test` (14 tests), `node tools/build/verify-all.cjs` (all six toolchains `PASS`), and JAR entry
+  inspection. All 17 pull-request checks and the post-merge `main` CI, CodeQL, and Scorecard runs
+  passed. No browser, real server, or product route was tested.
 - The real Paper conflicting-library classloader check for #48 was recorded on
   [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
   spike and JAR inspection are not a support claim.
@@ -45,8 +46,7 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 ## In flight
 
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 87. Milestones `0.1.0` through `0.10.0` exist.
-- WP-1.4 (issue #44) is implemented locally; its pull request, review, and CI checks are pending.
+- Open issues: 86. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -56,12 +56,11 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Open the WP-1.4 pull request, wait for all required checks, and squash-merge it.
-2. Record the merge commit, pull-request CI evidence, and final GitHub state in the status pages.
-3. Start WP-1.5 (issue #45) on a new branch only after WP-1.4 is merged.
-4. Continue in owner order: #45-#49, then category 3 (#115-#120), category 4 (#121-#123), and
+1. Record the post-merge status in the status pages (this documentation pull request).
+2. Start WP-1.5 (issue #45) on a new branch after this documentation change is merged.
+3. Continue in owner order: #45-#49, then category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130).
-5. Update project status, implementation status, and this handoff at the end of each session.
+4. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
 
