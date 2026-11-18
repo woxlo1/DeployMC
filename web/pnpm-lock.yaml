@@ -43,8 +43,8 @@ importers:
         specifier: 0.4.16
         version: 0.4.16(eslint@9.17.0)
       globals:
-        specifier: 15.14.0
-        version: 15.14.0
+        specifier: 17.14.0
+        version: 17.14.0
       jsdom:
         specifier: 25.0.1
         version: 25.0.1
@@ -1173,8 +1173,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  globals@15.14.0:
-    resolution: {integrity: sha512-OkToC372DtlQeje9/zHIo5CT8lRP/FUgEOKBEhU4e0abL7J7CD24fD9ohiLN5hagG/kWCYj4K5oaxxtj2Z0Dig==}
+  globals@17.14.0:
+    resolution: {integrity: sha512-UtdkTVyAJePQv0J2M9Xe4L0ruNSDV314XiIJsADI2Zf40bcdAonE/D/OhAU8AT99oij9mhLByb+NvA3QWZYgCg==}
     engines: {node: '>=18'}
 
   gopd@1.2.0:
@@ -2810,7 +2810,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  globals@15.14.0: {}
+  globals@17.14.0: {}
 
   gopd@1.2.0: {}
 
