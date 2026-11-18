@@ -22,19 +22,23 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`. Real Paper-latest load
   and clean-disable thread-dump verification were **not** performed; they are recorded on the
   compatibility harness issue.
-- WP-1.3 (issue #43) is implemented on `feature/wp-1.3-transport`: ADR-0003 accepted Netty
-  4.1.141.Final after the recorded spike, and `transport/` now has internal interfaces,
-  `NettyTransportServer`, config/policy/logging types, and 9 integration tests. The Shadow JAR
-  relocates Netty and excludes the unused BlockHound service file. Verified with
+- WP-1.3 (issue #43) was completed in PR #135 and merged at `dbb32ae`; the issue closed. ADR-0003
+  accepted Netty 4.1.141.Final after the recorded spike, and `transport/` now has internal
+  interfaces, `NettyTransportServer`, config/policy/logging types, and 9 integration tests. The
+  Shadow JAR relocates Netty and excludes the unused BlockHound service file. Verified with
   `.\gradlew.bat build verifyJava8 --console=plain` through the ASCII junction: 79 Java tests,
   0 failures, Java 8 bytecode check passed. `node tools/build/verify-all.cjs` reported `PASS`
-  for all six toolchains. No Minecraft server was started and no product routes are registered.
+  for all six toolchains. Post-merge `main` CI, CodeQL, and Scorecard runs all passed. No Minecraft
+  server was started and no product routes are registered.
+- The real Paper conflicting-library classloader check for #48 was recorded on
+  [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
+  spike and JAR inspection are not a support claim.
 
 ## In flight
 
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 88. Milestones `0.1.0` through `0.10.0` exist.
-- WP-1.3 (issue #43) is ready to be pushed and opened as a pull request; do not merge before CI.
+- Open issues: 87. Milestones `0.1.0` through `0.10.0` exist.
+- WP-1.4 (issue #44), static asset serving from the JAR, is the next work package.
 
 ## Blocked
 
@@ -44,10 +48,9 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Push `feature/wp-1.3-transport`, open a PR for #43, wait for all required checks, and
-   squash-merge only after CI is green.
-2. Tell the compatibility harness issue that the real Paper conflicting-library check remains
-   open; the transport spike alone is not a support claim.
+1. Finish the post-merge documentation PR for WP-1.3 and wait for all required checks before
+   merging.
+2. Start WP-1.4 (issue #44) on a new branch after the documentation PR is merged.
 3. Continue in owner order: #44-#49, then category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130).
 4. Update project status, implementation status, and this handoff at the end of each session.
