@@ -1,7 +1,7 @@
 <!--
 Translation status
 - Source: README.md
-- Source commit: 2983407
+- Source commit: b867054
 - Completeness: complete draft
 - Review: AI-assisted draft, not reviewed by a native speaker
 - Reviewer: none
@@ -31,7 +31,7 @@ Translation status
 | Java、Web、CLI、Python SDK のビルド骨組み | ビルド可能。製品機能はなし |
 | アーキテクチャの基準文書と ADR | 起草済み（フェーズ 0） |
 | CI ワークフローとブランチ保護 | `main` で稼働中 |
-| 仕様（REST、WebSocket、設定） | 未着手（フェーズ 0） |
+| 仕様（REST、WebSocket、設定、監査、配備） | 骨組みを作成し CI で検証済み（フェーズ 0） |
 | プラグインランタイム、API、Web UI、CLI、SDK | 未着手（フェーズ 1 以降） |
 
 常に最新の詳細な状態は
@@ -71,6 +71,16 @@ DeployMC は、プラグインディレクトリだけを対象にした、狭�
 [API の階層](../architecture/api-layering.md) の各文書があります。重要な決定は
 [アーキテクチャ決定記録（ADR）](../adr/README.md) に残し、セキュリティ上の立場は
 [脅威モデルの草案](../../specification/security/threat-model.md) に記載しています。
+
+仕様の骨組みは [`specification/`](../../specification/) にあり、
+[REST API](../../specification/api/openapi.yaml)、
+[WebSocket API](../../specification/api/asyncapi.yaml)、
+[エラーコード一覧](../../specification/api/errors.md)、
+[設定スキーマ](../../specification/config/config.schema.json)、
+[監査ログ形式](../../specification/audit/audit-log-format.md)、
+[配備状態マシン](../../specification/deployment/state-machine.md) が含まれます。
+これらは意図する契約を表すだけで、まだサーバーには実装されていません。
+CI の `Spec` ジョブが [`tools/spec/`](../../tools/spec/) で検証します。
 
 完全な開発仕様は
 [`docs/development/DeployMC_Complete_Master_Development_Specification.md`](../development/DeployMC_Complete_Master_Development_Specification.md)
