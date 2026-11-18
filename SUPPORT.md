@@ -9,12 +9,23 @@ asking for help: most user-facing features are not implemented yet.
 | Need | Where |
 |---|---|
 | Reproducible bug | Open a GitHub issue in <https://github.com/woxlo1/DeployMC/issues> |
-| Question, idea, or setup discussion | GitHub Discussions in <https://github.com/woxlo1/DeployMC/discussions> |
-| Translation help or review | Discussions, and read [TRANSLATING.md](TRANSLATING.md) first |
+| Question, idea, or setup discussion | GitHub Discussions in <https://github.com/woxlo1/DeployMC/discussions> (enabled, currently no posts) |
+| Translation help or review | Translation issue form, or Discussions; read [TRANSLATING.md](TRANSLATING.md) first |
 | Security vulnerability | **Private report only**, per [SECURITY.md](SECURITY.md) |
 
-Dedicated issue forms are part of the Phase 0 community setup. Until they land, a plain issue is
-fine; include the information below.
+Dedicated issue forms are available. Choose the closest one:
+
+| Need | Form |
+|---|---|
+| Reproducible incorrect behavior | Bug report |
+| New capability or changed behavior | Feature request |
+| Real result on a server platform/version | Compatibility report |
+| Wrong, missing, or stale documentation | Documentation issue |
+| Translation or review | Translation help or review |
+
+Plain issues remain enabled if no form fits; include the information below. Security details must
+never go into a public form. See [community configuration](docs/development/community.md) for the
+full list of templates and settings.
 
 ## What to include
 

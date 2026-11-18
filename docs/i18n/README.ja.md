@@ -1,7 +1,7 @@
 <!--
 Translation status
 - Source: README.md
-- Source commit: b867054
+- Source commit: 4160224
 - Completeness: complete draft
 - Review: AI-assisted draft, not reviewed by a native speaker
 - Reviewer: none

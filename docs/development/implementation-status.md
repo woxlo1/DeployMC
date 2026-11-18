@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0, work package WP-0.5).
+Last updated: 2026-11-18 (Phase 0, work package WP-0.8).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -30,11 +30,19 @@ These were actually run, not just written. Commands are the ones documented in
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
-| CI | Five workflows (CI, lint, CodeQL, dependency review, Scorecard), including the `Spec` job | GitHub Actions runs on `main` |
+| CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
 
 The most recent verified full run before this update was CI run
-[44040380569](https://github.com/woxlo1/DeployMC/actions/runs/44040380569) on `main` at
-`f8d77ac`. That run covers the skeletons, not product features.
+[44251355610](https://github.com/woxlo1/DeployMC/actions/runs/44251355610) on `main` at
+`3ddf583`. That run covers the skeletons and specification checks, not product features.
+
+## Repository configuration, not a product feature
+
+WP-0.8 added six issue forms with a security contact redirect, a pull request template, a CODEOWNERS
+file, Dependabot update configuration, a label source-of-truth TSV, and a label sync workflow. These
+are GitHub configuration files; they do not make DeployMC run. They are described in
+[community configuration](community.md). The label sync workflow is configured to run on `main`
+after this work is merged; its first run is not evidence in this status page.
 
 ## Designed but not implemented
 
@@ -78,6 +86,7 @@ The following are documented as intended behavior. They are **not** code.
 
 | Path | State |
 |---|---|
+| `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, six workflows |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
 | `core/` | Version and capability value objects; SPI interfaces and value types |
 | `transport/` | `HttpBindConfig` value object only; no server |
@@ -103,5 +112,6 @@ same change that fixes or breaks it.
 
 - [Roadmap](../../ROADMAP.md)
 - [CI and enforced checks](ci.md)
+- [Community configuration](community.md)
 - [Pending decisions](decisions-pending.md)
 - [Master development specification](DeployMC_Complete_Master_Development_Specification.md)

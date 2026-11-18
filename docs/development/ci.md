@@ -12,6 +12,7 @@ SHA, workflows use least-privilege `permissions`, and concurrent runs for the sa
 | `codeql.yml` | Push to `main`, pull requests, weekly schedule, manual | CodeQL analysis for Java/Kotlin, JavaScript/TypeScript, and Python |
 | `dependency-review.yml` | Pull request | Fails on newly introduced dependencies with high or critical advisories |
 | `scorecard.yml` | Weekly schedule, push to `main`, branch protection changes, manual | OpenSSF Scorecard, published to code scanning |
+| `labels.yml` | Push to `main` changing `.github/labels.tsv` or the workflow, manual | Creates/updates repository labels from the TSV using the `gh` CLI; never deletes |
 
 ## Repository settings
 
@@ -21,6 +22,8 @@ These are configured in GitHub, not in a workflow file:
 - Dependabot alerts and the dependency graph are enabled (`PUT /repos/{owner}/{repo}/vulnerability-alerts`).
   Dependency review fails closed when the graph is unavailable.
 - Secret scanning and push protection are enabled.
+- Dependabot update pull requests are configured for Gradle, npm in `web/` and `tools/spec/`, Cargo,
+  pip, and GitHub Actions. See [community configuration](community.md).
 - `main` requires linear history, forbids force-pushes and deletion, requires conversation resolution,
   and applies every rule to administrators.
 - Required status checks are enforced with `strict` (the branch must be up to date):

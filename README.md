@@ -110,6 +110,7 @@ Translation workflow and message-catalog rules are documented in
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Security policy](SECURITY.md) — **report vulnerabilities privately, never in a public issue**
 - [Support](SUPPORT.md) — where to ask, what to include, response targets
+- [Community configuration](docs/development/community.md) — issue forms, labels, Dependabot, settings
 - [Roadmap](ROADMAP.md) — phase order and milestone versions, not a schedule
 - [Governance](GOVERNANCE.md) — how decisions are made today
 - [Authors](AUTHORS.md) and [Changelog](CHANGELOG.md)

@@ -96,8 +96,8 @@ Default expectations for every phase:
 - Tokens are stored hashed, compared in constant time, and redacted from logs.
 - All file access goes through the sandbox resolver.
 
-The full threat model will live in `specification/security/threat-model.md` and a hardening checklist
-will accompany it. Neither exists yet; this policy will link to them when they do.
+The [threat model](specification/security/threat-model.md) exists as a draft. A separate hardening
+checklist does not exist yet; this policy will link to it when it does.
 
 ## Safe harbor
 
