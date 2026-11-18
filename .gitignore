@@ -1,6 +1,7 @@
 # Java / Gradle
 .gradle/
 build/
+!tools/build/
 out/
 bin/
 *.class
