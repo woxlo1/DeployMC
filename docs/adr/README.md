@@ -51,7 +51,7 @@ Numbering is never reused. File names use zero-padded four-digit numbers.
 |---|---|---|---|
 | [0001](ADR-0001-monorepo-structure.md) | Monorepo structure | Accepted | 2026-11-17 |
 | [0002](ADR-0002-java-8-bytecode-baseline.md) | Java 8 bytecode baseline with a modern toolchain | Accepted | 2026-11-17 |
-| [0003](ADR-0003-embedded-http-websocket-server.md) | Embedded HTTP/WebSocket server selection | Proposed | 2026-11-17 |
+| [0003](ADR-0003-embedded-http-websocket-server.md) | Embedded HTTP/WebSocket server selection | Accepted | 2026-11-17 |
 | [0004](ADR-0004-shading-and-relocation.md) | Shading and relocation strategy | Accepted | 2026-11-17 |
 | [0005](ADR-0005-authentication-and-cloudflare-jwt.md) | Authentication modes and Cloudflare JWT verification | Accepted | 2026-11-17 |
 | [0006](ADR-0006-sandbox-and-protected-paths.md) | Sandbox design and protected paths | Accepted | 2026-11-17 |

@@ -1,9 +1,10 @@
 # ADR-0003: Embedded HTTP/WebSocket server selection
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-17
-- **Deciders:** maintainers; owner for the final choice
-- **Related:** [Threading model](../architecture/threading-model.md), [API layering](../architecture/api-layering.md), [ADR-0004](ADR-0004-shading-and-relocation.md)
+- **Accepted:** 2026-11-18
+- **Deciders:** maintainers; owner approved the final choice on 2026-11-18
+- **Related:** [Threading model](../architecture/threading-model.md), [API layering](../architecture/api-layering.md), [ADR-0004](ADR-0004-shading-and-relocation.md), [transport spike](../research/transport-spike.md)
 
 ## Context
 
@@ -78,11 +79,16 @@ Which HTTP and WebSocket implementation should `transport` use?
 
 ## Decision
 
-**Proposed:** keep `transport` behind internal `HttpServer` and `WebSocketServer`
-interfaces and run a WP-1.3 spike before choosing an implementation. The spike must
-compare at least Option A (JDK HTTP server plus a WebSocket layer), Option B (Jetty
-9.4.x), and Option C (Netty 4.1.x). Option D may be added if the first three fail a
-criterion.
+Use **Netty 4.1.141.Final** for HTTP and WebSocket, behind internal transport interfaces.
+The owner approved this choice on 2026-11-18 after the WP-1.3 spike recorded in
+[transport spike research](../research/transport-spike.md).
+
+The spike compared Option A (JDK HTTP server plus a WebSocket layer), Option B (Jetty
+9.4.x), and Option C (Netty 4.1.x) against the criteria below. Netty is not the smallest
+closure, but it is the only measured baseline that combines an actively patched release line,
+the Java 8 baseline, clean relocation, and a single HTTP/WebSocket dependency set. Jetty 9.4 is
+officially EOL and unsupported. The JDK option leaves the WebSocket protocol implementation
+unresolved, and this ADR does not accept an unaudited in-house parser.
 
 Evaluation criteria, in priority order:
 
@@ -98,8 +104,9 @@ Evaluation criteria, in priority order:
 7. Testability and operability: deterministic tests, metrics/log hooks, graceful drain.
 8. License compatibility with Apache-2.0 and the Minecraft plugin ecosystem.
 
-The spike must publish measured results and a recommendation. Until then, no HTTP server
-dependency is added to the production build.
+Netty 4.1 is scheduled for EOL on 2027-07-01. Moving to Netty 4.2 requires a higher Java
+baseline and is a separate future decision. Until that migration is accepted, production
+updates must stay on the latest patched 4.1 release.
 
 ## Consequences
 
@@ -111,28 +118,28 @@ dependency is added to the production build.
 
 ### Negative and costs
 
-- Transport work is blocked behind the spike; only the interfaces and value objects can
-  proceed.
-- The spike itself costs time and must build small prototypes, including a WebSocket
-  echo test and a slow-client test.
-- Whichever option wins will have relocation and lifecycle work.
+- Netty adds a 3.3 MB uncompressed dependency closure before relocation.
+- Netty 4.1 reaches upstream EOL on 2027-07-01 and will need a planned migration.
+- Relocation, named threads, graceful shutdown, and an unused service-file exclusion must be
+  implemented and tested rather than assumed.
 
 ### Follow-up
 
-- Define `HttpServer`/`WebSocketServer` interfaces and request/response abstractions.
-- Build the spike under `tests/` or a throwaway branch, not in the production dependency
-  graph.
-- Record the winner in a new ADR that supersedes this one, or change this ADR's status to
-  Accepted with the measured evidence.
-- Re-check the chosen library's supported Java line before every major release.
+- Keep the internal transport interfaces independent of Netty types.
+- Verify the final shaded artifact for unrelocated Netty classes and duplicate entries.
+- Validate classloader isolation on a real Paper server with a conflicting plugin in the
+  compatibility harness work tracked by issue forty-eight.
+- Re-check the chosen library's supported Java line before every major release and before the
+  2027-07-01 EOL date.
 
 ## Evidence and validation
 
-- **Not verified:** no spike has been run, no benchmark exists, and no HTTP/WebSocket
-  library is in the production build. The current `transport` module contains only
-  `HttpBindConfig`.
-- This ADR is intentionally `Proposed`. It must not be cited as a decision that a
-  particular server was selected or tested.
+- The standalone spike, dependency sizes, relocation output, and three WebSocket echo runs are
+  recorded in [transport spike research](../research/transport-spike.md).
+- No Minecraft server was started. Real Paper loading and conflicting-library classloader
+  behavior remain unverified and are not a support claim.
+- This ADR is `Accepted` for the Netty 4.1.141.Final choice only. The production implementation
+  and its integration tests are recorded separately in the implementation status page.
 
 ## References
 

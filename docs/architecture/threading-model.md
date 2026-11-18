@@ -31,9 +31,9 @@ The threading model therefore has four rules:
 | Scheduler | Delayed tasks, countdowns, timeouts | Platform scheduler or a tracked DeployMC executor | Yes: cancellation and shutdown |
 | Event/webhook dispatcher | Fan-out to WebSocket clients and HTTP webhooks | DeployMC | Yes: per-target queues and drop policy |
 
-The chosen HTTP/WebSocket library will add its own threads. Their count, naming, and
-shutdown behavior are evaluation criteria for
-[ADR-0003](../adr/ADR-0003-embedded-http-websocket-server.md).
+The chosen HTTP/WebSocket library adds its own threads. [ADR-0003](../adr/ADR-0003-embedded-http-websocket-server.md)
+selects Netty 4.1; the transport implementation configures named event-loop threads and joins
+them during shutdown.
 
 ## Naming and tracking
 
@@ -177,8 +177,8 @@ handle alive after disable.
 
 ## Open questions
 
-- The exact HTTP server and its threading behavior are pending
-  [ADR-0003](../adr/ADR-0003-embedded-http-websocket-server.md).
+- ADR-0003 selected Netty 4.1. Its exact production thread counts and shutdown timing are
+  verified by the WP-1.3 lifecycle tests, not assumed from the spike.
 - Whether deployment coordination uses one thread or a small pool per data directory is
   an implementation detail, but the one-active-transaction invariant is fixed.
 - Virtual threads on Java 21 are not used on the Java 8 shared path. Any future use must

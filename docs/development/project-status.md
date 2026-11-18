@@ -101,5 +101,8 @@ Run at every milestone and record results here (master specification Part 39.3):
 | Translation catalogs | `node tools/i18n/check` reported 0 errors and 0 warnings. |
 | ADR statuses | 14 ADRs reviewed: ADR-0003 and the editor part of ADR-0011 are Proposed, the rest Accepted; no contradiction with Phase 0 state found. Re-audit when code exists. |
 
+The Phase 0 row records the state at that audit. In WP-1.3 the owner accepted ADR-0003 for
+Netty 4.1.141.Final after the measured spike; the editor choice in ADR-0011 remains Proposed.
+
 Re-run the local toolchain checks with `node tools/build/verify-all.cjs`; CI remains the merge
 authority. See [CI documentation](ci.md).
