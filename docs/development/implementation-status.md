@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1/WP-1.2/WP-1.3).
+Last updated: 2026-11-18 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1/WP-1.2/WP-1.3/WP-1.4).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -10,12 +10,14 @@ is the normative design.
 ## Summary
 
 DeployMC is **pre-alpha**. The repository contains documentation, specifications, architecture
-records, buildable skeletons for each language, a source-complete Bukkit-family adapter, and an
-embedded Netty HTTP/WebSocket transport with server-free integration tests.
+records, buildable skeletons for each language, a source-complete Bukkit-family adapter, an
+embedded Netty HTTP/WebSocket transport with server-free integration tests, and a classpath-only
+static asset handler for the built Web UI.
 **No DeployMC feature has been observed running inside a Minecraft server.** The adapter has only
 server-free tests, and the transport has no authenticated routes or application handlers beyond
 the internal injection points. There is no sandbox, snapshot store, deployment engine,
-authentication, authorization, audit log, or Web UI screen.
+authentication, authorization, audit log, or Web UI screen; the packaged Web UI has not been
+rendered in a browser.
 
 ## Verified working today
 
@@ -25,13 +27,13 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | `SemanticVersion`, `PlatformCapabilities`, capability catalog, and fake SPI contract tests | Gradle `test` tasks |
+| Java unit tests | 93 tests across all modules, including fake SPI, Bukkit, standalone, transport, and static asset cases | Gradle `test` tasks; JUnit XML: 93 tests, 0 failures, 0 errors |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml`, `JavaPlugin` entry point, SPI bridge, version detection, startup banner, capability map, and task cleanup | `.\gradlew.bat :platform:bukkit:build`; 28 Bukkit tests, 0 failures. No server loaded |
-| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalog, and relocated Netty; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
-| Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, and bounded WebSocket queues | `NettyTransportServerTest`: 9 tests, 0 failures |
-| Web skeleton | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest | `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build` |
+| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalog, relocated Netty, and `deploymc-web/` assets with precompressed variants; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
+| Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, and static asset delivery | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; 0 failures |
+| Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
@@ -41,14 +43,15 @@ These were actually run, not just written. Commands are the ones documented in
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, and measured transport spike with source links and access dates | `docs/research/*.md` |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
-`feature/wp-1.3-transport`, which reported `PASS` for `java`, `web`, `cli`, `python`, `spec`,
-and `i18n`, including the new transport tests. After PR #135 was squash-merged at `dbb32ae`, the
-post-merge `main` CI run [44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147)
-passed every job, CodeQL
+`feature/wp-1.4-static-assets`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
+and `i18n`. Web now runs before Java in that script and in the CI Java job because the plugin build
+packages `web/dist` into the JAR. The WP-1.3 post-merge `main` CI run
+[44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147) passed every job, CodeQL
 [44281228983](https://github.com/woxlo1/DeployMC/actions/runs/44281228983) passed all three
 languages, and Scorecard [44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021)
-passed. These runs cover build and unit checks, not a real server. The one-command tool is
-documented in [`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
+passed. Those runs predate WP-1.4; the WP-1.4 pull request checks are recorded in project status.
+These runs cover build and unit checks, not a real server. The one-command tool is documented in
+[`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
 
 ## Repository configuration, not a product feature
 
@@ -88,6 +91,21 @@ started, no application routes are registered, and the real Paper conflicting-li
 check remains in the compatibility harness work; the exact deferred steps were recorded on
 [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). No support tier
 is claimed.
+
+WP-1.4 adds `StaticAssetHandler` in `transport/`. It resolves classpath names only below the fixed
+`deploymc-web/` root, decodes paths once, rejects raw and encoded separators, dot segments, NUL,
+malformed percent escapes, and double-encoded traversals, and returns 404 without SPA fallback for
+missing extensioned assets. Unknown extensionless routes fall back to `index.html`; paths under
+`/api` are delegated to an application handler or return 404 and are never served as the SPA. HTML
+receives a worker-capable CSP, hashed assets receive one-year immutable caching, other assets receive
+a one-hour cache, and `.br`/`.gz` variants generated by the Web build are selected by
+`Accept-Encoding`. Netty security headers now preserve handler-supplied `Content-Security-Policy`
+and `Cache-Control` values while still defaulting to restrictive values for JSON responses.
+`.\gradlew.bat build verifyJava8 --console=plain` passed on 2026-11-18 through the ASCII junction;
+the JUnit XML reports 93 tests, 0 failures, and 0 errors. `node tools/build/verify-all.cjs` reported
+`PASS` for all six toolchains. JAR entry inspection listed `deploymc-web/index.html`, hashed JS/CSS,
+source map, and gzip/Brotli variants. No browser rendering, real server load, or authenticated
+route was exercised; no support tier is claimed. No new user-facing strings were introduced.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
@@ -142,12 +160,12 @@ The following are documented as intended behavior. They are **not** code.
 | `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, six workflows |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
 | `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types; fake adapter in test sources |
-| `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, and Netty HTTP/WebSocket server with 9 integration tests |
+| `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, and classpath-only static asset handler with 12 tests |
 | `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, and server-free tests |
 | `platform/standalone/` | Build placeholder with configuration value object |
-| `plugin/` | Shadow aggregator; produced JAR contains descriptor, adapter classes, message catalog, and relocated Netty |
+| `plugin/` | Shadow aggregator; produced JAR contains descriptor, adapter classes, message catalog, relocated Netty, and `deploymc-web/` assets |
 | `docs/research/` | Naming, competitive, license, Bukkit descriptor, and transport spike research; no hands-on server tests |
-| `web/` | Buildable React skeleton; no product screens |
+| `web/` | Buildable React skeleton with gzip/Brotli precompression; no product screens |
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |
 | `sdk/typescript/`, `sdk/java/` | Not created |

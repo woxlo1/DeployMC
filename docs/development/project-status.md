@@ -1,6 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-18 (Phase 1, WP-1.3 merged; WP-1.4 next). Verified against `main` at `dbb32ae`.
+Last updated: 2026-11-18 (Phase 1, WP-1.4 implemented locally; PR pending). Verified against `main`
+at `8d00fa9`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -14,21 +15,20 @@ This is the session-level status page. For per-component facts use
 - Active milestone: `0.2.0` (Phase 1). WP-1.3 (issue #43), the HTTP/WebSocket transport decision
   and implementation, was merged in PR #135 at `dbb32ae`; the issue closed automatically. WP-1.1
   was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134 with issue #42 closed.
-  The next work package is WP-1.4 (issue #44), static asset serving from the JAR.
+  The post-WP-1.3 documentation PR #136 merged at `8d00fa9`. WP-1.4 (issue #44), static asset
+  serving from the JAR, is implemented on `feature/wp-1.4-static-assets`; its pull request is
+  pending, so no merge or pull-request CI result is claimed here.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-18 after PR #135 was merged:
+Verified GitHub state on 2026-11-18 before the WP-1.4 pull request was opened:
 
 ```text
 git log -1 --oneline
-dbb32ae feat(transport): add embedded Netty HTTP WebSocket server (#135)
+8d00fa9 docs(docs): refresh post-WP-1.3 project status (#136)
 
-gh pr view 135 --json state,mergeCommit
-state=MERGED mergeCommit=dbb32ae462be3755cc5e69adebcd60743aada40d
-
-gh issue view 43 --json state
-state=CLOSED
+gh pr view 136 --json state,mergeCommit
+state=MERGED mergeCommit=8d00fa9
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
@@ -37,10 +37,31 @@ gh issue list --state open --limit 1000
 open issues: 87
 ```
 
-Post-merge `main` workflows all passed: CI
+Post-merge `main` workflows for WP-1.3 passed: CI
 [44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147), CodeQL
 [44281228983](https://github.com/woxlo1/DeployMC/actions/runs/44281228983), and Scorecard
-[44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021).
+[44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021). PR #136 also passed all
+required checks before merge, including CI run
+[44282091787](https://github.com/woxlo1/DeployMC/actions/runs/44282091787) and CodeQL run
+[44282091768](https://github.com/woxlo1/DeployMC/actions/runs/44282091768).
+
+## WP-1.4 local verification
+
+These commands were run on 2026-11-18 before opening the pull request:
+
+```text
+pnpm lint                         # pass
+pnpm format:check                 # pass
+pnpm test                         # 14 passed, 0 failed
+pnpm build                        # pass; 2 gzip and 2 Brotli assets generated
+gradlew build verifyJava8         # pass; JUnit XML 93 tests, 0 failures, 0 errors
+node tools/build/verify-all.cjs   # PASS web, java, cli, python, spec, i18n
+jar tf plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar
+  -> deploymc-web/index.html, hashed JS/CSS, source map, and .gz/.br variants
+```
+
+The Java build now requires `web/dist`; CI and `verify-all.cjs` build Web first. Browser rendering,
+real-server load, and product routes remain unverified.
 
 ## Known limitations
 
@@ -61,9 +82,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43 (all done) -> category 2 (#44-#114, #44 starting)
--> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start the next item
-only when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43 (all done) -> category 2 (#44-#114, #44 implemented
+locally with its PR pending) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5
+(#124-#130). Start the next item only when earlier items are complete or the owner explicitly
+approves.
 
 ## Release checklist
 

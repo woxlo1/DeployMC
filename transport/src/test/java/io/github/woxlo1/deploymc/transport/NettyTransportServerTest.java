@@ -87,6 +87,54 @@ class NettyTransportServerTest {
   }
 
   @Test
+  void servesStaticAssetsWithWorkerCspThroughTransport() throws Exception {
+    NettyTransportServer server = newStaticServer();
+    try {
+      server.start();
+      String response =
+          rawRequest(
+              server.port(), "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
+      assertTrue(response.startsWith("HTTP/1.1 200"), response);
+      assertTrue(response.contains("WEB_INDEX"), response);
+      assertTrue(response.contains("text/html; charset=utf-8"), response);
+      assertTrue(response.contains("content-security-policy:"), response);
+      assertTrue(response.contains("worker-src 'self' blob:"), response);
+      assertTrue(response.contains("X-Content-Type-Options: nosniff"), response);
+      assertTrue(response.contains("cache-control: no-store"), response);
+
+      String asset =
+          rawRequest(
+              server.port(),
+              "GET /assets/index-abcdef12.js HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
+      assertTrue(asset.startsWith("HTTP/1.1 200"), asset);
+      assertTrue(asset.contains("WEB_ASSET"), asset);
+      assertTrue(asset.contains("cache-control: public, max-age=31536000, immutable"), asset);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
+  void rejectsStaticAssetTraversalThroughTransport() throws Exception {
+    NettyTransportServer server = newStaticServer();
+    try {
+      server.start();
+      String[] paths = {"/../../plugin.yml", "/%2e%2e%2fplugin.yml", "/..%2f..%2fplugin.yml"};
+      for (String path : paths) {
+        String response =
+            rawRequest(
+                server.port(),
+                "GET " + path + " HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
+        assertTrue(response.startsWith("HTTP/1.1 404"), path + ": " + response);
+        assertFalse(response.contains("PLUGIN_YML_MARKER"), path + ": " + response);
+        assertFalse(response.contains("WEB_INDEX"), path + ": " + response);
+      }
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
   void rejectsOversizedBody() throws Exception {
     TransportConfig config =
         TransportConfig.builder(HttpBindConfig.of("127.0.0.1", 0, false))
@@ -271,6 +319,18 @@ class NettyTransportServerTest {
         return true;
       }
     };
+  }
+
+  private static NettyTransportServer newStaticServer() {
+    TransportConfig config =
+        TransportConfig.builder(HttpBindConfig.of("127.0.0.1", 0, false)).build();
+    return new Server(
+            config,
+            new StaticAssetHandler(),
+            echoListener(),
+            new DefaultTransportPolicy(config),
+            new NoopLogger())
+        .netty();
   }
 
   private static NettyTransportServer newServer(

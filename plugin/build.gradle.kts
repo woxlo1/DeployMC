@@ -4,6 +4,24 @@ plugins {
 
 description = "DeployMC plugin aggregator and shaded distribution."
 
+val webDistDir = rootProject.layout.projectDirectory.dir("web/dist")
+val webIndexFile = webDistDir.file("index.html").asFile
+val webResourcesDir = layout.buildDirectory.dir("generated/resources/web")
+
+val copyWebDist =
+    tasks.register<Sync>("copyWebDist") {
+      from(webDistDir)
+      into(webResourcesDir.map { it.dir("deploymc-web") })
+      inputs.file(webIndexFile).withPropertyName("webIndex")
+    }
+
+sourceSets {
+  main { resources.srcDir(webResourcesDir) }
+}
+
+tasks.named("processResources") { dependsOn(copyWebDist) }
+tasks.named("sourcesJar") { dependsOn(copyWebDist) }
+
 dependencies {
     implementation(project(":api"))
     implementation(project(":core"))

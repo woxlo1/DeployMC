@@ -49,10 +49,12 @@ To check every language toolchain at once, run `node tools/build/verify-all.cjs`
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
 individual commands below are for investigating one toolchain.
 
-Verified commands (2026-11-16, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain):
+Verified commands (2026-11-18, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain). The Java build
+packages `web/dist`, so build Web first or run `node tools/build/verify-all.cjs`, which orders Web
+before Java:
 
 ```powershell
-.\gradlew.bat build            # compiles all Java modules, runs 32 Java tests, runs Spotless check
+.\gradlew.bat build            # compiles all Java modules, runs 93 Java tests, runs Spotless check
 .\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
 .\gradlew.bat spotlessApply    # formats Java sources and repository text files
 ```
@@ -63,8 +65,8 @@ Verified Web commands (2026-11-16, Node.js 24.13.1, pnpm 9.15.4), run from `web/
 pnpm install --frozen-lockfile
 pnpm lint
 pnpm format:check
-pnpm test                      # 13 Vitest tests
-pnpm build                     # tsc --noEmit, then Vite production build
+pnpm test                      # 14 Vitest tests
+pnpm build                     # tsc --noEmit, Vite build, then gzip/Brotli precompression
 ```
 
 Verified CLI commands (2026-11-16, Rust 1.100.0 GNU toolchain), run from `cli/`:

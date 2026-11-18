@@ -16,8 +16,8 @@ It runs these toolchains in order and prints a `PASS`/`FAIL` line for each:
 
 | Key | What runs |
 |---|---|
-| `java` | `gradlew build verifyJava8` (all modules, JUnit, Java 8 bytecode check) |
-| `web` | `pnpm install --frozen-lockfile`, lint, format check, Vitest, production build |
+| `web` | `pnpm install --frozen-lockfile`, lint, format check, Vitest, production build and precompression |
+| `java` | `gradlew build verifyJava8` (all modules, JUnit, Java 8 bytecode check; packages `web/dist`) |
 | `cli` | `cargo fmt --check`, clippy, tests, build for the whole workspace |
 | `python` | Creates `.venv` if needed, installs the editable dev extra, ruff, mypy, pytest |
 | `spec` | `npm ci`, specification lint, checker tests |
@@ -33,7 +33,9 @@ node tools/build/verify-all.cjs --only=java,web
 node tools/build/verify-all.cjs --help
 ```
 
-Valid keys are `java`, `web`, `cli`, `python`, `spec`, and `i18n`.
+Valid keys are `java`, `web`, `cli`, `python`, `spec`, and `i18n`. Selection preserves the order
+above, so `--only=java,web` still builds Web first. `--only=java` assumes `web/dist` already exists;
+on a clean checkout, run the full command or `--only=web,java` once first.
 
 ## Requirements
 

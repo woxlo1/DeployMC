@@ -72,6 +72,18 @@ function buildSteps() {
 
   return [
     {
+      // The Java build packages web/dist into the plugin JAR, so Web must run first.
+      key: "web",
+      name: "Web (pnpm, ESLint, Prettier, Vitest, Vite)",
+      commands: [
+        { command: "pnpm install --frozen-lockfile", cwd: web },
+        { command: "pnpm lint", cwd: web },
+        { command: "pnpm format:check", cwd: web },
+        { command: "pnpm test", cwd: web },
+        { command: "pnpm build", cwd: web },
+      ],
+    },
+    {
       key: "java",
       name: "Java (Gradle, JUnit, Java 8 bytecode)",
       commands: [
@@ -81,17 +93,6 @@ function buildSteps() {
           command: `${isWindows ? ".\\gradlew.bat" : "./gradlew"} build verifyJava8 --console=plain --no-configuration-cache`,
           cwd: java,
         },
-      ],
-    },
-    {
-      key: "web",
-      name: "Web (pnpm, ESLint, Prettier, Vitest, Vite)",
-      commands: [
-        { command: "pnpm install --frozen-lockfile", cwd: web },
-        { command: "pnpm lint", cwd: web },
-        { command: "pnpm format:check", cwd: web },
-        { command: "pnpm test", cwd: web },
-        { command: "pnpm build", cwd: web },
       ],
     },
     {
