@@ -111,9 +111,13 @@ internal implementation details are relocated.
 
 - Shadow plugin `8.3.5` is configured in the version catalog and applied to `plugin/`;
   `shadowJar` merges service files and produces the `DeployMC` artifact.
-- **Not verified:** no third-party dependency is bundled yet, no relocation rule is
-  configured, and no shaded artifact has been loaded on a real server. The policy is
-  accepted; its implementation and isolation tests are pending.
+- WP-1.3 configured `relocate("io.netty", "io.github.woxlo1.deploymc.lib.netty")` and excluded the
+  unused `META-INF/services/reactor.blockhound.integration.BlockHoundIntegration` entry. The
+  resulting `DeployMC-0.1.0-SNAPSHOT.jar` was inspected on 2026-11-18: 2,164 relocated Netty
+  classes, 0 unrelocated `io/netty/**` classes, 0 duplicate entries, and no service files.
+- **Not verified:** the shaded artifact has not been loaded on a real Minecraft server, and the
+  automated duplicate-class and unrelocated-package CI check remains a follow-up. Those checks are
+  part of the compatibility harness work, not a support claim.
 - Java 8 compatibility of the build itself is verified by
   [ADR-0002](ADR-0002-java-8-bytecode-baseline.md).
 

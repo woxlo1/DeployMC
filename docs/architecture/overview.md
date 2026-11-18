@@ -1,10 +1,10 @@
 # Architecture Overview
 
-> **Status: design baseline (2026-11-17).** This document describes the intended
-> architecture and the boundaries that later implementation must respect. It is not a
-> description of working features. The Java modules currently contain value objects,
-> capability reporting, and SPI interfaces only; the sandbox, snapshot store, deployment
-> pipeline, authentication, transport server, and Web UI features do not exist yet.
+> **Status: design baseline (2026-11-17), implementation notes added 2026-11-18.** This document
+> describes the intended architecture and the boundaries that later implementation must respect.
+> The Java modules now contain value objects, capability reporting, SPI interfaces, a Bukkit
+> adapter, and an embedded Netty transport. The sandbox, snapshot store, deployment pipeline,
+> authentication, application routes, and Web UI features do not exist yet.
 
 ## Purpose
 
@@ -68,7 +68,7 @@ binds to loopback by default in every mode.
 
 | Component | Responsibility | Current state |
 |---|---|---|
-| `transport` | HTTP/WebSocket listeners, request parsing, limits, request IDs, upgrade handling | Only `HttpBindConfig` value object |
+| `transport` | HTTP/WebSocket listeners, request parsing, limits, request IDs, upgrade handling | Netty 4.1.141.Final server behind internal interfaces; no registered product routes |
 | `core` | Platform-independent domain and application services | `SemanticVersion`, capability reporting, SPI interfaces |
 | `api` | Small, stable Java API for other plugins; shared public value objects | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` |
 | `platform/*` | Adapters that translate SPI calls to one server platform | Version/config value objects only |
@@ -105,7 +105,7 @@ Dependencies point inward. The following rules are mandatory:
 |---|---|---|
 | `api` | JDK only | `core`, `transport`, platform adapters, server APIs |
 | `core` | `api`, JDK | Bukkit/Velocity/Bungee/Folia classes, `transport`, platform adapters |
-| `transport` | `core`, `api`, JDK, the chosen HTTP/WebSocket library | Platform adapters, server APIs |
+| `transport` | `core`, `api`, JDK, Netty 4.1.141.Final | Platform adapters, server APIs |
 | `platform/*` | `core` (SPI), `api`, its own server API | `transport`, other platform adapters |
 | `plugin` | All Java modules | Domain logic of its own |
 

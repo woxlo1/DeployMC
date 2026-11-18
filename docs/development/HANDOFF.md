@@ -22,12 +22,19 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`. Real Paper-latest load
   and clean-disable thread-dump verification were **not** performed; they are recorded on the
   compatibility harness issue.
+- WP-1.3 (issue #43) is implemented on `feature/wp-1.3-transport`: ADR-0003 accepted Netty
+  4.1.141.Final after the recorded spike, and `transport/` now has internal interfaces,
+  `NettyTransportServer`, config/policy/logging types, and 9 integration tests. The Shadow JAR
+  relocates Netty and excludes the unused BlockHound service file. Verified with
+  `.\gradlew.bat build verifyJava8 --console=plain` through the ASCII junction: 79 Java tests,
+  0 failures, Java 8 bytecode check passed. `node tools/build/verify-all.cjs` reported `PASS`
+  for all six toolchains. No Minecraft server was started and no product routes are registered.
 
 ## In flight
 
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 88. Milestones `0.1.0` through `0.10.0` exist.
-- WP-1.3 (issue #43) starts on `feature/wp-1.3-transport`; no code has been added yet.
+- WP-1.3 (issue #43) is ready to be pushed and opened as a pull request; do not merge before CI.
 
 ## Blocked
 
@@ -37,9 +44,10 @@ Last updated: 2026-11-18. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Run the ADR-0003 transport spike, record the measured decision, and implement the transport
-   behind an internal interface for WP-1.3.
-2. Open a PR for #43, wait for all required checks, and squash-merge only after CI is green.
+1. Push `feature/wp-1.3-transport`, open a PR for #43, wait for all required checks, and
+   squash-merge only after CI is green.
+2. Tell the compatibility harness issue that the real Paper conflicting-library check remains
+   open; the transport spike alone is not a support claim.
 3. Continue in owner order: #44-#49, then category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130).
 4. Update project status, implementation status, and this handoff at the end of each session.

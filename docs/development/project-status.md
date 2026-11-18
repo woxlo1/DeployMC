@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-18 (Phase 1, WP-1.3 starting). Verified against `main` at `34e94f5`.
+Last updated: 2026-11-18 (Phase 1, WP-1.3 implemented on a branch). Verified against `main` at `34e94f5`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -12,8 +12,9 @@ This is the session-level status page. For per-component facts use
 - Foundation milestone: `0.1.0` (Phase 0) is complete. WP-0.7 was verified as already delivered
   by PR #18, and WP-0.10 was completed by PR #132; both issues were closed on 2026-11-18.
 - Active milestone: `0.2.0` (Phase 1). Active work package: WP-1.3 (issue #43), HTTP/WebSocket
-  transport decision and implementation, starting on `feature/wp-1.3-transport`. WP-1.1 was
-  merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134 with issue #42 closed.
+  transport decision and implementation, completed on `feature/wp-1.3-transport` and awaiting a
+  pull request. WP-1.1 was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134
+  with issue #42 closed.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -49,9 +50,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42 (all done) -> category 2 (#43-#114, #43 starting) ->
-category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start the next item
-only when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42 (all done) -> category 2 (#43-#114, #43 implemented,
+awaiting PR) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start
+the next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
@@ -93,7 +94,7 @@ Run at every milestone and record results here (master specification Part 39.3):
 | Invariant | Result |
 |---|---|
 | Specification requirements | Phase 0 items delivered; later requirements are open gaps tracked in #41-#130. |
-| Endpoints vs OpenAPI | Not applicable: no server implementation exists. Re-audit at WP-1.3/WP-2.6. |
+| Endpoints vs OpenAPI | Phase 0 result: no server implementation. WP-1.3 added transport machinery but no registered endpoints; re-audit when routes are added at WP-2.6. |
 | Config keys vs schema | Not applicable: no config loader exists. Re-audit at WP-1.5. |
 | Permissions and error codes vs catalogs | Not applicable: no authorization code exists. Re-audit at WP-3.x. |
 | README vs implementation status | Aligned: both describe buildable skeletons and no product features. |
