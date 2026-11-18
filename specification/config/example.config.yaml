@@ -1,0 +1,172 @@
+# DeployMC configuration example
+#
+# Status: specification only (2026-11-17). No configuration loader reads this file
+# yet. The normative schema is config.schema.json next to this file; if the example
+# and the schema disagree, the schema wins.
+#
+# This example is a complete, schema-valid configuration for a small team that
+# exposes the API through Cloudflare Tunnel + Access. Placeholders are marked.
+# Values shown are the documented defaults unless a comment says otherwise.
+
+config-version: 1
+language: en
+
+bind:
+  # Loopback only. Cloudflare Tunnel connects locally; the port is never exposed
+  # directly to the internet.
+  address: 127.0.0.1
+  port: 8080
+  allow-non-loopback: false
+  # CIDRs whose X-Forwarded-For / CF-Connecting-IP headers are believed.
+  trusted-proxies: []
+
+auth:
+  mode: cloudflare
+  cloudflare:
+    # Replace with your Zero Trust team domain. The JWKS URL is derived from it.
+    team-domain: "myteam.cloudflareaccess.com"
+    # Replace with the Access application AUD tag (64 hex characters).
+    audience: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    clock-skew-seconds: 60
+    jwks-cache-max-age-seconds: 3600
+    jwks-max-stale-seconds: 86400
+    # Optional defense in depth. The header VALUE lives in the secret store, not here.
+    require-shared-secret-header: ""
+  token:
+    # Used in `token` mode and for tokens created in any mode.
+    default-ttl-days: 90
+    max-ttl-days: 365
+  local-onetime:
+    # Used in `local-onetime` mode: a token printed once to the server console.
+    ttl-minutes: 15
+    max-attempts: 5
+
+sandbox:
+  # Relative to the server's `plugins` directory.
+  root: "."
+  protected-paths:
+    - ".deploymc/**"
+    - "DeployMC/**"
+  deny-patterns: []
+  max-file-size-mb: 10
+  max-upload-size-mb: 64
+  max-list-entries: 5000
+  # Following symlinks weakens containment. Leave this false unless you understand
+  # the risk and have tested the target platform.
+  follow-symlinks: false
+
+snapshots:
+  directory: ".deploymc/history"
+  retention:
+    max-versions-per-file: 50
+    max-age-days: 90
+    max-total-size-mb: 2048
+
+deploy:
+  staging-directory: ".deploymc/staging"
+  restart:
+    # `shutdown-only` requires an external supervisor (systemd, Docker, Pterodactyl,
+    # Windows service) that starts the process again. `none` never claims a restart.
+    mode: shutdown-only
+    countdown-seconds: 30
+    save-before-restart: true
+    min-interval-minutes: 5
+  verification:
+    timeout-seconds: 180
+    require-plugin-enabled: true
+    fail-patterns: []
+    success-patterns: []
+  rollback:
+    automatic: true
+    max-attempts: 2
+  approval:
+    # With `required: true`, `approver-roles` must be non-empty. The requester can
+    # never approve their own deployment.
+    required: false
+    approver-roles: []
+  jar-policy:
+    require-descriptor: true
+    hash-allowlist-file: ""
+    hash-denylist-file: ""
+
+console:
+  enabled: true
+  buffer-lines: 5000
+  command-policy:
+    # Evaluation order: deny, then confirm, then allow.
+    allow:
+      - "*"
+    deny:
+      - "stop"
+      - "op *"
+      - "deop *"
+    confirm:
+      - "reload"
+      - "whitelist *"
+
+audit:
+  directory: ".deploymc/audit"
+  rotate-size-mb: 50
+  retention-days: 365
+
+limits:
+  rate-limit-per-minute: 300
+  max-websocket-connections: 50
+
+roles:
+  admin:
+    permissions:
+      - "*"
+  developer:
+    permissions:
+      - files.read
+      - files.write
+      - snapshots.read
+      - snapshots.restore
+      - deployments.create
+      - console.read
+    paths:
+      allow:
+        - "MyRpgPlugin/**"
+        - "MyRpgPlugin.jar"
+      deny:
+        - "**/secrets.yml"
+    limits:
+      max-upload-mb: 20
+  observer:
+    permissions:
+      - files.read
+      - console.read
+  ci-deployer:
+    permissions:
+      - deployments.create
+      - deployments.read
+      - snapshots.read
+    paths:
+      allow:
+        - "MyRpgPlugin/**"
+
+users:
+  # Keys are verified identities: email, service-token common name, or token owner.
+  "alice@example.com":
+    roles:
+      - admin
+  "bob@example.com":
+    roles:
+      - developer
+  "ci-service-token":
+    roles:
+      - ci-deployer
+
+# Unknown identities are denied. This must stay `none` unless every identity that
+# can reach the API is intentionally granted a role.
+default-role: none
+
+webhooks:
+  # Keep false unless a webhook target really lives in a private network. This
+  # setting exists to prevent SSRF.
+  allow-private-targets: false
+
+telemetry:
+  # Opt-in only. No identity, path, file name, or server address is collected.
+  enabled: false
