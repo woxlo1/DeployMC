@@ -1,0 +1,92 @@
+name: Bug report
+description: Report reproducible incorrect behavior in an existing DeployMC build
+title: "[Bug]: "
+labels: ["type:bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. DeployMC is **pre-alpha**: most user-facing features do not
+        exist yet. Please report only behavior you actually observed in a build you ran.
+        Do **not** include tokens, cookies, JWTs, Cloudflare credentials, real hostnames,
+        or personal data. See [SUPPORT.md](../../SUPPORT.md).
+
+        For a security vulnerability, use the private report link instead of this form.
+  - type: input
+    id: version
+    attributes:
+      label: DeployMC version or commit
+      description: "For example: main@3ddf583, 0.1.0, or the JAR you downloaded."
+      placeholder: "main@3ddf583"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Choose the closest area.
+      multiple: true
+      options:
+        - Core or Java API
+        - Sandbox and files
+        - Snapshots and history
+        - Deployment and rollback
+        - Authentication, RBAC, or audit
+        - Console
+        - Web UI
+        - CLI
+        - SDK
+        - CI or build
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Server and operating system
+      description: "Server software and version, Java vendor/version, and OS. Example: Paper 1.21.4, Temurin 21, Linux."
+      placeholder: "Paper 1.21.4, Temurin 21, Linux"
+    validations:
+      required: true
+  - type: input
+    id: installation
+    attributes:
+      label: Installation type
+      description: "Plugin on a server, standalone, container, or panel (for example Pterodactyl)."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: A short statement of the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened instead?
+      description: Exact error messages, with secrets and hostnames redacted.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, smallest case first.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic output
+      description: |
+        Paste `deploymc doctor` output only if your build provides that command. The command
+        is planned but **not implemented yet**; if it does not exist, write "not available".
+        Paste relevant server log lines after redacting secrets and hostnames.
+    validations:
+      required: false

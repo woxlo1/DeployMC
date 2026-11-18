@@ -1,0 +1,102 @@
+name: Compatibility report
+description: Record a real test result on a specific Minecraft server platform and version
+title: "[Compatibility]: "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        DeployMC is **pre-alpha**. The [support matrix](../../docs/compatibility/support-matrix.md)
+        is empty and no platform adapter is implemented, so no combination is claimed as supported
+        yet. This form records evidence from a build you actually ran. Do not post results from
+        documentation, assumptions, or a scanner.
+
+        Redact tokens, hostnames, and personal data before submitting. For security issues use the
+        private report link, not this form.
+  - type: input
+    id: deploymc-version
+    attributes:
+      label: DeployMC version or commit
+      description: "For example: main@3ddf583, or the artifact you built."
+      placeholder: "main@3ddf583"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Server platform
+      options:
+        - Paper
+        - Purpur
+        - Folia
+        - Spigot
+        - Velocity
+        - BungeeCord
+        - Standalone
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: platform-version
+    attributes:
+      label: Platform version
+      description: "Exact version, for example 1.21.4-R0.1-SNAPSHOT or 3.3.0."
+    validations:
+      required: true
+  - type: input
+    id: java
+    attributes:
+      label: Java vendor and version
+      placeholder: "Temurin 21.0.11"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - Windows
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      description: Select the closest result for the features you actually exercised.
+      options:
+        - Works as expected
+        - Works with limitations
+        - Fails to start or load
+        - Fails during an operation
+        - Not tested (environment information only)
+    validations:
+      required: true
+  - type: input
+    id: features
+    attributes:
+      label: Features exercised
+      description: "For example: plugin load, capability detection, file read, snapshot, deploy, rollback, console."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: |
+        Commands run, observed output, and relevant redacted log lines. State what was not tested
+        so the result is not read as broader than it is. `deploymc doctor` is planned but not
+        implemented; write "not available" unless your build provides it.
+    validations:
+      required: true
+  - type: checkboxes
+    id: honesty
+    attributes:
+      label: Scope checks
+      options:
+        - label: I ran this myself on the platform and version named above
+          required: true
+        - label: I understand this report is evidence, not a promise that the combination is supported
+          required: true
