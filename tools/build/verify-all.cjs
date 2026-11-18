@@ -28,9 +28,11 @@ function javaWorkingDirectory() {
       `${link} points to another checkout. Set DEPLOYMC_JAVA_ROOT to a different ASCII path.`,
     );
   }
-  const made = spawnSync("cmd", ["/c", "mklink", "/J", link, root], { encoding: "utf8" });
-  if (made.status !== 0) {
-    throw new Error(`could not create ${link}: ${(made.stderr || "").trim()}`);
+  // fs creates the junction directly; no shell command is built from the two paths.
+  try {
+    fs.symlinkSync(root, link, "junction");
+  } catch (error) {
+    throw new Error(`could not create ${link}: ${error.message}`);
   }
   return link;
 }
