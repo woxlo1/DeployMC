@@ -1,8 +1,9 @@
 # AGENTS.md - DeployMC
 
 Read this file before doing anything. For current state, read
-`docs/development/implementation-status.md`; for intended design, read
-`docs/architecture/overview.md` and the master specification.
+`docs/development/implementation-status.md`, `docs/development/project-status.md`, and
+`docs/development/HANDOFF.md`; for intended design, read `docs/architecture/overview.md` and the
+master specification.
 
 ## Mission
 
