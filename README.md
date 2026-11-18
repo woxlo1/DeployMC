@@ -21,7 +21,7 @@ English · [日本語](docs/i18n/README.ja.md)
 | Build skeletons for Java, Web, CLI, and the Python SDK | Buildable; no product features |
 | Architecture baseline and architecture decision records | Drafted (Phase 0) |
 | CI workflows and branch protection | Working on `main` |
-| Specifications (REST, WebSocket, configuration) | Not started (Phase 0) |
+| Specifications (REST, WebSocket, configuration, audit, deployment) | Skeletons drafted and linted (Phase 0) |
 | Plugin runtime, API, Web UI, CLI, SDKs | Not started (Phase 1+) |
 
 A more detailed, always current status is maintained in
@@ -60,6 +60,15 @@ the [platform SPI](docs/architecture/platform-spi.md),
 [API layering](docs/architecture/api-layering.md). Significant decisions are recorded as
 [architecture decision records](docs/adr/README.md), and the security posture is described in the
 [draft threat model](specification/security/threat-model.md).
+
+Normative specification skeletons live under [`specification/`](specification/): the
+[REST API](specification/api/openapi.yaml), [WebSocket API](specification/api/asyncapi.yaml),
+[error code catalog](specification/api/errors.md),
+[configuration schema](specification/config/config.schema.json),
+[audit log format](specification/audit/audit-log-format.md), and the
+[formal deployment state machine](specification/deployment/state-machine.md). These describe
+the intended contracts only; no server implements them yet. They are checked in CI by
+[`tools/spec/`](tools/spec/).
 
 The complete development specification lives in
 [`docs/development/DeployMC_Complete_Master_Development_Specification.md`](docs/development/DeployMC_Complete_Master_Development_Specification.md).
