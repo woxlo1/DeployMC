@@ -38,15 +38,17 @@ These were actually run, not just written. Commands are the ones documented in
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
 | One-command local verification | All six toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all six reported `PASS` |
 | CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
-| Research documents | Naming check, competitive analysis, and license comparison with source links and access dates | `docs/research/*.md` |
+| Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, and measured transport spike with source links and access dates | `docs/research/*.md` |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
 `feature/wp-1.3-transport`, which reported `PASS` for `java`, `web`, `cli`, `python`, `spec`,
-and `i18n`, including the new transport tests. The most recent verified full CI run on `main` remains
-[44251355610](https://github.com/woxlo1/DeployMC/actions/runs/44251355610) at `3ddf583`; the WP-1.3
-CI run is pending its pull request. These runs cover build and unit checks, not a real server. The
-one-command tool is documented in [`tools/build/README.md`](../../tools/build/README.md); CI remains
-the merge authority.
+and `i18n`, including the new transport tests. After PR #135 was squash-merged at `dbb32ae`, the
+post-merge `main` CI run [44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147)
+passed every job, CodeQL
+[44281228983](https://github.com/woxlo1/DeployMC/actions/runs/44281228983) passed all three
+languages, and Scorecard [44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021)
+passed. These runs cover build and unit checks, not a real server. The one-command tool is
+documented in [`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
 
 ## Repository configuration, not a product feature
 
@@ -83,7 +85,9 @@ connection close, port-in-use, Host/Origin rejection, WebSocket echo, queue boun
 `DeployMC-netty-*` threads. The Shadow JAR inspection reported 2,164 relocated Netty classes, 0
 unrelocated Netty classes, 0 duplicate entries, and no service files. No Minecraft server was
 started, no application routes are registered, and the real Paper conflicting-library classloader
-check remains in the compatibility harness work. No support tier is claimed.
+check remains in the compatibility harness work; the exact deferred steps were recorded on
+[issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). No support tier
+is claimed.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),

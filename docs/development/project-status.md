@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-18 (Phase 1, WP-1.3 implemented on a branch). Verified against `main` at `34e94f5`.
+Last updated: 2026-11-18 (Phase 1, WP-1.3 merged; WP-1.4 next). Verified against `main` at `dbb32ae`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -11,25 +11,36 @@ This is the session-level status page. For per-component facts use
 - Build version: `0.1.0-SNAPSHOT`.
 - Foundation milestone: `0.1.0` (Phase 0) is complete. WP-0.7 was verified as already delivered
   by PR #18, and WP-0.10 was completed by PR #132; both issues were closed on 2026-11-18.
-- Active milestone: `0.2.0` (Phase 1). Active work package: WP-1.3 (issue #43), HTTP/WebSocket
-  transport decision and implementation, completed on `feature/wp-1.3-transport` and awaiting a
-  pull request. WP-1.1 was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134
-  with issue #42 closed.
+- Active milestone: `0.2.0` (Phase 1). WP-1.3 (issue #43), the HTTP/WebSocket transport decision
+  and implementation, was merged in PR #135 at `dbb32ae`; the issue closed automatically. WP-1.1
+  was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134 with issue #42 closed.
+  The next work package is WP-1.4 (issue #44), static asset serving from the JAR.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-18:
+Verified GitHub state on 2026-11-18 after PR #135 was merged:
 
 ```text
 git log -1 --oneline
-34e94f5 feat(platform-bukkit): add minimal Bukkit-family adapter
+dbb32ae feat(transport): add embedded Netty HTTP WebSocket server (#135)
 
-gh pr list --state open --limit 100
+gh pr view 135 --json state,mergeCommit
+state=MERGED mergeCommit=dbb32ae462be3755cc5e69adebcd60743aada40d
+
+gh issue view 43 --json state
+state=CLOSED
+
+gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
-gh issue list --state open --limit 200
-open issues: 88
+gh issue list --state open --limit 1000
+open issues: 87
 ```
+
+Post-merge `main` workflows all passed: CI
+[44281229147](https://github.com/woxlo1/DeployMC/actions/runs/44281229147), CodeQL
+[44281228983](https://github.com/woxlo1/DeployMC/actions/runs/44281228983), and Scorecard
+[44281229021](https://github.com/woxlo1/DeployMC/actions/runs/44281229021).
 
 ## Known limitations
 
@@ -50,9 +61,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42 (all done) -> category 2 (#43-#114, #43 implemented,
-awaiting PR) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start
-the next item only when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43 (all done) -> category 2 (#44-#114, #44 starting)
+-> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start the next item
+only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
@@ -97,13 +108,13 @@ Run at every milestone and record results here (master specification Part 39.3):
 | Endpoints vs OpenAPI | Phase 0 result: no server implementation. WP-1.3 added transport machinery but no registered endpoints; re-audit when routes are added at WP-2.6. |
 | Config keys vs schema | Not applicable: no config loader exists. Re-audit at WP-1.5. |
 | Permissions and error codes vs catalogs | Not applicable: no authorization code exists. Re-audit at WP-3.x. |
-| README vs implementation status | Aligned: both describe buildable skeletons and no product features. |
+| README vs implementation status | Aligned: both describe buildable skeletons, the source-complete Bukkit adapter, and the embedded transport; neither claims product features. |
 | Support matrix vs CI | Aligned: matrix empty, no harness or support claim. |
 | Translation catalogs | `node tools/i18n/check` reported 0 errors and 0 warnings. |
-| ADR statuses | 14 ADRs reviewed: ADR-0003 and the editor part of ADR-0011 are Proposed, the rest Accepted; no contradiction with Phase 0 state found. Re-audit when code exists. |
+| ADR statuses | 14 ADRs reviewed: ADR-0003 is now Accepted for Netty 4.1.141.Final; the editor part of ADR-0011 remains Proposed. No contradiction with verified state found. |
 
-The Phase 0 row records the state at that audit. In WP-1.3 the owner accepted ADR-0003 for
-Netty 4.1.141.Final after the measured spike; the editor choice in ADR-0011 remains Proposed.
+The Phase 0 row records the state at that audit. WP-1.3 updated ADR-0003 after the measured spike;
+the editor choice in ADR-0011 remains Proposed.
 
 Re-run the local toolchain checks with `node tools/build/verify-all.cjs`; CI remains the merge
 authority. See [CI documentation](ci.md).
