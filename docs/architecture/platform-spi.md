@@ -1,10 +1,10 @@
 # Platform SPI
 
-> **Status: implemented contract with no real adapter (2026-11-18).** The interfaces below
+> **Status: implemented contract with one unvalidated adapter (2026-11-18).** The interfaces below
 > exist in `core/src/main/java/io/github/woxlo1/deploymc/core/spi/`. The capability keys have an
 > executable catalog in `core`, and an in-memory fake adapter exercises the SPI in core tests.
-> No real platform adapter implements them yet. A Bukkit-family adapter is the first target; its
-> behavior is not tested against a running server.
+> A minimal Bukkit-family adapter now implements the SPI in `platform/bukkit`, but it has only
+> server-free unit tests. It has not been loaded on a Minecraft server and has no support tier.
 
 ## Why a SPI exists
 
@@ -160,11 +160,32 @@ follow-up ADR:
 These gaps are deliberate: the SPI should grow only when a real adapter and a real test
 require it.
 
+## Bukkit-family implementation notes
+
+`platform/bukkit` is the first concrete adapter. It compiles against Spigot API 1.8.8 as a
+`compileOnly` dependency and imports no NMS or CraftBukkit classes. The generated `plugin.yml`
+declares `api-version: '1.13'`; the reasons and consequences are recorded in the
+[Bukkit descriptor baseline research](../research/bukkit-descriptor-baseline.md).
+
+`DeployMCPlugin` creates the data folder, constructs `BukkitPlatformAdapter`, renders the localized
+startup banner, and logs a catalog message if startup fails. `BukkitPlatformAdapter` translates
+the public Bukkit API into the SPI:
+
+- version detection reads `Server.getVersion()` and `Server.getBukkitVersion()`;
+- lifecycle operations are marshaled onto the scheduler;
+- every scheduled task is tracked and cancelled on disable;
+- `pluginsDirectory()` and `dataDirectory()` are derived from the plugin's managed data folder;
+- unsupported capabilities are reported truthfully rather than inferred from API presence.
+
+The minimal adapter does not capture console output, correlate command output, provide a restart
+supervisor, manage the update folder, or schedule region-located work. It does not declare Folia
+support. Its server-side messages are `.properties` catalog entries, not strings in Java code.
+
 ## Adapter status
 
 | Adapter | Target | Status |
 |---|---|---|
-| Bukkit family | Spigot, CraftBukkit, Paper, Paper forks | Not implemented; version detection value object only |
+| Bukkit family | Spigot, CraftBukkit, Paper, Paper forks | Source implemented and unit-tested without a server; Paper-latest load and clean-disable verification deferred to #48; no support tier |
 | Folia | Regionized Paper fork | Not started; requires region-aware scheduling |
 | Velocity | Proxy | Not started |
 | BungeeCord/Waterfall | Proxy | Not started |
@@ -186,6 +207,10 @@ Every adapter needs the same three layers of tests:
 3. **Real-server tests in the compatibility harness.** Start the actual server, load the
    built JAR, and exercise file read/write, snapshot, deploy, console, and shutdown.
 
+The current Bukkit module has descriptor, startup, capability, localization, version-detection,
+and task-cleanup tests. These exercise layer 1 only. They do not prove that a server loads the
+JAR, that lifecycle callbacks run in the expected order, or that no threads survive a disable.
+
 An adapter that cannot pass the real-server layer is reported as unsupported, not as
 "probably works".
 
@@ -195,3 +220,4 @@ An adapter that cannot pass the real-server layer is reported as unsupported, no
 - [ADR-0006: Sandbox design and protected paths](../adr/ADR-0006-sandbox-and-protected-paths.md)
 - [ADR-0008: Deployment state machine and rollback semantics](../adr/ADR-0008-deployment-state-machine.md)
 - [ADR-0014: Platform support tiers and compatibility harness](../adr/ADR-0014-platform-support-tiers.md)
+- [Bukkit descriptor and compile baseline research](../research/bukkit-descriptor-baseline.md)
