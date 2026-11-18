@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-17 (Phase 0, work package WP-0.4).
+Last updated: 2026-11-18 (Phase 0, work package WP-0.5).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -29,7 +29,8 @@ These were actually run, not just written. Commands are the ones documented in
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
-| CI | Five workflows (CI, lint, CodeQL, dependency review, Scorecard) | GitHub Actions runs on `main` |
+| Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
+| CI | Five workflows (CI, lint, CodeQL, dependency review, Scorecard), including the `Spec` job | GitHub Actions runs on `main` |
 
 The most recent verified full run before this update was CI run
 [44040380569](https://github.com/woxlo1/DeployMC/actions/runs/44040380569) on `main` at
@@ -47,6 +48,11 @@ The following are documented as intended behavior. They are **not** code.
 | Threading model | [Threading model](../architecture/threading-model.md) | Documents only |
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
 | Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
+| REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Skeleton; no server implements it |
+| WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Skeleton; no server implements it |
+| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml) | Schema and example; no loader implements them |
+| Audit log | [Audit log format](../../specification/audit/audit-log-format.md) | Format definition; no log is written |
+| Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
 | Support matrix | [Support matrix](../compatibility/support-matrix.md) | Empty; harness not built |
 | ADRs 0001-0014 | [ADR index](../adr/README.md) | Decision records |
 
@@ -60,7 +66,7 @@ The following are documented as intended behavior. They are **not** code.
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
 - Plugin configuration schema, validation, migration, and reload.
-- REST/OpenAPI and WebSocket/AsyncAPI specifications, error catalog, and contract tests.
+- Contract tests that check a running implementation against the API skeletons.
 - Web UI screens (file tree, editor, diff, deployment view, console, audit).
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
@@ -82,7 +88,8 @@ The following are documented as intended behavior. They are **not** code.
 | `sdk/python/` | Buildable package skeleton; no API client |
 | `sdk/typescript/`, `sdk/java/` | Not created |
 | `tools/i18n/` | Working checker and tests |
-| `specification/` | Threat model draft only |
+| `tools/spec/` | Working specification linter and checker tests |
+| `specification/` | REST, WebSocket, error, config, audit, and deployment skeletons; threat model draft |
 | `tests/` | Not created |
 
 ## How to verify this page
