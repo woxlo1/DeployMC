@@ -1,0 +1,73 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: npm
+    directory: "/web"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: npm
+    directory: "/tools/spec"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: cargo
+    directory: "/cli"
+    schedule:
+      interval: weekly
+      day: tuesday
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: pip
+    directory: "/sdk/python"
+    schedule:
+      interval: weekly
+      day: tuesday
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: wednesday
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    labels:
+      - "type:chore"
+    commit-message:
+      prefix: "chore(deps)"
