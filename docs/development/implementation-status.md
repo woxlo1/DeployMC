@@ -125,6 +125,8 @@ corrected in the same change that fixes or breaks it.
 ## Related documents
 
 - [Roadmap](../../ROADMAP.md)
+- [Project status](project-status.md)
+- [Handoff](HANDOFF.md)
 - [Research index](../research/README.md)
 - [CI and enforced checks](ci.md)
 - [Community configuration](community.md)
