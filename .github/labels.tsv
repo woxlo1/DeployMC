@@ -1,0 +1,56 @@
+# Source of truth for repository labels. Synced by .github/workflows/labels.yml.
+# Format: name<TAB>description<TAB>color (6 hex digits, without #).
+# Lines starting with # are ignored. The workflow creates or updates labels; it never deletes them.
+accessibility	Barrier affecting people with disabilities	f143ab
+bug	Something isn't working	d73a4a
+documentation	Improvements or additions to documentation	0075ca
+duplicate	This issue or pull request already exists	cfd3d7
+enhancement	New feature or request	a2eeef
+good first issue	Good for newcomers	7057ff
+help wanted	Extra attention is needed	008672
+invalid	This doesn't seem right	e4e669
+question	Further information is requested	d876e3
+wontfix	This will not be worked on	ffffff
+type:bug	Something is broken	d73a4a
+type:docs	Documentation	0075ca
+type:feature	New feature or request	0e8a16
+type:refactor	Code refactoring	5319e7
+type:test	Tests	1d76db
+type:chore	Maintenance	ededed
+type:security	Security-related work	b60205
+area:core	Core module	bfd4f2
+area:sandbox	Sandbox and file system	bfd4f2
+area:snapshot	Snapshots and history	bfd4f2
+area:deploy	Deployment pipeline	bfd4f2
+area:auth	Authentication	bfd4f2
+area:rbac	Authorization	bfd4f2
+area:api	Public API	bfd4f2
+area:audit	Audit log	bfd4f2
+area:console	Console and logs	bfd4f2
+area:cli	CLI	bfd4f2
+area:web	Web UI	bfd4f2
+area:action	GitHub Action	bfd4f2
+area:sdk	SDKs	bfd4f2
+area:docs	Documentation content	bfd4f2
+area:ci	CI/CD	bfd4f2
+area:i18n	Localization	bfd4f2
+platform:paper	Paper	c5def5
+platform:folia	Folia	c5def5
+platform:spigot	Spigot	c5def5
+platform:velocity	Velocity	c5def5
+platform:bungee	BungeeCord	c5def5
+platform:standalone	Standalone mode	c5def5
+tier:1	Tested on every PR/nightly	006b75
+tier:2	Tested on schedule	006b75
+tier:3	Best effort	006b75
+os:linux	Linux-specific	fbca04
+os:windows	Windows-specific	fbca04
+os:macos	macOS-specific	fbca04
+needs-triage	Needs maintainer triage	e4e669
+needs-info	Waiting for information	d876e3
+blocked	Blocked	000000
+breaking	Breaking change	b60205
+research	Research required	d4c5f9
+lang:ja	Japanese	fef2c0
+lang:zh-CN	Simplified Chinese	fef2c0
+lang:ko	Korean	fef2c0
