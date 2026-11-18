@@ -1,0 +1,10 @@
+extends:
+  - recommended
+rules:
+  # The skeleton defines shared components before every resource uses them. Remove
+  # this when the API surface is complete.
+  no-unused-components: off
+  # Informational while the API is a skeleton; every implemented operation must
+  # document these explicitly before the rule is enabled.
+  operation-4xx-response: off
+  info-license: off
