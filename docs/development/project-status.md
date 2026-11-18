@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-18 (Phase 0, WP-0.10). Verified against `main` at `2dc88a8`.
+Last updated: 2026-11-18 (Phase 1, WP-1.1 in review). Verified against `main` at `dcb74bc`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -9,24 +9,24 @@ This is the session-level status page. For per-component facts use
 ## Current version and milestone
 
 - Build version: `0.1.0-SNAPSHOT`.
-- Active milestone: `0.1.0` (Phase 0, project foundation).
-- Closed Phase 0 work packages: WP-0.1 through WP-0.9 (issues #1-#9). WP-0.7 was verified as
-  already delivered by PR #18 and its issue was closed on 2026-11-18.
-- Active work package: WP-0.10 (issue #10), this documentation set.
-- Later milestones: `0.2.0` through `0.10.0` exist with the 84 specification work packages and
-  category 3-5 work registered as issues #41-#130.
+- Foundation milestone: `0.1.0` (Phase 0) is complete. WP-0.7 was verified as already delivered
+  by PR #18, and WP-0.10 was completed by PR #132; both issues were closed on 2026-11-18.
+- Active milestone: `0.2.0` (Phase 1). Active work package: WP-1.1 (issue #41), Platform SPI and
+  capabilities, implemented on `feature/wp-1.1-platform-spi` and awaiting review.
+- Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
+  and category 3-5 work registered as issues #42-#130.
 
 Verified GitHub state on 2026-11-18:
 
 ```text
 git log -1 --oneline
-2dc88a8 docs(docs): add WP-0.2 research evidence (#131)
+dcb74bc docs(docs): add project tracking and handoff documents (#132)
 
 gh pr list --state open --limit 100
-open PRs: 17   (#23-#39, all Dependabot updates)
+open PRs: 17   (#23-#39, all Dependabot updates; WP-1.1 PR not opened yet at this check)
 
 gh issue list --state open --limit 200
-open issues: 91
+open issues: 89
 ```
 
 ## Known limitations
@@ -48,7 +48,7 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2 (done) -> #7 (done) -> #10 (this work) -> category 2 (#41-#114) ->
+Owner-directed order: #2, #7, #10 (all done) -> category 2 (#41-#114, #41 in review) ->
 category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start the next item
 only when earlier items are complete or the owner explicitly approves.
 

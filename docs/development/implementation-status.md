@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0, work packages WP-0.6 and WP-0.2).
+Last updated: 2026-11-18 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -22,9 +22,9 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | `SemanticVersion` parsing/comparison and `PlatformCapabilities` value semantics | Gradle `test` tasks |
-| Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, SPI value types | Compile and unit tests |
-| SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile; no adapter implementation |
+| Java unit tests | `SemanticVersion`, `PlatformCapabilities`, capability catalog, and fake SPI contract tests | Gradle `test` tasks |
+| Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
+| SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests; no adapter implementation |
 | Web skeleton | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest | `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
@@ -49,6 +49,11 @@ are GitHub configuration files; they do not make DeployMC run. They are describe
 [community configuration](community.md). The label sync workflow is configured to run on `main`
 after this work is merged; its first run is not evidence in this status page.
 
+WP-1.1 added the executable [capability catalog](../architecture/platform-spi.md#executable-capability-catalog)
+and a `FakePlatformAdapter` test double in `core/src/test/java`. The tests run with no server and
+verify capability keys, fallback metadata, and the SPI contract. No real adapter exists. The
+`.\gradlew.bat build verifyJava8` command above was run on 2026-11-18 and passed with the new tests.
+
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
 and [license comparison](../research/license-comparison.md). They record desk research with
@@ -62,7 +67,7 @@ The following are documented as intended behavior. They are **not** code.
 | Area | Where the design lives | What exists |
 |---|---|---|
 | Component boundaries | [Architecture overview](../architecture/overview.md) | Documents only |
-| Platform SPI contract | [Platform SPI](../architecture/platform-spi.md) | Interfaces; no adapter |
+| Platform SPI contract | [Platform SPI](../architecture/platform-spi.md) | Interfaces, capability catalog, fake tests; no real adapter |
 | Deployment state machine | [Deployment state machine](../architecture/deployment-state-machine.md), [ADR-0008](../adr/ADR-0008-deployment-state-machine.md) | Narrative only |
 | Threading model | [Threading model](../architecture/threading-model.md) | Documents only |
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
@@ -99,7 +104,7 @@ The following are documented as intended behavior. They are **not** code.
 |---|---|
 | `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, six workflows |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
-| `core/` | Version and capability value objects; SPI interfaces and value types |
+| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types; fake adapter in test sources |
 | `transport/` | `HttpBindConfig` value object only; no server |
 | `platform/bukkit/`, `platform/standalone/` | Build placeholders |
 | `plugin/` | Shadow aggregator; produces an empty scaffold JAR |

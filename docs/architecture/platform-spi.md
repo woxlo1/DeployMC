@@ -1,9 +1,10 @@
 # Platform SPI
 
-> **Status: design baseline (2026-11-17).** The interfaces below exist in
-> `core/src/main/java/io/github/woxlo1/deploymc/core/spi/` and are covered by unit tests
-> for their value objects. No real platform adapter implements them yet. A Bukkit-family
-> adapter is the first target; its behavior is not tested against a running server.
+> **Status: implemented contract with no real adapter (2026-11-18).** The interfaces below
+> exist in `core/src/main/java/io/github/woxlo1/deploymc/core/spi/`. The capability keys have an
+> executable catalog in `core`, and an in-memory fake adapter exercises the SPI in core tests.
+> No real platform adapter implements them yet. A Bukkit-family adapter is the first target; its
+> behavior is not tested against a running server.
 
 ## Why a SPI exists
 
@@ -81,6 +82,20 @@ fallback behavior; a no-op that looks like success is not acceptable.
 must not report `AVAILABLE` unless it has actually exercised the capability or can prove
 it from a stable API. Clients must treat `UNKNOWN` as unavailable for safety-sensitive
 operations.
+
+### Executable capability catalog
+
+`CapabilityCatalog` in `core` holds one `CapabilityDefinition` for each key above. A definition
+has a key, description, and mandatory fallback, so a capability cannot be added without saying
+what clients do when it is missing. `CapabilityKeys` holds the stable string constants; tests
+assert that the catalog contains exactly those keys and that the constants still match their wire
+values. The catalog is implemented in production code; clients do **not** need to read this
+document to discover a key.
+
+Tier evidence is deliberately not a field in the catalog. The empty
+[support matrix](../compatibility/support-matrix.md) is the only place where a capability may be
+recorded as present or absent on a named platform and version. No capability has tier evidence
+today, so no adapter may claim one.
 
 ## Threading contract
 
@@ -162,8 +177,10 @@ No adapter is listed in a support tier until the compatibility harness runs it. 
 
 Every adapter needs the same three layers of tests:
 
-1. **Unit tests with a fake platform.** Verify capability reporting, lifecycle cleanup,
-   and thread marshalling without a server.
+1. **Unit tests with a fake platform.** `FakePlatformAdapter` in `core/src/test/java` verifies
+   capability reporting, subscription cleanup, command recording, deterministic scheduling,
+   cancellation, and plugin snapshots without a server. It is a test double, not an adapter;
+   it does not prove that a platform honors thread expectations.
 2. **Contract tests against the SPI.** The same test suite runs against every adapter's
    fake to ensure consistent semantics.
 3. **Real-server tests in the compatibility harness.** Start the actual server, load the
