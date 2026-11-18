@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-18 (Phase 1, WP-1.1 in review). Verified against `main` at `dcb74bc`.
+Last updated: 2026-11-18 (Phase 1, WP-1.2 in PR #134). Verified against `main` at `ca2bd4b`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -11,8 +11,9 @@ This is the session-level status page. For per-component facts use
 - Build version: `0.1.0-SNAPSHOT`.
 - Foundation milestone: `0.1.0` (Phase 0) is complete. WP-0.7 was verified as already delivered
   by PR #18, and WP-0.10 was completed by PR #132; both issues were closed on 2026-11-18.
-- Active milestone: `0.2.0` (Phase 1). Active work package: WP-1.1 (issue #41), Platform SPI and
-  capabilities, implemented on `feature/wp-1.1-platform-spi` and awaiting review.
+- Active milestone: `0.2.0` (Phase 1). Active work package: WP-1.2 (issue #42), minimal
+  Bukkit-family adapter, open in PR #134 from `feature/wp-1.2-bukkit-adapter`. WP-1.1 was merged
+  in PR #133 with issue #41 closed.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -20,10 +21,10 @@ Verified GitHub state on 2026-11-18:
 
 ```text
 git log -1 --oneline
-dcb74bc docs(docs): add project tracking and handoff documents (#132)
+ca2bd4b feat(core): add capability catalog and fake SPI platform (#133)
 
 gh pr list --state open --limit 100
-open PRs: 17   (#23-#39, all Dependabot updates; WP-1.1 PR not opened yet at this check)
+open PRs: 18   (#23-#39 Dependabot updates and WP-1.2 PR #134)
 
 gh issue list --state open --limit 200
 open issues: 89
@@ -48,7 +49,7 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10 (all done) -> category 2 (#41-#114, #41 in review) ->
+Owner-directed order: #2, #7, #10, #41 (all done) -> category 2 (#42-#114, #42 in PR #134) ->
 category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start the next item
 only when earlier items are complete or the owner explicitly approves.
 

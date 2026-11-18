@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1).
+Last updated: 2026-11-18 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1/WP-1.2).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -10,8 +10,9 @@ is the normative design.
 ## Summary
 
 DeployMC is **pre-alpha**. The repository contains documentation, specifications, architecture
-records, and buildable skeletons for each language. **No DeployMC feature runs inside a
-Minecraft server.** There is no transport server, sandbox, snapshot store, deployment engine,
+records, buildable skeletons for each language, and a source-complete Bukkit-family adapter.
+**No DeployMC feature has been observed running inside a Minecraft server.** The adapter has only
+server-free tests. There is no transport server, sandbox, snapshot store, deployment engine,
 authentication, authorization, audit log, or Web UI screen.
 
 ## Verified working today
@@ -24,7 +25,9 @@ These were actually run, not just written. Commands are the ones documented in
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
 | Java unit tests | `SemanticVersion`, `PlatformCapabilities`, capability catalog, and fake SPI contract tests | Gradle `test` tasks |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
-| SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests; no adapter implementation |
+| SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
+| Bukkit adapter | Generated `plugin.yml`, `JavaPlugin` entry point, SPI bridge, version detection, startup banner, capability map, and task cleanup | `.\gradlew.bat :platform:bukkit:build`; 28 Bukkit tests, 0 failures. No server loaded |
+| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, and message catalog; no Spigot classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Web skeleton | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest | `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
@@ -35,11 +38,12 @@ These were actually run, not just written. Commands are the ones documented in
 | Research documents | Naming check, competitive analysis, and license comparison with source links and access dates | `docs/research/*.md` |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
-`build/verify-all`, which reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`.
-The most recent verified full CI run on `main` was
-[44251355610](https://github.com/woxlo1/DeployMC/actions/runs/44251355610) at `3ddf583`. Both cover
-the skeletons and checks, not product features. The one-command tool is documented in
-[`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
+`feature/wp-1.2-bukkit-adapter`, which reported `PASS` for `java`, `web`, `cli`, `python`, `spec`,
+and `i18n`, including the new Bukkit tests. The most recent verified full CI run on `main` remains
+[44251355610](https://github.com/woxlo1/DeployMC/actions/runs/44251355610) at `3ddf583`; the WP-1.2
+CI run is pending its pull request. These runs cover build and unit checks, not a real server. The
+one-command tool is documented in [`tools/build/README.md`](../../tools/build/README.md); CI remains
+the merge authority.
 
 ## Repository configuration, not a product feature
 
@@ -51,8 +55,18 @@ after this work is merged; its first run is not evidence in this status page.
 
 WP-1.1 added the executable [capability catalog](../architecture/platform-spi.md#executable-capability-catalog)
 and a `FakePlatformAdapter` test double in `core/src/test/java`. The tests run with no server and
-verify capability keys, fallback metadata, and the SPI contract. No real adapter exists. The
-`.\gradlew.bat build verifyJava8` command above was run on 2026-11-18 and passed with the new tests.
+verify capability keys, fallback metadata, and the SPI contract. WP-1.2 then added the first real
+adapter described below.
+
+WP-1.2 adds `platform/bukkit` with a generated descriptor, a `JavaPlugin` entry point, an SPI
+adapter using only public Bukkit 1.8.8 API, no-NMS version detection, a localized startup banner,
+explicit capability states, and tracked task cleanup. The generated Shadow JAR was inspected and
+contains `plugin.yml`, the entry point, and the message catalog, with no `org/bukkit/**` classes.
+`.\gradlew.bat build verifyJava8 --console=plain` passed on 2026-11-18; the JUnit XML reports 70
+tests, 0 failures, and 0 errors across all Java modules. The descriptor choice is documented in
+[Bukkit descriptor baseline research](../research/bukkit-descriptor-baseline.md). Loading on Paper
+latest and comparing thread dumps before and after a clean disable were not performed and remain
+in [issue #48](https://github.com/woxlo1/DeployMC/issues/48). No support tier is claimed.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
@@ -67,7 +81,7 @@ The following are documented as intended behavior. They are **not** code.
 | Area | Where the design lives | What exists |
 |---|---|---|
 | Component boundaries | [Architecture overview](../architecture/overview.md) | Documents only |
-| Platform SPI contract | [Platform SPI](../architecture/platform-spi.md) | Interfaces, capability catalog, fake tests; no real adapter |
+| Platform SPI contract | [Platform SPI](../architecture/platform-spi.md) | Interfaces, capability catalog, fake tests, and a Bukkit adapter with server-free tests; no real-server validation |
 | Deployment state machine | [Deployment state machine](../architecture/deployment-state-machine.md), [ADR-0008](../adr/ADR-0008-deployment-state-machine.md) | Narrative only |
 | Threading model | [Threading model](../architecture/threading-model.md) | Documents only |
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
@@ -95,8 +109,8 @@ The following are documented as intended behavior. They are **not** code.
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
 - Real-server compatibility harness and any Tier 1/2/3 entry.
-- Platform adapters for Bukkit family, Folia, Velocity, BungeeCord, or standalone.
-- Bundled and relocated third-party dependencies (Shadow is configured but nothing is bundled).
+- Platform adapters for Folia, Velocity, BungeeCord, or standalone. The Bukkit adapter source exists but is not server-validated.
+- Bundled and relocated third-party dependencies (Shadow is configured; no third-party server classes are bundled).
 
 ## Module inventory
 
@@ -106,9 +120,10 @@ The following are documented as intended behavior. They are **not** code.
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
 | `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types; fake adapter in test sources |
 | `transport/` | `HttpBindConfig` value object only; no server |
-| `platform/bukkit/`, `platform/standalone/` | Build placeholders |
-| `plugin/` | Shadow aggregator; produces an empty scaffold JAR |
-| `docs/research/` | Naming, competitive, and license research documents; no hands-on tests |
+| `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, and server-free tests |
+| `platform/standalone/` | Build placeholder with configuration value object |
+| `plugin/` | Shadow aggregator; produced JAR contains descriptor, adapter classes, and message catalog |
+| `docs/research/` | Naming, competitive, license, and Bukkit descriptor research; no hands-on server tests |
 | `web/` | Buildable React skeleton; no product screens |
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |
