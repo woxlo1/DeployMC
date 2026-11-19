@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.5 merged).
+Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.6 merged).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -12,14 +12,15 @@ is the normative design.
 DeployMC is **pre-alpha**. The repository contains documentation, specifications, architecture
 records, buildable skeletons for each language, a source-complete Bukkit-family adapter, an
 embedded Netty HTTP/WebSocket transport with server-free integration tests, a classpath-only
-static asset handler for the built Web UI, and a Java configuration loader with schema validation,
-migrations, safe reload, and fail-closed property tests.
+static asset handler for the built Web UI, a Java configuration loader with schema validation,
+migrations, safe reload, and fail-closed property tests, and a server-side plugin message i18n
+runtime.
 **No DeployMC feature has been observed running inside a Minecraft server.** The adapter has only
 server-free tests, and the transport has no authenticated routes or application handlers beyond
 the internal injection points. There is no sandbox, snapshot store, deployment engine,
 authentication, authorization, audit log, or Web UI screen; the packaged Web UI has not been
-rendered in a browser. The WP-1.5 command surface has only server-free tests; it has not been
-executed on a real Minecraft server.
+rendered in a browser. The WP-1.5 command surface and WP-1.6 message runtime have only server-free
+tests; neither has been executed on a real Minecraft server.
 
 ## Verified working today
 
@@ -29,10 +30,10 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 133 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, and command cases | Gradle `test` tasks; JUnit XML: 133 tests, 0 failures, 0 errors |
+| Java unit tests | 143 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, and i18n runtime cases | Gradle `test` tasks; JUnit XML: 143 tests, 0 failures, 0 errors |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
-| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, and tab completion | `.\gradlew.bat :platform:bukkit:test`; 42 Bukkit tests, 0 failures. No server loaded |
+| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, and per-sender i18n with legacy color output | `.\gradlew.bat :platform:bukkit:test`; 50 Bukkit tests, 0 failures. No server loaded |
 | Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, relocated Netty and SnakeYAML, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, and static asset delivery | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; 0 failures |
 | Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
@@ -45,6 +46,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
+| WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
 `feature/wp-1.4-static-assets`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
@@ -157,6 +159,29 @@ post-merge CodeQL attempt failed during autobuild because Gradle could not resol
 from `plugins.gradle.org`; a rerun of
 [44485350346](https://github.com/woxlo1/DeployMC/actions/runs/44485350346) passed all three language
 analyses. The pull-request CodeQL analysis had already passed for the same commit.
+
+WP-1.6 adds the Bukkit-family plugin message runtime documented in
+[plugin messages](../i18n/plugin-messages.md). `LocalizedMessages` reads `.properties` resources
+directly and resolves each key through the sender locale, configured server default, and English
+base catalog. It never consults the JVM default locale. A partial translation can override one key;
+absent keys fall through one at a time. Named `{placeholder}` values are inserted literally, and
+missing keys or placeholders return catalog diagnostics. `SenderLocaleResolver` feature-detects
+public `locale()` or `getLocale()` accessors returning `Locale` or a language tag; unavailable
+accessors fall back to the configured default. `LegacyColorFormatter` translates valid `&` codes
+only in the Bukkit send path and has no `ChatColor` or text-component dependency.
+
+`.\gradlew.bat spotlessApply :platform:bukkit:test build verifyJava8 --console=plain` and
+`node tools/i18n/check` were run on 2026-11-19 through the ASCII junction. The Bukkit task reported
+50 tests with 0 failures; all Java modules reported 143 tests, 0 failures, and 0 errors in the JUnit
+XML, and the Java 8 bytecode check passed. The i18n checker reported 0 errors and 0 warnings for the
+Web catalogs. No new user-facing strings were added; the Japanese catalog remains a machine-translated
+draft awaiting native review. No real server load, in-game command execution, browser rendering,
+conflicting-library classloader check, or text-component compatibility check was performed; no
+support tier is claimed. PR #144 merged at `d38217f` with all required checks passing after a Java
+CodeQL autobuild dependency-resolution failure and successful rerun. Post-merge `main` CI
+[44490811820](https://github.com/woxlo1/DeployMC/actions/runs/44490811820), CodeQL
+[44490811804](https://github.com/woxlo1/DeployMC/actions/runs/44490811804), and Scorecard
+[44490811934](https://github.com/woxlo1/DeployMC/actions/runs/44490811934) passed.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
