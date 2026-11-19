@@ -1,7 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4 merged; WP-1.5 loader stage in progress). Verified against
-`main` at `5dd95b9`.
+Last updated: 2026-11-19 (Phase 1, WP-1.4 merged; WP-1.5 loader stage merged). Verified against
+`main` at `5fc04a1`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -17,21 +17,21 @@ This is the session-level status page. For per-component facts use
   was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134 with issue #42 closed.
   The post-WP-1.3 documentation PR #136 merged at `8d00fa9`. WP-1.4 (issue #44), static asset
   serving from the JAR, was merged in PR #137 at `4548b4b`; the issue closed automatically. The
-  post-WP-1.4 documentation PR #138 merged at `5dd95b9`. WP-1.5 (issue #45) is in progress on
-  `feature/wp-1.5-config-system`; its first stage is the configuration loader, and the command
-  integration remains for a follow-up PR.
+  post-WP-1.4 documentation PR #138 merged at `5dd95b9`. The first WP-1.5 stage (issue #45) merged
+  in PR #139 at `5fc04a1`; issue #45 remains open until the Bukkit startup and `/deploymc` command
+  integration is also merged.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-18 after PR #138 was merged:
+Verified GitHub state on 2026-11-19 after PR #139 was merged:
 
 ```text
 git log -1 --oneline
-5dd95b9 docs(docs): record WP-1.4 merge evidence (#138)
+5fc04a1 feat(config): add validated configuration loader (#139)
 
-gh pr view 138 --json state,mergeCommit,url
-state=MERGED mergeCommit=5dd95b9
-url=https://github.com/woxlo1/DeployMC/pull/138
+gh pr view 139 --json state,mergeCommit,url
+state=MERGED mergeCommit=5fc04a173dea8bf3924ebd6207179532f87d6cbb
+url=https://github.com/woxlo1/DeployMC/pull/139
 
 gh issue view 45 --json state
 state=OPEN
@@ -43,16 +43,14 @@ gh issue list --state open --limit 1000
 open issues: 86
 ```
 
-All 17 required pull-request checks passed before PR #137, including CI run
-[44285175619](https://github.com/woxlo1/DeployMC/actions/runs/44285175619) and CodeQL run
-[44285175613](https://github.com/woxlo1/DeployMC/actions/runs/44285175613). Post-merge `main`
-workflows for WP-1.4 all passed: CI
-[44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524), CodeQL
-[44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587), and Scorecard
-[44285715509](https://github.com/woxlo1/DeployMC/actions/runs/44285715509). PR #138 also passed all
-17 required checks; its post-merge `main` CI run
-[44287663503](https://github.com/woxlo1/DeployMC/actions/runs/44287663503) exited 0. Earlier passing
-runs for WP-1.3 and PR #136 are recorded in the repository history.
+All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
+failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
+the branch was force-pushed with lease, and the rerun passed every required check. Post-merge `main`
+workflows for the loader stage all passed: CI
+[44481755600](https://github.com/woxlo1/DeployMC/actions/runs/44481755600), CodeQL
+[44481755589](https://github.com/woxlo1/DeployMC/actions/runs/44481755589), and Scorecard
+[44481755610](https://github.com/woxlo1/DeployMC/actions/runs/44481755610). Earlier passing runs for
+WP-1.4, WP-1.3, and their documentation PRs are recorded in the repository history.
 
 ## WP-1.4 verification
 
@@ -88,8 +86,9 @@ The deterministic property test generated 250 invalid mutations of the default c
 verified that every mutation failed validation and never became active. JAR inspection reported 254
 relocated and 0 unrelocated SnakeYAML classes, one packaged schema, and one default template. The
 configuration design and library evidence are in [configuration](../configuration.md) and
-[SnakeYAML selection research](../research/config-yaml-library.md). No pull request, CI run,
-command execution, or real-server load exists for this stage yet.
+[SnakeYAML selection research](../research/config-yaml-library.md). PR #139 passed all required
+checks and merged at `5fc04a1`; its post-merge workflows are listed above. No command execution or
+real-server load exists for this stage yet.
 
 ## Known limitations
 
@@ -112,9 +111,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41, #42, #43, #44 (all done) -> category 2 (#45-#114, #45 in
-progress) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Finish the
-WP-1.5 loader PR, then implement its Bukkit startup/command PR before starting #46. Start the next
-item only when earlier items are complete or the owner explicitly approves.
+progress) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Implement
+and merge the WP-1.5 Bukkit startup/command PR before starting #46. Start the next item only when
+earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
