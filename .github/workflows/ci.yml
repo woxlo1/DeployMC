@@ -50,6 +50,9 @@ jobs:
       - name: Build and test
         shell: bash
         run: ./gradlew build verifyJava8 --console=plain
+      - name: Report plugin JAR size
+        shell: bash
+        run: ./gradlew :plugin:reportPluginJarSize --console=plain
 
   web:
     name: Web
