@@ -1,7 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, and WP-1.6 merged). Verified against
-`main` at `d38217f` after PR #144; this evidence PR records that merge.
+Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, and WP-1.6 merged and closed).
+Verified against `main` at `e812be6` after PR #145; this closure-alignment PR records the closure.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -21,29 +21,29 @@ This is the session-level status page. For per-component facts use
   #139 at `5fc04a1` added the configuration loader and PR #141 at `f853136` added Bukkit startup
   wiring and `/deploymc`. Evidence PR #142 merged at `682e32d`; issue #45 was closed after its
   required checks and post-merge workflows passed. WP-1.6 (issue #46), the plugin message i18n
-  runtime, merged in PR #144 at `d38217f`; issue #46 remains open until this evidence PR merges and
-  the post-merge workflows are verified.
+  runtime, merged in PR #144 at `d38217f`. Evidence PR #145 merged at `e812be6`; issue #46 was closed
+  after its required checks and post-merge workflows passed.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-19 after PR #144 was merged:
+Verified GitHub state on 2026-11-19 after PR #145 was merged and issue #46 was closed:
 
 ```text
 git log -1 --oneline
-d38217f feat(platform-bukkit): add plugin message i18n runtime (#144)
+e812be6 docs(docs): record WP-1.6 merge evidence (#145)
 
-gh pr view 144 --json state,mergeCommit,url
-state=MERGED mergeCommit=d38217f13c1923e772c8c5a8ebaf3e025d0104a9
-url=https://github.com/woxlo1/DeployMC/pull/144
+gh pr view 145 --json state,mergeCommit,url
+state=MERGED mergeCommit=e812be6671203340057b443409a3d8912bd0ec5f
+url=https://github.com/woxlo1/DeployMC/pull/145
 
-gh issue view 46 --json state
-state=OPEN
+gh issue view 46 --json state,closedAt
+state=CLOSED closedAt=2026-11-19T09:02:01Z
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
-open issues: 85
+open issues: 84
 ```
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
@@ -76,8 +76,14 @@ analyses. The Java, Web, CLI, Python, Spec, i18n, commit-message, dependency-rev
 passed. Post-merge `main` CI
 [44490811820](https://github.com/woxlo1/DeployMC/actions/runs/44490811820), CodeQL
 [44490811804](https://github.com/woxlo1/DeployMC/actions/runs/44490811804), and Scorecard
-[44490811934](https://github.com/woxlo1/DeployMC/actions/runs/44490811934) passed. Earlier passing
-runs for WP-1.5, WP-1.4, WP-1.3, and their documentation PRs are recorded in the repository history.
+[44490811934](https://github.com/woxlo1/DeployMC/actions/runs/44490811934) passed.
+
+All required checks passed before evidence PR #145 was merged. Post-merge `main` CI
+[44492254923](https://github.com/woxlo1/DeployMC/actions/runs/44492254923), CodeQL
+[44492254967](https://github.com/woxlo1/DeployMC/actions/runs/44492254967), and Scorecard
+[44492254918](https://github.com/woxlo1/DeployMC/actions/runs/44492254918) all passed, and issue #46
+was closed with a comment recording that evidence. Earlier passing runs for WP-1.5, WP-1.4, WP-1.3,
+and their documentation PRs are recorded in the repository history.
 
 ## WP-1.4 verification
 
@@ -176,10 +182,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45 (all done), #46 implementation merged ->
-remaining category 2 (#47-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5
-(#124-#130). Close #46 after this evidence PR merges and its post-merge workflows pass, then start
-#47. Start the next item only when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46 (all done) -> category 2 (#47-#114)
+-> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start with #47. Start
+the next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
