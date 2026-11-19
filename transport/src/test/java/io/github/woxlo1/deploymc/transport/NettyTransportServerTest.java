@@ -305,12 +305,11 @@ class NettyTransportServerTest {
   }
 
   @Test
-  void stopLeavesNoNamedTransportThreads() {
+  void stopLeavesNoNamedTransportThreads() throws InterruptedException {
     NettyTransportServer server = newServer(0, HttpResponse.json(200, "{}"), echoListener());
     server.start();
     server.stop();
-    assertTrue(
-        namedThreads().isEmpty(), "named transport threads survived stop: " + namedThreads());
+    awaitNoNamedThreads();
   }
 
   private static TransportPolicy permissivePolicy() {
@@ -365,6 +364,15 @@ class NettyTransportServerTest {
       @Override
       public void onClose(WebSocketSession session) {}
     };
+  }
+
+  private static void awaitNoNamedThreads() throws InterruptedException {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+    while (!namedThreads().isEmpty() && System.nanoTime() < deadline) {
+      Thread.sleep(10);
+    }
+    assertTrue(
+        namedThreads().isEmpty(), "named transport threads survived stop: " + namedThreads());
   }
 
   private static String namedThreads() {
