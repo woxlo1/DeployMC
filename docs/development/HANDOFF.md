@@ -39,22 +39,23 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   `pnpm test` (14 tests), `node tools/build/verify-all.cjs` (all six toolchains `PASS`), and JAR entry
   inspection. All 17 pull-request checks and the post-merge `main` CI, CodeQL, and Scorecard runs
   passed. No browser, real server, or product route was tested.
-- WP-1.5 (issue #45) is in progress on `feature/wp-1.5-config-system`. The first stage adds a
-  hardened SnakeYAML 2.9 loader, schema validation with localized 1-based diagnostics, default
-  generation, timestamped migration backups, atomic writes, immutable `ConfigView`, safe reload,
-  and a 250-case deterministic fail-closed property test. SnakeYAML is relocated in the Shadow JAR.
-  Verified on 2026-11-18 through the ASCII junction with `gradlew spotlessApply :core:test` (53 core
-  tests), `gradlew build verifyJava8` (121 Java tests, 0 failures, Java 8 check passed), and JAR
-  inspection (254 relocated, 0 unrelocated SnakeYAML classes). No PR or CI run exists for this stage
-  yet. Bukkit startup wiring and `/deploymc` commands are deliberately deferred to a second PR.
+- WP-1.5 (issue #45) is in progress. Its first stage merged in PR #139 at `5fc04a1`: a hardened
+  SnakeYAML 2.9 loader, schema validation with localized 1-based diagnostics, default generation,
+  timestamped migration backups, atomic writes, immutable `ConfigView`, safe reload, and a 250-case
+  deterministic fail-closed property test. SnakeYAML is relocated in the Shadow JAR. Verified on
+  2026-11-18 through the ASCII junction with `gradlew spotlessApply :core:test` (53 core tests),
+  `gradlew build verifyJava8` (121 Java tests, 0 failures, Java 8 check passed), and JAR inspection
+  (254 relocated, 0 unrelocated SnakeYAML classes). All 16 required PR checks and the post-merge
+  `main` CI, CodeQL, and Scorecard runs passed. Bukkit startup wiring and `/deploymc` commands are
+  deliberately deferred to a second PR.
 - The real Paper conflicting-library classloader check for #48 was recorded on
   [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
   spike and JAR inspection are not a support claim.
 
 ## In flight
 
-- Uncommitted WP-1.5 loader stage on `feature/wp-1.5-config-system`, based on `main` at `5dd95b9`.
-  The first PR must be committed, pushed, reviewed, and CI-green before the command stage starts.
+- This documentation PR records the PR #139 merge evidence. The command-stage branch has not been
+  created yet.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 86. Milestones `0.1.0` through `0.10.0` exist.
 
@@ -66,13 +67,13 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Run `gradlew spotlessApply` and `git diff --check`, then commit and push the WP-1.5 loader stage
-   from `feature/wp-1.5-config-system` with `Refs #45`.
-2. Open the first WP-1.5 PR and wait for all required checks; do not close #45 yet.
-3. After that PR merges, implement the second stage: `/deploymc status|reload|doctor|token`,
-   permission nodes, localized command messages, and Bukkit startup/reload wiring.
-4. Verify, merge, and only then close #45. Continue in owner order with #46-#49, category 3
-   (#115-#120), category 4 (#121-#123), and category 5 (#124-#130).
+1. Merge this documentation PR after the required checks pass.
+2. Create the second WP-1.5 branch from the updated `main` and implement
+   `/deploymc status|reload|doctor|token`, permission nodes, localized command messages, and Bukkit
+   startup/reload wiring.
+3. Verify, open a PR, merge after required checks pass, and only then close #45.
+4. Continue in owner order with #46-#49, category 3 (#115-#120), category 4 (#121-#123), and
+   category 5 (#124-#130).
 5. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
@@ -81,6 +82,8 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   for Gradle and set `CARGO_TARGET_DIR` to an ASCII path for Cargo; see [environment](environment.md).
   The one-command `node tools/build/verify-all.cjs` handles both.
 - `gh milestone list` is not supported; query `gh api repos/woxlo1/DeployMC/milestones`.
+- Conventional Commit body and footer lines must be at most 120 characters; PR #139 needed an amend
+  because `Refs #45` was parsed as a footer on an over-long line.
 - `gh` commands with `--jq` need careful quoting in PowerShell; prefer `--json` plus
   `ConvertFrom-Json` when a filter fails.
 - Discussions stay enabled with default categories and zero threads. Do not create custom

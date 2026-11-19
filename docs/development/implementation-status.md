@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.5 loader stage).
+Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.5 loader stage merged).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -119,7 +119,7 @@ closed on any parse, version, migration, validation, or role-reference error. `C
 revalidates before swapping an immutable `ConfigView`, so an invalid file preserves the last known
 good configuration. English and Japanese diagnostic catalogs localize messages. The second stage,
 which will wire startup and `/deploymc status|reload|doctor|token` into Bukkit, is not implemented in
-this PR.
+PR #139. That PR merged at `5fc04a1` with all 16 required checks passing.
 
 `.\gradlew.bat spotlessApply :core:test --console=plain`, `.\gradlew.bat build verifyJava8
 --console=plain`, and JAR inspection were run on 2026-11-18 through the ASCII junction. The JUnit XML
@@ -128,7 +128,10 @@ bytecode check passed. The property test generated 250 deterministic invalid mut
 that all failed validation and never became active. JAR inspection reported 254 relocated and 0
 unrelocated SnakeYAML classes, one schema resource, and one default template. No plugin startup,
 command execution, real server load, or conflicting-library classloader test was performed; no
-support tier is claimed.
+support tier is claimed. Post-merge `main` workflows for PR #139 all passed: CI
+[44481755600](https://github.com/woxlo1/DeployMC/actions/runs/44481755600), CodeQL
+[44481755589](https://github.com/woxlo1/DeployMC/actions/runs/44481755589), and Scorecard
+[44481755610](https://github.com/woxlo1/DeployMC/actions/runs/44481755610).
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
