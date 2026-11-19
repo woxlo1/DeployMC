@@ -88,12 +88,31 @@ relocated and 0 unrelocated SnakeYAML classes, one packaged schema, and one defa
 configuration design and library evidence are in [configuration](../configuration.md) and
 [SnakeYAML selection research](../research/config-yaml-library.md). PR #139 passed all required
 checks and merged at `5fc04a1`; its post-merge workflows are listed above. No command execution or
-real-server load exists for this stage yet.
+real-server load exists for that stage.
+
+## WP-1.5 command-stage verification
+
+These commands were run on 2026-11-19 on `feature/wp-1.5-commands` before opening the second PR:
+
+```text
+gradlew spotlessApply :platform:bukkit:test --console=plain
+  # pass; 42 Bukkit tests, 0 failures
+gradlew spotlessApply build verifyJava8 --console=plain
+  # pass; 133 Java tests, 0 failures, 0 errors; Java 8 bytecode check passed
+node tools/i18n/check                 # 0 errors, 0 warnings
+```
+
+JAR inspection confirmed the generated `commands` and `permissions` blocks with five operator-only
+nodes. The command tests are server-free and cover permission checks, tab completion, status output,
+safe reload, limited doctor coverage, and console-only token behavior. No plugin startup, in-game
+command execution, browser rendering, or conflicting-library classloader check was performed. This
+stage is uncommitted on the feature branch at the time of this update; no PR or CI run exists yet.
 
 ## Known limitations
 
 - DeployMC is pre-alpha. No DeployMC feature runs inside a Minecraft server.
-- The WP-1.5 configuration loader has no Bukkit startup wiring or `/deploymc` command surface yet.
+- The WP-1.5 command surface has server-free tests only; it has not run on a real Minecraft server.
+- Token management is intentionally unimplemented until WP-1.9; `/deploymc token` creates no token.
 - The compatibility matrix is empty; no harness exists. See [compat status](compat-status.md).
 - Research is desk research with source links; no hands-on competitor test, benchmark, or legal
   review was performed. See [research](../research/README.md).
@@ -111,7 +130,7 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41, #42, #43, #44 (all done) -> category 2 (#45-#114, #45 in
-progress) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Implement
+progress) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Open, verify,
 and merge the WP-1.5 Bukkit startup/command PR before starting #46. Start the next item only when
 earlier items are complete or the owner explicitly approves.
 
@@ -165,6 +184,12 @@ Run at every milestone and record results here (master specification Part 39.3):
 
 The Phase 0 row records the state at that audit. WP-1.3 updated ADR-0003 after the measured spike;
 the editor choice in ADR-0011 remains Proposed.
+
+The 2026-11-19 WP-1.5 command implementation re-audits two rows: the configuration loader now exists
+and is schema-driven, so the earlier "no config loader" note is obsolete; the five Bukkit command
+permission nodes are declared in the generated descriptor and checked by tests, but no authorization
+code or endpoints exist yet. `node tools/i18n/check` still reports 0 errors and 0 warnings, and the
+Japanese Bukkit command catalog is a machine-translated draft.
 
 Re-run the local toolchain checks with `node tools/build/verify-all.cjs`; CI remains the merge
 authority. See [CI documentation](ci.md).

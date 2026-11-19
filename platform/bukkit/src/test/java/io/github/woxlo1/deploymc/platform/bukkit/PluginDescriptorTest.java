@@ -9,7 +9,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +48,32 @@ class PluginDescriptorTest {
     assertFalse(fields.containsKey("paper-plugin-loader"));
   }
 
+  @Test
+  void descriptorRegistersCommandBehindRootPermission() throws Exception {
+    String descriptor = readDescriptorText();
+
+    assertTrue(
+        descriptor.contains("commands:\n  deploymc:\n    permission: " + CommandPermissions.ROOT));
+  }
+
+  @Test
+  void descriptorDeclaresEveryCommandPermissionAsOperatorOnly() throws Exception {
+    String descriptor = readDescriptorText();
+    List<String> permissions =
+        Arrays.asList(
+            CommandPermissions.ROOT,
+            CommandPermissions.STATUS,
+            CommandPermissions.RELOAD,
+            CommandPermissions.DOCTOR,
+            CommandPermissions.TOKEN);
+
+    for (String permission : permissions) {
+      assertTrue(
+          descriptor.contains("  " + permission + ":\n    default: op"),
+          "missing operator-only permission " + permission);
+    }
+  }
+
   private static String unquote(String value) {
     assertNotNull(value);
     if (value.length() >= 2
@@ -76,5 +104,24 @@ class PluginDescriptorTest {
       }
     }
     return fields;
+  }
+
+  private static String readDescriptorText() throws Exception {
+    StringBuilder result = new StringBuilder();
+    try (InputStream stream =
+        PluginDescriptorTest.class.getClassLoader().getResourceAsStream("plugin.yml")) {
+      assertNotNull(stream, "generated plugin.yml is missing from the test classpath");
+      try (BufferedReader reader =
+          new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          if (result.length() > 0) {
+            result.append('\n');
+          }
+          result.append(line);
+        }
+      }
+    }
+    return result.toString();
   }
 }

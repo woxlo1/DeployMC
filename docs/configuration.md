@@ -1,7 +1,7 @@
 # Configuration
 
-Last updated: 2026-11-19. This page describes the loader implemented in `core` for WP-1.5. The
-`/deploymc` command integration is a separate follow-up and is not available yet.
+Last updated: 2026-11-19. This page describes the WP-1.5 configuration loader in `core` and its
+Bukkit startup and `/deploymc` command integration.
 
 ## Location and ownership
 
@@ -35,6 +35,40 @@ Startup performs these steps in order:
 There is no permissive fallback. A parse, version, migration, validation, or role-reference failure
 prevents activation of the configuration.
 
+On Bukkit-family servers, `DeployMCPlugin.onEnable()` loads the configuration before creating the
+platform adapter. The validated `bind` and `auth.mode` values feed the startup plan and banner; the
+previous hard-coded defaults are no longer used. If loading fails, startup is logged through the
+localized `lifecycle.startFailed` message and the plugin disables itself.
+
+## `/deploymc` commands
+
+The generated `plugin.yml` registers `/deploymc` behind `deploymc.command.use` and declares five
+operator-only permission nodes:
+
+| Permission | Command |
+|---|---|
+| `deploymc.command.use` | Base command access. |
+| `deploymc.command.status` | `status` |
+| `deploymc.command.reload` | `reload` |
+| `deploymc.command.doctor` | `doctor` |
+| `deploymc.command.token` | `token` |
+
+All permission identifiers, subcommand names, and configuration keys are stable identifiers and are
+never localized. The response text is localized from English and Japanese Bukkit resource bundles;
+the catalog selected for a command follows the active configuration's `language` value.
+
+- `status` reports the plugin version, config version, language, effective bind address and port,
+  authentication mode, warning count, and config file path. It never prints secrets or token values.
+- `reload` revalidates the file and reports changed and restart-required paths. A failed reload keeps
+  the last known-good configuration active and reports the localized error.
+- `doctor` reports only checks that are actually implemented: active validated configuration, loopback
+  bind, selected authentication mode, and catalog completeness. It always adds a warning that the
+  check coverage is limited and that the output is **not** a support-tier verdict.
+- `token` is console-only and deliberately reports that token management is not implemented in this
+  phase. It creates no token and writes no file. Token provisioning belongs to WP-1.9.
+
+Tab completion offers only subcommands for which the sender holds the matching permission.
+
 ## Safe reload
 
 `ConfigManager.reload()` re-reads and revalidates the file before swapping the active view. If the
@@ -59,13 +93,19 @@ is reported at `auth.mode` with the exact line and column of the offending value
 
 ## Verification
 
-Verified on 2026-11-18 with the Gradle ASCII junction:
+Verified on 2026-11-18 and 2026-11-19 with the Gradle ASCII junction:
 
 ```powershell
 .\gradlew.bat spotlessApply :core:test --console=plain
+.\gradlew.bat spotlessApply :platform:bukkit:test --console=plain
 .\gradlew.bat build verifyJava8 --console=plain
 ```
 
-All 53 core tests passed, the full multi-module build passed, and the Java 8 bytecode check passed.
-The property test generated 250 deterministic invalid mutations of the default configuration and
-verified that every one failed validation and never became active.
+All 53 core tests and all 42 Bukkit tests passed. The full multi-module build passed, and the Java 8
+bytecode check passed. The property test generated 250 deterministic invalid mutations of the default
+configuration and verified that every one failed validation and never became active. The command
+tests are server-free: they exercise permission checks, tab completion, status output, safe reload,
+limited doctor coverage, and console-only token behavior without loading a Minecraft server. No real
+server load, real command execution in-game, browser rendering, or conflicting-library classloader
+check was performed; no support tier is claimed. The Japanese command strings are a machine-translated
+draft awaiting native review.
