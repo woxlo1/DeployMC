@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test;
 class StartupPlanTest {
 
   @Test
-  void defaultsUseLoopbackAndCloudflareMode() {
+  void defaultsUseLoopbackAndTokenMode() {
     StartupPlan plan = StartupPlan.defaults("0.1.0-SNAPSHOT");
 
     assertEquals("127.0.0.1", plan.bind().address());
     assertEquals(8080, plan.bind().port());
     assertFalse(plan.bind().allowNonLoopback());
-    assertEquals("cloudflare", plan.authMode());
+    assertEquals("token", plan.authMode());
     assertEquals(
         Collections.singletonList(MessageKeys.WARNING_NO_RESTART_SCRIPT), plan.warningKeys());
   }
@@ -33,9 +33,14 @@ class StartupPlanTest {
 
   @Test
   void unsupportedAuthModeFailsClosed() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> StartupPlan.of("127.0.0.1", 8080, false, "none", "0.1.0-SNAPSHOT"));
+    for (String mode : Arrays.asList("none", "cloudflare", "local-onetime")) {
+      StartupConfigurationException failure =
+          assertThrows(
+              StartupConfigurationException.class,
+              () -> StartupPlan.of("127.0.0.1", 8080, false, mode, "0.1.0-SNAPSHOT"));
+      assertEquals(MessageKeys.STARTUP_AUTH_UNSUPPORTED, failure.messageKey());
+      assertEquals(mode, failure.values().get("mode"));
+    }
   }
 
   @Test

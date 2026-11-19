@@ -28,10 +28,10 @@ bind:
   trusted-proxies: []
 
 auth:
-  # cloudflare | token | local-onetime. Restart only. Unauthenticated access
-  # is never an option. local-onetime prints a short-lived token to the
-  # console and is the safest starting mode.
-  mode: local-onetime
+  # token is the only implemented mode. Restart only. Unauthenticated access
+  # is never an option. cloudflare and local-onetime are reserved for later
+  # work and currently refuse startup.
+  mode: token
 
   # To use Cloudflare Access, add this section and set both values. Secrets
   # belong in the secret store, never in this file.

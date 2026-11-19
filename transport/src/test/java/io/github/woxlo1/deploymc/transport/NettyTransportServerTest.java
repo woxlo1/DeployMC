@@ -5,6 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
+import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
+import io.github.woxlo1.deploymc.core.auth.Authenticator;
+import io.github.woxlo1.deploymc.core.auth.Identity;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -18,6 +22,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
@@ -41,6 +46,7 @@ import org.junit.jupiter.api.Test;
 class NettyTransportServerTest {
 
   private static final long TIMEOUT_SECONDS = 10;
+  private static final String TEST_TOKEN = "dmc_transport_test_token_0123456789";
 
   @Test
   void startsStopsAndRejectsDoubleStart() {
@@ -379,6 +385,28 @@ class NettyTransportServerTest {
   }
 
   private static String rawRequest(int port, String request, byte[] body) throws IOException {
+    return rawSocketRequest(port, authenticated(request), body);
+  }
+
+  private static String authenticated(String request) {
+    if (request.contains("Authorization:")) {
+      return request;
+    }
+    int end = request.indexOf("\r\n\r\n");
+    if (end < 0) {
+      return request;
+    }
+    return request.substring(0, end)
+        + "\r\nAuthorization: Bearer "
+        + TEST_TOKEN
+        + request.substring(end);
+  }
+
+  private static String rawRequestUnauthenticated(int port, String request) throws IOException {
+    return rawSocketRequest(port, request, new byte[0]);
+  }
+
+  private static String rawSocketRequest(int port, String request, byte[] body) throws IOException {
     try (Socket socket = new Socket("127.0.0.1", port)) {
       socket.setSoTimeout(5000);
       OutputStream output = socket.getOutputStream();
@@ -406,7 +434,12 @@ class NettyTransportServerTest {
     URI uri = URI.create("ws://127.0.0.1:" + port + "/api/v1/ws");
     WebSocketClientHandshaker handshaker =
         WebSocketClientHandshakerFactory.newHandshaker(
-            uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders(), 8192);
+            uri,
+            WebSocketVersion.V13,
+            null,
+            true,
+            new DefaultHttpHeaders().set(HttpHeaderNames.AUTHORIZATION, "Bearer " + TEST_TOKEN),
+            8192);
     Bootstrap client = new Bootstrap();
     client
         .group(group)
@@ -462,7 +495,12 @@ class NettyTransportServerTest {
     URI uri = URI.create("ws://127.0.0.1:" + port + "/api/v1/ws");
     WebSocketClientHandshaker handshaker =
         WebSocketClientHandshakerFactory.newHandshaker(
-            uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders(), 8192);
+            uri,
+            WebSocketVersion.V13,
+            null,
+            true,
+            new DefaultHttpHeaders().set(HttpHeaderNames.AUTHORIZATION, "Bearer " + TEST_TOKEN),
+            8192);
     Bootstrap client = new Bootstrap();
     client
         .group(group)
@@ -532,7 +570,20 @@ class NettyTransportServerTest {
     }
 
     private NettyTransportServer netty() {
-      return new NettyTransportServer(config, httpHandler, listener, policy, logger);
+      Authenticator authenticator =
+          header ->
+              ("Bearer " + TEST_TOKEN).equals(header)
+                  ? AuthenticationResult.authenticated(
+                      new Identity("test", "test", "token", true, null))
+                  : AuthenticationResult.failed(AuthenticationFailure.INVALID);
+      return new NettyTransportServer(
+          config,
+          httpHandler,
+          listener,
+          policy,
+          logger,
+          authenticator,
+          TransportMessages.of(Locale.ENGLISH));
     }
   }
 

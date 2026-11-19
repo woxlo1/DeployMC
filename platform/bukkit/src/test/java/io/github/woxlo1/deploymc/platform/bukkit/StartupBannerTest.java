@@ -26,7 +26,7 @@ class StartupBannerTest {
     assertTrue(lines.get(1).contains("Paper"));
     assertTrue(lines.get(2).contains("21.0.1"));
     assertEquals("Bind: 127.0.0.1:8080", lines.get(3));
-    assertEquals("Auth mode: cloudflare", lines.get(4));
+    assertEquals("Auth mode: token", lines.get(4));
     assertEquals(messages.format(MessageKeys.WARNING_NO_RESTART_SCRIPT), lines.get(5));
     for (String line : lines) {
       assertFalse(line.contains("{"), line);

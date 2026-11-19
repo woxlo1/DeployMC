@@ -55,7 +55,7 @@ class ConfigFailClosedPropertyTest {
             source -> source.replace("language: en", "language: EN"),
             source -> source.replace("address: 127.0.0.1", "address: 0.0.0.0"),
             source -> source.replace("port: 8080", "port: 70000"),
-            source -> source.replace("mode: local-onetime", "mode: nobody"),
+            source -> source.replace("mode: token", "mode: nobody"),
             source -> source.replace("trusted-proxies: []", "trusted-proxies: not-an-array"),
             source -> source.replace("- \".deploymc/**\"", "- \"/absolute/**\""),
             source -> source.replace("max-file-size-mb: 10", "max-file-size-mb: 0"),

@@ -12,6 +12,12 @@ public final class MessageKeys {
   public static final String WEBSOCKET_CLOSED = "transport.websocket.closed";
   public static final String WEBSOCKET_REJECTED = "transport.websocket.rejected";
   public static final String WEBSOCKET_QUEUE_FULL = "transport.websocket.queueFull";
+  public static final String AUTH_REQUIRED_TITLE = "problem.auth.required.title";
+  public static final String AUTH_REQUIRED_DETAIL = "problem.auth.required.detail";
+  public static final String AUTH_INVALID_TITLE = "problem.auth.invalid.title";
+  public static final String AUTH_INVALID_DETAIL = "problem.auth.invalid.detail";
+  public static final String AUTH_EXPIRED_TITLE = "problem.auth.expired.title";
+  public static final String AUTH_EXPIRED_DETAIL = "problem.auth.expired.detail";
 
   private MessageKeys() {}
 }

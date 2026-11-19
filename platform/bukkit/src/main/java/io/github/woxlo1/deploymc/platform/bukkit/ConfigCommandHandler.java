@@ -1,5 +1,7 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
+import io.github.woxlo1.deploymc.core.auth.CreatedToken;
+import io.github.woxlo1.deploymc.core.auth.TokenStoreException;
 import io.github.woxlo1.deploymc.core.config.ConfigException;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
@@ -23,8 +25,14 @@ public final class ConfigCommandHandler {
 
   private final ConfigManager manager;
   private final StartupPlan plan;
+  private final AuthenticationRuntime authentication;
 
   public ConfigCommandHandler(ConfigManager manager, StartupPlan plan) {
+    this(manager, plan, null);
+  }
+
+  public ConfigCommandHandler(
+      ConfigManager manager, StartupPlan plan, AuthenticationRuntime authentication) {
     if (manager == null) {
       throw new IllegalArgumentException("manager");
     }
@@ -33,6 +41,7 @@ public final class ConfigCommandHandler {
     }
     this.manager = manager;
     this.plan = plan;
+    this.authentication = authentication;
   }
 
   /** Handles one invocation. Always returns {@code true} so Bukkit does not show generic usage. */
@@ -64,7 +73,7 @@ public final class ConfigCommandHandler {
     } else if ("doctor".equals(subcommand)) {
       doctor(output, messages);
     } else {
-      token(output, messages);
+      token(output, messages, args);
     }
     return true;
   }
@@ -226,12 +235,36 @@ public final class ConfigCommandHandler {
                 messages.format(MessageKeys.COMMAND_DOCTOR_SCOPE_LIMITED))));
   }
 
-  private void token(CommandOutput output, LocalizedMessages messages) {
+  private void token(CommandOutput output, LocalizedMessages messages, String[] args) {
     if (!output.isConsole()) {
       output.send(messages.format(MessageKeys.COMMAND_CONSOLE_ONLY));
       return;
     }
-    output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
+    if (args.length < 2 || !"create".equals(args[1])) {
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_USAGE));
+      return;
+    }
+    if (authentication == null) {
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
+      return;
+    }
+    String label = args.length > 2 ? join(Arrays.asList(args).subList(2, args.length)) : "console";
+    try {
+      CreatedToken created =
+          authentication.provisioner().create(label, authentication.defaultTokenLifetime());
+      output.send(
+          messages.format(
+              MessageKeys.COMMAND_TOKEN_CREATED,
+              values("id", created.record().id(), "label", created.record().label())));
+      output.send(
+          messages.format(MessageKeys.COMMAND_TOKEN_TOKEN_LINE, values("token", created.token())));
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_ADMIN_EQUIVALENT));
+    } catch (TokenStoreException | RuntimeException exception) {
+      output.send(
+          messages.format(
+              MessageKeys.COMMAND_TOKEN_FAILED,
+              values("error", String.valueOf(exception.getMessage()))));
+    }
   }
 
   private LocalizedMessages messages(CommandOutput output) {

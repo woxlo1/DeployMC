@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/woxlo1/DeployMC/raw/main/specification/config/config.schema.json",
   "title": "DeployMC configuration",
-  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: specification only (2026-11-17). No configuration loader implements this schema yet.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
+  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: the loader validates the structural rules in this schema. As of 0.1.0, only `auth.mode: token` is implemented; `cloudflare` and `local-onetime` are reserved for later work and refuse startup.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
   "type": "object",
   "additionalProperties": true,
   "required": ["config-version"],
@@ -87,8 +87,8 @@
         "mode": {
           "type": "string",
           "enum": ["cloudflare", "token", "local-onetime"],
-          "default": "cloudflare",
-          "description": "`cloudflare` verifies Cloudflare Access JWTs. `token` accepts DeployMC-native API tokens. `local-onetime` issues a short-lived token printed only to the server console.",
+          "default": "token",
+          "description": "`token` accepts host-provisioned DeployMC API tokens and is the only implemented mode. `cloudflare` and `local-onetime` are reserved for later work; selecting them refuses startup.",
           "x-deploymc-hot-reload": false
         },
         "cloudflare": {

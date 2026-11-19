@@ -1,5 +1,8 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
+import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
+import io.github.woxlo1.deploymc.core.auth.Authenticator;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -65,12 +68,16 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private static final String OVERSIZED_BODY = "oversized_body";
   private static final String INTERNAL_ERROR = "internal_error";
   private static final String TRANSPORT_ERROR = "transport_error";
+  private static final String HEALTHZ = "/healthz";
+  private static final String READYZ = "/readyz";
 
   private final TransportConfig config;
   private final HttpHandler httpHandler;
   private final WebSocketListener webSocketListener;
   private final TransportPolicy policy;
   private final RequestLogger logger;
+  private final Authenticator authenticator;
+  private final TransportMessages messages;
   private final Set<Channel> channels =
       Collections.newSetFromMap(new ConcurrentHashMap<Channel, Boolean>());
 
@@ -86,11 +93,31 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       WebSocketListener webSocketListener,
       TransportPolicy policy,
       RequestLogger logger) {
+    this(
+        config,
+        httpHandler,
+        webSocketListener,
+        policy,
+        logger,
+        null,
+        TransportMessages.of(Locale.ENGLISH));
+  }
+
+  public NettyTransportServer(
+      TransportConfig config,
+      HttpHandler httpHandler,
+      WebSocketListener webSocketListener,
+      TransportPolicy policy,
+      RequestLogger logger,
+      Authenticator authenticator,
+      TransportMessages messages) {
     this.config = Objects.requireNonNull(config, "config");
     this.httpHandler = Objects.requireNonNull(httpHandler, "httpHandler");
     this.webSocketListener = Objects.requireNonNull(webSocketListener, "webSocketListener");
     this.policy = Objects.requireNonNull(policy, "policy");
     this.logger = Objects.requireNonNull(logger, "logger");
+    this.authenticator = authenticator;
+    this.messages = Objects.requireNonNull(messages, "messages");
   }
 
   public HttpTransport http() {
@@ -135,6 +162,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
                               config.maxHeaderBytes()))
                       .addLast(new LimitedHttpObjectAggregator(config.maxBodyBytes()))
                       .addLast(new ValidationHandler())
+                      .addLast(new AuthenticationHandler())
                       .addLast(
                           new WebSocketServerProtocolHandler(
                               config.webSocketPath(), null, false, config.maxWebSocketFrameBytes()))
@@ -307,6 +335,39 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         && request.headers().contains(HttpHeaderNames.UPGRADE);
   }
 
+  private static String path(String uri) {
+    int queryIndex = uri.indexOf('?');
+    return queryIndex < 0 ? uri : uri.substring(0, queryIndex);
+  }
+
+  private HttpResponse unauthorized(String requestId, AuthenticationFailure failure) {
+    String titleKey;
+    String detailKey;
+    switch (failure) {
+      case INVALID:
+        titleKey = MessageKeys.AUTH_INVALID_TITLE;
+        detailKey = MessageKeys.AUTH_INVALID_DETAIL;
+        break;
+      case EXPIRED:
+        titleKey = MessageKeys.AUTH_EXPIRED_TITLE;
+        detailKey = MessageKeys.AUTH_EXPIRED_DETAIL;
+        break;
+      case REQUIRED:
+      default:
+        titleKey = MessageKeys.AUTH_REQUIRED_TITLE;
+        detailKey = MessageKeys.AUTH_REQUIRED_DETAIL;
+        break;
+    }
+    HttpResponse response =
+        HttpResponse.problem(
+            HttpResponseStatus.UNAUTHORIZED.code(),
+            failure.code(),
+            messages.format(titleKey),
+            messages.format(detailKey),
+            requestId);
+    return response.withHeader(HttpHeaderNames.WWW_AUTHENTICATE.toString(), "Bearer");
+  }
+
   private String requestId(ChannelHandlerContext context) {
     String id = context.channel().attr(REQUEST_ID).get();
     return id == null ? UUID.randomUUID().toString() : id;
@@ -402,6 +463,47 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       }
       ReferenceCountUtil.release(request);
       writeResponse(context, HttpResponse.error(status, code));
+    }
+  }
+
+  private final class AuthenticationHandler extends ChannelInboundHandlerAdapter {
+
+    @Override
+    public void channelRead(ChannelHandlerContext context, Object message) {
+      if (!(message instanceof FullHttpRequest)) {
+        context.fireChannelRead(message);
+        return;
+      }
+      FullHttpRequest request = (FullHttpRequest) message;
+      String path = path(request.uri());
+      if (HEALTHZ.equals(path) || READYZ.equals(path)) {
+        context.fireChannelRead(message);
+        return;
+      }
+      if (authenticator == null) {
+        reject(context, request, AuthenticationFailure.REQUIRED);
+        return;
+      }
+      AuthenticationResult result =
+          authenticator.authenticate(request.headers().get(HttpHeaderNames.AUTHORIZATION));
+      if (result.authenticated()) {
+        context.fireChannelRead(message);
+        return;
+      }
+      reject(context, request, result.failure());
+    }
+
+    private void reject(
+        ChannelHandlerContext context, FullHttpRequest request, AuthenticationFailure failure) {
+      AuthenticationFailure reason = failure == null ? AuthenticationFailure.REQUIRED : failure;
+      String id = requestId(context);
+      if (isWebSocketUpgrade(request)) {
+        logger.websocketRejected(String.valueOf(context.channel().remoteAddress()), reason.code());
+      } else {
+        logger.rejected(id, reason.code());
+      }
+      ReferenceCountUtil.release(request);
+      writeResponse(context, unauthorized(id, reason));
     }
   }
 

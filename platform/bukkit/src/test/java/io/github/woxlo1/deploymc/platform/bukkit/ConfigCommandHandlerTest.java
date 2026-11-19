@@ -4,12 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,8 +87,7 @@ class ConfigCommandHandlerTest {
         output.messages.contains(
             english(MessageKeys.COMMAND_STATUS_CONFIG_VERSION, values("version", "1"))));
     assertTrue(
-        output.messages.contains(
-            english(MessageKeys.STARTUP_AUTH, values("authMode", "local-onetime"))));
+        output.messages.contains(english(MessageKeys.STARTUP_AUTH, values("authMode", "token"))));
     assertTrue(
         output.messages.contains(
             english(MessageKeys.STARTUP_BIND, values("address", "127.0.0.1", "port", "8080"))));
@@ -100,14 +103,14 @@ class ConfigCommandHandlerTest {
     Files.write(
         configFile,
         yaml.replace("language: en", "language: ja")
-            .replace("  mode: local-onetime", "  mode: token")
+            .replace("port: 8080", "port: 9090")
             .getBytes(StandardCharsets.UTF_8));
     RecordingOutput output = operatorOutput(false);
 
     handler.handle(output, new String[] {"reload"});
 
     assertTrue(containsMessage(output, "language"));
-    assertTrue(containsMessage(output, "auth.mode"));
+    assertTrue(containsMessage(output, "bind.port"));
     assertTrue(
         containsMessage(
             output, english(MessageKeys.COMMAND_RELOAD_RESTART_REQUIRED, values("paths", ""))));
@@ -167,20 +170,51 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
-  void tokenIsConsoleOnlyAndCreatesNothing() throws Exception {
-    byte[] before = Files.readAllBytes(configFile);
-
+  void tokenIsConsoleOnlyAndRequiresCreateAction() throws Exception {
     RecordingOutput player = operatorOutput(false);
-    handler.handle(player, new String[] {"token"});
+    handler.handle(player, new String[] {"token", "create"});
     assertEquals(
         Collections.singletonList(english(MessageKeys.COMMAND_CONSOLE_ONLY)), player.messages);
 
     RecordingOutput console = operatorOutput(true);
     handler.handle(console, new String[] {"token"});
     assertEquals(
-        Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_UNAVAILABLE)),
-        console.messages);
-    assertEquals(Arrays.hashCode(before), Arrays.hashCode(Files.readAllBytes(configFile)));
+        Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_USAGE)), console.messages);
+  }
+
+  @Test
+  void tokenCreatePrintsTokenOnceAndStoresOnlyHash() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens.d"));
+    AuthenticationRuntime authentication =
+        AuthenticationRuntime.create(
+            store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30));
+    ConfigCommandHandler tokenHandler =
+        new ConfigCommandHandler(
+            manager, StartupPlan.fromConfig(manager.current().get(), "0.1.0-test"), authentication);
+    RecordingOutput console = operatorOutput(true);
+
+    tokenHandler.handle(console, new String[] {"token", "create", "ci runner"});
+
+    assertTrue(containsMessage(console, "Created token"));
+    assertTrue(console.messages.contains(english(MessageKeys.COMMAND_TOKEN_ADMIN_EQUIVALENT)));
+    String tokenLine = null;
+    for (String message : console.messages) {
+      if (message.startsWith("Token: ")) {
+        tokenLine = message;
+      }
+    }
+    assertTrue(tokenLine != null, console.messages.toString());
+    String token = tokenLine.substring("Token: ".length());
+    assertTrue(token.startsWith("dmc_"), token);
+
+    Path[] files;
+    try (java.util.stream.Stream<Path> stream = Files.list(store.directory())) {
+      files = stream.toArray(Path[]::new);
+    }
+    assertEquals(1, files.length);
+    String record = new String(Files.readAllBytes(files[0]), StandardCharsets.UTF_8);
+    assertTrue(record.contains("secretHash"));
+    assertFalse(record.contains(token));
   }
 
   @Test

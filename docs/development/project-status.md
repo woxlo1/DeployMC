@@ -1,7 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, and WP-1.7 merged and closed).
-Verified against `main` at `db3e33a` after PR #147; merge and post-merge evidence are recorded below.
+Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, and WP-1.7 merged and closed;
+WP-1.9 implemented on `feat/wp-1.9-token-authentication` with local verification, review pending).
+Verified against `main` at `d4ce4c6` after evidence PR #148; earlier merge evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -24,7 +25,10 @@ This is the session-level status page. For per-component facts use
   runtime, merged in PR #144 at `d38217f`. Evidence PR #145 merged at `e812be6`; issue #46 was closed
   after its required checks and post-merge workflows passed. WP-1.7 (issue #47), with SnakeYAML 2.7,
   mandatory relocations, the final-JAR verifier, and CI size reporting, merged in PR #147 at
-  `db3e33a`; the issue closed automatically. Verification is recorded below.
+  `db3e33a`; the issue closed automatically. Evidence PR #148 merged at `d4ce4c6` with all required
+  checks and post-merge workflows passing. WP-1.9 (issue #49) is implemented on
+  `feat/wp-1.9-token-authentication` with the local evidence recorded below; it is not yet merged or
+  closed.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -199,12 +203,43 @@ closed automatically; the GitHub state and post-merge workflow results are recor
 server, conflicting-library classloader, browser, or text-component check was performed; no support
 tier is claimed.
 
+## WP-1.9 verification
+
+These commands were run on 2026-11-19 through the ASCII junction on
+`feat/wp-1.9-token-authentication`. All passed:
+
+```text
+.\gradlew.bat :platform:bukkit:test --console=plain
+  BUILD SUCCESSFUL; 51 Bukkit tests, 0 failures, 0 errors
+.\gradlew.bat spotlessApply --console=plain
+  BUILD SUCCESSFUL
+.\gradlew.bat build verifyJava8 --console=plain
+  BUILD SUCCESSFUL; Java 8 bytecode check passed
+  JUnit XML aggregate: 159 tests, 0 failures, 0 errors
+  Plugin JAR verification passed: DeployMC-0.1.0-SNAPSHOT.jar, 4297968 bytes,
+    2510 classes (0 versioned), max common bytecode 52
+npm test --prefix tools/spec                       # 14 tests, 14 passed, 0 failed
+npm run lint --prefix tools/spec                   # openapi, asyncapi, config, state-machine pass
+node tools/i18n/check                              # 0 error(s), 0 warning(s)
+node --test tools/i18n/test/check.test.cjs         # 7 tests, 7 passed, 0 failed
+node tools/i18n/check --write-status               # 0 error(s), 0 warning(s)
+node tools/build/verify-all.cjs                    # PASS web, java, cli, python, spec, i18n
+git diff --check                                   # pass
+```
+
+The route-enumeration test reads the committed OpenAPI document, asserts 401 for every non-health
+route, and separately checks the AsyncAPI bearer declaration for `/api/v1/ws`. Module test counts
+were core 64, transport 32, api 8, Bukkit 51, and standalone 4. No real Minecraft server load,
+in-game command execution, browser rendering, conflicting-library classloader check, or
+text-component compatibility check was performed.
+
 ## Known limitations
 
 - DeployMC is pre-alpha. No DeployMC feature runs inside a Minecraft server.
-- The WP-1.5 command surface and WP-1.6 message runtime have server-free tests only; neither has run
-  on a real Minecraft server.
-- Token management is intentionally unimplemented until WP-1.9; `/deploymc token` creates no token.
+- The WP-1.5 command surface, WP-1.6 message runtime, and WP-1.9 token command have server-free tests
+  only; none has run on a real Minecraft server.
+- Only `auth.mode: token` is implemented. `cloudflare` and `local-onetime` refuse startup.
+- Every token is admin-equivalent until 0.4.0; RBAC and path scopes do not exist yet.
 - Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
   real-server verification. See [plugin messages](../i18n/plugin-messages.md).
 - The compatibility matrix is empty; no harness exists. See [compat status](compat-status.md).
@@ -226,9 +261,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47 (all done) -> category 2
-(#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Continue
-with #48-#49. Start the next item only when earlier items are complete or the owner explicitly
-approves.
+(#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). WP-1.9
+(#49) is prepared for review; after its PR checks, merge, post-merge workflows, and evidence are
+verified, continue with #48. Start the next item only when earlier items are complete or the owner
+explicitly approves.
 
 ## Release checklist
 

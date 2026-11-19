@@ -6,13 +6,13 @@ info:
   summary: Authenticated REST API for DeployMC.
   description: |
     Normative REST contract for DeployMC. The API is served by the DeployMC plugin,
-    binds to `127.0.0.1` by default, and is normally exposed through Cloudflare Tunnel
-    and authenticated by Cloudflare Access.
+    binds to `127.0.0.1` by default, and is authenticated by host-provisioned bearer
+    tokens in 0.1.0. Remote access requires a TLS terminator.
 
-    **Status: skeleton.** Only the server resource, health endpoints, and shared
-    components are defined here. File, snapshot, deployment, console, and audit
-    resources are added by later work packages. No endpoint in this document is
-    implemented yet.
+    **Status: transport skeleton.** The authentication gate and health endpoints are
+    implemented; the server resource and shared components are defined but their
+    application handlers are not. File, snapshot, deployment, console, and audit
+    resources are added by later work packages.
 
     Rules that apply to every operation:
 
@@ -182,12 +182,13 @@ components:
       scheme: bearer
       bearerFormat: DeployMC API token
       description: |
-        DeployMC-native API token, sent as `Authorization: Bearer <token>`. Used in
-        `token` authentication mode and for the short-lived `local-onetime` token.
+        Host-provisioned DeployMC API token, sent as `Authorization: Bearer <token>`.
+        This is the only implemented authentication mode in 0.1.0.
 
-        Tokens are high-entropy, shown once, stored only as a hash, scoped by
-        permission and path, and can expire or be revoked. A token never exceeds the
-        permissions of its owner.
+        Tokens are high-entropy, shown once by `/deploymc token create`, and stored
+        only as a SHA-256 hash under `plugins/DeployMC/tokens.d`. Optional expiry is
+        enforced. Until 0.4.0 every token is admin-equivalent; permission and path
+        scoping arrive with RBAC and are not implemented yet.
     sessionCookie:
       type: apiKey
       in: cookie
