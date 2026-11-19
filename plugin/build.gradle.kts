@@ -34,6 +34,7 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     archiveBaseName.set("DeployMC")
     archiveClassifier.set("")
     relocate("io.netty", "io.github.woxlo1.deploymc.lib.netty")
+    relocate("org.yaml.snakeyaml", "io.github.woxlo1.deploymc.lib.snakeyaml")
     exclude("META-INF/services/reactor.blockhound.integration.BlockHoundIntegration")
     mergeServiceFiles()
 }

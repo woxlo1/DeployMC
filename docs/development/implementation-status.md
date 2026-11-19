@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-18 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1/WP-1.2/WP-1.3/WP-1.4).
+Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.5 loader stage).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -11,13 +11,15 @@ is the normative design.
 
 DeployMC is **pre-alpha**. The repository contains documentation, specifications, architecture
 records, buildable skeletons for each language, a source-complete Bukkit-family adapter, an
-embedded Netty HTTP/WebSocket transport with server-free integration tests, and a classpath-only
-static asset handler for the built Web UI.
+embedded Netty HTTP/WebSocket transport with server-free integration tests, a classpath-only
+static asset handler for the built Web UI, and a Java configuration loader with schema validation,
+migrations, safe reload, and fail-closed property tests.
 **No DeployMC feature has been observed running inside a Minecraft server.** The adapter has only
 server-free tests, and the transport has no authenticated routes or application handlers beyond
 the internal injection points. There is no sandbox, snapshot store, deployment engine,
 authentication, authorization, audit log, or Web UI screen; the packaged Web UI has not been
-rendered in a browser.
+rendered in a browser. The configuration loader is not yet connected to Bukkit startup or the
+`/deploymc` command surface.
 
 ## Verified working today
 
@@ -27,11 +29,11 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 93 tests across all modules, including fake SPI, Bukkit, standalone, transport, and static asset cases | Gradle `test` tasks; JUnit XML: 93 tests, 0 failures, 0 errors |
+| Java unit tests | 121 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, and configuration cases | Gradle `test` tasks; JUnit XML: 121 tests, 0 failures, 0 errors |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml`, `JavaPlugin` entry point, SPI bridge, version detection, startup banner, capability map, and task cleanup | `.\gradlew.bat :platform:bukkit:build`; 28 Bukkit tests, 0 failures. No server loaded |
-| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalog, relocated Netty, and `deploymc-web/` assets with precompressed variants; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
+| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, relocated Netty and SnakeYAML, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, and static asset delivery | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; 0 failures |
 | Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
@@ -40,7 +42,8 @@ These were actually run, not just written. Commands are the ones documented in
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
 | One-command local verification | All six toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all six reported `PASS` |
 | CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
-| Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, and measured transport spike with source links and access dates | `docs/research/*.md` |
+| Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
+| Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
 `feature/wp-1.4-static-assets`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
@@ -106,6 +109,27 @@ the JUnit XML reports 93 tests, 0 failures, and 0 errors. `node tools/build/veri
 source map, and gzip/Brotli variants. No browser rendering, real server load, or authenticated
 route was exercised; no support tier is claimed. No new user-facing strings were introduced.
 
+The first WP-1.5 stage adds the configuration loader in `core` and the documentation in
+[configuration](../configuration.md). SnakeYAML 2.9 is parsed only through a hardened wrapper that
+rejects duplicate keys, aliases, recursive and non-scalar keys, non-standard tags, excessive
+nesting, and oversized input. The packaged JSON Schema is validated with 1-based line and column
+findings; role references are checked separately. Startup writes a commented `config.yml` with
+`auth.mode: local-onetime`, backs up and migrates older versions before an atomic write, and fails
+closed on any parse, version, migration, validation, or role-reference error. `ConfigManager.reload()`
+revalidates before swapping an immutable `ConfigView`, so an invalid file preserves the last known
+good configuration. English and Japanese diagnostic catalogs localize messages. The second stage,
+which will wire startup and `/deploymc status|reload|doctor|token` into Bukkit, is not implemented in
+this PR.
+
+`.\gradlew.bat spotlessApply :core:test --console=plain`, `.\gradlew.bat build verifyJava8
+--console=plain`, and JAR inspection were run on 2026-11-18 through the ASCII junction. The JUnit XML
+reports 121 tests, 0 failures, and 0 errors across all modules, including 53 `core` tests; the Java 8
+bytecode check passed. The property test generated 250 deterministic invalid mutations and verified
+that all failed validation and never became active. JAR inspection reported 254 relocated and 0
+unrelocated SnakeYAML classes, one schema resource, and one default template. No plugin startup,
+command execution, real server load, or conflicting-library classloader test was performed; no
+support tier is claimed.
+
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
 and [license comparison](../research/license-comparison.md). They record desk research with
@@ -126,7 +150,7 @@ The following are documented as intended behavior. They are **not** code.
 | Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
 | REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Skeleton; transport carries HTTP requests but registers no authenticated routes |
 | WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Skeleton; transport carries frames but registers no AsyncAPI application handlers |
-| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml) | Schema and example; no loader implements them |
+| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, and tested `core` loader; Bukkit startup and commands are not wired |
 | Audit log | [Audit log format](../../specification/audit/audit-log-format.md) | Format definition; no log is written |
 | Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
 | Support matrix | [Support matrix](../compatibility/support-matrix.md) | Empty; harness not built |
@@ -142,15 +166,15 @@ The following are documented as intended behavior. They are **not** code.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
-- Plugin configuration schema, validation, migration, and reload.
+- `/deploymc` status, reload, doctor, and token commands, permission nodes, and Bukkit startup/reload wiring for the configuration loader.
 - Contract tests that check a running implementation against the API skeletons.
 - Web UI screens (file tree, editor, diff, deployment view, console, audit).
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
 - Real-server compatibility harness and any Tier 1/2/3 entry.
 - Platform adapters for Folia, Velocity, BungeeCord, or standalone. The Bukkit adapter source exists but is not server-validated.
-- Additional bundled third-party dependencies beyond Netty; the automated duplicate-class and
-  unrelocated-package CI check from ADR-0004 is still open.
+- Additional bundled third-party dependencies beyond Netty and SnakeYAML; the automated
+  duplicate-class and unrelocated-package CI check from ADR-0004 is still open.
 
 ## Module inventory
 
@@ -158,7 +182,7 @@ The following are documented as intended behavior. They are **not** code.
 |---|---|
 | `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, six workflows |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
-| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types; fake adapter in test sources |
+| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types, validated configuration loader and migration manager; fake adapter in test sources |
 | `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, and classpath-only static asset handler with 12 tests |
 | `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, and server-free tests |
 | `platform/standalone/` | Build placeholder with configuration value object |

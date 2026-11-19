@@ -1,0 +1,155 @@
+# DeployMC configuration
+#
+# Generated on first start. This file is controlled by the host administrator.
+# DeployMC's API can never read or write this file through an authenticated
+# request; use a local shell/editor and restart the server after restart-only
+# changes. Unknown keys produce warnings. Invalid values stop startup instead
+# of falling back to permissive defaults.
+#
+# The normative schema is specification/config/config.schema.json. When this
+# template and the schema disagree, the schema wins.
+
+config-version: 1              # restart only; do not change by hand
+
+# Default language for console and in-game messages. Web/API clients negotiate
+# their own language. Hot-reloadable.
+language: en
+
+bind:
+  # Keep loopback unless a TLS terminator such as Cloudflare Tunnel is in
+  # front of DeployMC. Non-loopback binds require allow-non-loopback: true.
+  # Restart only.
+  address: 127.0.0.1
+  port: 8080                   # restart only
+  allow-non-loopback: false    # restart only
+
+  # CIDRs whose forwarded headers are trusted. Empty trusts the direct peer
+  # only. Restart only.
+  trusted-proxies: []
+
+auth:
+  # cloudflare | token | local-onetime. Restart only. Unauthenticated access
+  # is never an option. local-onetime prints a short-lived token to the
+  # console and is the safest starting mode.
+  mode: local-onetime
+
+  # To use Cloudflare Access, add this section and set both values. Secrets
+  # belong in the secret store, never in this file.
+  # cloudflare:
+  #   team-domain: "example.cloudflareaccess.com"
+  #   audience: "replace-with-access-aud-tag"
+  #   clock-skew-seconds: 60
+  #   jwks-cache-max-age-seconds: 3600
+  #   jwks-max-stale-seconds: 86400
+  #   require-shared-secret-header: ""
+
+  token:
+    default-ttl-days: 90       # hot-reloadable; never exceeds max-ttl-days
+    max-ttl-days: 365          # hot-reloadable
+
+  local-onetime:
+    ttl-minutes: 15            # hot-reloadable
+    max-attempts: 5            # hot-reloadable
+
+sandbox:
+  # Relative to the server's plugins directory. Absolute paths and `..`
+  # escapes are rejected. Restart only.
+  root: "."
+
+  # Never writable through the API, even by an admin. Hot-reloadable.
+  protected-paths:
+    - ".deploymc/**"
+    - "DeployMC/**"
+
+  # Additional hidden paths. Deny always wins. Hot-reloadable.
+  deny-patterns: []
+
+  # Size and listing limits. Hot-reloadable.
+  max-file-size-mb: 10
+  max-upload-size-mb: 64
+  max-list-entries: 5000
+
+  # Following symlinks weakens containment. Restart only.
+  follow-symlinks: false
+
+snapshots:
+  # Content-addressed snapshot store, relative to plugins. Restart only.
+  directory: ".deploymc/history"
+  retention:
+    max-versions-per-file: 50  # hot-reloadable
+    max-age-days: 90           # hot-reloadable
+    max-total-size-mb: 2048    # hot-reloadable
+
+deploy:
+  staging-directory: ".deploymc/staging" # restart only
+  restart:
+    # shutdown-only needs an external supervisor. none never claims a restart
+    # happened. Restart only.
+    mode: shutdown-only
+    countdown-seconds: 30      # hot-reloadable
+    save-before-restart: true  # hot-reloadable
+    min-interval-minutes: 5    # hot-reloadable
+  verification:
+    timeout-seconds: 180       # hot-reloadable
+    require-plugin-enabled: true # hot-reloadable
+    fail-patterns: []          # hot-reloadable
+    success-patterns: []       # hot-reloadable
+  rollback:
+    automatic: true            # hot-reloadable
+    max-attempts: 2            # hot-reloadable
+  approval:
+    # When required is true, approver-roles must be non-empty. The requester
+    # can never approve their own deployment. Hot-reloadable.
+    required: false
+    approver-roles: []
+  jar-policy:
+    require-descriptor: true   # hot-reloadable
+    hash-allowlist-file: ""    # hot-reloadable; host-local path
+    hash-denylist-file: ""     # hot-reloadable; host-local path
+
+console:
+  # Disabling console capture removes console capabilities from the API.
+  # Restart only.
+  enabled: true
+  buffer-lines: 5000           # hot-reloadable
+  command-policy:
+    # Evaluation order: deny, then confirm, then allow. A command matching no
+    # allow pattern is denied. Hot-reloadable.
+    allow:
+      - "*"
+    deny:
+      - "stop"
+      - "op *"
+      - "deop *"
+    confirm:
+      - "reload"
+      - "whitelist *"
+
+audit:
+  directory: ".deploymc/audit" # restart only
+  rotate-size-mb: 50           # hot-reloadable
+  retention-days: 365          # hot-reloadable
+
+limits:
+  rate-limit-per-minute: 300   # hot-reloadable; role limits can lower it
+  max-websocket-connections: 50 # restart only
+
+# Role names are lowercase keys. `admin`, `developer`, `observer`, and
+# `ci-deployer` are conventions, not built-ins. Hot-reloadable.
+roles: {}
+
+# Keys are verified identities. Unknown identities receive default-role.
+# Hot-reloadable.
+users: {}
+
+# `none` is the only safe default: every unmapped identity is denied.
+default-role: none
+
+webhooks:
+  # Keep false to block private-network targets and prevent SSRF.
+  # Hot-reloadable.
+  allow-private-targets: false
+
+telemetry:
+  # Opt-in only. Hot-reloadable.
+  enabled: false
