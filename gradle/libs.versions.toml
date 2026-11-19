@@ -6,14 +6,14 @@ shadow = "8.3.5"
 google-java-format = "1.24.0"
 spigot-api = "1.8.8-R0.1-SNAPSHOT"
 netty = "4.1.141.Final"
-snakeyaml = "2.9"
+snakeyaml = "2.7"
 
 [libraries]
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
 netty-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty" }
-snakeyaml = { module = "io.github.snake-yaml:snakeyaml", version.ref = "snakeyaml" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

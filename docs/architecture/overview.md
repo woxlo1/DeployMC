@@ -72,7 +72,7 @@ binds to loopback by default in every mode.
 | `core` | Platform-independent domain and application services | `SemanticVersion`, capability reporting, SPI interfaces |
 | `api` | Small, stable Java API for other plugins; shared public value objects | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` |
 | `platform/*` | Adapters that translate SPI calls to one server platform | Version/config value objects only |
-| `plugin` | Shadow JAR aggregation, plugin descriptors, wiring | Build placeholder |
+| `plugin` | Shadow JAR aggregation, plugin descriptors, wiring | Relocated Shadow JAR with automated packaging verification and CI size report; no server load |
 | `web` | React single-page UI served by the plugin | Buildable skeleton |
 | `cli` | Rust command-line client over the public API | Buildable skeleton |
 | `sdk/*` | Generated and hand-polished clients | Python skeleton; TypeScript and Java planned |

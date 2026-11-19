@@ -1,7 +1,9 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, and WP-1.6 merged and closed).
-Verified against `main` at `e812be6` after PR #145; this closure-alignment PR records the closure.
+Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, and WP-1.6 merged and closed;
+WP-1.7 locally verified on a feature branch).
+Verified against `main` at `ceef79d` before the WP-1.7 pull request; PR and post-merge evidence are
+recorded after merge.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -22,7 +24,9 @@ This is the session-level status page. For per-component facts use
   wiring and `/deploymc`. Evidence PR #142 merged at `682e32d`; issue #45 was closed after its
   required checks and post-merge workflows passed. WP-1.6 (issue #46), the plugin message i18n
   runtime, merged in PR #144 at `d38217f`. Evidence PR #145 merged at `e812be6`; issue #46 was closed
-  after its required checks and post-merge workflows passed.
+  after its required checks and post-merge workflows passed. WP-1.7 (issue #47) is implemented on
+  `feat/wp-1.7-jar-verification` with SnakeYAML 2.7, mandatory relocations, the final-JAR verifier,
+  and CI size reporting; local verification is recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -158,6 +162,38 @@ git diff --check
 No real Minecraft server was loaded. `players.locale` remains `UNKNOWN` until verified on a real
 server; no support tier is claimed.
 
+## WP-1.7 verification
+
+These commands were run on 2026-11-19 through the ASCII junction before the WP-1.7 pull request was
+prepared:
+
+```text
+.\gradlew.bat spotlessApply build verifyJava8 --console=plain
+  BUILD SUCCESSFUL; 143 Java tests, 0 failures, 0 errors; Java 8 bytecode check passed
+  Plugin JAR verification passed: DeployMC-0.1.0-SNAPSHOT.jar, 4268456 bytes,
+    2493 classes (0 versioned), max common bytecode 52
+.\gradlew.bat :plugin:shadowJar --rerun-tasks --console=plain
+  BUILD SUCCESSFUL; forced rerun after changing Shadow exclusions
+.\gradlew.bat :plugin:reportPluginJarSize --console=plain
+  Plugin JAR size: 4268456 bytes (4.07 MiB): DeployMC-0.1.0-SNAPSHOT.jar
+git diff --check
+  pass
+node tools/build/verify-all.cjs
+  PASS web, java, cli, python, spec, i18n
+```
+
+Twelve fixture JARs were generated with `.\gradlew.bat :plugin:generatePluginJarFixtures --console=plain`
+and checked with
+`.\gradlew.bat --project-prop=deploymc.verifyJarFile=build/fixtures/<name>.jar :plugin:verifyPluginJarFixture --console=plain`.
+`good.jar`, `valid-mr.jar`, and `good-service.jar` passed. `outside.jar`, `new-bytecode.jar`,
+`malformed-mr.jar`, `old-mr.jar`, `mr-without-manifest.jar`, `missing-base.jar`, `duplicate.jar`,
+`bad-service.jar`, and `bad-service-provider.jar` each failed with the intended diagnostic.
+
+The produced JAR has 2,681 entries and 2,493 classes, including 230 relocated SnakeYAML classes and
+0 unrelocated `org/yaml/**` or `io/netty/**` classes, 0 multi-release entries, 0 `module-info.class`
+entries, 0 service files, and 0 duplicate names. No real server, conflicting-library classloader,
+browser, or text-component check was performed; no support tier is claimed.
+
 ## Known limitations
 
 - DeployMC is pre-alpha. No DeployMC feature runs inside a Minecraft server.
@@ -167,6 +203,8 @@ server; no support tier is claimed.
 - Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
   real-server verification. See [plugin messages](../i18n/plugin-messages.md).
 - The compatibility matrix is empty; no harness exists. See [compat status](compat-status.md).
+- Final-JAR verification is local and build-time only; no real-server classloader conflict or
+  artifact size budget is enforced.
 - Research is desk research with source links; no hands-on competitor test, benchmark, or legal
   review was performed. See [research](../research/README.md).
 - Japanese Web and plugin message strings are machine-translated drafts without native review. See
@@ -183,8 +221,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46 (all done) -> category 2 (#47-#114)
--> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start with #47. Start
-the next item only when earlier items are complete or the owner explicitly approves.
+-> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). #47 is locally
+verified and its pull request is in flight; after merge and issue closure, continue with #48-#49.
+Start the next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
