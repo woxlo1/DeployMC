@@ -19,29 +19,29 @@ This is the session-level status page. For per-component facts use
   serving from the JAR, was merged in PR #137 at `4548b4b`; the issue closed automatically. The
   post-WP-1.4 documentation PR #138 merged at `5dd95b9`. Both WP-1.5 stages (issue #45) merged: PR
   #139 at `5fc04a1` added the configuration loader and PR #141 at `f853136` added Bukkit startup
-  wiring and `/deploymc`. Issue #45 is closed after this documentation PR merges and the post-merge
-  workflows are verified.
+  wiring and `/deploymc`. Evidence PR #142 merged at `682e32d`; issue #45 was closed after its
+  required checks and post-merge workflows passed.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-19 after PR #141 was merged:
+Verified GitHub state on 2026-11-19 after PR #142 was merged and issue #45 was closed:
 
 ```text
 git log -1 --oneline
-f853136 feat(bukkit): wire config commands (#141)
+682e32d docs(docs): record WP-1.5 commands merge evidence (#142)
 
-gh pr view 141 --json state,mergeCommit,url
-state=MERGED mergeCommit=f8531366f47b265d6509a5a71d60b4eb1433f29d
-url=https://github.com/woxlo1/DeployMC/pull/141
+gh pr view 142 --json state,mergeCommit,url
+state=MERGED mergeCommit=682e32db48d7a8d410c3233e57cc9cda5471a8b0
+url=https://github.com/woxlo1/DeployMC/pull/142
 
-gh issue view 45 --json state
-state=OPEN
+gh issue view 45 --json state,closedAt
+state=CLOSED closedAt=2026-11-19T08:25:26Z
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
-open issues: 86
+open issues: 85
 ```
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
@@ -59,8 +59,14 @@ i18n, Spec, commit messages, and dependency review. Post-merge `main` CI
 CodeQL attempt failed only because Gradle autobuild could not resolve plugin dependencies from
 `plugins.gradle.org`; a rerun of
 [44485350346](https://github.com/woxlo1/DeployMC/actions/runs/44485350346) passed all three language
-analyses, and the pull-request CodeQL analysis had already passed for the same commit. Earlier passing
-runs for WP-1.4, WP-1.3, and their documentation PRs are recorded in the repository history.
+analyses, and the pull-request CodeQL analysis had already passed for the same commit.
+
+All required checks passed before evidence PR #142 was merged. Post-merge `main` CI
+[44487041759](https://github.com/woxlo1/DeployMC/actions/runs/44487041759), CodeQL
+[44487041901](https://github.com/woxlo1/DeployMC/actions/runs/44487041901), and Scorecard
+[44487042080](https://github.com/woxlo1/DeployMC/actions/runs/44487042080) all passed, and issue #45
+was closed with a comment recording that evidence. Earlier passing runs for WP-1.4, WP-1.3, and their
+documentation PRs are recorded in the repository history.
 
 ## WP-1.4 verification
 
@@ -139,10 +145,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44 (all done) -> category 2 (#45-#114, #45 complete
-after issue closure) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
-Close #45 after this documentation PR merges, then start #46. Start the next item only when earlier
-items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45 (all done) -> category 2 (#46-#114) ->
+category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start with #46. Start the
+next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
