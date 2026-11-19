@@ -23,6 +23,8 @@ public final class LocalizedMessages {
   private static final Pattern PLACEHOLDER = Pattern.compile("\\{([A-Za-z0-9_.-]+)}");
   private static final Map<String, String> NO_PLACEHOLDERS =
       Collections.unmodifiableMap(new LinkedHashMap<String, String>());
+  private static final ResourceBundle.Control NO_FALLBACK_CONTROL =
+      ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_PROPERTIES);
 
   private final ResourceBundle bundle;
   private final Locale locale;
@@ -32,10 +34,16 @@ public final class LocalizedMessages {
     this.locale = locale;
   }
 
-  /** Loads the catalog for {@code locale}, falling back to the English base catalog. */
+  /** Loads the catalog for {@code locale}, falling back only to the English base catalog. */
   public static LocalizedMessages of(Locale locale) {
     Objects.requireNonNull(locale, "locale");
-    return new LocalizedMessages(ResourceBundle.getBundle(BASE_NAME, locale), locale);
+    ResourceBundle bundle;
+    try {
+      bundle = ResourceBundle.getBundle(BASE_NAME, locale, NO_FALLBACK_CONTROL);
+    } catch (MissingResourceException exception) {
+      bundle = ResourceBundle.getBundle(BASE_NAME, Locale.ROOT, NO_FALLBACK_CONTROL);
+    }
+    return new LocalizedMessages(bundle, locale);
   }
 
   /** Returns the locale used to select the catalog. */

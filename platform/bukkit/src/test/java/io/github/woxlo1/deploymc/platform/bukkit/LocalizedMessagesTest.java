@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -14,21 +15,29 @@ class LocalizedMessagesTest {
   private final LocalizedMessages messages = LocalizedMessages.of(Locale.ENGLISH);
 
   @Test
-  void catalogContainsEveryDeclaredKey() {
-    assertTrue(messages.contains(MessageKeys.STARTUP_TITLE));
-    assertTrue(messages.contains(MessageKeys.STARTUP_PLATFORM));
-    assertTrue(messages.contains(MessageKeys.STARTUP_JAVA));
-    assertTrue(messages.contains(MessageKeys.STARTUP_BIND));
-    assertTrue(messages.contains(MessageKeys.STARTUP_AUTH));
-    assertTrue(messages.contains(MessageKeys.WARNING_NON_LOOPBACK));
-    assertTrue(messages.contains(MessageKeys.WARNING_NO_RESTART_SCRIPT));
-    assertTrue(messages.contains(MessageKeys.MESSAGE_MISSING_KEY));
-    assertTrue(messages.contains(MessageKeys.MESSAGE_MISSING_PLACEHOLDER));
-    assertTrue(messages.contains(MessageKeys.MESSAGE_CAPABILITY_UNAVAILABLE));
-    assertTrue(messages.contains(MessageKeys.MESSAGE_SHUTDOWN_REQUESTED));
-    assertTrue(messages.contains(MessageKeys.LIFECYCLE_DISABLED));
-    assertTrue(messages.contains(MessageKeys.LIFECYCLE_START_FAILED));
-    assertTrue(messages.contains(MessageKeys.WARNING_DATA_FOLDER));
+  void catalogContainsEveryDeclaredKey() throws Exception {
+    assertEveryDeclaredKeyIsPresent(messages);
+  }
+
+  @Test
+  void japaneseCatalogContainsEveryDeclaredKey() throws Exception {
+    assertEveryDeclaredKeyIsPresent(LocalizedMessages.of(Locale.JAPANESE));
+  }
+
+  private static void assertEveryDeclaredKeyIsPresent(LocalizedMessages catalog) throws Exception {
+    for (Field field : MessageKeys.class.getFields()) {
+      if (String.class.equals(field.getType())) {
+        String key = (String) field.get(null);
+        assertTrue(catalog.contains(key), field.getName() + " -> " + key);
+      }
+    }
+  }
+
+  @Test
+  void configurationLanguageSelectsCatalogLocale() {
+    assertEquals(Locale.JAPANESE, ConfigLanguage.toLocale("ja"));
+    assertEquals(Locale.forLanguageTag("ja-JP"), ConfigLanguage.toLocale("ja_JP"));
+    assertEquals(Locale.ENGLISH, ConfigLanguage.toLocale(""));
   }
 
   @Test

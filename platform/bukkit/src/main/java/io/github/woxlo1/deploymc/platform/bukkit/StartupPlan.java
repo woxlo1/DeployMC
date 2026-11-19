@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
+import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.transport.HttpBindConfig;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +27,19 @@ public final class StartupPlan {
   /** Creates the documented safe defaults from the configuration specification. */
   public static StartupPlan defaults(String pluginVersion) {
     return of("127.0.0.1", 8080, false, "cloudflare", pluginVersion);
+  }
+
+  /** Creates a validated plan from the loaded host configuration. */
+  public static StartupPlan fromConfig(ConfigView view, String pluginVersion) {
+    if (view == null) {
+      throw new IllegalArgumentException("view");
+    }
+    return of(
+        view.getString("bind.address", "127.0.0.1"),
+        view.getInt("bind.port", 8080),
+        view.getBoolean("bind.allow-non-loopback", false),
+        view.getString("auth.mode", "local-onetime"),
+        pluginVersion);
   }
 
   /** Creates a validated plan. An unsupported authentication mode is rejected. */

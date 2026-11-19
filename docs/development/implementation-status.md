@@ -18,8 +18,8 @@ migrations, safe reload, and fail-closed property tests.
 server-free tests, and the transport has no authenticated routes or application handlers beyond
 the internal injection points. There is no sandbox, snapshot store, deployment engine,
 authentication, authorization, audit log, or Web UI screen; the packaged Web UI has not been
-rendered in a browser. The configuration loader is not yet connected to Bukkit startup or the
-`/deploymc` command surface.
+rendered in a browser. The WP-1.5 command surface has only server-free tests; it has not been
+executed on a real Minecraft server.
 
 ## Verified working today
 
@@ -29,10 +29,10 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 121 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, and configuration cases | Gradle `test` tasks; JUnit XML: 121 tests, 0 failures, 0 errors |
+| Java unit tests | 133 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, and command cases | Gradle `test` tasks; JUnit XML: 133 tests, 0 failures, 0 errors |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
-| Bukkit adapter | Generated `plugin.yml`, `JavaPlugin` entry point, SPI bridge, version detection, startup banner, capability map, and task cleanup | `.\gradlew.bat :platform:bukkit:build`; 28 Bukkit tests, 0 failures. No server loaded |
+| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, and tab completion | `.\gradlew.bat :platform:bukkit:test`; 42 Bukkit tests, 0 failures. No server loaded |
 | Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, relocated Netty and SnakeYAML, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, and static asset delivery | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; 0 failures |
 | Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
@@ -44,6 +44,7 @@ These were actually run, not just written. Commands are the ones documented in
 | CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
+| WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 
 The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
 `feature/wp-1.4-static-assets`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
@@ -117,9 +118,8 @@ findings; role references are checked separately. Startup writes a commented `co
 `auth.mode: local-onetime`, backs up and migrates older versions before an atomic write, and fails
 closed on any parse, version, migration, validation, or role-reference error. `ConfigManager.reload()`
 revalidates before swapping an immutable `ConfigView`, so an invalid file preserves the last known
-good configuration. English and Japanese diagnostic catalogs localize messages. The second stage,
-which will wire startup and `/deploymc status|reload|doctor|token` into Bukkit, is not implemented in
-PR #139. That PR merged at `5fc04a1` with all 16 required checks passing.
+good configuration. English and Japanese diagnostic catalogs localize messages. The second stage was
+not part of PR #139, which merged at `5fc04a1` with all 16 required checks passing.
 
 `.\gradlew.bat spotlessApply :core:test --console=plain`, `.\gradlew.bat build verifyJava8
 --console=plain`, and JAR inspection were run on 2026-11-18 through the ASCII junction. The JUnit XML
@@ -132,6 +132,25 @@ support tier is claimed. Post-merge `main` workflows for PR #139 all passed: CI
 [44481755600](https://github.com/woxlo1/DeployMC/actions/runs/44481755600), CodeQL
 [44481755589](https://github.com/woxlo1/DeployMC/actions/runs/44481755589), and Scorecard
 [44481755610](https://github.com/woxlo1/DeployMC/actions/runs/44481755610).
+
+The second WP-1.5 stage wires the loader into Bukkit startup and adds `/deploymc status|reload|doctor|token`.
+The generated descriptor registers the command behind `deploymc.command.use` and declares five
+operator-only permission nodes. Command logic lives in a server-independent `ConfigCommandHandler` with
+a thin Bukkit executor, so permissions, tab completion, status output, safe reload, limited doctor
+coverage, and console-only token behavior are covered without a server. `doctor` reports only active
+validated configuration, loopback bind, selected auth mode, and catalog completeness, and always states
+that it is not a support-tier verdict. `token` creates nothing because provisioning belongs to WP-1.9.
+English and Japanese command catalogs use the same `ResourceBundle` convention as the startup banner;
+the Japanese text is a machine-translated draft awaiting native review. `LocalizedMessages` now disables
+default-locale fallback and falls back only to the English base catalog.
+
+`.\gradlew.bat spotlessApply :platform:bukkit:test --console=plain` and
+`.\gradlew.bat spotlessApply build verifyJava8 --console=plain` were run on 2026-11-19 through the ASCII
+junction. The JUnit XML reports 133 tests, 0 failures, and 0 errors across all modules, including 42
+Bukkit tests; the Java 8 bytecode check passed. JAR inspection confirmed the generated command and
+permission blocks. `node tools/i18n/check` reported 0 errors and 0 warnings. No plugin startup, real
+command execution on a server, browser rendering, or conflicting-library classloader check was
+performed; no support tier is claimed.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
@@ -153,7 +172,7 @@ The following are documented as intended behavior. They are **not** code.
 | Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
 | REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Skeleton; transport carries HTTP requests but registers no authenticated routes |
 | WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Skeleton; transport carries frames but registers no AsyncAPI application handlers |
-| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, and tested `core` loader; Bukkit startup and commands are not wired |
+| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, and `/deploymc` commands |
 | Audit log | [Audit log format](../../specification/audit/audit-log-format.md) | Format definition; no log is written |
 | Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
 | Support matrix | [Support matrix](../compatibility/support-matrix.md) | Empty; harness not built |
@@ -169,7 +188,8 @@ The following are documented as intended behavior. They are **not** code.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
-- `/deploymc` status, reload, doctor, and token commands, permission nodes, and Bukkit startup/reload wiring for the configuration loader.
+- Real-server load, in-game command execution, clean-disable thread dumps, and conflicting-library classloader checks for #48.
+- Token creation in WP-1.9 and native review of the Japanese command catalog.
 - Contract tests that check a running implementation against the API skeletons.
 - Web UI screens (file tree, editor, diff, deployment view, console, audit).
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.

@@ -46,16 +46,22 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   2026-11-18 through the ASCII junction with `gradlew spotlessApply :core:test` (53 core tests),
   `gradlew build verifyJava8` (121 Java tests, 0 failures, Java 8 check passed), and JAR inspection
   (254 relocated, 0 unrelocated SnakeYAML classes). All 16 required PR checks and the post-merge
-  `main` CI, CodeQL, and Scorecard runs passed. Bukkit startup wiring and `/deploymc` commands are
-  deliberately deferred to a second PR.
+  `main` CI, CodeQL, and Scorecard runs passed. The second stage is now implemented on
+  `feature/wp-1.5-commands`: config-driven Bukkit startup, `/deploymc status|reload|doctor|token`,
+  five operator-only permission nodes, localized English/Japanese command catalogs, a server-free
+  `ConfigCommandHandler`, and tab completion. Verified on 2026-11-19 with `gradlew spotlessApply
+  :platform:bukkit:test` (42 Bukkit tests), `gradlew spotlessApply build verifyJava8` (133 Java tests,
+  0 failures, Java 8 check passed), `node tools/i18n/check`, and JAR descriptor inspection. `doctor`
+  reports only implemented checks and explicitly disclaims a support-tier verdict; `token` is
+  console-only and creates nothing. No real server load or in-game command execution was performed.
 - The real Paper conflicting-library classloader check for #48 was recorded on
   [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
   spike and JAR inspection are not a support claim.
 
 ## In flight
 
-- This documentation PR records the PR #139 merge evidence. The command-stage branch has not been
-  created yet.
+- Uncommitted WP-1.5 command stage on `feature/wp-1.5-commands`, based on `main` at `322fb5c`. Commit,
+  push, and open the second PR after the required checks pass locally.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 86. Milestones `0.1.0` through `0.10.0` exist.
 
@@ -67,14 +73,13 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Merge this documentation PR after the required checks pass.
-2. Create the second WP-1.5 branch from the updated `main` and implement
-   `/deploymc status|reload|doctor|token`, permission nodes, localized command messages, and Bukkit
-   startup/reload wiring.
-3. Verify, open a PR, merge after required checks pass, and only then close #45.
+1. Commit the command stage with a Conventional Commit, `Refs #45`, and the OpenCode co-author
+   trailer, keeping every body/footer line at 120 characters or fewer.
+2. Push `feature/wp-1.5-commands`, open the second WP-1.5 PR, and wait for all required checks.
+3. Merge after checks pass, then close #45 only after verifying the merge and post-merge workflows.
 4. Continue in owner order with #46-#49, category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130).
-5. Update project status, implementation status, and this handoff at the end of each session.
+5. Record merge evidence in a separate documentation PR and update all three status documents.
 
 ## Gotchas
 
