@@ -181,7 +181,9 @@ support tier is claimed. PR #144 merged at `d38217f` with all required checks pa
 CodeQL autobuild dependency-resolution failure and successful rerun. Post-merge `main` CI
 [44490811820](https://github.com/woxlo1/DeployMC/actions/runs/44490811820), CodeQL
 [44490811804](https://github.com/woxlo1/DeployMC/actions/runs/44490811804), and Scorecard
-[44490811934](https://github.com/woxlo1/DeployMC/actions/runs/44490811934) passed.
+[44490811934](https://github.com/woxlo1/DeployMC/actions/runs/44490811934) passed. Evidence PR #145
+merged at `e812be6` with all required checks and post-merge CI, CodeQL, and Scorecard runs passing,
+and issue #46 was closed.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
