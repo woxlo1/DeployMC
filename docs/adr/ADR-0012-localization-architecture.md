@@ -102,7 +102,7 @@ UI, with structural validation in CI:
 
 - Add pseudo-locale and RTL tests.
 - Add a translation-status check for documentation headers.
-- Build the plugin message runtime and its fallback chain.
+- Keep the plugin message runtime and its fallback chain under test as new keys are added.
 - Recruit native reviewers before claiming a translation is reviewed.
 - Keep the Japanese README synchronized and update its source commit when the English
   README changes.
@@ -120,11 +120,16 @@ UI, with structural validation in CI:
   [44038277496](https://github.com/woxlo1/DeployMC/actions/runs/44038277496) removed
   `{count}` from the Japanese plural message; the `i18n` job failed with
   `placeholder mismatch: missing {count}` and the Web tests failed on the rendered plural.
-- **Not verified:** no native-speaker review exists, no RTL locale is implemented, and the
-  plugin message runtime is not written.
+- WP-1.6 added server-free tests for the plugin message runtime: catalog completeness, named
+  placeholders, missing-key and missing-placeholder diagnostics, partial fallback, JVM-default-locale
+  isolation, sender locale detection, and legacy color translation. See
+  [plugin messages](../i18n/plugin-messages.md).
+- **Not verified:** no native-speaker review exists, no RTL locale is implemented, and no
+  real-server plugin message behavior has been observed.
 
 ## References
 
 - Master specification, Part 11.
 - `tools/i18n/lib.cjs`, `tools/i18n/test/check.test.cjs`, and `docs/i18n/STATUS.md`.
+- [Plugin message runtime](../i18n/plugin-messages.md).
 - [TRANSLATING.md](../../TRANSLATING.md).

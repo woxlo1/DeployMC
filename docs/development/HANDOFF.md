@@ -58,27 +58,42 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   three language analyses. Evidence PR #142 merged at `682e32d`, its required checks and post-merge
   CI, CodeQL, and Scorecard runs passed, and issue #45 was closed. No real server load or in-game
   command execution was performed.
+- WP-1.6 (issue #46) is complete pending issue closure. PR #144 merged at `d38217f`: a manual
+  `.properties` loader with per-key sender/server-default/English fallback, named placeholders,
+  catalog diagnostics, reflective sender locale detection, and legacy color translation only at the
+  Bukkit send boundary. Verified on 2026-11-19 through the ASCII junction with
+  `gradlew spotlessApply :platform:bukkit:test build verifyJava8` (50 Bukkit tests; 143 total Java
+  tests, 0 failures, 0 errors, Java 8 check passed), `node tools/i18n/check` (0 errors, 0 warnings),
+  and `git diff --check`. No new user-facing strings were added. All required PR checks passed after
+  a Java CodeQL autobuild dependency-resolution failure and successful rerun. Post-merge `main` CI,
+  CodeQL, and Scorecard passed. No real server load, in-game command execution, browser rendering,
+  or text-component compatibility check was performed.
 - The real Paper conflicting-library classloader check for #48 was recorded on
   [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
   spike and JAR inspection are not a support claim.
 
 ## In flight
 
-- No WP-1.5 work remains in flight. Evidence PR #142 merged at `682e32d` and issue #45 is closed.
+- This documentation PR records the PR #144 merge evidence on `main` at `d38217f`. Issue #46 remains
+  open until this PR is merged and the post-merge workflows are verified.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 85. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 85, including #46. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks the next Phase 1 work.
+- Nothing blocks this documentation PR or the next Phase 1 work.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work, not Phase 0.
 
 ## Exact next steps
 
-1. Continue in owner order with #46-#49, category 3 (#115-#120), category 4 (#121-#123), and
+1. Run `spotlessApply` and `git diff --check`, then commit these status documents on
+   `docs/wp-1.6-merge-evidence`.
+2. Push the branch, open the WP-1.6 evidence PR, and wait for all required checks.
+3. Merge the evidence PR, verify the post-merge workflows, and only then close #46.
+4. Continue in owner order with #47-#49, category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130).
-2. Update project status, implementation status, and this handoff at the end of each session.
+5. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
 

@@ -1,7 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4 and both WP-1.5 stages merged). Verified against `main` at
-`f853136`.
+Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, and WP-1.6 merged). Verified against
+`main` at `d38217f` after PR #144; this evidence PR records that merge.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -20,22 +20,24 @@ This is the session-level status page. For per-component facts use
   post-WP-1.4 documentation PR #138 merged at `5dd95b9`. Both WP-1.5 stages (issue #45) merged: PR
   #139 at `5fc04a1` added the configuration loader and PR #141 at `f853136` added Bukkit startup
   wiring and `/deploymc`. Evidence PR #142 merged at `682e32d`; issue #45 was closed after its
-  required checks and post-merge workflows passed.
+  required checks and post-merge workflows passed. WP-1.6 (issue #46), the plugin message i18n
+  runtime, merged in PR #144 at `d38217f`; issue #46 remains open until this evidence PR merges and
+  the post-merge workflows are verified.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-19 after PR #142 was merged and issue #45 was closed:
+Verified GitHub state on 2026-11-19 after PR #144 was merged:
 
 ```text
 git log -1 --oneline
-682e32d docs(docs): record WP-1.5 commands merge evidence (#142)
+d38217f feat(platform-bukkit): add plugin message i18n runtime (#144)
 
-gh pr view 142 --json state,mergeCommit,url
-state=MERGED mergeCommit=682e32db48d7a8d410c3233e57cc9cda5471a8b0
-url=https://github.com/woxlo1/DeployMC/pull/142
+gh pr view 144 --json state,mergeCommit,url
+state=MERGED mergeCommit=d38217f13c1923e772c8c5a8ebaf3e025d0104a9
+url=https://github.com/woxlo1/DeployMC/pull/144
 
-gh issue view 45 --json state,closedAt
-state=CLOSED closedAt=2026-11-19T08:25:26Z
+gh issue view 46 --json state
+state=OPEN
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
@@ -65,8 +67,17 @@ All required checks passed before evidence PR #142 was merged. Post-merge `main`
 [44487041759](https://github.com/woxlo1/DeployMC/actions/runs/44487041759), CodeQL
 [44487041901](https://github.com/woxlo1/DeployMC/actions/runs/44487041901), and Scorecard
 [44487042080](https://github.com/woxlo1/DeployMC/actions/runs/44487042080) all passed, and issue #45
-was closed with a comment recording that evidence. Earlier passing runs for WP-1.4, WP-1.3, and their
-documentation PRs are recorded in the repository history.
+was closed with a comment recording that evidence.
+
+All required checks passed before PR #144 was merged. The Java CodeQL autobuild first failed because
+Gradle could not resolve `org.codehaus.plexus:plexus-xml:4.0.4` from `plugins.gradle.org`; a rerun of
+[44490102786](https://github.com/woxlo1/DeployMC/actions/runs/44490102786) passed all three language
+analyses. The Java, Web, CLI, Python, Spec, i18n, commit-message, dependency-review, and title checks
+passed. Post-merge `main` CI
+[44490811820](https://github.com/woxlo1/DeployMC/actions/runs/44490811820), CodeQL
+[44490811804](https://github.com/woxlo1/DeployMC/actions/runs/44490811804), and Scorecard
+[44490811934](https://github.com/woxlo1/DeployMC/actions/runs/44490811934) passed. Earlier passing
+runs for WP-1.5, WP-1.4, WP-1.3, and their documentation PRs are recorded in the repository history.
 
 ## WP-1.4 verification
 
@@ -124,15 +135,35 @@ safe reload, limited doctor coverage, and console-only token behavior. No plugin
 command execution, browser rendering, or conflicting-library classloader check was performed. PR #141
 passed all required checks and merged at `f853136`; its post-merge workflow results are recorded above.
 
+## WP-1.6 verification
+
+These commands were run on 2026-11-19 through the ASCII junction before PR #144 was opened:
+
+```text
+.\gradlew.bat spotlessApply :platform:bukkit:test build verifyJava8 --console=plain
+  BUILD SUCCESSFUL; 50 Bukkit tests passed; Java 8 bytecode check passed
+JUnit XML aggregate: 143 tests, 0 failures, 0 errors
+node tools/i18n/check
+  i18n check passed: 0 error(s), 0 warning(s)
+git diff --check
+  pass
+```
+
+No real Minecraft server was loaded. `players.locale` remains `UNKNOWN` until verified on a real
+server; no support tier is claimed.
+
 ## Known limitations
 
 - DeployMC is pre-alpha. No DeployMC feature runs inside a Minecraft server.
-- The WP-1.5 command surface has server-free tests only; it has not run on a real Minecraft server.
+- The WP-1.5 command surface and WP-1.6 message runtime have server-free tests only; neither has run
+  on a real Minecraft server.
 - Token management is intentionally unimplemented until WP-1.9; `/deploymc token` creates no token.
+- Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
+  real-server verification. See [plugin messages](../i18n/plugin-messages.md).
 - The compatibility matrix is empty; no harness exists. See [compat status](compat-status.md).
 - Research is desk research with source links; no hands-on competitor test, benchmark, or legal
   review was performed. See [research](../research/README.md).
-- Japanese UI strings are a machine-translated draft without native review. See
+- Japanese Web and plugin message strings are machine-translated drafts without native review. See
   [i18n status](i18n-status.md).
 - Many security-critical components are designed but not implemented. See
   [implementation status](implementation-status.md) and [risks](risks.md).
@@ -145,9 +176,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45 (all done) -> category 2 (#46-#114) ->
-category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Start with #46. Start the
-next item only when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45 (all done), #46 implementation merged ->
+remaining category 2 (#47-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5
+(#124-#130). Close #46 after this evidence PR merges and its post-merge workflows pass, then start
+#47. Start the next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 

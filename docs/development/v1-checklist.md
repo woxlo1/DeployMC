@@ -58,8 +58,10 @@ All boxes are unchecked today (2026-11-18, pre-alpha).
 - [ ] Documentation site complete and versioned; guides for Cloudflare, Windows, Docker, CI.
       Evidence: not yet; #124, #126.
 - [ ] Web UI and plugin messages complete in all declared languages (missing keys = 0; stale keys
-      tracked). Evidence: [i18n status](i18n-status.md) covers 7 Web keys only; plugin messages do
-      not exist yet.
+      tracked). Evidence: [i18n status](i18n-status.md) covers 7 Web keys only. The Bukkit plugin
+      runtime exists and has server-free catalog tests; see
+      [plugin messages](../i18n/plugin-messages.md). Full-language coverage and native review remain
+      outstanding.
 - [ ] API reference, Javadoc, and SDK docs published. Evidence: not yet; #94.
 - [ ] Contribution, translation, and governance docs complete. Evidence: present in repository;
       final v1 review still required.
