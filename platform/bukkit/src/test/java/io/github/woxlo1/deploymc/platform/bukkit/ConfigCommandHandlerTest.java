@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -119,6 +120,21 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
+  void senderLocaleOverridesConfiguredLanguage() throws Exception {
+    Files.write(
+        configFile,
+        DefaultConfigWriter.template()
+            .replace("language: en", "language: ja")
+            .getBytes(StandardCharsets.UTF_8));
+    manager.reload();
+    RecordingOutput output = operatorOutput(false, Locale.ENGLISH);
+
+    handler.handle(output, new String[] {"status"});
+
+    assertEquals(english(MessageKeys.COMMAND_STATUS_TITLE), output.messages.get(0));
+  }
+
+  @Test
   void invalidReloadKeepsLastKnownGoodConfiguration() throws Exception {
     Files.write(
         configFile, "config-version: 1\nauth:\n  mode: none\n".getBytes(StandardCharsets.UTF_8));
@@ -179,8 +195,13 @@ class ConfigCommandHandlerTest {
   }
 
   private RecordingOutput operatorOutput(boolean console) {
+    return operatorOutput(console, null);
+  }
+
+  private RecordingOutput operatorOutput(boolean console, Locale locale) {
     return new RecordingOutput(
         console,
+        locale,
         CommandPermissions.ROOT,
         CommandPermissions.STATUS,
         CommandPermissions.RELOAD,
@@ -216,11 +237,17 @@ class ConfigCommandHandlerTest {
   private static final class RecordingOutput implements CommandOutput {
 
     private final boolean console;
+    private final Optional<Locale> locale;
     private final Set<String> permissions;
     private final List<String> messages = new ArrayList<String>();
 
     private RecordingOutput(boolean console, String... permissions) {
+      this(console, null, permissions);
+    }
+
+    private RecordingOutput(boolean console, Locale locale, String... permissions) {
       this.console = console;
+      this.locale = Optional.ofNullable(locale);
       this.permissions = new HashSet<String>(Arrays.asList(permissions));
     }
 
@@ -232,6 +259,11 @@ class ConfigCommandHandlerTest {
     @Override
     public boolean isConsole() {
       return console;
+    }
+
+    @Override
+    public Optional<Locale> locale() {
+      return locale;
     }
 
     @Override

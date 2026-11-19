@@ -1,6 +1,8 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,8 +51,13 @@ final class DeployMCCommandExecutor implements CommandExecutor, TabCompleter {
     }
 
     @Override
+    public Optional<Locale> locale() {
+      return SenderLocaleResolver.resolve(sender);
+    }
+
+    @Override
     public void send(String message) {
-      sender.sendMessage(message);
+      sender.sendMessage(LegacyColorFormatter.translate(message));
     }
   }
 }
