@@ -1,7 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4 merged; WP-1.5 loader stage merged). Verified against
-`main` at `5fc04a1`.
+Last updated: 2026-11-19 (Phase 1, WP-1.4 and both WP-1.5 stages merged). Verified against `main` at
+`f853136`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -17,21 +17,22 @@ This is the session-level status page. For per-component facts use
   was merged in PR #133 with issue #41 closed; WP-1.2 was merged in PR #134 with issue #42 closed.
   The post-WP-1.3 documentation PR #136 merged at `8d00fa9`. WP-1.4 (issue #44), static asset
   serving from the JAR, was merged in PR #137 at `4548b4b`; the issue closed automatically. The
-  post-WP-1.4 documentation PR #138 merged at `5dd95b9`. The first WP-1.5 stage (issue #45) merged
-  in PR #139 at `5fc04a1`; issue #45 remains open until the Bukkit startup and `/deploymc` command
-  integration is also merged.
+  post-WP-1.4 documentation PR #138 merged at `5dd95b9`. Both WP-1.5 stages (issue #45) merged: PR
+  #139 at `5fc04a1` added the configuration loader and PR #141 at `f853136` added Bukkit startup
+  wiring and `/deploymc`. Issue #45 is closed after this documentation PR merges and the post-merge
+  workflows are verified.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-19 after PR #139 was merged:
+Verified GitHub state on 2026-11-19 after PR #141 was merged:
 
 ```text
 git log -1 --oneline
-5fc04a1 feat(config): add validated configuration loader (#139)
+f853136 feat(bukkit): wire config commands (#141)
 
-gh pr view 139 --json state,mergeCommit,url
-state=MERGED mergeCommit=5fc04a173dea8bf3924ebd6207179532f87d6cbb
-url=https://github.com/woxlo1/DeployMC/pull/139
+gh pr view 141 --json state,mergeCommit,url
+state=MERGED mergeCommit=f8531366f47b265d6509a5a71d60b4eb1433f29d
+url=https://github.com/woxlo1/DeployMC/pull/141
 
 gh issue view 45 --json state
 state=OPEN
@@ -49,8 +50,17 @@ the branch was force-pushed with lease, and the rerun passed every required chec
 workflows for the loader stage all passed: CI
 [44481755600](https://github.com/woxlo1/DeployMC/actions/runs/44481755600), CodeQL
 [44481755589](https://github.com/woxlo1/DeployMC/actions/runs/44481755589), and Scorecard
-[44481755610](https://github.com/woxlo1/DeployMC/actions/runs/44481755610). Earlier passing runs for
-WP-1.4, WP-1.3, and their documentation PRs are recorded in the repository history.
+[44481755610](https://github.com/woxlo1/DeployMC/actions/runs/44481755610).
+
+All required pull-request checks passed before PR #141 was merged, including both Java jobs, CodeQL,
+i18n, Spec, commit messages, and dependency review. Post-merge `main` CI
+[44485350410](https://github.com/woxlo1/DeployMC/actions/runs/44485350410) and Scorecard
+[44485350476](https://github.com/woxlo1/DeployMC/actions/runs/44485350476) passed. The first post-merge
+CodeQL attempt failed only because Gradle autobuild could not resolve plugin dependencies from
+`plugins.gradle.org`; a rerun of
+[44485350346](https://github.com/woxlo1/DeployMC/actions/runs/44485350346) passed all three language
+analyses, and the pull-request CodeQL analysis had already passed for the same commit. Earlier passing
+runs for WP-1.4, WP-1.3, and their documentation PRs are recorded in the repository history.
 
 ## WP-1.4 verification
 
@@ -105,8 +115,8 @@ node tools/i18n/check                 # 0 errors, 0 warnings
 JAR inspection confirmed the generated `commands` and `permissions` blocks with five operator-only
 nodes. The command tests are server-free and cover permission checks, tab completion, status output,
 safe reload, limited doctor coverage, and console-only token behavior. No plugin startup, in-game
-command execution, browser rendering, or conflicting-library classloader check was performed. This
-stage is uncommitted on the feature branch at the time of this update; no PR or CI run exists yet.
+command execution, browser rendering, or conflicting-library classloader check was performed. PR #141
+passed all required checks and merged at `f853136`; its post-merge workflow results are recorded above.
 
 ## Known limitations
 
@@ -129,10 +139,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44 (all done) -> category 2 (#45-#114, #45 in
-progress) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Open, verify,
-and merge the WP-1.5 Bukkit startup/command PR before starting #46. Start the next item only when
-earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44 (all done) -> category 2 (#45-#114, #45 complete
+after issue closure) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
+Close #45 after this documentation PR merges, then start #46. Start the next item only when earlier
+items are complete or the owner explicitly approves.
 
 ## Release checklist
 
