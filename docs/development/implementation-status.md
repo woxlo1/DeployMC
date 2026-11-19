@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.5 loader stage merged).
+Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.5 merged).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -150,7 +150,13 @@ junction. The JUnit XML reports 133 tests, 0 failures, and 0 errors across all m
 Bukkit tests; the Java 8 bytecode check passed. JAR inspection confirmed the generated command and
 permission blocks. `node tools/i18n/check` reported 0 errors and 0 warnings. No plugin startup, real
 command execution on a server, browser rendering, or conflicting-library classloader check was
-performed; no support tier is claimed.
+performed; no support tier is claimed. PR #141 merged at `f853136` with all required checks passing.
+Post-merge `main` CI [44485350410](https://github.com/woxlo1/DeployMC/actions/runs/44485350410) and
+Scorecard [44485350476](https://github.com/woxlo1/DeployMC/actions/runs/44485350476) passed. The first
+post-merge CodeQL attempt failed during autobuild because Gradle could not resolve plugin dependencies
+from `plugins.gradle.org`; a rerun of
+[44485350346](https://github.com/woxlo1/DeployMC/actions/runs/44485350346) passed all three language
+analyses. The pull-request CodeQL analysis had already passed for the same commit.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),

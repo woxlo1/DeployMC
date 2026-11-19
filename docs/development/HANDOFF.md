@@ -39,47 +39,50 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   `pnpm test` (14 tests), `node tools/build/verify-all.cjs` (all six toolchains `PASS`), and JAR entry
   inspection. All 17 pull-request checks and the post-merge `main` CI, CodeQL, and Scorecard runs
   passed. No browser, real server, or product route was tested.
-- WP-1.5 (issue #45) is in progress. Its first stage merged in PR #139 at `5fc04a1`: a hardened
-  SnakeYAML 2.9 loader, schema validation with localized 1-based diagnostics, default generation,
+- WP-1.5 (issue #45) is complete pending issue closure. Its first stage merged in PR #139 at
+  `5fc04a1`: a hardened SnakeYAML 2.9 loader, schema validation with localized 1-based diagnostics,
+  default generation,
   timestamped migration backups, atomic writes, immutable `ConfigView`, safe reload, and a 250-case
   deterministic fail-closed property test. SnakeYAML is relocated in the Shadow JAR. Verified on
   2026-11-18 through the ASCII junction with `gradlew spotlessApply :core:test` (53 core tests),
   `gradlew build verifyJava8` (121 Java tests, 0 failures, Java 8 check passed), and JAR inspection
   (254 relocated, 0 unrelocated SnakeYAML classes). All 16 required PR checks and the post-merge
-  `main` CI, CodeQL, and Scorecard runs passed. The second stage is now implemented on
-  `feature/wp-1.5-commands`: config-driven Bukkit startup, `/deploymc status|reload|doctor|token`,
-  five operator-only permission nodes, localized English/Japanese command catalogs, a server-free
-  `ConfigCommandHandler`, and tab completion. Verified on 2026-11-19 with `gradlew spotlessApply
-  :platform:bukkit:test` (42 Bukkit tests), `gradlew spotlessApply build verifyJava8` (133 Java tests,
-  0 failures, Java 8 check passed), `node tools/i18n/check`, and JAR descriptor inspection. `doctor`
-  reports only implemented checks and explicitly disclaims a support-tier verdict; `token` is
-  console-only and creates nothing. No real server load or in-game command execution was performed.
+  `main` CI, CodeQL, and Scorecard runs passed. The second stage merged in PR #141 at `f853136`:
+  config-driven Bukkit startup, `/deploymc status|reload|doctor|token`, five operator-only permission
+  nodes, localized English/Japanese command catalogs, a server-free `ConfigCommandHandler`, and tab
+  completion. Verified on 2026-11-19 with `gradlew spotlessApply :platform:bukkit:test` (42 Bukkit tests),
+  `gradlew spotlessApply build verifyJava8` (133 Java tests, 0 failures, Java 8 check passed),
+  `node tools/i18n/check`, and JAR descriptor inspection. `doctor` reports only implemented checks and
+  explicitly disclaims a support-tier verdict; `token` is console-only and creates nothing. All required
+  PR checks passed. Post-merge CI and Scorecard passed; the first CodeQL post-merge autobuild failed on
+  plugin dependency resolution from `plugins.gradle.org`, and a rerun passed all three language analyses.
+  No real server load or in-game command execution was performed.
 - The real Paper conflicting-library classloader check for #48 was recorded on
   [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
   spike and JAR inspection are not a support claim.
 
 ## In flight
 
-- Uncommitted WP-1.5 command stage on `feature/wp-1.5-commands`, based on `main` at `322fb5c`. Commit,
-  push, and open the second PR after the required checks pass locally.
+- This documentation PR records the PR #141 merge evidence on `main` at `f853136`. Issue #45 remains
+  open until this PR is merged and the post-merge workflows are verified.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 86. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 86 at the time of this update, including #45. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks the next documentation or Phase 1 work.
+- Nothing blocks this documentation PR or the next Phase 1 work.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work, not Phase 0.
 
 ## Exact next steps
 
-1. Commit the command stage with a Conventional Commit, `Refs #45`, and the OpenCode co-author
-   trailer, keeping every body/footer line at 120 characters or fewer.
-2. Push `feature/wp-1.5-commands`, open the second WP-1.5 PR, and wait for all required checks.
-3. Merge after checks pass, then close #45 only after verifying the merge and post-merge workflows.
+1. Run `spotlessApply` and `git diff --check`, then commit these three status documents on
+   `docs/wp-1.5-commands-merge`.
+2. Push the branch, open the WP-1.5 evidence PR, and wait for all required checks.
+3. Merge the evidence PR, verify the post-merge workflows, and only then close #45.
 4. Continue in owner order with #46-#49, category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130).
-5. Record merge evidence in a separate documentation PR and update all three status documents.
+5. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
 
