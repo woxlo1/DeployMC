@@ -89,7 +89,7 @@ Core services are planned as separate packages rather than separate Gradle modul
 | `rbac` | Roles, permissions, path scopes, explain mode |
 | `audit` | Append-only hash-chained audit log, query, export |
 | `console` | Bounded log ring buffer, filtering, command dispatch policy |
-| `config` | Schema, validation, migration, safe hot reload |
+| `config` | Schema, validation, migration, safe hot reload (see [configuration reference](../configuration.md)) |
 | `events` | Internal event bus and webhook delivery |
 | `application` | Use cases that compose the services for transport and the Java API |
 | `spi` | Platform interfaces (already present) |
