@@ -24,6 +24,36 @@ class LocalizedMessagesTest {
     assertEveryDeclaredKeyIsPresent(LocalizedMessages.of(Locale.JAPANESE));
   }
 
+  @Test
+  void missingTranslationsFallBackOneKeyAtATime() {
+    LocalizedMessages catalog =
+        LocalizedMessages.of(Locale.forLanguageTag("zz"), Locale.forLanguageTag("yy"));
+    Map<String, String> values = new LinkedHashMap<String, String>();
+    values.put("version", "1.2.3-test");
+
+    assertEquals("Partial title 1.2.3-test", catalog.format(MessageKeys.STARTUP_TITLE, values));
+    assertEquals("Server default usage", catalog.format(MessageKeys.COMMAND_USAGE));
+    assertEquals(
+        LocalizedMessages.of(Locale.ENGLISH).format(MessageKeys.COMMAND_RELOAD_SUCCESS),
+        catalog.format(MessageKeys.COMMAND_RELOAD_SUCCESS));
+  }
+
+  @Test
+  void requestedCatalogIgnoresJvmDefaultLocale() {
+    Map<String, String> values = new LinkedHashMap<String, String>();
+    values.put("version", "1.2.3-test");
+    String english = messages.format(MessageKeys.STARTUP_TITLE, values);
+    Locale original = Locale.getDefault();
+    try {
+      Locale.setDefault(Locale.JAPANESE);
+
+      assertEquals(
+          english, LocalizedMessages.of(Locale.ENGLISH).format(MessageKeys.STARTUP_TITLE, values));
+    } finally {
+      Locale.setDefault(original);
+    }
+  }
+
   private static void assertEveryDeclaredKeyIsPresent(LocalizedMessages catalog) throws Exception {
     for (Field field : MessageKeys.class.getFields()) {
       if (String.class.equals(field.getType())) {
@@ -64,6 +94,15 @@ class LocalizedMessagesTest {
 
     assertTrue(result.startsWith("Missing localized message key:"));
     assertTrue(result.contains("key.does.not.exist"));
+    assertFalse(result.contains("{key}"));
+  }
+
+  @Test
+  void missingCatalogKeyUsesSelectedCatalogDiagnostic() {
+    String result = LocalizedMessages.of(Locale.JAPANESE).format("key.does.not.exist");
+
+    assertTrue(result.contains("key.does.not.exist"));
+    assertFalse(result.startsWith("Missing localized message key:"));
     assertFalse(result.contains("{key}"));
   }
 

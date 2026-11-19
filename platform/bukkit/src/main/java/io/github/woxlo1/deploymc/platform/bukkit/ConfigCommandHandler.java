@@ -37,7 +37,7 @@ public final class ConfigCommandHandler {
 
   /** Handles one invocation. Always returns {@code true} so Bukkit does not show generic usage. */
   public boolean handle(CommandOutput output, String[] arguments) {
-    LocalizedMessages messages = messages();
+    LocalizedMessages messages = messages(output);
     if (!output.hasPermission(CommandPermissions.ROOT)) {
       output.send(
           messages.format(
@@ -234,10 +234,18 @@ public final class ConfigCommandHandler {
     output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
   }
 
-  private LocalizedMessages messages() {
+  private LocalizedMessages messages(CommandOutput output) {
+    LocalizedMessages serverMessages = serverMessages();
+    Optional<Locale> senderLocale = output.locale();
+    if (!senderLocale.isPresent()) {
+      return serverMessages;
+    }
+    return LocalizedMessages.of(senderLocale.get(), serverMessages.locale());
+  }
+
+  private LocalizedMessages serverMessages() {
     Optional<ConfigView> current = manager.current();
-    String language =
-        current.isPresent() ? current.get().language() : Locale.getDefault().getLanguage();
+    String language = current.isPresent() ? current.get().language() : Locale.ROOT.getLanguage();
     return LocalizedMessages.of(ConfigLanguage.toLocale(language));
   }
 
