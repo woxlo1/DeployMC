@@ -1,7 +1,7 @@
 # Implementation Status
 
-Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.6 merged; WP-1.7
-implemented and locally verified).
+Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.7 merged; issue #47
+closed).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -50,9 +50,9 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 
-The most recent all-toolchain run was `node tools/build/verify-all.cjs` on
-`feat/wp-1.7-jar-verification`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
-and `i18n`. Web runs before Java in that script and in the CI Java job because the plugin build
+The most recent all-toolchain run was `node tools/build/verify-all.cjs` on the merged
+`feat/wp-1.7-jar-verification` branch, which reported `PASS` for `web`, `java`, `cli`, `python`,
+`spec`, and `i18n`. Web runs before Java in that script and in the CI Java job because the plugin build
 packages `web/dist` into the JAR. WP-1.4 was merged in PR #137 at `4548b4b`; the post-merge `main`
 CI run [44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524) passed every job,
 CodeQL [44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587) passed all three
@@ -238,6 +238,13 @@ baseline), `malformed-mr.jar` and `old-mr.jar` (malformed version segment),
 `mr-without-manifest.jar` (missing `Multi-Release: true`), `missing-base.jar` (no base entry),
 `duplicate.jar` (duplicate entry), `bad-service.jar` (service file outside namespace), and
 `bad-service-provider.jar` (provider outside namespace).
+
+PR #147 merged at `db3e33a` on 2026-11-19T09:49:21Z; issue #47 closed at
+2026-11-19T09:49:23Z. All 18 pull-request checks passed (16 required). Post-merge `main` runs
+passed: CI [44499929954](https://github.com/woxlo1/DeployMC/actions/runs/44499929954), CodeQL
+[44499932471](https://github.com/woxlo1/DeployMC/actions/runs/44499932471), and Scorecard
+[44499929986](https://github.com/woxlo1/DeployMC/actions/runs/44499929986). These runs cover build
+and unit checks, not a real server.
 
 No real Minecraft server load, in-game command execution, browser rendering, conflicting-library
 classloader test, or text-component compatibility check was performed; no support tier is claimed.

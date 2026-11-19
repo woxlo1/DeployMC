@@ -1,9 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, and WP-1.6 merged and closed;
-WP-1.7 locally verified on a feature branch).
-Verified against `main` at `ceef79d` before the WP-1.7 pull request; PR and post-merge evidence are
-recorded after merge.
+Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, and WP-1.7 merged and closed).
+Verified against `main` at `db3e33a` after PR #147; merge and post-merge evidence are recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -24,31 +22,36 @@ This is the session-level status page. For per-component facts use
   wiring and `/deploymc`. Evidence PR #142 merged at `682e32d`; issue #45 was closed after its
   required checks and post-merge workflows passed. WP-1.6 (issue #46), the plugin message i18n
   runtime, merged in PR #144 at `d38217f`. Evidence PR #145 merged at `e812be6`; issue #46 was closed
-  after its required checks and post-merge workflows passed. WP-1.7 (issue #47) is implemented on
-  `feat/wp-1.7-jar-verification` with SnakeYAML 2.7, mandatory relocations, the final-JAR verifier,
-  and CI size reporting; local verification is recorded below.
+  after its required checks and post-merge workflows passed. WP-1.7 (issue #47), with SnakeYAML 2.7,
+  mandatory relocations, the final-JAR verifier, and CI size reporting, merged in PR #147 at
+  `db3e33a`; the issue closed automatically. Verification is recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-19 after PR #145 was merged and issue #46 was closed:
+Verified GitHub state on 2026-11-19 after PR #147 was merged and issue #47 was closed:
 
 ```text
 git log -1 --oneline
-e812be6 docs(docs): record WP-1.6 merge evidence (#145)
+db3e33a build(plugin): verify the final shaded jar
 
-gh pr view 145 --json state,mergeCommit,url
-state=MERGED mergeCommit=e812be6671203340057b443409a3d8912bd0ec5f
-url=https://github.com/woxlo1/DeployMC/pull/145
+gh pr view 147 --json state,mergeCommit,url
+state=MERGED mergeCommit=db3e33afa5f1d198d29c49a5f133da0e0548cc7e
+url=https://github.com/woxlo1/DeployMC/pull/147
 
-gh issue view 46 --json state,closedAt
-state=CLOSED closedAt=2026-11-19T09:02:01Z
+gh issue view 47 --json state,closedAt
+state=CLOSED closedAt=2026-11-19T09:49:23Z
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
-open issues: 84
+open issues: 83
 ```
+
+All 18 pull-request checks passed before merge (16 required). Post-merge `main` runs passed: CI
+[44499929954](https://github.com/woxlo1/DeployMC/actions/runs/44499929954), CodeQL
+[44499932471](https://github.com/woxlo1/DeployMC/actions/runs/44499932471), and Scorecard
+[44499929986](https://github.com/woxlo1/DeployMC/actions/runs/44499929986).
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
@@ -191,8 +194,10 @@ and checked with
 
 The produced JAR has 2,681 entries and 2,493 classes, including 230 relocated SnakeYAML classes and
 0 unrelocated `org/yaml/**` or `io/netty/**` classes, 0 multi-release entries, 0 `module-info.class`
-entries, 0 service files, and 0 duplicate names. No real server, conflicting-library classloader,
-browser, or text-component check was performed; no support tier is claimed.
+entries, 0 service files, and 0 duplicate names. PR #147 merged the work at `db3e33a` and issue #47
+closed automatically; the GitHub state and post-merge workflow results are recorded above. No real
+server, conflicting-library classloader, browser, or text-component check was performed; no support
+tier is claimed.
 
 ## Known limitations
 
@@ -220,10 +225,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46 (all done) -> category 2 (#47-#114)
--> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). #47 is locally
-verified and its pull request is in flight; after merge and issue closure, continue with #48-#49.
-Start the next item only when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47 (all done) -> category 2
+(#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Continue
+with #48-#49. Start the next item only when earlier items are complete or the owner explicitly
+approves.
 
 ## Release checklist
 
