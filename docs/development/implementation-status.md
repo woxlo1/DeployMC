@@ -1,6 +1,7 @@
 # Implementation Status
 
-Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.6 merged).
+Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.6 merged; WP-1.7
+implemented and locally verified).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -13,8 +14,8 @@ DeployMC is **pre-alpha**. The repository contains documentation, specifications
 records, buildable skeletons for each language, a source-complete Bukkit-family adapter, an
 embedded Netty HTTP/WebSocket transport with server-free integration tests, a classpath-only
 static asset handler for the built Web UI, a Java configuration loader with schema validation,
-migrations, safe reload, and fail-closed property tests, and a server-side plugin message i18n
-runtime.
+migrations, safe reload, and fail-closed property tests, a server-side plugin message i18n
+runtime, and an automated final-JAR packaging verifier.
 **No DeployMC feature has been observed running inside a Minecraft server.** The adapter has only
 server-free tests, and the transport has no authenticated routes or application handlers beyond
 the internal injection points. There is no sandbox, snapshot store, deployment engine,
@@ -34,7 +35,8 @@ These were actually run, not just written. Commands are the ones documented in
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, and per-sender i18n with legacy color output | `.\gradlew.bat :platform:bukkit:test`; 50 Bukkit tests, 0 failures. No server loaded |
-| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, relocated Netty and SnakeYAML, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot or unrelocated Netty classes | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
+| Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, 230 relocated SnakeYAML classes, relocated Netty, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot, unrelocated Netty/YAML, or multi-release entries | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
+| Plugin JAR verification | `:plugin:verifyPluginJar` fails on out-of-namespace classes, malformed or manifest-less multi-release entries, missing versioned bases, duplicate entries/classes, service entries outside the namespace, or common-path bytecode above major 52; CI reports the size | Production JAR plus 12 positive/negative fixture JARs |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, and static asset delivery | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; 0 failures |
 | Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
@@ -42,15 +44,15 @@ These were actually run, not just written. Commands are the ones documented in
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
 | One-command local verification | All six toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all six reported `PASS` |
-| CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job | GitHub Actions runs on `main` |
+| CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job and plugin JAR size report | GitHub Actions runs on `main` |
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 
-The most recent verified full local run was `node tools/build/verify-all.cjs` on branch
-`feature/wp-1.4-static-assets`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
-and `i18n`. Web now runs before Java in that script and in the CI Java job because the plugin build
+The most recent all-toolchain run was `node tools/build/verify-all.cjs` on
+`feat/wp-1.7-jar-verification`, which reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
+and `i18n`. Web runs before Java in that script and in the CI Java job because the plugin build
 packages `web/dist` into the JAR. WP-1.4 was merged in PR #137 at `4548b4b`; the post-merge `main`
 CI run [44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524) passed every job,
 CodeQL [44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587) passed all three
@@ -113,7 +115,7 @@ source map, and gzip/Brotli variants. No browser rendering, real server load, or
 route was exercised; no support tier is claimed. No new user-facing strings were introduced.
 
 The first WP-1.5 stage adds the configuration loader in `core` and the documentation in
-[configuration](../configuration.md). SnakeYAML 2.9 is parsed only through a hardened wrapper that
+[configuration](../configuration.md). SnakeYAML 2.7 is parsed only through a hardened wrapper that
 rejects duplicate keys, aliases, recursive and non-scalar keys, non-standard tags, excessive
 nesting, and oversized input. The packaged JSON Schema is validated with 1-based line and column
 findings; role references are checked separately. Startup writes a commented `config.yml` with
@@ -185,6 +187,62 @@ CodeQL autobuild dependency-resolution failure and successful rerun. Post-merge 
 merged at `e812be6` with all required checks and post-merge CI, CodeQL, and Scorecard runs passing,
 and issue #46 was closed.
 
+WP-1.7 adds mandatory relocation and a final-JAR verification gate. `plugin/build.gradle.kts` keeps
+Shadow relocations for `io.netty` and `org.yaml.snakeyaml` under
+`io.github.woxlo1.deploymc.lib.*`, excludes `module-info.class` and all `META-INF/versions/**`, and
+declares the relocation and exclusion inputs so a local configuration change invalidates the Shadow
+task. The `buildSrc` task `PluginJarVerifierTask` is wired into `check` and fails on classes outside
+`io/github/woxlo1/deploymc/`, malformed or manifest-less multi-release entries, versioned classes
+without a base entry, duplicate ZIP entries or logical classes, service files or providers outside
+the namespace, and common-path bytecode above major 52. `PluginJarSizeTask` writes a
+locale-independent size line for CI.
+
+The YAML dependency moved from `io.github.snake-yaml:snakeyaml:2.9` to
+`org.yaml:snakeyaml:2.7`. The 2.9 artifact's common classes were major 53 and its manifest required
+JavaSE 9 despite a release-8 POM; 2.7 common classes are major 52 with manifest JavaSE 1.8. The
+official 2.7 notes and artifact evidence are recorded in
+[configuration YAML library check](../research/config-yaml-library.md).
+
+The following commands were run on 2026-11-19 through the ASCII junction:
+
+```text
+.\gradlew.bat spotlessApply build verifyJava8 --console=plain
+  BUILD SUCCESSFUL; verifyPluginJar passed; Java 8 bytecode check passed
+  JUnit XML aggregate: 143 tests, 0 failures, 0 errors
+  Plugin JAR verification passed: DeployMC-0.1.0-SNAPSHOT.jar, 4268456 bytes,
+    2493 classes (0 versioned), max common bytecode 52
+.\gradlew.bat :plugin:reportPluginJarSize --console=plain
+  Plugin JAR size: 4268456 bytes (4.07 MiB): DeployMC-0.1.0-SNAPSHOT.jar
+git diff --check
+  pass
+node tools/build/verify-all.cjs
+  PASS web, java, cli, python, spec, i18n
+```
+
+A forced `.\gradlew.bat :plugin:shadowJar --rerun-tasks --console=plain` was run after changing the
+exclusion rules because Shadow 8.3.5 did not invalidate the task from those rules; explicit task
+inputs were added. Final ZIP inspection reported 2,681 entries, 2,493 classes, 230 relocated
+SnakeYAML classes, 0 unrelocated `org/yaml/**` or `io/netty/**` class entries, 0 multi-release
+entries, 0 `module-info.class` entries, 0 service files, and 0 duplicate names.
+
+Twelve fixture JARs are generated by a committed task and were checked with the non-build task:
+
+```powershell
+.\gradlew.bat :plugin:generatePluginJarFixtures --console=plain
+.\gradlew.bat --project-prop=deploymc.verifyJarFile=build/fixtures/<name>.jar :plugin:verifyPluginJarFixture --console=plain
+```
+
+`good.jar`, `valid-mr.jar`, and `good-service.jar` exited 0. The nine bad fixtures exited 1 with the
+expected messages: `outside.jar` (class outside namespace), `new-bytecode.jar` (major 53 above
+baseline), `malformed-mr.jar` and `old-mr.jar` (malformed version segment),
+`mr-without-manifest.jar` (missing `Multi-Release: true`), `missing-base.jar` (no base entry),
+`duplicate.jar` (duplicate entry), `bad-service.jar` (service file outside namespace), and
+`bad-service-provider.jar` (provider outside namespace).
+
+No real Minecraft server load, in-game command execution, browser rendering, conflicting-library
+classloader test, or text-component compatibility check was performed; no support tier is claimed.
+No user-facing strings or i18n catalogs changed.
+
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
 and [license comparison](../research/license-comparison.md). They record desk research with
@@ -229,8 +287,9 @@ The following are documented as intended behavior. They are **not** code.
 - GitHub Action, examples, documentation site.
 - Real-server compatibility harness and any Tier 1/2/3 entry.
 - Platform adapters for Folia, Velocity, BungeeCord, or standalone. The Bukkit adapter source exists but is not server-validated.
-- Additional bundled third-party dependencies beyond Netty and SnakeYAML; the automated
-  duplicate-class and unrelocated-package CI check from ADR-0004 is still open.
+- Additional bundled third-party dependencies beyond Netty and SnakeYAML; each addition needs a new
+  relocation rule and verifier evidence. The real-server conflicting-library classloader check and a
+  numeric artifact size budget remain open; only the size report is implemented.
 
 ## Module inventory
 
@@ -242,8 +301,9 @@ The following are documented as intended behavior. They are **not** code.
 | `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, and classpath-only static asset handler with 12 tests |
 | `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, and server-free tests |
 | `platform/standalone/` | Build placeholder with configuration value object |
-| `plugin/` | Shadow aggregator; produced JAR contains descriptor, adapter classes, message catalog, relocated Netty, and `deploymc-web/` assets |
-| `docs/research/` | Naming, competitive, license, Bukkit descriptor, and transport spike research; no hands-on server tests |
+| `plugin/` | Shadow aggregator with mandatory relocations, final-JAR verifier, CI size report, descriptor, adapter classes, message catalog, relocated Netty/SnakeYAML, and `deploymc-web/` assets |
+| `buildSrc/` | Java implementations of `PluginJarVerifierTask`, `PluginJarSizeTask`, and `PluginJarFixturesTask` for configuration-cache compatibility and reproducible fixtures |
+| `docs/research/` | Naming, competitive, license, Bukkit descriptor, transport spike, and SnakeYAML 2.7 evidence; no hands-on server tests |
 | `web/` | Buildable React skeleton with gzip/Brotli precompression; no product screens |
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |

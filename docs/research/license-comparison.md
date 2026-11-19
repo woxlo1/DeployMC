@@ -35,7 +35,7 @@
 | Paper states that it inherits its licensing from upstream projects and is licensed under GPLv3, inherited from Spigot, which in turn inherits from Bukkit and CraftBukkit. | [Paper LICENSE.md](https://raw.githubusercontent.com/PaperMC/Paper/master/LICENSE.md) | 2026-11-18 |
 | Paper states that authors not listed should be presumed to have released their work under the original GPL, while contributors may choose MIT and the listed authors have chosen MIT. | [Paper LICENSE.md](https://raw.githubusercontent.com/PaperMC/Paper/master/LICENSE.md) | 2026-11-18 |
 | DeployMC's ADR-0013 requires bundled dependencies to be compatible with Apache-2.0 and with distribution inside the plugin JAR, and forbids bundling GPL-only or otherwise incompatible dependencies without a documented, owner-accepted exception. | [ADR-0013](../adr/ADR-0013-license.md) | 2026-11-18 |
-| No third-party runtime dependency is bundled today; Shadow is configured but the produced JAR is an empty scaffold. | [implementation status](../development/implementation-status.md) | 2026-11-18 |
+| The distribution JAR bundles two runtime dependencies, Netty 4.1.141.Final and SnakeYAML 2.7, both Apache-2.0. They are relocated, and the final JAR is checked by `:plugin:verifyPluginJar`. | [transport spike](transport-spike.md), [SnakeYAML check](config-yaml-library.md), [implementation status](../development/implementation-status.md) | 2026-11-19 |
 
 **Assessment:** compiling against platform APIs and bundling third-party code are different
 questions. The distribution check must be repeated for each dependency when it is actually added,
