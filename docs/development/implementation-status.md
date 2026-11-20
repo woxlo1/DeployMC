@@ -1,8 +1,8 @@
 # Implementation Status
 
-Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.9 merged; issues #47, #48,
-and #49 closed. WP-1.8 merged in PR #151 at `839b789` with green PR and post-merge checks. WP-2.1
-resolver implementation is in PR #153; local verification passed and PR checks are in progress.)
+Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and WP-2.1 merged; issues
+#47, #48, #49, and #50 closed. WP-2.1 merged in PR #153 at `748bbc8` with green PR and post-merge
+checks.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -82,6 +82,23 @@ rendered into the [support matrix](../compatibility/support-matrix.md). Issue #4
 completed at 2026-11-20T08:42:28Z. These runs cover the smoke suite and build/unit checks, not the
 full integration suite or a support tier. The one-command tool is documented in
 [`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
+
+WP-2.1 merged in [PR #153](https://github.com/woxlo1/DeployMC/pull/153) at
+`748bbc8adda99e1aae9eeaca600863b44ff2f2ab`; issue #50 closed as completed at
+2026-11-20T10:06:27Z. An explicit PR comment recorded the local commands, CI investigation, and
+review notes at
+<https://github.com/woxlo1/DeployMC/pull/153#issuecomment-7036766443>. All PR checks passed on
+`9d52a85`, including `Java (windows-latest)` after the canonical-root assertion fix; PR runs were
+CI [44715858946](https://github.com/woxlo1/DeployMC/actions/runs/44715858946), lint
+[44715858928](https://github.com/woxlo1/DeployMC/actions/runs/44715858928), CodeQL
+[44715858945](https://github.com/woxlo1/DeployMC/actions/runs/44715858945), and dependency review
+[44715858883](https://github.com/woxlo1/DeployMC/actions/runs/44715858883). Post-merge `main` runs
+at `748bbc8` passed: CI [44716375506](https://github.com/woxlo1/DeployMC/actions/runs/44716375506),
+CodeQL [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542), and Scorecard
+[44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486). The local and remote
+`feature/wp-2.1-sandbox-resolver` branches were deleted after the merge. These runs cover unit,
+corpus, fuzz, build, and compatibility evidence; they do not claim running-server or file-API use of
+`SandboxPath`.
 
 ## Repository configuration, not a product feature
 

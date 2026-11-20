@@ -37,16 +37,22 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation) with Phase 1 WP-1.1-WP-1.9 merged. The Java, Web, CLI, and Python skeletons
-exist and are verified, along with the localization tooling, core project documents, and Japanese
-README. Build/test, lint, i18n, CodeQL, dependency review, Scorecard, and two compatibility jobs run
-in CI, and branch protection with required checks is enforced on `main`. The architecture documents,
-ADR set, threat-model draft, support-matrix design, implementation-status page,
+Phase 0 (foundation) with Phase 1 WP-1.1-WP-1.9 and WP-2.1 merged. The Java, Web, CLI, and Python
+skeletons exist and are verified, along with the localization tooling, core project documents, and
+Japanese README. Build/test, lint, i18n, CodeQL, dependency review, Scorecard, and two compatibility
+jobs run in CI, and branch protection with required checks is enforced on `main`. Architecture
+documents, the ADR set, a threat-model draft, support-matrix design, implementation-status page,
 REST/AsyncAPI/configuration specifications, and GitHub community forms exist. WP-1.8 added a pinned
 Paper smoke harness; passing results at merge commit `839b789` on Ubuntu and Windows recorded plugin
 enable, the localized banner, authenticated `/api/v1/server`, a conflicting Netty fixture, and clean
-disable with Netty threads released. This is smoke evidence, not a support tier. The full integration
-suite has not run, and no in-game `/deploymc` command has been exercised.
+disable with Netty threads released. This is smoke evidence, not a support tier. WP-2.1 merged in
+[PR #153](https://github.com/woxlo1/DeployMC/pull/153) at `748bbc8` with issue #50 closed. It adds a
+canonical `SandboxResolver`, host-controlled policy, protected/deny globs, root revalidation,
+post-open file-key checks, localized rejections, and a deterministic corpus/fuzz suite. PR checks
+and post-merge CI, CodeQL, and Scorecard passed. No file API, transport handler, running server, or
+in-game command uses the resolver yet, and exact-byte preservation for existing NFD filenames is not
+implemented. The full integration suite has not run, and no in-game `/deploymc` command has been
+exercised.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
@@ -57,7 +63,8 @@ Verified commands (2026-11-20 for Java, 2026-11-18 for the other toolchains; Win
 `node tools/build/verify-all.cjs`, which orders Web before Java:
 
 ```powershell
-.\gradlew.bat build            # compiles all Java modules, runs 165 Java tests, runs Spotless check
+.\gradlew.bat build            # compiles all Java modules, runs 181 Java tests (1 skipped)
+                              # and runs the Spotless check
 .\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
 .\gradlew.bat spotlessApply    # formats Java sources and repository text files
 ```
