@@ -127,13 +127,22 @@ an implementation that lacks the feature.
 |---|---|---|---|
 | `files.path-rejected` | 400 | no | The path failed sandbox validation (traversal, reserved name, symlink policy, invalid Unicode, and similar). |
 | `files.not-found` | 404 | no | The file or directory does not exist. |
+| `files.not-directory` | 400 | no | A directory was required but the path names a file, or vice versa. |
 | `files.already-exists` | 409 | no | The target already exists and the operation does not overwrite. |
 | `files.revision-conflict` | 412 | no | The supplied revision does not match the current one. |
 | `files.revision-mismatch` | 412 | no | An `errors[]` entry code describing the expected and actual revisions. |
-| `files.too-large` | 413 | no | The file or upload exceeds the configured limit. |
+| `files.too-large` | 413 | no | The file, upload, listing, or deletion exceeds the configured limit. |
 | `files.protected` | 403 | no | The path is protected (`.deploymc/`, DeployMC config, secret store, or a deny pattern). |
 | `files.binary-not-editable` | 415 | no | A binary file was requested as editable text. Download is available instead. |
 | `files.directory-not-empty` | 409 | no | A non-recursive delete targeted a non-empty directory. |
+| `files.invalid-range` | 416 | no | A byte-range request was negative, malformed, or outside the file. |
+| `files.delete-confirmation-required` | 409 | no | Recursive deletion did not confirm the current entry count. |
+| `files.delete-limit-exceeded` | 413 | no | A tree exceeds the host-controlled deletion entry cap. |
+| `files.snapshot-required` | 409 | no | A destructive operation was attempted without a configured snapshot hook. |
+| `files.snapshot-failed` | 503 | yes | Snapshot capture failed; the mutation was aborted before changing files. |
+| `files.atomic-move-unsupported` | 500 | no | The file system cannot perform the required atomic move; no partial write was committed. |
+| `files.invalid-operation` | 400 | no | The operation is not valid for this target, such as writing the sandbox root. |
+| `files.io` | 500 | yes | A host file-system failure prevented the operation. Details are sanitized. |
 
 ### Snapshots
 
