@@ -1,5 +1,14 @@
 description = "Platform-independent DeployMC core."
 
+// Security corpora live with the other security tests and are shared by unit and fuzz runs.
+sourceSets {
+    test {
+        resources {
+            srcDir("../tests/security")
+        }
+    }
+}
+
 dependencies {
     api(project(":api"))
     implementation(libs.snakeyaml)
