@@ -118,10 +118,15 @@ jobs:
       - name: Run Paper smoke entry
         shell: bash
         run: |
-          export PATH="$JAVA_HOME_25_X64/bin:$PATH"
-          java -version
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            java25="$(cygpath -w "$JAVA_HOME_25_X64/bin/java.exe")"
+          else
+            java25="$JAVA_HOME_25_X64/bin/java"
+          fi
+          python -c "import subprocess,sys; subprocess.run([sys.argv[1], '-version'], check=True)" "$java25"
           python tests/compat-matrix/harness.py run \
             --entry paper-26.3 \
+            --java "$java25" \
             --plugin-jar plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar \
             --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/legacy-netty-fixture-1.0.0.jar \
             --cache-dir tests/compat-matrix/.cache \
