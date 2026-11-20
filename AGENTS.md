@@ -37,24 +37,27 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation). The Java, Web, CLI, and Python skeletons exist and are verified, along with the
-localization tooling, core project documents, and Japanese README. Build/test, lint, i18n, CodeQL,
-dependency review, and Scorecard workflows run in CI, and branch protection with required checks is
-enforced on `main`. The architecture documents, ADR set, threat-model draft, support-matrix design,
-implementation-status page, REST/AsyncAPI/configuration specifications, and GitHub community forms
-exist. The compatibility harness is not written yet. No DeployMC feature runs inside a Minecraft
-server.
+Phase 0 (foundation) with Phase 1 WP-1.1-WP-1.9 merged. The Java, Web, CLI, and Python skeletons
+exist and are verified, along with the localization tooling, core project documents, and Japanese
+README. Build/test, lint, i18n, CodeQL, dependency review, Scorecard, and two compatibility jobs run
+in CI, and branch protection with required checks is enforced on `main`. The architecture documents,
+ADR set, threat-model draft, support-matrix design, implementation-status page,
+REST/AsyncAPI/configuration specifications, and GitHub community forms exist. WP-1.8 added a pinned
+Paper smoke harness; passing results at merge commit `839b789` on Ubuntu and Windows recorded plugin
+enable, the localized banner, authenticated `/api/v1/server`, a conflicting Netty fixture, and clean
+disable with Netty threads released. This is smoke evidence, not a support tier. The full integration
+suite has not run, and no in-game `/deploymc` command has been exercised.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
 individual commands below are for investigating one toolchain.
 
-Verified commands (2026-11-18, Windows 11, Gradle 8.10.2 wrapper, JDK 21 toolchain). The Java build
-packages `web/dist`, so build Web first or run `node tools/build/verify-all.cjs`, which orders Web
-before Java:
+Verified commands (2026-11-20 for Java, 2026-11-18 for the other toolchains; Windows 11, Gradle
+8.10.2 wrapper, JDK 21 toolchain). The Java build packages `web/dist`, so build Web first or run
+`node tools/build/verify-all.cjs`, which orders Web before Java:
 
 ```powershell
-.\gradlew.bat build            # compiles all Java modules, runs 93 Java tests, runs Spotless check
+.\gradlew.bat build            # compiles all Java modules, runs 165 Java tests, runs Spotless check
 .\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
 .\gradlew.bat spotlessApply    # formats Java sources and repository text files
 ```
@@ -99,6 +102,17 @@ node tools/i18n/check                        # 0 errors, 0 warnings
 node --test tools/i18n/test/check.test.cjs   # 7 tests
 node tools/i18n/check --write-status         # regenerates docs/i18n/STATUS.md
 ```
+
+Verified compatibility-harness commands (2026-11-20), run from the repository root:
+
+```powershell
+python -m unittest discover -s tests/compat-matrix -p 'test_*.py'   # 14 tests
+python tests/compat-matrix/harness.py render <result.json> [<result.json> ...]
+```
+
+The real Paper 26.3 smoke entry requires Java 25. CI runs it on Ubuntu and Windows; a local run with
+`--java <path-to-Java-25>` reported `compat entry paper-26.3: pass`. See
+[`tests/compat-matrix/README.md`](tests/compat-matrix/README.md).
 
 On Windows, Gradle test workers cannot load test classes when the absolute repository path contains
 non-ASCII characters. This machine's path contains `ドキュメント`; create an ASCII junction and run

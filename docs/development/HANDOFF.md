@@ -19,9 +19,9 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   `BukkitPlatformAdapter`, localized startup banner/messages, capability map, and task cleanup.
   Verified with `.\gradlew.bat build verifyJava8 --console=plain` through the ASCII junction:
   70 Java tests, 0 failures, Java 8 bytecode check passed. `node tools/build/verify-all.cjs`
-  reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`. Real Paper-latest load
-  and clean-disable thread-dump verification were **not** performed; they are recorded on the
-  compatibility harness issue.
+  reported `PASS` for `java`, `web`, `cli`, `python`, `spec`, and `i18n`. Real Paper load and
+  clean-disable thread dumps were not performed at that stage; the pinned WP-1.8 smoke entry later
+  covered both.
 - WP-1.3 (issue #43) was completed in PR #135 and merged at `dbb32ae`; the issue closed. ADR-0003
   accepted Netty 4.1.141.Final after the recorded spike, and `transport/` now has internal
   interfaces, `NettyTransportServer`, config/policy/logging types, and 9 integration tests. The
@@ -107,19 +107,23 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   fixed by `18eb9f7` before the passing rerun. Post-merge CI, CodeQL, and Scorecard runs passed, and
   issue #49 closed at 2026-11-20T07:17:29Z. No real server, in-game command, browser,
   conflicting-library classloader, or text-component check was performed.
-- WP-1.8 (issue #48) is implemented on `feat/wp-1.8-compatibility-harness` and under final
-  verification. It adds the official-API Paper harness, host-provisioned token smoke test against
-  `/api/v1/server`, a conflicting Netty fixture plugin, and before/after-disable thread dumps. The
-  earlier deferred check was recorded on
-  [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). No support tier
-  is claimed.
+- WP-1.8 (issue #48) merged in PR #151 at `839b789ae8483f83dcb4b430641b7f0eafccb303`; the issue
+  closed as completed at 2026-11-20T08:42:28Z. It adds the official-API Paper harness, host-provisioned
+  token smoke test against `/api/v1/server`, a conflicting Netty fixture plugin, and
+  before/after-disable thread dumps. All PR checks passed after the Windows Java-path fix
+  `9dd87ed`; post-merge CI [44704690836](https://github.com/woxlo1/DeployMC/actions/runs/44704690836),
+  CodeQL [44704690767](https://github.com/woxlo1/DeployMC/actions/runs/44704690767), and Scorecard
+  [44704690925](https://github.com/woxlo1/DeployMC/actions/runs/44704690925) passed. CI artifacts
+  rendered passing Linux and Windows rows into the [support matrix](../compatibility/support-matrix.md).
+  No support tier is claimed.
 
 ## In flight
 
 - WP-1.9 merged in PR #149 at `3244680`, issue #49 is closed, and no WP-1.9 work remains in flight.
+- WP-1.8 merged in PR #151 at `839b789`, issue #48 is closed, and no WP-1.8 work remains in flight.
 - WP-1.7 merged in PR #147 at `db3e33a`, issue #47 is closed, and no WP-1.7 work remains in flight.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 82. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 81. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -129,8 +133,8 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Continue with #48, then category 3 (#115-#120), category 4 (#121-#123), and category 5
-   (#124-#130).
+1. Continue with #50 (WP-2.1: Sandbox path resolver), then the rest of category 2, category 3
+   (#115-#120), category 4 (#121-#123), and category 5 (#124-#130).
 2. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
@@ -146,6 +150,9 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 - Paper 26.3 requires Java 25 at runtime. Build with JDK 21 and run only the Paper process with
   Java 25. The server's console has no `disable <plugin>` command; the compatibility fixture
   registers `fixture-disable-deploymc`, which calls the Bukkit API for the harness.
+- In Git Bash, prepending a Windows-style `C:\...` path to `PATH` does not make `java` resolve to
+  that executable; the first Windows compatibility job silently used Java 21. Pass the native path
+  with `--java` and normalize it with `cygpath -w` when `RUNNER_OS=Windows`.
 - PowerShell splits a bare `-Pdeploymc.verifyJarFile=...` Gradle argument. Use
   `--project-prop=deploymc.verifyJarFile=...` before the task name when running
   `:plugin:verifyPluginJarFixture`.

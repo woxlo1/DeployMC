@@ -23,12 +23,13 @@ Phase 0 is in progress. Verified today:
   design.
 - Source-linked naming, competitive, and license research in `docs/research/`.
 
-Issue forms and community automation, the REST/AsyncAPI/configuration specification skeletons, and
-the naming, competitive, and license research are complete. Not yet done in Phase 0: the
-compatibility harness.
+Issue forms and community automation, the REST/AsyncAPI/configuration specification skeletons, the
+naming, competitive, and license research, and the v1 compatibility harness are complete. The
+harness records smoke evidence only; the full compatibility integration suite is not done.
 
-No DeployMC feature runs inside a Minecraft server yet. The current matrix has no Tier 1, 2, or 3
-entry.
+A pinned Paper smoke run observes plugin enable, the localized banner, authenticated
+`/api/v1/server`, a conflicting-library fixture, and clean disable on Ubuntu and Windows. The
+current matrix has no Tier 1, 2, or 3 entry.
 
 ## Phase 0 — Project foundation (0.1.0)
 

@@ -1,8 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-20 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, WP-1.7, and WP-1.9 merged
-and closed). Verified against `main` at `3244680` after PR #149; earlier merge evidence is recorded
-below.
+Last updated: 2026-11-20 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, WP-1.7, WP-1.8, and WP-1.9
+merged and closed). Verified against `main` at `839b789` after PR #151; earlier merge evidence is
+recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -28,29 +28,34 @@ This is the session-level status page. For per-component facts use
   `db3e33a`; the issue closed automatically. Evidence PR #148 merged at `d4ce4c6` with all required
   checks and post-merge workflows passing. WP-1.9 (issue #49), host-provisioned SHA-256 token records
   and the fail-closed HTTP/WebSocket gate, merged in PR #149 at `3244680`; the issue closed
-  automatically. Verification is recorded below.
+  automatically. WP-1.8 (issue #48), the pinned Paper compatibility smoke harness with a
+  conflicting Netty fixture and before/after-disable thread dumps, merged in PR #151 at `839b789`;
+  the issue closed as completed. Verification is recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-20 after PR #149 was merged and issue #49 was closed:
+Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
 ```text
-git log -1 --oneline
-3244680 feat(auth): add host-provisioned token authentication
+git log -1 --oneline origin/main
+839b789 feat(compat): add Paper compatibility smoke harness (#151)
 
-gh pr view 149 --json state,mergeCommit,url
-state=MERGED mergeCommit=32446800b5e7d2e8cf5fd249b9fccb174a5b117b
-url=https://github.com/woxlo1/DeployMC/pull/149
+gh pr view 151 --json state,mergeCommit,url
+state=MERGED mergeCommit=839b789ae8483f83dcb4b430641b7f0eafccb303
+url=https://github.com/woxlo1/DeployMC/pull/151
 
-gh issue view 49 --json state,stateReason,closedAt
-state=CLOSED stateReason=COMPLETED closedAt=2026-11-20T07:17:29Z
+gh issue view 48 --json state,stateReason,closedAt
+state=CLOSED stateReason=COMPLETED closedAt=2026-11-20T08:42:28Z
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
-open issues: 82
+open issues: 81
 ```
+
+The earlier PR #149 state is preserved in the repository history. Required branch-protection checks
+now also include `Compatibility (ubuntu-latest)` and `Compatibility (windows-latest)`.
 
 All 18 pull-request checks passed before merge (16 required). The first Windows Java check failed
 only on the immediate Netty thread-termination assertion; `18eb9f7` bounded that wait, and the rerun
@@ -237,6 +242,49 @@ were core 64, transport 32, api 8, Bukkit 51, and standalone 4. PR #149 merged a
 above. No real Minecraft server load, in-game command execution, browser rendering,
 conflicting-library classloader check, or text-component compatibility check was performed.
 
+## WP-1.8 verification
+
+The work was organized into eight logical commits on `feat/wp-1.8-compatibility-harness` before the
+squash merge: transport catalog fix, Bukkit transport wiring, harness and fixture, verifier step,
+CI job, OpenAPI status, compatibility documentation, and status pages. A ninth commit fixed the
+Windows runner Java path before the passing rerun. These commands were run on 2026-11-20 on the
+ASCII junction; all passed:
+
+```text
+python -m unittest discover -s tests/compat-matrix -p 'test_*.py'
+  Ran 14 tests ... OK
+node tools/build/verify-all.cjs
+  PASS web, java, cli, python, spec, i18n, compat
+.\gradlew.bat spotlessApply --console=plain
+  BUILD SUCCESSFUL
+git diff --check
+  no output
+python tests/compat-matrix/harness.py run --entry paper-26.3 \
+  --plugin-jar plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar \
+  --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/legacy-netty-fixture-1.0.0.jar \
+  --result tests/compat-matrix/results/compat-v1-local.json \
+  --java 'C:\Users\satos\AppData\Local\Temp\opencode\jdk25\extracted\jdk-25.0.5+8\bin\java.exe'
+  compat entry paper-26.3: pass
+```
+
+The local result recorded Paper 26.3 build 256 on Java 25.0.5, API and Minecraft ports 50989 and
+50990, 14 capabilities, and no `DeployMC-netty-*` thread after explicit disable. The first PR run
+[44703288127](https://github.com/woxlo1/DeployMC/actions/runs/44703288127) failed only
+`Compatibility (windows-latest)`: Git Bash did not resolve the Windows-style `PATH` entry and started
+Paper with Java 21. Commit `9dd87ed` passes the native Java 25 path with `--java`; the rerun
+[44704128125](https://github.com/woxlo1/DeployMC/actions/runs/44704128125) passed all required
+checks. Post-merge runs passed: CI
+[44704690836](https://github.com/woxlo1/DeployMC/actions/runs/44704690836), CodeQL
+[44704690767](https://github.com/woxlo1/DeployMC/actions/runs/44704690767), and Scorecard
+[44704690925](https://github.com/woxlo1/DeployMC/actions/runs/44704690925).
+
+The CI artifacts `compat-v1-ubuntu-latest` and `compat-v1-windows-latest` each contain a passing
+result at `839b789`. Both report MC 26.3 build 256, Java 25.0.5, 2988 unrelocated Netty classes in
+the fixture, 2164 relocated Netty classes in DeployMC, four `DeployMC-netty-*` threads before
+disable and none after, and every required harness check true. They were rendered into the
+[support matrix](../compatibility/support-matrix.md). This is smoke evidence only: the Tier 1/2/3
+matrix remains empty and `softwareName` is still `Unknown`.
+
 ## Known limitations
 
 - DeployMC is pre-alpha. A real Paper smoke run observes plugin enable, transport startup,
@@ -267,10 +315,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #49 (all done) -> category 2
-(#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Continue
-with the next open category 2 item after #48 is landed. Start the next item only when earlier items
-are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49 (all done) ->
+category 2 (#50-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
+Continue with #50 (WP-2.1: Sandbox path resolver). Start the next item only when earlier items are
+complete or the owner explicitly approves.
 
 ## Release checklist
 
