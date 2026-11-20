@@ -63,12 +63,12 @@ reviewed Tier 3 report.
 <!-- BEGIN GENERATED SMOKE MATRIX -->
 ### Generated compatibility smoke results (not a support tier)
 
-These rows record only the v1 smoke suite: concurrent load with an older Netty fixture,
-authenticated `/api/v1/server`, before/after-disable thread dumps, logs, and clean shutdown. They
-do not earn Tier 1 or Tier 2.
+These rows record only the v1 smoke suite: concurrent load with an older Netty fixture, authenticated `/api/v1/server`, before/after-disable thread dumps, logs, and clean shutdown. They do not earn Tier 1 or Tier 2.
 
 | Suite | Entry | Minecraft | Build | OS | DeployMC commit | Result | Run | Date |
 |---|---|---|---|---|---|---|---|---|
+| compat-v1 | paper-26.3 | 26.3 | 256 | Linux-7.0.0-1019-azure-x86_64-with-glibc2.43 | 839b789ae8483f83dcb4b430641b7f0eafccb303 | pass | [run](https://github.com/woxlo1/DeployMC/actions/runs/44704690836) | 2026-11-20T08:43:32Z |
+| compat-v1 | paper-26.3 | 26.3 | 256 | Windows-2025Server-10.0.26100-SP0 | 839b789ae8483f83dcb4b430641b7f0eafccb303 | pass | [run](https://github.com/woxlo1/DeployMC/actions/runs/44704690836) | 2026-11-20T08:44:23Z |
 <!-- END GENERATED SMOKE MATRIX -->
 
 ## Evidence fields
