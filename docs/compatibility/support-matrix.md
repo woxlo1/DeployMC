@@ -1,9 +1,12 @@
 # Support Matrix
 
-> **Status: design (2026-11-17).** This document defines how support is claimed and
-> verified. **The current matrix is empty.** No Minecraft server of any version or platform
-> has loaded DeployMC, and no compatibility harness exists. Nothing in the "candidate"
-> section is a support claim.
+> **Status (2026-11-20): v1 smoke harness implemented; no support tier earned.** This document
+> defines how support is claimed and verified. **The Tier 1/2/3 matrix is empty.** The v1 harness
+> loads a pinned Paper build in CI with a conflicting-library fixture, checks an authenticated
+> `/api/v1/server` response, compares thread dumps before and after an explicit plugin disable,
+> and records real smoke evidence in a separate generated section. It does not run the full
+> integration suite, so it does not claim support. Nothing in the "candidate" section is a support
+> claim.
 
 The normative definitions are in the master specification (Part 3). This document is the
 working matrix and the rules for changing it.
@@ -47,7 +50,8 @@ enough for Tier 1 or Tier 2; it may become a Tier 3 entry with a note.
 
 ## Current matrix
 
-**Empty.** No DeployMC build has been loaded by a Minecraft server.
+**Empty.** The v1 harness has loaded DeployMC on Paper, but the full integration suite has not
+run, so no Tier 1/2/3 row is justified.
 
 | Tier | Platform | Server version | Minecraft | Java | OS | DeployMC commit | Run | Result | Date |
 |---|---|---|---|---|---|---|---|---|---|
@@ -55,6 +59,17 @@ enough for Tier 1 or Tier 2; it may become a Tier 3 entry with a note.
 
 Do not add a row here by hand to advertise intent. Rows come from harness results or from a
 reviewed Tier 3 report.
+
+<!-- BEGIN GENERATED SMOKE MATRIX -->
+### Generated compatibility smoke results (not a support tier)
+
+These rows record only the v1 smoke suite: concurrent load with an older Netty fixture,
+authenticated `/api/v1/server`, before/after-disable thread dumps, logs, and clean shutdown. They
+do not earn Tier 1 or Tier 2.
+
+| Suite | Entry | Minecraft | Build | OS | DeployMC commit | Result | Run | Date |
+|---|---|---|---|---|---|---|---|---|
+<!-- END GENERATED SMOKE MATRIX -->
 
 ## Evidence fields
 
@@ -121,7 +136,47 @@ behavior must also be compatible.
 
 ## Harness design
 
-Planned location: `tests/compat-matrix/`. Not implemented.
+The v1 harness lives in `tests/compat-matrix/`. It is implemented with the Python standard
+library and runs on Ubuntu and Windows. Entry definitions are pinned in `entries.json`; the
+current entry is Paper 26.3 build 256, selected through PaperMC's official Fill API and verified
+by the SHA-256 digest that the API supplies. The Gradle build uses JDK 21 while the server process
+uses Java 25, which Paper 26.3 requires. Evidence and API research are recorded in
+[Paper download API](../research/paper-download-api.md).
+
+### v1 scope
+
+The v1 smoke entry does the following:
+
+1. Resolve the pinned build through the official API and verify its SHA-256 digest.
+2. Cache the download by digest; a cached file is re-hashed before use.
+3. Create an isolated sandbox, accept the EULA only there, and write a minimal flat world config.
+4. Provision a one-run token record directly in `plugins/DeployMC/tokens.d/`.
+5. Install a fixture plugin that bundles unrelocated Netty 4.1.100.Final and compare its shaded
+   classes with DeployMC's relocated Netty 4.1.141.Final namespace before starting the server.
+6. Start the server headless with distinct loopback ports for Minecraft and the API, wait for a
+   real `Done (...)` log signal, then poll `/healthz`. It never sleeps a fixed time to guess
+   readiness.
+7. Call `/api/v1/server` twice: without credentials (expect `401`) and with the provisioned token
+   (expect documented `ServerInfo` plus `ETag` and `X-Request-Id`).
+8. Capture a thread dump, disable DeployMC through the fixture's Bukkit-API command, verify the
+   adapter release log, and capture a second thread dump to confirm `DeployMC-netty-*` threads are
+   gone.
+9. Record the server log, both dumps, and a JSON result, then send `stop` and force-kill only after
+   a timeout. Upload logs and results as CI artifacts and render a generated smoke-result section.
+
+The harness never parses a token from console output and never writes the secret to a result or
+log. The token is host-provisioned through the same WP-1.9 mechanism used by administrators.
+
+### Deferred verification
+
+The conflicting-library and before/after-disable checks from issue #48 comments are now part of
+v1. The following remain explicitly **not** claimed:
+
+- The full shared integration suite (file read/write, snapshot, deploy, console stream, and
+  restart semantics) required for a Tier 1 or Tier 2 row.
+- Support claims for any platform or version. The generated smoke table is evidence only.
+- Other Bukkit-family forks, older versions, proxies, and standalone mode; each needs its own
+  entry and evidence.
 
 ### Flow per entry
 
@@ -179,10 +234,10 @@ Demotion is recorded in the matrix history, not just the current table.
 
 ## Reporting a result
 
-Until the harness exists, compatibility reports can be accepted through a compatibility
-issue form (planned) and are labeled unverified. A report must include the evidence fields,
-the server log, and the exact DeployMC commit. A maintainer reproduces it before it affects
-the matrix. A community report alone is Tier 3 at most.
+Until the full integration suite exists, compatibility reports can be accepted through a
+compatibility issue form (planned) and are labeled unverified. A report must include the
+evidence fields, the server log, and the exact DeployMC commit. A maintainer reproduces it
+before it affects the matrix. A community report alone is Tier 3 at most.
 
 ## What is not a support claim
 

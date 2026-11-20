@@ -1,7 +1,7 @@
 # Implementation Status
 
 Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.7 and WP-1.9 merged;
-issues #47 and #49 closed).
+issues #47 and #49 closed. WP-1.8 is implemented and under final verification for issue #48.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -17,12 +17,14 @@ static asset handler for the built Web UI, a Java configuration loader with sche
 migrations, safe reload, and fail-closed property tests, a server-side plugin message i18n
 runtime, an automated final-JAR packaging verifier, and host-provisioned bearer tokens enforced by
 a fail-closed HTTP/WebSocket gate.
-**No DeployMC feature has been observed running inside a Minecraft server.** The adapter has only
-server-free tests. The transport rejects every route except `/healthz` and `/readyz` without a valid
-token, but it still has no application resource handlers. There is no sandbox, snapshot store,
-deployment engine, authorization, audit log, or Web UI screen; the packaged Web UI has not been
-rendered in a browser. The WP-1.5 command surface, WP-1.6 message runtime, and WP-1.9 token command
-have only server-free tests; none has been executed on a real Minecraft server.
+A WP-1.8 smoke run has now observed the plugin enabling on a real Paper server, the localized
+startup banner, authenticated `/api/v1/server`, a conflicting-library fixture loading alongside
+DeployMC, and a clean explicit disable with Netty threads released. This is smoke evidence, not a
+support tier or a full feature validation. The transport rejects every route except `/healthz` and
+`/readyz` without a valid token, but it still has no application resource handlers. There is no
+sandbox, snapshot store, deployment engine, authorization, audit log, or Web UI screen; the
+packaged Web UI has not been rendered in a browser. The WP-1.5 command surface, WP-1.6 message
+runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
 ## Verified working today
 
@@ -44,13 +46,14 @@ These were actually run, not just written. Commands are the ones documented in
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
-| One-command local verification | All six toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all six reported `PASS` |
+| One-command local verification | All seven toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all seven reported `PASS` |
 | CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job and plugin JAR size report | GitHub Actions runs on `main` |
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
+| WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, and a real local Paper 26.3 build 256 smoke run; no support tier |
 
 The most recent all-toolchain run was `node tools/build/verify-all.cjs` on the merged
 `feat/wp-1.9-token-authentication` branch, which reported `PASS` for `web`, `java`, `cli`, `python`,
@@ -349,7 +352,7 @@ The following are documented as intended behavior. They are **not** code.
 | Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, and `/deploymc` commands |
 | Audit log | [Audit log format](../../specification/audit/audit-log-format.md) | Format definition; no log is written |
 | Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
-| Support matrix | [Support matrix](../compatibility/support-matrix.md) | Empty; harness not built |
+| Support matrix | [Support matrix](../compatibility/support-matrix.md) | Tier matrix empty; v1 smoke harness built, including conflict and thread-dump checks |
 | ADRs 0001-0014 | [ADR index](../adr/README.md) | Decision records |
 
 ## Not started
@@ -364,17 +367,17 @@ The following are documented as intended behavior. They are **not** code.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
-- Real-server load, in-game command execution, clean-disable thread dumps, and conflicting-library classloader checks for #48.
+- Real-server execution of in-game `/deploymc` commands; the WP-1.8 smoke uses the HTTP API and a fixture disable command, not the product command surface.
 - Native review of the Japanese command and authentication catalogs.
 - Contract tests that check a running implementation against the API skeletons.
 - Web UI screens (file tree, editor, diff, deployment view, console, audit).
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
-- Real-server compatibility harness and any Tier 1/2/3 entry.
+- Tier 1/2/3 entries and the full integration suite; the v1 smoke harness exists but intentionally earns no tier.
 - Platform adapters for Folia, Velocity, BungeeCord, or standalone. The Bukkit adapter source exists but is not server-validated.
 - Additional bundled third-party dependencies beyond Netty and SnakeYAML; each addition needs a new
-  relocation rule and verifier evidence. The real-server conflicting-library classloader check and a
-  numeric artifact size budget remain open; only the size report is implemented.
+  relocation rule and verifier evidence. The real-server conflicting-library check is covered by the
+  v1 smoke entry, but a numeric artifact size budget remains open; only the size report is implemented.
 
 ## Module inventory
 
@@ -397,7 +400,7 @@ The following are documented as intended behavior. They are **not** code.
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
 | `specification/` | REST, WebSocket, error, config, audit, and deployment skeletons; threat model draft |
-| `tests/` | Standalone ADR-0003 transport spike build; no compatibility harness |
+| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, and the conflicting-library fixture plugin |
 
 ## How to verify this page
 

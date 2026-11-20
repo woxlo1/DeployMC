@@ -20,6 +20,8 @@ public final class MessageKeys {
   public static final String MESSAGE_SHUTDOWN_REQUESTED = "message.shutdownRequested";
   public static final String LIFECYCLE_DISABLED = "lifecycle.disabled";
   public static final String LIFECYCLE_START_FAILED = "lifecycle.startFailed";
+  public static final String STARTUP_TRANSPORT_FAILED = "startup.transportFailed";
+  public static final String LIFECYCLE_TRANSPORT_STOP_FAILED = "lifecycle.transportStopFailed";
   public static final String WARNING_DATA_FOLDER = "warning.dataFolder";
   public static final String COMMAND_USAGE = "command.usage";
   public static final String COMMAND_PERMISSION_DENIED = "command.permissionDenied";

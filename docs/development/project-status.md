@@ -239,16 +239,19 @@ conflicting-library classloader check, or text-component compatibility check was
 
 ## Known limitations
 
-- DeployMC is pre-alpha. No DeployMC feature runs inside a Minecraft server.
-- The WP-1.5 command surface, WP-1.6 message runtime, and WP-1.9 token command have server-free tests
-  only; none has run on a real Minecraft server.
+- DeployMC is pre-alpha. A real Paper smoke run observes plugin enable, transport startup,
+  authenticated `/api/v1/server`, and clean shutdown, but the full feature set has not been tested
+  on a server.
+- The WP-1.5 command surface and WP-1.6 per-sender message path still have server-free tests only;
+  the smoke run does not execute `/deploymc` in-game.
 - Only `auth.mode: token` is implemented. `cloudflare` and `local-onetime` refuse startup.
 - Every token is admin-equivalent until 0.4.0; RBAC and path scopes do not exist yet.
 - Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
   real-server verification. See [plugin messages](../i18n/plugin-messages.md).
-- The compatibility matrix is empty; no harness exists. See [compat status](compat-status.md).
-- Final-JAR verification is local and build-time only; no real-server classloader conflict or
-  artifact size budget is enforced.
+- The support-tier matrix is empty; the v1 smoke harness records real Paper evidence but earns no
+  tier. See [compat status](compat-status.md).
+- Final-JAR verification is local and build-time only. A real-server classloader smoke check now
+  exists, but no numeric artifact size budget is enforced.
 - Research is desk research with source links; no hands-on competitor test, benchmark, or legal
   review was performed. See [research](../research/README.md).
 - Japanese Web and plugin message strings are machine-translated drafts without native review. See
@@ -266,7 +269,8 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #49 (all done) -> category 2
 (#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Continue
-with #48. Start the next item only when earlier items are complete or the owner explicitly approves.
+with the next open category 2 item after #48 is landed. Start the next item only when earlier items
+are complete or the owner explicitly approves.
 
 ## Release checklist
 

@@ -129,11 +129,24 @@ function buildSteps() {
         { command: "git diff --exit-code -- docs/i18n/STATUS.md", cwd: root },
       ],
     },
+    {
+      // Offline harness checks only; the real Paper smoke entry runs in CI.
+      key: "compat",
+      name: "Compatibility harness (offline unit tests)",
+      commands: [
+        {
+          command: `${q(basePython)} -m unittest discover -s tests/compat-matrix -p ${q("test_*.py")}`,
+          cwd: root,
+        },
+      ],
+    },
   ];
 }
 
 function usage() {
-  console.log("Usage: node tools/build/verify-all.cjs [--only=java,web,cli,python,spec,i18n]");
+  console.log(
+    "Usage: node tools/build/verify-all.cjs [--only=java,web,cli,python,spec,i18n,compat]",
+  );
   console.log("Runs the local equivalents of the CI jobs from the repository root.");
   console.log("A failing command stops its toolchain but the other toolchains still run.");
 }

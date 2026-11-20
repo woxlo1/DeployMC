@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "id": "paper-26.3",
+      "project": "paper",
+      "minecraftVersion": "26.3",
+      "build": 256,
+      "channel": "STABLE",
+      "expectedJava": 21,
+      "suite": "compat-v1"
+    }
+  ]
+}
