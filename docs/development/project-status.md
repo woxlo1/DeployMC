@@ -1,8 +1,9 @@
 # Project Status
 
 Last updated: 2026-11-20 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, WP-1.7, WP-1.8, and WP-1.9
-merged and closed). Verified against `main` at `839b789` after PR #151; earlier merge evidence is
-recorded below.
+merged and closed. WP-2.1 implementation is in PR #153; local verification passed and PR checks are
+in progress). Verified against `main` at `b57f549` after PR #152; earlier merge evidence is recorded
+below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -30,7 +31,10 @@ This is the session-level status page. For per-component facts use
   and the fail-closed HTTP/WebSocket gate, merged in PR #149 at `3244680`; the issue closed
   automatically. WP-1.8 (issue #48), the pinned Paper compatibility smoke harness with a
   conflicting Netty fixture and before/after-disable thread dumps, merged in PR #151 at `839b789`;
-  the issue closed as completed. Verification is recorded below.
+  the issue closed as completed. Verification is recorded below. WP-2.1 (issue #50), the canonical
+  sandbox resolver, host-controlled policy, localized rejections, and security corpus, is implemented
+  in PR #153; local verification passed. Merge and issue-closure evidence will be recorded after the
+  required checks pass and the PR is merged.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -64,6 +68,36 @@ passed. Post-merge `main` runs passed: CI
 [44693880985](https://github.com/woxlo1/DeployMC/actions/runs/44693880985), and Scorecard
 [44693881125](https://github.com/woxlo1/DeployMC/actions/runs/44693881125). Earlier WP-1.7 merge
 evidence remains in the repository history.
+
+## WP-2.1 verification (pre-merge)
+
+These commands were run on 2026-11-20 on `feature/wp-2.1-sandbox-resolver` before PR #153 was merged:
+
+```text
+python tests/security/sandbox/generate_corpus.py
+reject=2736 allow=29
+
+$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii"
+node tools/build/verify-all.cjs
+PASS web
+PASS java
+PASS cli
+PASS python
+PASS spec
+PASS i18n
+PASS compat
+
+.\gradlew.bat spotlessApply :core:test --tests '*Sandbox*' --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+16 tests: 15 passed, 1 skipped
+```
+
+The sandbox-only suite contains 3 corpus tests, 1 seeded fuzz test, and 12 resolver behavior tests.
+The skipped test requires symlink creation, which this Windows host does not allow without elevation.
+The full Gradle build in `verify-all.cjs` ran 181 Java tests with 0 failures, 0 errors, and 1 skipped
+test. `DEPLOYMC_JAVA_ROOT` selected the existing ASCII junction so Gradle and Spotless saw one project
+path; otherwise this host can create a second junction and fail Spotless with a path mismatch. PR
+checks were still in progress when this section was written and are not claimed as passed here.
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
@@ -317,7 +351,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49 (all done) ->
 category 2 (#50-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
-Continue with #50 (WP-2.1: Sandbox path resolver). Start the next item only when earlier items are
+#50 (WP-2.1: Sandbox path resolver) is implemented in PR #153. Finish its documentation, verify the
+required checks, comment on and merge the PR, confirm issue closure, record post-merge evidence, and
+delete the branch before starting the next item. Start later items only when earlier items are
 complete or the owner explicitly approves.
 
 ## Release checklist

@@ -1,11 +1,11 @@
 # Threat Model
 
-> **Status: draft, design-level (2026-11-17).** This document describes the threats DeployMC
-> is designed to address and the ones it explicitly does not. It is written before
-> authentication is implemented, as required by the master specification (section 9.0).
-> Nothing in this document has been validated against a running system: no sandbox, audit
-> log, authentication, or deployment engine exists yet. It will be revised as implementation
-> and security tests produce evidence.
+> **Status: draft, design-level with WP-2.1 implementation evidence (2026-11-20).** This document
+> describes the threats DeployMC is designed to address and the ones it explicitly does not.
+> The token authenticator and sandbox resolver now exist in code; RBAC, an audit log, and a
+> deployment engine do not. Nothing in this document has been validated against a running system:
+> the resolver has unit, corpus, and fuzz evidence, but no file API or server process uses it yet.
+> It will be revised as implementation and security tests produce further evidence.
 
 ## Why this document exists
 
@@ -120,8 +120,15 @@ Each path lists the primary controls. "Residual" states what remains after the c
   dangerous segments on every platform; `NOFOLLOW_LINKS`/open-by-handle where available;
   post-open identity check; protected-path matching on the resolved key; bounded limits; a
   traversal corpus and fuzzing on Linux and Windows.
-- **Residual:** TOCTOU cannot be eliminated on every platform. A host administrator can
-  create layouts the resolver rejects; that is a denial of convenience, not an escape.
+- **Implementation evidence (2026-11-20):** `SandboxResolver` applies these rules with an
+  injected file-system boundary. A deterministic corpus contains 2,736 reject payloads and 29
+  allowed paths; 16 sandbox unit/fuzz/corpus tests ran locally with 15 passed and 1 skipped.
+  The skipped test requires symlink privileges unavailable on this Windows host. Implementation
+  PR #153 was awaiting required CI checks and merge when this evidence was recorded.
+- **Residual:** TOCTOU cannot be eliminated on every platform; root revalidation and the post-open
+  file-key check narrow the window. A host administrator can create layouts the resolver rejects;
+  that is a denial of convenience, not an escape. Existing NFD filenames are compared under NFC
+  but their exact bytes are not preserved. No file API or running server uses the resolver yet.
   Server software or another plugin with host access is unaffected.
 
 ### A3. Unauthorized action within the API

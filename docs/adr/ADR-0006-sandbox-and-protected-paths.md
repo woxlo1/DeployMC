@@ -67,7 +67,7 @@ into a file operation. The algorithm follows master specification section 33.1:
 3. Treat both `/` and `\` as separators on every platform.
 4. Reject `..`; drop `.` and empty segments; reject Windows-invalid segments everywhere
    (reserved device names, trailing dot or space, `:`, invalid characters).
-5. Join with the root's real path, computed at startup and re-validated periodically.
+5. Join with the root's real path, computed at startup and re-validated on every resolve.
 6. Inspect each existing ancestor with `lstat`. Reject symlinks, junctions, and reparse
    points by default; an explicitly configured policy may resolve and re-check
    containment instead.
@@ -76,10 +76,10 @@ into a file operation. The algorithm follows master specification section 33.1:
 8. Compare the normalized, case-folded path against protected patterns
    case-insensitively.
 9. Return a `SandboxPath` containing the relative normalized path, absolute real path,
-   and root identity. Callers can only perform operations through APIs that accept
-   `SandboxPath`.
-10. After opening a file, re-check with `fstat`/file key that the opened object is still
-    under the root; use `NOFOLLOW_LINKS` where available.
+   root identity, and the file key of the deepest existing ancestor. Callers can only
+   perform operations through APIs that accept `SandboxPath`.
+10. After opening a file, re-check the canonical path and file key; reject a changed key
+    as a same-path replacement. Use `NOFOLLOW_LINKS` where available.
 
 Protected paths, non-editable through the API even for administrators:
 
@@ -114,19 +114,29 @@ upload size, directory entries per listing, path length, and concurrent operatio
 
 ### Follow-up
 
-- Build a traversal payload corpus and run it on Linux and Windows in CI.
-- Fuzz the resolver.
-- Add tests for junctions, short names, alternate data streams, NFC/NFD, case folding,
-  and concurrent rename/delete races.
+- Done: build a deterministic traversal payload corpus (2,736 reject and 29 allow paths) and run it
+  through unit tests and the scheduled Ubuntu/Windows fuzz workflow.
+- Done: fuzz the resolver with a seeded Java test.
+- Still open: expand real-host junction and reparse-point coverage; add NFC/NFD filename preservation
+  cases, concurrent rename/delete race tests, and broader case-folding coverage.
 - Keep the protected-path list in the configuration schema and in tests.
 
 ## Evidence and validation
 
 - The algorithm is specified in master specification sections 9.1 and 33.1.
-- **Not verified:** no resolver code exists and no security corpus has been run. This ADR
-  records the design, not a tested implementation.
-- The threat model draft identifies path escape as a primary attack path; it will be
-  updated as tests are implemented.
+- WP-2.1 implements the resolver in `core/src/main/java/io/github/woxlo1/deploymc/core/sandbox/`,
+  with an injectable `SandboxFileSystem`, resolver-only `SandboxPath`, stable rejection codes, and
+  English/Japanese message catalogs.
+- On 2026-11-20, the local corpus generator produced 2,736 reject and 29 allow payloads. The
+  sandbox-only Gradle run completed 16 tests with 15 passed and 1 skipped; the skipped test needs
+  symlink privileges unavailable on this host. `node tools/build/verify-all.cjs` reported `PASS` for
+  all seven toolchains. Implementation PR #153 was awaiting required CI checks and merge when this
+  evidence was recorded.
+- The corpus and fuzz workflow have not yet run on a scheduled GitHub Actions event, and no file API
+  or running server consumes `SandboxPath`. Exact-byte preservation for an existing NFD filename is
+  not implemented; comparison keys are NFC.
+- The threat model identifies path escape as a primary attack path and records the implemented
+  controls and residual risk in A2.
 
 ## References
 
