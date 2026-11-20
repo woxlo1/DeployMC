@@ -116,12 +116,27 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44704690925](https://github.com/woxlo1/DeployMC/actions/runs/44704690925) passed. CI artifacts
   rendered passing Linux and Windows rows into the [support matrix](../compatibility/support-matrix.md).
   No support tier is claimed.
+- WP-2.1 (issue #50) is implemented on `feature/wp-2.1-sandbox-resolver` in PR #153. It adds a pure
+  `SandboxResolver`, resolver-only `SandboxPath`, host-controlled `SandboxPolicy`, Windows name rules
+  on every host, default reparse-point rejection, root revalidation on each resolve, post-open file-key
+  checks, protected/deny globs, and localized English/Japanese rejection codes. The deterministic
+  corpus contains 2,736 reject payloads and 29 allowed paths, with seeded fuzz coverage and a
+  scheduled Ubuntu/Windows fuzz workflow. On 2026-11-20, `python tests/security/sandbox/generate_corpus.py`
+  reported `reject=2736 allow=29`; `.\gradlew.bat spotlessApply :core:test --tests '*Sandbox*'
+  --console=plain --no-configuration-cache` completed 16 tests (15 passed, 1 skipped); and
+  `$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii";
+  node tools/build/verify-all.cjs` reported `PASS` for all seven toolchains. The skipped test needs
+  symlink privileges unavailable on this host. PR checks were still running when this was written;
+  no merge, issue closure, running-server validation, or file-API integration is claimed.
 
 ## In flight
 
 - WP-1.9 merged in PR #149 at `3244680`, issue #49 is closed, and no WP-1.9 work remains in flight.
 - WP-1.8 merged in PR #151 at `839b789`, issue #48 is closed, and no WP-1.8 work remains in flight.
 - WP-1.7 merged in PR #147 at `db3e33a`, issue #47 is closed, and no WP-1.7 work remains in flight.
+- WP-2.1 implementation PR #153 is open. Documentation for this branch is being pushed to that PR;
+  required checks must finish before an explicit review comment, squash merge, issue closure, and
+  branch cleanup.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 81. Milestones `0.1.0` through `0.10.0` exist.
 
@@ -133,9 +148,12 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Continue with #50 (WP-2.1: Sandbox path resolver), then the rest of category 2, category 3
-   (#115-#120), category 4 (#121-#123), and category 5 (#124-#130).
-2. Update project status, implementation status, and this handoff at the end of each session.
+1. Finish and push the WP-2.1 documentation to PR #153, wait for every required check, post an
+   explicit PR comment with commands and results, squash-merge the PR, verify that issue #50 closes,
+   record post-merge CI/CodeQL/Scorecard evidence, and delete the local and remote feature branch.
+2. Identify the next open category 2 item after #50, then continue with category 3 (#115-#120),
+   category 4 (#121-#123), and category 5 (#124-#130).
+3. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
 

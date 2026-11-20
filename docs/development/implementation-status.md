@@ -1,7 +1,8 @@
 # Implementation Status
 
 Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.9 merged; issues #47, #48,
-and #49 closed. WP-1.8 merged in PR #151 at `839b789` with green PR and post-merge checks.)
+and #49 closed. WP-1.8 merged in PR #151 at `839b789` with green PR and post-merge checks. WP-2.1
+resolver implementation is in PR #153; local verification passed and PR checks are in progress.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -22,10 +23,11 @@ startup banner, authenticated `/api/v1/server`, a conflicting-library fixture lo
 DeployMC, and a clean explicit disable with Netty threads released. This is smoke evidence, not a
 support tier or a full feature validation. The transport rejects every route except `/healthz`,
 `/readyz`, and the implemented `GET /api/v1/server` handler without a valid token; the file,
-snapshot, deployment, console, and audit resources have no handlers. There is no sandbox, snapshot
-store, deployment engine, authorization, audit log, or Web UI screen; the
-packaged Web UI has not been rendered in a browser. The WP-1.5 command surface, WP-1.6 message
-runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
+snapshot, deployment, console, and audit resources have no handlers. The WP-2.1 sandbox resolver,
+protected-path rules, and security corpus are implemented, but no file operation or API handler
+uses them yet. There is no snapshot store, deployment engine, authorization, audit log, or Web UI
+screen; the packaged Web UI has not been rendered in a browser. The WP-1.5 command surface, WP-1.6
+message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
 ## Verified working today
 
@@ -35,7 +37,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 159 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, and auth gate cases | Gradle `test` tasks; JUnit XML: 159 tests, 0 failures, 0 errors |
+| Java unit tests | 181 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, and sandbox resolver/corpus/fuzz cases | Gradle `test` tasks; JUnit XML: 181 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 51 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
@@ -48,18 +50,24 @@ These were actually run, not just written. Commands are the ones documented in
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
 | One-command local verification | All seven toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all seven reported `PASS` |
-| CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job, plugin JAR size report, and compatibility matrix jobs on Ubuntu and Windows | GitHub Actions runs on `main` |
+| CI | Seven workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels, Fuzz), including the `Spec` job, plugin JAR size report, compatibility matrix jobs on Ubuntu and Windows, and scheduled sandbox fuzzing on both hosts | GitHub Actions runs on `main` |
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
+| WP-2.1 sandbox resolver | Canonical resolver with an injectable file-system boundary, resolver-only `SandboxPath`, host-controlled policy, Windows name rules on every host, default reparse-point rejection, root revalidation, post-open file-key checks, protected/deny globs, and localized rejections | 16 sandbox tests (15 passed, 1 skipped locally without symlink privileges), full Gradle build, Java 8 check, all-toolchain verification, and the 2,736-payload corpus plus seeded fuzz test |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 
 The most recent all-toolchain run was `node tools/build/verify-all.cjs` on
-`feat/wp-1.8-compatibility-harness` before the squash merge, which reported `PASS` for `web`, `java`,
-`cli`, `python`, `spec`, `i18n`, and `compat`. Web runs before Java in that script and in the CI Java
-job because the plugin build packages `web/dist` into the JAR. WP-1.8 was merged in
+`feature/wp-2.1-sandbox-resolver`, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction, and
+it reported `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`. The sandbox-only
+command `.\gradlew.bat spotlessApply :core:test --tests '*Sandbox*' --console=plain
+--no-configuration-cache` completed 16 tests: 15 passed and 1 skipped. The skipped test requires
+symlink creation, which this unprivileged Windows host does not permit. Running
+`python tests/security/sandbox/generate_corpus.py` produced `reject=2736 allow=29`. Web runs before
+Java in the all-toolchain script and in the CI Java job because the plugin build packages `web/dist`
+into the JAR. WP-1.8 was merged in
 [PR #151](https://github.com/woxlo1/DeployMC/pull/151) at
 `839b789ae8483f83dcb4b430641b7f0eafccb303`; the PR head run
 [44704128125](https://github.com/woxlo1/DeployMC/actions/runs/44704128125) passed every required
@@ -372,7 +380,8 @@ The following are documented as intended behavior. They are **not** code.
   deployment, console, and audit routes are not.
 - Cloudflare Access and `local-onetime` authentication modes, RBAC, and the audit log. The minimal
   `token` mode is implemented and refuses startup for the other two modes.
-- Sandbox path resolver, protected paths, and file read/write API.
+- File read/write API that consumes `SandboxPath`; no application handler or file operation calls the
+  resolver yet.
 - Snapshot store, diff, restore, retention, and garbage collection.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
@@ -394,9 +403,9 @@ The following are documented as intended behavior. They are **not** code.
 
 | Path | State |
 |---|---|
-| `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, six workflows |
+| `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, seven workflows including scheduled sandbox fuzzing |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
-| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types, validated configuration loader and migration manager, host-provisioned token authentication; fake adapter in test sources |
+| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types, validated configuration loader and migration manager, host-provisioned token authentication, canonical sandbox resolver with localized rejection catalogs; fake adapter in test sources |
 | `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, classpath-only static asset handler with 12 tests, authentication/health gate with 4 tests, and localized 401 responses |
 | `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, token-aware startup and console token creation, and server-free tests |
 | `platform/standalone/` | Build placeholder with configuration value object |
@@ -407,11 +416,11 @@ The following are documented as intended behavior. They are **not** code.
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |
 | `sdk/typescript/`, `sdk/java/` | Not created |
-| `tools/build/` | One-command local verification for all six toolchains; Windows path workarounds |
+| `tools/build/` | One-command local verification for all seven toolchains; Windows path workarounds |
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
 | `specification/` | REST, WebSocket, error, config, audit, and deployment skeletons; threat model draft |
-| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, and the conflicting-library fixture plugin |
+| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, conflicting-library fixture plugin, and the deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads |
 
 ## How to verify this page
 

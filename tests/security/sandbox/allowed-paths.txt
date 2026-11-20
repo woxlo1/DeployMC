@@ -1,0 +1,30 @@
+# Paths that must resolve successfully. Empty means the sandbox root.
+
+.
+.hidden
+a.b.c
+caf\xe9/plugin.yml
+config.yml
+foo..bar
+foo.jar
+ja-JP/messages.properties
+nested/dir/.hidden
+nested/dir/a.b.c
+nested/dir/caf\xe9/plugin.yml
+nested/dir/config.yml
+nested/dir/foo..bar
+nested/dir/foo.jar
+nested/dir/ja-JP/messages.properties
+nested/dir/sp ace/file.txt
+nested/dir/\u65e5\u672c\u8a9e/\u8a2d\u5b9a.yml
+plugins/.hidden
+plugins/a.b.c
+plugins/caf\xe9/plugin.yml
+plugins/config.yml
+plugins/foo..bar
+plugins/foo.jar
+plugins/ja-JP/messages.properties
+plugins/sp ace/file.txt
+plugins/\u65e5\u672c\u8a9e/\u8a2d\u5b9a.yml
+sp ace/file.txt
+\u65e5\u672c\u8a9e/\u8a2d\u5b9a.yml
