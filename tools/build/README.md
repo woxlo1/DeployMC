@@ -22,6 +22,7 @@ It runs these toolchains in order and prints a `PASS`/`FAIL` line for each:
 | `python` | Creates `.venv` if needed, installs the editable dev extra, ruff, mypy, pytest |
 | `spec` | `npm ci`, specification lint, checker tests |
 | `i18n` | Catalog check, checker tests, generated-status drift check |
+| `compat` | Offline compatibility-harness unit tests; the real Paper smoke entry runs only in CI |
 
 A failing command stops that toolchain, but the remaining toolchains still run. The process exits
 non-zero if any toolchain failed.
@@ -33,7 +34,7 @@ node tools/build/verify-all.cjs --only=java,web
 node tools/build/verify-all.cjs --help
 ```
 
-Valid keys are `java`, `web`, `cli`, `python`, `spec`, and `i18n`. Selection preserves the order
+Valid keys are `java`, `web`, `cli`, `python`, `spec`, `i18n`, and `compat`. Selection preserves the order
 above, so `--only=java,web` still builds Web first. `--only=java` assumes `web/dist` already exists;
 on a clean checkout, run the full command or `--only=web,java` once first.
 
@@ -80,5 +81,6 @@ retried; report a failure that repeats after the daemon is stopped.
 
 - It does not run CodeQL, dependency review, OpenSSF Scorecard, or commit-message linting. Those are
   GitHub-specific and run in the required checks on the pull request.
-- It does not run the compatibility harness or a real Minecraft server; neither exists yet.
+- It does not run the real compatibility harness or a Minecraft server. The `compat` step runs
+  only the offline harness unit tests; CI runs the pinned Paper smoke entry.
 - A local pass does not replace the required CI checks on a pull request.
