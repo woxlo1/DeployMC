@@ -23,7 +23,7 @@ English · [日本語](docs/i18n/README.ja.md)
 | CI workflows and branch protection | Working on `main` |
 | Specifications (REST, WebSocket, configuration, audit, deployment) | Normative drafts; implemented subsets are marked in `specification/README.md` |
 | Authentication foundation | Host-provisioned bearer tokens with a fail-closed HTTP/WebSocket gate; no RBAC yet |
-| Plugin runtime, API, Web UI, CLI, SDKs | No product feature runs inside a Minecraft server yet (Phase 1+) |
+| Plugin runtime, API, Web UI, CLI, SDKs | A pinned Paper smoke run observes plugin enable, authenticated `/api/v1/server`, library isolation, and clean shutdown; no support tier or product feature set is claimed yet |
 
 A more detailed, always current status is maintained in
 [`docs/development/implementation-status.md`](docs/development/implementation-status.md).
