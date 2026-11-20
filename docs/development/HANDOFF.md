@@ -107,9 +107,12 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   fixed by `18eb9f7` before the passing rerun. Post-merge CI, CodeQL, and Scorecard runs passed, and
   issue #49 closed at 2026-11-20T07:17:29Z. No real server, in-game command, browser,
   conflicting-library classloader, or text-component check was performed.
-- The real Paper conflicting-library classloader check for #48 was recorded on
-  [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
-  spike and JAR inspection are not a support claim.
+- WP-1.8 (issue #48) is implemented on `feat/wp-1.8-compatibility-harness` and under final
+  verification. It adds the official-API Paper harness, host-provisioned token smoke test against
+  `/api/v1/server`, a conflicting Netty fixture plugin, and before/after-disable thread dumps. The
+  earlier deferred check was recorded on
+  [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). No support tier
+  is claimed.
 
 ## In flight
 
@@ -140,6 +143,9 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   because `Refs #45` was parsed as a footer on an over-long line.
 - `gh` commands with `--jq` need careful quoting in PowerShell; prefer `--json` plus
   `ConvertFrom-Json` when a filter fails.
+- Paper 26.3 requires Java 25 at runtime. Build with JDK 21 and run only the Paper process with
+  Java 25. The server's console has no `disable <plugin>` command; the compatibility fixture
+  registers `fixture-disable-deploymc`, which calls the Bukkit API for the harness.
 - PowerShell splits a bare `-Pdeploymc.verifyJarFile=...` Gradle argument. Use
   `--project-prop=deploymc.verifyJarFile=...` before the task name when running
   `:plugin:verifyPluginJarFixture`.
