@@ -7,6 +7,11 @@ import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigMigration;
 import io.github.woxlo1.deploymc.core.config.ConfigSchema;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
+import io.github.woxlo1.deploymc.transport.DefaultTransportPolicy;
+import io.github.woxlo1.deploymc.transport.NettyTransportServer;
+import io.github.woxlo1.deploymc.transport.TransportConfig;
+import io.github.woxlo1.deploymc.transport.TransportException;
+import io.github.woxlo1.deploymc.transport.TransportMessages;
 import java.io.File;
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -23,6 +28,7 @@ public final class DeployMCPlugin extends JavaPlugin {
 
   private BukkitPlatformAdapter adapter;
   private ConfigManager configManager;
+  private NettyTransportServer transport;
 
   @Override
   public void onLoad() {
@@ -42,6 +48,7 @@ public final class DeployMCPlugin extends JavaPlugin {
     LocalizedMessages fallback = LocalizedMessages.of(Locale.getDefault());
     LocalizedMessages messages = fallback;
     BukkitPlatformAdapter created = null;
+    NettyTransportServer createdTransport = null;
     try {
       ConfigManager createdConfigManager =
           new ConfigManager(
@@ -63,6 +70,22 @@ public final class DeployMCPlugin extends JavaPlugin {
 
       created = new BukkitPlatformAdapter(this, plan, messages);
 
+      TransportMessages transportMessages =
+          TransportMessages.of(ConfigLanguage.toLocale(view.language()));
+      TransportConfig transportConfig = TransportConfig.builder(plan.bind()).build();
+      createdTransport =
+          new NettyTransportServer(
+              transportConfig,
+              new DeployMCHttpHandler(
+                  new ServerInfoHandler(
+                      plan.pluginVersion(), created.info(), created.capabilities())),
+              new NoopWebSocketListener(),
+              new DefaultTransportPolicy(transportConfig),
+              new PluginRequestLogger(getLogger(), transportMessages),
+              authentication.authenticator(),
+              transportMessages);
+      createdTransport.start();
+
       StartupBanner banner = new StartupBanner(messages);
       for (String line : banner.render(created.info(), plan)) {
         getLogger().info(line);
@@ -71,7 +94,7 @@ public final class DeployMCPlugin extends JavaPlugin {
       PluginCommand command = getCommand("deploymc");
       if (command == null) {
         getLogger().severe(messages.format(MessageKeys.COMMAND_REGISTRATION_FAILED));
-        disableAfterFailure(created);
+        disableAfterFailure(created, createdTransport);
         return;
       }
       DeployMCCommandExecutor executor =
@@ -82,9 +105,10 @@ public final class DeployMCPlugin extends JavaPlugin {
 
       adapter = created;
       configManager = createdConfigManager;
+      transport = createdTransport;
     } catch (StartupConfigurationException exception) {
       getLogger().severe(messages.format(exception.messageKey(), exception.values()));
-      disableAfterFailure(created);
+      disableAfterFailure(created, createdTransport);
     } catch (TokenStoreException exception) {
       String key;
       switch (exception.reason()) {
@@ -103,17 +127,22 @@ public final class DeployMCPlugin extends JavaPlugin {
           .severe(
               messages.format(
                   key, Collections.singletonMap("detail", String.valueOf(exception.detail()))));
-      disableAfterFailure(created);
+      disableAfterFailure(created, createdTransport);
+    } catch (TransportException exception) {
+      Map<String, String> values = Collections.singletonMap("error", exception.error().code());
+      getLogger().severe(messages.format(MessageKeys.STARTUP_TRANSPORT_FAILED, values));
+      disableAfterFailure(created, createdTransport);
     } catch (ConfigException | RuntimeException exception) {
       Map<String, String> values =
           java.util.Collections.singletonMap("error", String.valueOf(exception.getMessage()));
       getLogger().severe(fallback.format(MessageKeys.LIFECYCLE_START_FAILED, values));
-      disableAfterFailure(created);
+      disableAfterFailure(created, createdTransport);
     }
   }
 
   @Override
   public void onDisable() {
+    stopTransport();
     if (adapter != null) {
       adapter.close();
       adapter = null;
@@ -121,7 +150,9 @@ public final class DeployMCPlugin extends JavaPlugin {
     configManager = null;
   }
 
-  private void disableAfterFailure(BukkitPlatformAdapter created) {
+  private void disableAfterFailure(
+      BukkitPlatformAdapter created, NettyTransportServer createdTransport) {
+    stopTransport(createdTransport);
     if (created != null) {
       created.close();
     }
@@ -130,5 +161,25 @@ public final class DeployMCPlugin extends JavaPlugin {
       adapter = null;
     }
     getServer().getPluginManager().disablePlugin(this);
+  }
+
+  private void stopTransport() {
+    stopTransport(transport);
+    transport = null;
+  }
+
+  private void stopTransport(NettyTransportServer target) {
+    if (target == null) {
+      return;
+    }
+    try {
+      target.stop();
+    } catch (TransportException exception) {
+      Map<String, String> values = Collections.singletonMap("error", exception.error().code());
+      getLogger()
+          .severe(
+              LocalizedMessages.of(Locale.getDefault())
+                  .format(MessageKeys.LIFECYCLE_TRANSPORT_STOP_FAILED, values));
+    }
   }
 }
