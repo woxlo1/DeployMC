@@ -136,16 +136,27 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed. The feature
   branch was deleted locally and remotely. No running-server validation or file-API integration is
   claimed.
+- WP-2.2 (issue #51) adds `core.files`: sandboxed list/stat/read/range/download/create/mkdir/
+  write/upload/move/delete with `sha256:` full-file revisions, same-directory temporary writes and a
+  single atomic commit, revision and file-identity conflict detection, host-controlled limits,
+  explicit recursive-delete confirmation, and fail-closed overwrite/move/delete behind
+  `SnapshotHook`. English and Japanese diagnostic catalogs, stable error codes, and a normative
+  file-operations specification were added. On 2026-11-20, `.\gradlew.bat spotlessApply :core:test
+  --tests '*File*' --console=plain --no-configuration-cache` completed 26 tests (24 new WP-2.2 tests
+  plus 2 existing matching tests) with no failures; `.\gradlew.bat build verifyJava8` ran 205 Java
+  tests with 0 failures, 0 errors, and 1 skipped symlink test; `node tools/i18n/check`, `git diff
+  --check`, and `node tools/build/verify-all.cjs` passed with all seven toolchains reporting `PASS`.
+  No REST endpoint, transport handler, running server, or UI consumes the service, and no snapshot
+  store exists yet.
 
 ## In flight
 
-- WP-1.9 merged in PR #149 at `3244680`, issue #49 is closed, and no WP-1.9 work remains in flight.
-- WP-1.8 merged in PR #151 at `839b789`, issue #48 is closed, and no WP-1.8 work remains in flight.
-- WP-1.7 merged in PR #147 at `db3e33a`, issue #47 is closed, and no WP-1.7 work remains in flight.
-- WP-2.1 merged in PR #153 at `748bbc8`, issue #50 is closed, post-merge evidence is recorded, and
-  no feature branch remains. This evidence PR records the merge and PR-check results.
+- WP-2.2 file operations are implemented and verified locally under issue #51. No endpoint, server,
+  or UI consumes the service, and the real snapshot store remains WP-2.3 work.
+- Earlier WP-1.7, WP-1.8, WP-1.9, and WP-2.1 work is merged, with evidence recorded in the status
+  pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 80. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 80 (#51-#130). Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -155,9 +166,9 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Merge this evidence PR and confirm its post-merge `main` checks.
-2. Identify the next open category 2 item after #50, then continue with category 3 (#115-#120),
-   category 4 (#121-#123), and category 5 (#124-#130).
+1. Complete WP-2.2 review, required checks, merge, and post-merge evidence, then close issue #51.
+2. Identify the next open Phase 2 item, then continue with category 3 (#115-#120), category 4
+   (#121-#123), and category 5 (#124-#130).
 3. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas

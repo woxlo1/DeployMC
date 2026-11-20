@@ -1,8 +1,8 @@
 # Project Status
 
 Last updated: 2026-11-20 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and WP-2.1 merged and
-closed). Verified against `main` at `748bbc8` after PR #153; earlier merge evidence is recorded
-below.
+closed; WP-2.2 file operations implemented and locally verified). GitHub evidence below was verified
+against `main` at `7762a8f` after PR #154; earlier evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -32,7 +32,9 @@ This is the session-level status page. For per-component facts use
   conflicting Netty fixture and before/after-disable thread dumps, merged in PR #151 at `839b789`;
   the issue closed as completed. WP-2.1 (issue #50), the canonical sandbox resolver, host-controlled
   policy, localized rejections, and security corpus, merged in PR #153 at `748bbc8`; the issue closed
-  as completed. Verification is recorded below.
+  as completed. WP-2.2 (issue #51), the sandboxed file operations service, is implemented and
+  locally verified; its merge evidence is recorded in the issue and pull request. Verification is
+  recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -76,6 +78,23 @@ open PRs: 17 (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
 open issues: 80
+```
+
+Verified GitHub state on 2026-11-20 after PR #154 merged and both WP-2.1 branches were deleted:
+
+```text
+git log -1 --oneline origin/main
+7762a8f docs(docs): record WP-2.1 merge evidence (#154)
+
+gh pr view 154 --json number,state,mergeCommit,url
+number=154 state=MERGED mergeCommit=7762a8f608430397e1d9ca11c0bb169c4d480d03
+url=https://github.com/woxlo1/DeployMC/pull/154
+
+gh pr list --state open --limit 1000
+open PRs: 17 (#23-#39 Dependabot updates)
+
+gh issue list --state open --limit 1000
+open issues: 80 (#51-#130)
 ```
 
 `git branch --list 'feature/wp-2.1-sandbox-resolver'` and the matching
@@ -142,6 +161,44 @@ Scorecard 44716375486 success
 These are GitHub Actions run IDs, linked from [implementation status](implementation-status.md).
 The scheduled fuzz workflow has not run on a schedule yet, and no file API or server process uses
 `SandboxPath`.
+
+## WP-2.2 verification (local, pre-merge)
+
+These commands were run on 2026-11-20 on `feature/wp-2.2-file-operations`:
+
+```text
+.\gradlew.bat spotlessApply :core:test --tests '*File*' --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+26 tests: 24 new WP-2.2 tests and 2 existing matching tests, all passed
+
+.\gradlew.bat build verifyJava8 --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+205 Java tests: 0 failures, 0 errors, 1 skipped symlink test
+
+node tools/i18n/check
+i18n check passed: 0 error(s), 0 warning(s)
+
+git diff --check
+(no output)
+
+$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii"
+node tools/build/verify-all.cjs
+PASS web
+PASS java
+PASS cli
+PASS python
+PASS spec
+PASS i18n
+PASS compat
+```
+
+The 24 new tests cover strong revisions, full and ranged reads, binary and CRLF preservation,
+creation and directory conflicts, precondition and stale-revision rejection, streaming uploads and
+limits, protected and rejected paths, confirmed recursive deletion, deletion caps, snapshot failure,
+destructive-operation fail-closed behavior, move conflicts, concurrency, and deterministic crash
+points before and after the atomic commit. The skipped test remains the WP-2.1 symlink test that
+needs privileges unavailable on this host. No REST endpoint, transport handler, running server, or UI
+consumes `FileOperationsService`.
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,

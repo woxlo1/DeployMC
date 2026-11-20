@@ -80,9 +80,10 @@ binds to loopback by default in every mode.
 
 Core services are planned as separate packages rather than separate Gradle modules:
 
-| Package (planned) | Responsibility |
+| Package (planned unless noted) | Responsibility |
 |---|---|
 | `sandbox` | Path resolution, jail enforcement, protected paths, bounded file operations |
+| `files` (implemented) | Sandboxed list/stat/read/write/create/mkdir/move/delete/upload/download, revisions, atomic commits, limits |
 | `snapshot` | Content-addressed history, retention, diff, restore, integrity verification |
 | `deploy` | Staging, validation, persisted state machine, restart orchestration, rollback |
 | `auth` | Cloudflare JWT verification, token store, one-time local tokens, sessions |
