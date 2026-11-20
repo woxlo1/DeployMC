@@ -1,7 +1,7 @@
 # Implementation Status
 
-Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.7 and WP-1.9 merged;
-issues #47 and #49 closed. WP-1.8 is implemented and under final verification for issue #48.)
+Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.9 merged; issues #47, #48,
+and #49 closed. WP-1.8 merged in PR #151 at `839b789` with green PR and post-merge checks.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -20,9 +20,10 @@ a fail-closed HTTP/WebSocket gate.
 A WP-1.8 smoke run has now observed the plugin enabling on a real Paper server, the localized
 startup banner, authenticated `/api/v1/server`, a conflicting-library fixture loading alongside
 DeployMC, and a clean explicit disable with Netty threads released. This is smoke evidence, not a
-support tier or a full feature validation. The transport rejects every route except `/healthz` and
-`/readyz` without a valid token, but it still has no application resource handlers. There is no
-sandbox, snapshot store, deployment engine, authorization, audit log, or Web UI screen; the
+support tier or a full feature validation. The transport rejects every route except `/healthz`,
+`/readyz`, and the implemented `GET /api/v1/server` handler without a valid token; the file,
+snapshot, deployment, console, and audit resources have no handlers. There is no sandbox, snapshot
+store, deployment engine, authorization, audit log, or Web UI screen; the
 packaged Web UI has not been rendered in a browser. The WP-1.5 command surface, WP-1.6 message
 runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -37,7 +38,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Java unit tests | 159 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, and auth gate cases | Gradle `test` tasks; JUnit XML: 159 tests, 0 failures, 0 errors |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
-| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, and console-only token creation | `.\gradlew.bat :platform:bukkit:test`; 51 Bukkit tests, 0 failures. No server loaded |
+| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 51 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
 | Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, 230 relocated SnakeYAML classes, relocated Netty, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot, unrelocated Netty/YAML, or multi-release entries | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Plugin JAR verification | `:plugin:verifyPluginJar` fails on out-of-namespace classes, malformed or manifest-less multi-release entries, missing versioned bases, duplicate entries/classes, service entries outside the namespace, or common-path bytecode above major 52; CI reports the size | Production JAR plus 12 positive/negative fixture JARs |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, static asset delivery, and a fail-closed token gate with health exceptions | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; `AuthenticationGateTest`: 4 tests; 0 failures |
@@ -47,23 +48,32 @@ These were actually run, not just written. Commands are the ones documented in
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
 | Specification lint | OpenAPI and AsyncAPI validation, config example against JSON Schema, deployment transition graph checks | `npm ci && npm run lint && npm test` in `tools/spec/` |
 | One-command local verification | All seven toolchains above run from a single command; each reports `PASS`/`FAIL` | `node tools/build/verify-all.cjs` — verified on this Windows host: all seven reported `PASS` |
-| CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job and plugin JAR size report | GitHub Actions runs on `main` |
+| CI | Six workflows (CI, lint, CodeQL, dependency review, Scorecard, Labels), including the `Spec` job, plugin JAR size report, and compatibility matrix jobs on Ubuntu and Windows | GitHub Actions runs on `main` |
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
-| WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, and a real local Paper 26.3 build 256 smoke run; no support tier |
+| WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 
-The most recent all-toolchain run was `node tools/build/verify-all.cjs` on the merged
-`feat/wp-1.9-token-authentication` branch, which reported `PASS` for `web`, `java`, `cli`, `python`,
-`spec`, and `i18n`. Web runs before Java in that script and in the CI Java job because the plugin
-build packages `web/dist` into the JAR. WP-1.4 was merged in PR #137 at `4548b4b`; the post-merge `main`
-CI run [44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524) passed every job,
-CodeQL [44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587) passed all three
-languages, and Scorecard [44285715509](https://github.com/woxlo1/DeployMC/actions/runs/44285715509)
-passed. These runs cover build and unit checks, not a real server. The one-command tool is documented
-in [`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
+The most recent all-toolchain run was `node tools/build/verify-all.cjs` on
+`feat/wp-1.8-compatibility-harness` before the squash merge, which reported `PASS` for `web`, `java`,
+`cli`, `python`, `spec`, `i18n`, and `compat`. Web runs before Java in that script and in the CI Java
+job because the plugin build packages `web/dist` into the JAR. WP-1.8 was merged in
+[PR #151](https://github.com/woxlo1/DeployMC/pull/151) at
+`839b789ae8483f83dcb4b430641b7f0eafccb303`; the PR head run
+[44704128125](https://github.com/woxlo1/DeployMC/actions/runs/44704128125) passed every required
+check, including `Compatibility (ubuntu-latest)` and `Compatibility (windows-latest)`. The
+post-merge `main` CI run [44704690836](https://github.com/woxlo1/DeployMC/actions/runs/44704690836)
+passed every job, CodeQL
+[44704690767](https://github.com/woxlo1/DeployMC/actions/runs/44704690767) passed all three
+languages, and Scorecard
+[44704690925](https://github.com/woxlo1/DeployMC/actions/runs/44704690925) passed. The two CI
+compatibility artifacts contain passing Paper 26.3 build 256 results on Linux and Windows; they were
+rendered into the [support matrix](../compatibility/support-matrix.md). Issue #48 closed as
+completed at 2026-11-20T08:42:28Z. These runs cover the smoke suite and build/unit checks, not the
+full integration suite or a support tier. The one-command tool is documented in
+[`tools/build/README.md`](../../tools/build/README.md); CI remains the merge authority.
 
 ## Repository configuration, not a product feature
 
@@ -357,9 +367,9 @@ The following are documented as intended behavior. They are **not** code.
 
 ## Not started
 
-- Authenticated REST and WebSocket application endpoints bound to the OpenAPI and AsyncAPI
-  skeletons; the authentication gate exists, but no product routes or application handlers are
-  registered.
+- Remaining authenticated REST and WebSocket application endpoints bound to the OpenAPI and
+  AsyncAPI skeletons. The gate and `GET /api/v1/server` are implemented; the file, snapshot,
+  deployment, console, and audit routes are not.
 - Cloudflare Access and `local-onetime` authentication modes, RBAC, and the audit log. The minimal
   `token` mode is implemented and refuses startup for the other two modes.
 - Sandbox path resolver, protected paths, and file read/write API.
@@ -374,7 +384,8 @@ The following are documented as intended behavior. They are **not** code.
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
 - Tier 1/2/3 entries and the full integration suite; the v1 smoke harness exists but intentionally earns no tier.
-- Platform adapters for Folia, Velocity, BungeeCord, or standalone. The Bukkit adapter source exists but is not server-validated.
+- Platform adapters for Folia, Velocity, BungeeCord, or standalone. The Bukkit adapter is
+  server-validated only by the WP-1.8 smoke path; its command surface and remaining behavior are not.
 - Additional bundled third-party dependencies beyond Netty and SnakeYAML; each addition needs a new
   relocation rule and verifier evidence. The real-server conflicting-library check is covered by the
   v1 smoke entry, but a numeric artifact size budget remains open; only the size report is implemented.
