@@ -9,10 +9,10 @@ info:
     binds to `127.0.0.1` by default, and is authenticated by host-provisioned bearer
     tokens in 0.1.0. Remote access requires a TLS terminator.
 
-    **Status: transport skeleton.** The authentication gate and health endpoints are
-    implemented; the server resource and shared components are defined but their
-    application handlers are not. File, snapshot, deployment, console, and audit
-    resources are added by later work packages.
+    **Status: partial skeleton.** The authentication gate, health endpoints, and the
+    `GET /api/v1/server` application handler are implemented. The remaining server
+    resource fields, shared components, and all file, snapshot, deployment, console,
+    and audit resources are defined for later work packages.
 
     Rules that apply to every operation:
 
@@ -36,7 +36,7 @@ info:
     name: DeployMC maintainers
     url: https://github.com/woxlo1/DeployMC
 
-x-deploymc-implementation-status: not-implemented
+x-deploymc-implementation-status: partial
 
 servers:
   - url: http://127.0.0.1:8080
