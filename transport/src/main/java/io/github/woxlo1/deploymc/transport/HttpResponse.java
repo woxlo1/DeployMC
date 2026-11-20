@@ -47,6 +47,37 @@ public final class HttpResponse {
     return json(status, "{\"code\":\"" + code + "\"}");
   }
 
+  /** RFC 9457 Problem Details with the DeployMC stable code and request id extensions. */
+  public static HttpResponse problem(
+      int status, String code, String title, String detail, String requestId) {
+    StringBuilder body = new StringBuilder();
+    body.append("{\"type\":\"urn:deploymc:error:").append(escape(code)).append('"');
+    body.append(",\"title\":\"").append(escape(title)).append('"');
+    body.append(",\"status\":").append(status);
+    body.append(",\"code\":\"").append(escape(code)).append('"');
+    body.append(",\"detail\":\"").append(escape(detail)).append('"');
+    body.append(",\"requestId\":\"").append(escape(requestId)).append('"');
+    body.append(",\"retryable\":false}");
+    return json(status, body.toString());
+  }
+
+  private static String escape(String value) {
+    Objects.requireNonNull(value, "value");
+    StringBuilder result = new StringBuilder(value.length());
+    for (int index = 0; index < value.length(); index++) {
+      char character = value.charAt(index);
+      if (character == '"' || character == '\\') {
+        result.append('\\');
+      }
+      if (character < 0x20) {
+        result.append(String.format(Locale.ROOT, "\\u%04x", Integer.valueOf(character)));
+      } else {
+        result.append(character);
+      }
+    }
+    return result.toString();
+  }
+
   public HttpResponse withHeader(String name, String value) {
     Objects.requireNonNull(name, "name");
     Objects.requireNonNull(value, "value");

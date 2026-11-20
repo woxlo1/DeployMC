@@ -1,11 +1,10 @@
 # DeployMC configuration example
 #
-# Status: specification only (2026-11-17). No configuration loader reads this file
-# yet. The normative schema is config.schema.json next to this file; if the example
-# and the schema disagree, the schema wins.
+# Status: the loader validates the structural rules in config.schema.json next to
+# this file; if the example and the schema disagree, the schema wins.
 #
-# This example is a complete, schema-valid configuration for a small team that
-# exposes the API through Cloudflare Tunnel + Access. Placeholders are marked.
+# This example is a complete, schema-valid configuration for token mode. The API
+# listens on loopback only; place a TLS terminator in front of it for remote access.
 # Values shown are the documented defaults unless a comment says otherwise.
 
 config-version: 1
@@ -21,25 +20,16 @@ bind:
   trusted-proxies: []
 
 auth:
-  mode: cloudflare
-  cloudflare:
-    # Replace with your Zero Trust team domain. The JWKS URL is derived from it.
-    team-domain: "myteam.cloudflareaccess.com"
-    # Replace with the Access application AUD tag (64 hex characters).
-    audience: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-    clock-skew-seconds: 60
-    jwks-cache-max-age-seconds: 3600
-    jwks-max-stale-seconds: 86400
-    # Optional defense in depth. The header VALUE lives in the secret store, not here.
-    require-shared-secret-header: ""
+  # Only `token` is implemented. `cloudflare` and `local-onetime` are reserved
+  # for later work and currently refuse startup.
+  mode: token
   token:
-    # Used in `token` mode and for tokens created in any mode.
+    # Used by `/deploymc token create`. Never exceeds max-ttl-days.
     default-ttl-days: 90
     max-ttl-days: 365
-  local-onetime:
-    # Used in `local-onetime` mode: a token printed once to the server console.
-    ttl-minutes: 15
-    max-attempts: 5
+  # cloudflare and local-onetime settings are omitted because those modes are
+  # not implemented. Token records live under plugins/DeployMC/tokens.d/*.json
+  # and are never readable or writable through the API.
 
 sandbox:
   # Relative to the server's `plugins` directory.

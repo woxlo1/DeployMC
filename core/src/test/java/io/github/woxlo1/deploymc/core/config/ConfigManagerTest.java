@@ -70,7 +70,7 @@ class ConfigManagerTest {
     manager.load();
     ConfigView before = manager.current().get();
 
-    write(file, DefaultConfigWriter.template().replace("mode: local-onetime", "mode: wrong"));
+    write(file, DefaultConfigWriter.template().replace("mode: token", "mode: wrong"));
 
     assertThrows(ConfigException.class, manager::reload);
     assertEquals("en", manager.current().get().language());

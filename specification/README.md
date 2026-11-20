@@ -1,19 +1,20 @@
 # Specification skeletons
 
-> **Status: 2026-11-18.** These documents define intended contracts. No server, loader,
-> engine, or audit writer implements them yet. A skeleton is normative for design work,
-> not evidence that a feature works.
+> **Status: 2026-11-19.** These documents define normative contracts. Only the features
+> explicitly marked as implemented below have running code. A skeleton is normative for
+> design work, not evidence that a feature works.
 
 | Document | Defines | Implementation status |
 |---|---|---|
-| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Not implemented |
-| [api/asyncapi.yaml](api/asyncapi.yaml) | WebSocket envelope, channels, subscribe/unsubscribe/ping, and event schemas | Not implemented |
-| [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Not implemented |
-| [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | No loader |
+| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Transport auth gate and health routes implemented; resource handlers are not |
+| [api/asyncapi.yaml](api/asyncapi.yaml) | WebSocket envelope, channels, subscribe/unsubscribe/ping, and event schemas | Upgrade authentication implemented; event protocol is not |
+| [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Auth codes implemented; the rest is not |
+| [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | Structural validation implemented |
 | [config/example.config.yaml](config/example.config.yaml) | Complete schema-valid example | Example only |
 | [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification | No writer |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
 | [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |
+| [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | Implemented |
 
 ## How these documents are checked
 

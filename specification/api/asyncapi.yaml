@@ -8,9 +8,10 @@ info:
     events. The WebSocket endpoint upgrades from the same loopback listener as the
     REST API and uses the same authentication modes.
 
-    **Status: skeleton.** The envelope, event names, and initial channels are
-    defined; no WebSocket server is implemented. The concrete schema of file,
-    snapshot, and deployment resources is added with their REST resources.
+    **Status: transport skeleton.** The embedded Netty transport authenticates the
+    `/api/v1/ws` upgrade and enforces Origin and frame limits. The envelope, event
+    names, and initial channels are defined, but no event protocol or application
+    event publisher is implemented yet.
 
     Rules:
 
@@ -28,7 +29,7 @@ info:
     name: Apache License 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
 
-x-deploymc-implementation-status: not-implemented
+x-deploymc-implementation-status: transport-authentication-only
 
 defaultContentType: application/json
 

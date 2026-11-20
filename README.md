@@ -18,14 +18,19 @@ English · [日本語](docs/i18n/README.ja.md)
 | Area | Status |
 |---|---|
 | Repository, governance, and development documentation | In progress (Phase 0) |
-| Build skeletons for Java, Web, CLI, and the Python SDK | Buildable; no product features |
+| Build skeletons for Java, Web, CLI, and the Python SDK | Buildable; configuration loader and embedded transport have implemented slices |
 | Architecture baseline and architecture decision records | Drafted (Phase 0) |
 | CI workflows and branch protection | Working on `main` |
-| Specifications (REST, WebSocket, configuration, audit, deployment) | Skeletons drafted and linted (Phase 0) |
-| Plugin runtime, API, Web UI, CLI, SDKs | Not started (Phase 1+) |
+| Specifications (REST, WebSocket, configuration, audit, deployment) | Normative drafts; implemented subsets are marked in `specification/README.md` |
+| Authentication foundation | Host-provisioned bearer tokens with a fail-closed HTTP/WebSocket gate; no RBAC yet |
+| Plugin runtime, API, Web UI, CLI, SDKs | No product feature runs inside a Minecraft server yet (Phase 1+) |
 
 A more detailed, always current status is maintained in
 [`docs/development/implementation-status.md`](docs/development/implementation-status.md).
+
+> **Token permissions:** until 0.4.0 every valid token is **admin-equivalent**. Tokens are not
+> scoped by role or path yet. Do not share a token between principals that need different
+> permissions. See [token records](specification/security/token-records.md).
 
 ## Why DeployMC
 
@@ -66,9 +71,10 @@ Normative specification skeletons live under [`specification/`](specification/):
 [error code catalog](specification/api/errors.md),
 [configuration schema](specification/config/config.schema.json),
 [audit log format](specification/audit/audit-log-format.md), and the
-[formal deployment state machine](specification/deployment/state-machine.md). These describe
-the intended contracts only; no server implements them yet. They are checked in CI by
-[`tools/spec/`](tools/spec/).
+[formal deployment state machine](specification/deployment/state-machine.md), and the
+[host-provisioned token record format](specification/security/token-records.md). They describe
+the intended contracts; implemented subsets are marked in `specification/README.md`. They are
+checked in CI by [`tools/spec/`](tools/spec/).
 
 The complete development specification lives in
 [`docs/development/DeployMC_Complete_Master_Development_Specification.md`](docs/development/DeployMC_Complete_Master_Development_Specification.md).
