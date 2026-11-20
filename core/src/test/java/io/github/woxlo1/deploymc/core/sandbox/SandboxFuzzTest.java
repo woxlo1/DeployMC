@@ -34,7 +34,10 @@ class SandboxFuzzTest {
       try {
         SandboxPath resolved = resolver.resolve(candidate, mode);
         assertNotNull(resolved);
-        assertTrue(resolved.absolutePath().startsWith(root), "Escaped root: [" + candidate + "]");
+        // Containment is against the canonical root, not the possibly different configured path.
+        assertTrue(
+            resolved.absolutePath().startsWith(resolver.root()),
+            "Escaped root: [" + candidate + "]");
         assertTrue(resolved.belongsTo(resolver.rootIdentity()));
         accepted++;
       } catch (SandboxRejectionException expected) {

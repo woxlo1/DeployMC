@@ -29,7 +29,8 @@ class SandboxResolverTest {
     SandboxPath path = resolver.resolve("nested\\dir/./plugin.yml", SandboxAccessMode.WRITE);
 
     assertEquals("nested/dir/plugin.yml", path.relativePath());
-    assertEquals(root.resolve("nested/dir/plugin.yml"), path.absolutePath());
+    // Canonicalization may change the configured path, especially on Windows hosts.
+    assertEquals(resolver.root().resolve("nested/dir/plugin.yml"), path.absolutePath());
     assertEquals(SandboxAccessMode.WRITE, path.mode());
     assertTrue(path.belongsTo(resolver.rootIdentity()));
   }

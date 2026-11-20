@@ -47,7 +47,8 @@ class SandboxCorpusTest {
       for (SandboxAccessMode mode : SandboxAccessMode.values()) {
         SandboxPath resolved = resolver.resolve(payload, mode);
         assertNotNull(resolved);
-        assertTrue(resolved.absolutePath().startsWith(root));
+        // Containment is against the canonical root, not the possibly different configured path.
+        assertTrue(resolved.absolutePath().startsWith(resolver.root()));
         assertTrue(resolved.belongsTo(resolver.rootIdentity()));
         assertEquals(mode, resolved.mode());
       }
