@@ -7,4 +7,5 @@ include(
     ":platform:bukkit",
     ":platform:standalone",
     ":plugin",
+    ":tests:fixtures:conflicting-plugin",
 )

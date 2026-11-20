@@ -55,6 +55,8 @@ desktop.ini
 # Minecraft compatibility harness work directories
 tests/compat-matrix/work/
 tests/compat-matrix/cache/
+tests/compat-matrix/.cache/
+tests/compat-matrix/results/
 server.jar
 paper.jar
 eula.txt
