@@ -11,6 +11,7 @@
 | [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Auth codes implemented; the rest is not |
 | [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | Structural validation implemented |
 | [config/example.config.yaml](config/example.config.yaml) | Complete schema-valid example | Example only |
+| [files/file-operations.md](files/file-operations.md) | Sandboxed file operations, revisions, atomic writes, limits, and snapshot boundary | Core service implemented; endpoints not implemented |
 | [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification | No writer |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
 | [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |

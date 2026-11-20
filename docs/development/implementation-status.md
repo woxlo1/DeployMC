@@ -54,17 +54,20 @@ These were actually run, not just written. Commands are the ones documented in
 | Research documents | Naming check, competitive analysis, license comparison, Bukkit descriptor baseline, measured transport spike, and SnakeYAML selection with source links and access dates | `docs/research/*.md` |
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 | WP-2.1 sandbox resolver | Canonical resolver with an injectable file-system boundary, resolver-only `SandboxPath`, host-controlled policy, Windows name rules on every host, default reparse-point rejection, root revalidation, post-open file-key checks, protected/deny globs, and localized rejections | 16 sandbox tests (15 passed, 1 skipped locally without symlink privileges), full Gradle build, Java 8 check, all-toolchain verification, and the 2,736-payload corpus plus seeded fuzz test |
+| WP-2.2 file operations | Sandboxed list/stat/read/range/download/create/mkdir/write/upload/move/delete, SHA-256 full-file revisions, same-directory temporary writes with one atomic commit, revision and file-identity conflict checks, host-controlled limits, explicit recursive-delete confirmation, and a fail-closed snapshot boundary | 24 new file-operation tests, full Gradle build (205 Java tests), Java 8 check, all-toolchain verification, spec lint, and i18n check |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 
 The most recent all-toolchain run was `node tools/build/verify-all.cjs` on
-`feature/wp-2.1-sandbox-resolver`, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction, and
-it reported `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`. The sandbox-only
-command `.\gradlew.bat spotlessApply :core:test --tests '*Sandbox*' --console=plain
---no-configuration-cache` completed 16 tests: 15 passed and 1 skipped. The skipped test requires
-symlink creation, which this unprivileged Windows host does not permit. Running
+`feature/wp-2.2-file-operations`, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction, and
+it reported `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`. The focused
+file command `.\gradlew.bat spotlessApply :core:test --tests '*File*' --console=plain
+--no-configuration-cache` completed 26 tests: 24 new WP-2.2 tests and 2 existing tests whose names
+matched the filter; all passed. The full Gradle build ran 205 Java tests with 0 failures, 0 errors,
+and 1 skipped symlink test, which this unprivileged Windows host cannot run. The earlier WP-2.1
+sandbox suite completed 16 tests (15 passed, 1 skipped), and
 `python tests/security/sandbox/generate_corpus.py` produced `reject=2736 allow=29`. Web runs before
 Java in the all-toolchain script and in the CI Java job because the plugin build packages `web/dist`
 into the JAR. WP-1.8 was merged in
@@ -99,6 +102,18 @@ CodeQL [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542
 `feature/wp-2.1-sandbox-resolver` branches were deleted after the merge. These runs cover unit,
 corpus, fuzz, build, and compatibility evidence; they do not claim running-server or file-API use of
 `SandboxPath`.
+
+WP-2.2 (issue #51) adds the implemented `core.files` service described in
+[file operations](../../specification/files/file-operations.md). It resolves every request path
+through `SandboxResolver`, returns relative paths only, and uses `sha256:` revisions computed from
+full file bytes as ETag sources. Writes hash a same-directory temporary file, force its content,
+recheck the target, and commit with one `ATOMIC_MOVE`; there is no non-atomic fallback. In-process
+writes use 256 fixed stripes, while cross-process writers are detected by revision and file-identity
+rechecks rather than serialized. Overwrite, move, and delete fail closed without a `SnapshotHook`,
+which is the boundary for the later snapshot store. Recursive deletion requires confirmation of the
+current entry count and obeys a host-controlled cap. A deterministic test injects termination
+immediately before and after the atomic commit; it does not launch or kill an operating-system
+process. No REST endpoint, transport handler, running server, or UI consumes the service yet.
 
 ## Repository configuration, not a product feature
 
@@ -397,9 +412,10 @@ The following are documented as intended behavior. They are **not** code.
   deployment, console, and audit routes are not.
 - Cloudflare Access and `local-onetime` authentication modes, RBAC, and the audit log. The minimal
   `token` mode is implemented and refuses startup for the other two modes.
-- File read/write API that consumes `SandboxPath`; no application handler or file operation calls the
-  resolver yet.
-- Snapshot store, diff, restore, retention, and garbage collection.
+- REST/WebSocket file endpoints and running-server use of `FileOperationsService`. The core service
+  consumes `SandboxPath`, but no application handler or transport route calls it yet.
+- Snapshot store, diff, restore, retention, and garbage collection. `SnapshotHook` is only an
+  injected boundary; no snapshot store exists.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
