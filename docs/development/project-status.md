@@ -1,8 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-20 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, WP-1.7, WP-1.8, and WP-1.9
-merged and closed. WP-2.1 implementation is in PR #153; local verification passed and PR checks are
-in progress). Verified against `main` at `b57f549` after PR #152; earlier merge evidence is recorded
+Last updated: 2026-11-20 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and WP-2.1 merged and
+closed). Verified against `main` at `748bbc8` after PR #153; earlier merge evidence is recorded
 below.
 
 This is the session-level status page. For per-component facts use
@@ -31,10 +30,9 @@ This is the session-level status page. For per-component facts use
   and the fail-closed HTTP/WebSocket gate, merged in PR #149 at `3244680`; the issue closed
   automatically. WP-1.8 (issue #48), the pinned Paper compatibility smoke harness with a
   conflicting Netty fixture and before/after-disable thread dumps, merged in PR #151 at `839b789`;
-  the issue closed as completed. Verification is recorded below. WP-2.1 (issue #50), the canonical
-  sandbox resolver, host-controlled policy, localized rejections, and security corpus, is implemented
-  in PR #153; local verification passed. Merge and issue-closure evidence will be recorded after the
-  required checks pass and the PR is merged.
+  the issue closed as completed. WP-2.1 (issue #50), the canonical sandbox resolver, host-controlled
+  policy, localized rejections, and security corpus, merged in PR #153 at `748bbc8`; the issue closed
+  as completed. Verification is recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -58,8 +56,32 @@ gh issue list --state open --limit 1000
 open issues: 81
 ```
 
-The earlier PR #149 state is preserved in the repository history. Required branch-protection checks
-now also include `Compatibility (ubuntu-latest)` and `Compatibility (windows-latest)`.
+Verified GitHub state on 2026-11-20 after PR #153 was merged and the feature branch was deleted:
+
+```text
+git log -1 --oneline origin/main
+748bbc8 feat(sandbox): implement sandbox path resolver (#153)
+
+gh pr view 153 --json number,state,mergedAt,mergeCommit,url
+number=153 state=MERGED mergedAt=2026-11-20T10:06:26Z
+mergeCommit=748bbc8adda99e1aae9eeaca600863b44ff2f2ab
+url=https://github.com/woxlo1/DeployMC/pull/153
+
+gh issue view 50 --json number,title,state,stateReason,closedAt
+number=50 title="WP-2.1: Sandbox path resolver" state=CLOSED
+stateReason=COMPLETED closedAt=2026-11-20T10:06:27Z
+
+gh pr list --state open --limit 1000
+open PRs: 17 (#23-#39 Dependabot updates)
+
+gh issue list --state open --limit 1000
+open issues: 80
+```
+
+`git branch --list 'feature/wp-2.1-sandbox-resolver'` and the matching
+`git ls-remote --heads origin` query returned no branches after cleanup. The earlier PR #149 state
+is preserved in the repository history. Required branch-protection checks now also include
+`Compatibility (ubuntu-latest)` and `Compatibility (windows-latest)`.
 
 All 18 pull-request checks passed before merge (16 required). The first Windows Java check failed
 only on the immediate Netty thread-termination assertion; `18eb9f7` bounded that wait, and the rerun
@@ -69,7 +91,7 @@ passed. Post-merge `main` runs passed: CI
 [44693881125](https://github.com/woxlo1/DeployMC/actions/runs/44693881125). Earlier WP-1.7 merge
 evidence remains in the repository history.
 
-## WP-2.1 verification (pre-merge)
+## WP-2.1 verification (local, pre-merge)
 
 These commands were run on 2026-11-20 on `feature/wp-2.1-sandbox-resolver` before PR #153 was merged:
 
@@ -96,8 +118,30 @@ The sandbox-only suite contains 3 corpus tests, 1 seeded fuzz test, and 12 resol
 The skipped test requires symlink creation, which this Windows host does not allow without elevation.
 The full Gradle build in `verify-all.cjs` ran 181 Java tests with 0 failures, 0 errors, and 1 skipped
 test. `DEPLOYMC_JAVA_ROOT` selected the existing ASCII junction so Gradle and Spotless saw one project
-path; otherwise this host can create a second junction and fail Spotless with a path mismatch. PR
-checks were still in progress when this section was written and are not claimed as passed here.
+path; otherwise this host can create a second junction and fail Spotless with a path mismatch. The
+PR check results and post-merge evidence are recorded in the next section.
+
+### WP-2.1 PR and post-merge evidence
+
+At PR head `9d52a85`, `gh pr checks 153 --watch --interval 30` ended with all checks passing. The
+first Windows Java run had failed three assertions that used the configured root instead of the
+canonical root; the tests were changed to use `resolver.root()`, and the rewritten history had the
+same tree as the failed head (`git diff --stat d582408 HEAD` was empty). `Commit messages` had also
+rejected the original docs commit for `footer must have leading blank line`; that message was
+shortened. The explicit PR comment is at
+<https://github.com/woxlo1/DeployMC/pull/153#issuecomment-7036766443>.
+
+At merge commit `748bbc8`, all post-merge `main` workflows completed successfully:
+
+```text
+CI       44716375506  success
+CodeQL   44716375542  success
+Scorecard 44716375486 success
+```
+
+These are GitHub Actions run IDs, linked from [implementation status](implementation-status.md).
+The scheduled fuzz workflow has not run on a schedule yet, and no file API or server process uses
+`SandboxPath`.
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
@@ -349,12 +393,11 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49 (all done) ->
-category 2 (#50-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
-#50 (WP-2.1: Sandbox path resolver) is implemented in PR #153. Finish its documentation, verify the
-required checks, comment on and merge the PR, confirm issue closure, record post-merge evidence, and
-delete the branch before starting the next item. Start later items only when earlier items are
-complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49, #50 (all done) ->
+category 2 (#51-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
+WP-2.1 is merged, issue #50 is closed, post-merge evidence is recorded, and the feature branch is
+deleted. Identify the next open category 2 item before starting later work. Start later items only
+when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 

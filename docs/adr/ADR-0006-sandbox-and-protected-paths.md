@@ -130,8 +130,11 @@ upload size, directory entries per listing, path length, and concurrent operatio
 - On 2026-11-20, the local corpus generator produced 2,736 reject and 29 allow payloads. The
   sandbox-only Gradle run completed 16 tests with 15 passed and 1 skipped; the skipped test needs
   symlink privileges unavailable on this host. `node tools/build/verify-all.cjs` reported `PASS` for
-  all seven toolchains. Implementation PR #153 was awaiting required CI checks and merge when this
-  evidence was recorded.
+  all seven toolchains. Implementation PR #153 merged at `748bbc8` with all PR checks passing at
+  `9d52a85`; post-merge `main`
+  CI [44716375506](https://github.com/woxlo1/DeployMC/actions/runs/44716375506),
+  CodeQL [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542), and Scorecard
+  [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed.
 - The corpus and fuzz workflow have not yet run on a scheduled GitHub Actions event, and no file API
   or running server consumes `SandboxPath`. Exact-byte preservation for an existing NFD filename is
   not implemented; comparison keys are NFC.

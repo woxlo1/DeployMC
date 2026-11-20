@@ -116,41 +116,46 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44704690925](https://github.com/woxlo1/DeployMC/actions/runs/44704690925) passed. CI artifacts
   rendered passing Linux and Windows rows into the [support matrix](../compatibility/support-matrix.md).
   No support tier is claimed.
-- WP-2.1 (issue #50) is implemented on `feature/wp-2.1-sandbox-resolver` in PR #153. It adds a pure
-  `SandboxResolver`, resolver-only `SandboxPath`, host-controlled `SandboxPolicy`, Windows name rules
-  on every host, default reparse-point rejection, root revalidation on each resolve, post-open file-key
-  checks, protected/deny globs, and localized English/Japanese rejection codes. The deterministic
-  corpus contains 2,736 reject payloads and 29 allowed paths, with seeded fuzz coverage and a
-  scheduled Ubuntu/Windows fuzz workflow. On 2026-11-20, `python tests/security/sandbox/generate_corpus.py`
-  reported `reject=2736 allow=29`; `.\gradlew.bat spotlessApply :core:test --tests '*Sandbox*'
-  --console=plain --no-configuration-cache` completed 16 tests (15 passed, 1 skipped); and
+- WP-2.1 (issue #50) merged in PR #153 at `748bbc8adda99e1aae9eeaca600863b44ff2f2ab`; the issue
+  closed as completed at 2026-11-20T10:06:27Z. It adds a pure `SandboxResolver`, resolver-only
+  `SandboxPath`, host-controlled `SandboxPolicy`, Windows name rules on every host, default
+  reparse-point rejection, root revalidation on each resolve, post-open file-key checks,
+  protected/deny globs, and localized English/Japanese rejection codes. The deterministic corpus
+  contains 2,736 reject payloads and 29 allowed paths, with seeded fuzz coverage and a scheduled
+  Ubuntu/Windows fuzz workflow. On 2026-11-20,
+  `python tests/security/sandbox/generate_corpus.py` reported `reject=2736 allow=29`;
+  `.\gradlew.bat spotlessApply :core:test --tests '*Sandbox*' --console=plain
+  --no-configuration-cache` completed 16 tests (15 passed, 1 skipped); and
   `$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii";
   node tools/build/verify-all.cjs` reported `PASS` for all seven toolchains. The skipped test needs
-  symlink privileges unavailable on this host. PR checks were still running when this was written;
-  no merge, issue closure, running-server validation, or file-API integration is claimed.
+  symlink privileges unavailable on this host. The explicit PR comment is at
+  <https://github.com/woxlo1/DeployMC/pull/153#issuecomment-7036766443>. All PR checks passed at
+  `9d52a85`; post-merge `main`
+  CI [44716375506](https://github.com/woxlo1/DeployMC/actions/runs/44716375506),
+  CodeQL [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542), and Scorecard
+  [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed. The feature
+  branch was deleted locally and remotely. No running-server validation or file-API integration is
+  claimed.
 
 ## In flight
 
 - WP-1.9 merged in PR #149 at `3244680`, issue #49 is closed, and no WP-1.9 work remains in flight.
 - WP-1.8 merged in PR #151 at `839b789`, issue #48 is closed, and no WP-1.8 work remains in flight.
 - WP-1.7 merged in PR #147 at `db3e33a`, issue #47 is closed, and no WP-1.7 work remains in flight.
-- WP-2.1 implementation PR #153 is open. Documentation for this branch is being pushed to that PR;
-  required checks must finish before an explicit review comment, squash merge, issue closure, and
-  branch cleanup.
+- WP-2.1 merged in PR #153 at `748bbc8`, issue #50 is closed, post-merge evidence is recorded, and
+  no feature branch remains. This evidence PR records the merge and PR-check results.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 81. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 80. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks the next Phase 1 work.
+- Nothing blocks the next category 2 work.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work, not Phase 0.
 
 ## Exact next steps
 
-1. Finish and push the WP-2.1 documentation to PR #153, wait for every required check, post an
-   explicit PR comment with commands and results, squash-merge the PR, verify that issue #50 closes,
-   record post-merge CI/CodeQL/Scorecard evidence, and delete the local and remote feature branch.
+1. Merge this evidence PR and confirm its post-merge `main` checks.
 2. Identify the next open category 2 item after #50, then continue with category 3 (#115-#120),
    category 4 (#121-#123), and category 5 (#124-#130).
 3. Update project status, implementation status, and this handoff at the end of each session.

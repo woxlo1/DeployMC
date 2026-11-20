@@ -124,7 +124,10 @@ Each path lists the primary controls. "Residual" states what remains after the c
   injected file-system boundary. A deterministic corpus contains 2,736 reject payloads and 29
   allowed paths; 16 sandbox unit/fuzz/corpus tests ran locally with 15 passed and 1 skipped.
   The skipped test requires symlink privileges unavailable on this Windows host. Implementation
-  PR #153 was awaiting required CI checks and merge when this evidence was recorded.
+  PR #153 merged at `748bbc8` after all PR checks passed at `9d52a85`; post-merge `main` CI
+  [44716375506](https://github.com/woxlo1/DeployMC/actions/runs/44716375506), CodeQL
+  [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542), and Scorecard
+  [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed.
 - **Residual:** TOCTOU cannot be eliminated on every platform; root revalidation and the post-open
   file-key check narrow the window. A host administrator can create layouts the resolver rejects;
   that is a denial of convenience, not an escape. Existing NFD filenames are compared under NFC
