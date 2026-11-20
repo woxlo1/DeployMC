@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
@@ -86,7 +86,7 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   0 duplicate names. All 18 PR checks passed (16 required); post-merge CI, CodeQL, and Scorecard
   runs also passed. No real server, browser, conflicting-library classloader, or text-component
   check was performed.
-- WP-1.9 (issue #49) is implemented on `feat/wp-1.9-token-authentication`. `core/auth` now loads
+- WP-1.9 (issue #49) merged in PR #149 at `3244680` and the issue is closed. `core/auth` now loads
   host-controlled `plugins/DeployMC/tokens.d/*.json` records with SHA-256 hashes, rejects invalid or
   duplicate records at startup, verifies bearer tokens with `MessageDigest.isEqual()`, enforces
   expiry, and provides a one-time creation API. `NettyTransportServer` authenticates every HTTP and
@@ -102,20 +102,21 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   passed, JAR verifier passed at 4,297,968 bytes / 2,510 classes), spec lint/test (14 tests), i18n
   checks (0 errors, 0 warnings; 7 checker tests), `node tools/build/verify-all.cjs` (all six
   toolchains `PASS`), and `git diff --check`. The new route-enumeration test covers every OpenAPI
-  method and path and the AsyncAPI `/api/v1/ws` bearer declaration. No real server, in-game command,
-  browser, conflicting-library classloader, or text-component check was performed. PR, CI, merge,
-  post-merge evidence, and issue closure are still pending.
+  method and path and the AsyncAPI `/api/v1/ws` bearer declaration. All 18 pull-request checks
+  passed (16 required); the first Windows Java failure was a thread-termination timing assertion,
+  fixed by `18eb9f7` before the passing rerun. Post-merge CI, CodeQL, and Scorecard runs passed, and
+  issue #49 closed at 2026-11-20T07:17:29Z. No real server, in-game command, browser,
+  conflicting-library classloader, or text-component check was performed.
 - The real Paper conflicting-library classloader check for #48 was recorded on
   [issue #48](https://github.com/woxlo1/DeployMC/issues/48#issuecomment-6975215752). The transport
   spike and JAR inspection are not a support claim.
 
 ## In flight
 
-- WP-1.9 is implemented and locally verified on `feat/wp-1.9-token-authentication`; commit, push,
-  pull request, CI, merge, post-merge evidence, and issue #49 closure are still pending.
+- WP-1.9 merged in PR #149 at `3244680`, issue #49 is closed, and no WP-1.9 work remains in flight.
 - WP-1.7 merged in PR #147 at `db3e33a`, issue #47 is closed, and no WP-1.7 work remains in flight.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 83. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 82. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -125,14 +126,9 @@ Last updated: 2026-11-19. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Commit the WP-1.9 changes with Conventional Commits and the OpenCode co-author trailer, push
-   `feat/wp-1.9-token-authentication`, and open a PR referencing #49.
-2. Verify every PR check, merge only after green, verify the post-merge CI, CodeQL, and Scorecard
-   runs, then close #49 with an evidence comment or a separate evidence PR as required by the
-   repository pattern.
-3. After #49 is complete, continue with #48 and then category 3 (#115-#120), category 4 (#121-#123),
-   and category 5 (#124-#130).
-4. Update project status, implementation status, and this handoff at the end of each session.
+1. Continue with #48, then category 3 (#115-#120), category 4 (#121-#123), and category 5
+   (#124-#130).
+2. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
 
