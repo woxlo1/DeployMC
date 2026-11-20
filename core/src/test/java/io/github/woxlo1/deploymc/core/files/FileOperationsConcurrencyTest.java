@@ -52,9 +52,12 @@ class FileOperationsConcurrencyTest {
           successes++;
         } catch (ExecutionException failure) {
           assertTrue(failure.getCause() instanceof FileOperationException);
-          assertEquals(
-              FileOperationException.Reason.REVISION_CONFLICT,
-              ((FileOperationException) failure.getCause()).reason());
+          FileOperationException rejection = (FileOperationException) failure.getCause();
+          // Atomic replacement can change the file key before the stale writer rechecks.
+          assertTrue(
+              rejection.reason() == FileOperationException.Reason.REVISION_CONFLICT
+                  || rejection.reason() == FileOperationException.Reason.PATH_REJECTED,
+              "Unexpected conflict reason: " + rejection.reason());
           conflicts++;
         }
       }
