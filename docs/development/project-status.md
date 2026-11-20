@@ -1,8 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-19 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, and WP-1.7 merged and closed;
-WP-1.9 implemented on `feat/wp-1.9-token-authentication` with local verification, review pending).
-Verified against `main` at `d4ce4c6` after evidence PR #148; earlier merge evidence is recorded below.
+Last updated: 2026-11-20 (Phase 1, WP-1.4, both WP-1.5 stages, WP-1.6, WP-1.7, and WP-1.9 merged
+and closed). Verified against `main` at `3244680` after PR #149; earlier merge evidence is recorded
+below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -26,36 +26,39 @@ This is the session-level status page. For per-component facts use
   after its required checks and post-merge workflows passed. WP-1.7 (issue #47), with SnakeYAML 2.7,
   mandatory relocations, the final-JAR verifier, and CI size reporting, merged in PR #147 at
   `db3e33a`; the issue closed automatically. Evidence PR #148 merged at `d4ce4c6` with all required
-  checks and post-merge workflows passing. WP-1.9 (issue #49) is implemented on
-  `feat/wp-1.9-token-authentication` with the local evidence recorded below; it is not yet merged or
-  closed.
+  checks and post-merge workflows passing. WP-1.9 (issue #49), host-provisioned SHA-256 token records
+  and the fail-closed HTTP/WebSocket gate, merged in PR #149 at `3244680`; the issue closed
+  automatically. Verification is recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
-Verified GitHub state on 2026-11-19 after PR #147 was merged and issue #47 was closed:
+Verified GitHub state on 2026-11-20 after PR #149 was merged and issue #49 was closed:
 
 ```text
 git log -1 --oneline
-db3e33a build(plugin): verify the final shaded jar
+3244680 feat(auth): add host-provisioned token authentication
 
-gh pr view 147 --json state,mergeCommit,url
-state=MERGED mergeCommit=db3e33afa5f1d198d29c49a5f133da0e0548cc7e
-url=https://github.com/woxlo1/DeployMC/pull/147
+gh pr view 149 --json state,mergeCommit,url
+state=MERGED mergeCommit=32446800b5e7d2e8cf5fd249b9fccb174a5b117b
+url=https://github.com/woxlo1/DeployMC/pull/149
 
-gh issue view 47 --json state,closedAt
-state=CLOSED closedAt=2026-11-19T09:49:23Z
+gh issue view 49 --json state,stateReason,closedAt
+state=CLOSED stateReason=COMPLETED closedAt=2026-11-20T07:17:29Z
 
 gh pr list --state open --limit 1000
 open PRs: 17   (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
-open issues: 83
+open issues: 82
 ```
 
-All 18 pull-request checks passed before merge (16 required). Post-merge `main` runs passed: CI
-[44499929954](https://github.com/woxlo1/DeployMC/actions/runs/44499929954), CodeQL
-[44499932471](https://github.com/woxlo1/DeployMC/actions/runs/44499932471), and Scorecard
-[44499929986](https://github.com/woxlo1/DeployMC/actions/runs/44499929986).
+All 18 pull-request checks passed before merge (16 required). The first Windows Java check failed
+only on the immediate Netty thread-termination assertion; `18eb9f7` bounded that wait, and the rerun
+passed. Post-merge `main` runs passed: CI
+[44693881031](https://github.com/woxlo1/DeployMC/actions/runs/44693881031), CodeQL
+[44693880985](https://github.com/woxlo1/DeployMC/actions/runs/44693880985), and Scorecard
+[44693881125](https://github.com/woxlo1/DeployMC/actions/runs/44693881125). Earlier WP-1.7 merge
+evidence remains in the repository history.
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
@@ -229,9 +232,10 @@ git diff --check                                   # pass
 
 The route-enumeration test reads the committed OpenAPI document, asserts 401 for every non-health
 route, and separately checks the AsyncAPI bearer declaration for `/api/v1/ws`. Module test counts
-were core 64, transport 32, api 8, Bukkit 51, and standalone 4. No real Minecraft server load,
-in-game command execution, browser rendering, conflicting-library classloader check, or
-text-component compatibility check was performed.
+were core 64, transport 32, api 8, Bukkit 51, and standalone 4. PR #149 merged at `3244680` and issue
+#49 closed automatically; the GitHub state, passing checks, and post-merge workflow runs are recorded
+above. No real Minecraft server load, in-game command execution, browser rendering,
+conflicting-library classloader check, or text-component compatibility check was performed.
 
 ## Known limitations
 
@@ -260,11 +264,9 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47 (all done) -> category 2
-(#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). WP-1.9
-(#49) is prepared for review; after its PR checks, merge, post-merge workflows, and evidence are
-verified, continue with #48. Start the next item only when earlier items are complete or the owner
-explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #49 (all done) -> category 2
+(#48-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Continue
+with #48. Start the next item only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 

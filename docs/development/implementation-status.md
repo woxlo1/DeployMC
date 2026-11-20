@@ -1,7 +1,7 @@
 # Implementation Status
 
-Last updated: 2026-11-19 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.7 merged; issue #47
-closed; WP-1.9 implemented with local verification, review and merge pending).
+Last updated: 2026-11-20 (Phase 0 WP-0.6/WP-0.2 and Phase 1 WP-1.1-WP-1.7 and WP-1.9 merged;
+issues #47 and #49 closed).
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -52,10 +52,10 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 
-The most recent all-toolchain run was `node tools/build/verify-all.cjs` on
-`feat/wp-1.9-token-authentication`, which reported `PASS` for `web`, `java`, `cli`, `python`,
-`spec`, and `i18n`. Web runs before Java in that script and in the CI Java job because the plugin build
-packages `web/dist` into the JAR. WP-1.4 was merged in PR #137 at `4548b4b`; the post-merge `main`
+The most recent all-toolchain run was `node tools/build/verify-all.cjs` on the merged
+`feat/wp-1.9-token-authentication` branch, which reported `PASS` for `web`, `java`, `cli`, `python`,
+`spec`, and `i18n`. Web runs before Java in that script and in the CI Java job because the plugin
+build packages `web/dist` into the JAR. WP-1.4 was merged in PR #137 at `4548b4b`; the post-merge `main`
 CI run [44285715524](https://github.com/woxlo1/DeployMC/actions/runs/44285715524) passed every job,
 CodeQL [44285715587](https://github.com/woxlo1/DeployMC/actions/runs/44285715587) passed all three
 languages, and Scorecard [44285715509](https://github.com/woxlo1/DeployMC/actions/runs/44285715509)
@@ -315,6 +315,15 @@ reduction in reachable surface because the transport now fails closed without a 
 risk is that every token is admin-equivalent until RBAC arrives in 0.4.0. No real Minecraft server
 load, in-game command execution, browser rendering, conflicting-library classloader check, or
 text-component compatibility check was performed; no support tier is claimed.
+
+PR #149 merged at `3244680` on 2026-11-20T07:17:28Z; issue #49 closed at 2026-11-20T07:17:29Z.
+All 18 pull-request checks passed (16 required). The first Windows Java check failed only on the
+immediate Netty thread-termination assertion; `18eb9f7` bounded that wait, and the rerun passed.
+Post-merge `main` runs passed: CI
+[44693881031](https://github.com/woxlo1/DeployMC/actions/runs/44693881031), CodeQL
+[44693880985](https://github.com/woxlo1/DeployMC/actions/runs/44693880985), and Scorecard
+[44693881125](https://github.com/woxlo1/DeployMC/actions/runs/44693881125). These runs cover build
+and unit checks, not a real server.
 
 WP-0.2 added three source-linked research documents:
 [naming check](../research/naming-check.md), [competitive analysis](../research/competitive-analysis.md),
