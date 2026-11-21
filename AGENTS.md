@@ -68,11 +68,17 @@ at `9363e0c` with issue #54 closed. `core.validation` adds bounded YAML, JSON, T
 validators, strict UTF-8 decoding, stable localized findings, deterministic registry matching, a
 byte-preserving YAML scalar editor, and a host-wired fail-closed `core.files` save gate. PR checks and
 post-merge CI, CodeQL, and Scorecard passed for WP-2.1, WP-2.2, both WP-2.3 stages, both WP-2.4 stages,
-and both WP-2.5 stages; implementation evidence is recorded in `docs/development`.
-No REST endpoint, transport handler, running server, UI, or in-game command consumes the resolver,
-`core.files`, `core.snapshot`, `core.diff`, or `core.validation` yet, and exact-byte preservation for
-existing NFD filenames is not implemented. The full integration suite has not run, and no in-game
-`/deploymc` command has been exercised.
+both WP-2.5 stages, and both WP-2.6 file/validation stages; implementation evidence is recorded in
+`docs/development`. WP-2.6 merged the file/validation REST specification in
+[PR #168](https://github.com/woxlo1/DeployMC/pull/168) at `8970728` and its authenticated adapters in
+[PR #169](https://github.com/woxlo1/DeployMC/pull/169) at `08fe424`. The adapters consume the
+sandbox resolver, `core.files`, and `core.validation` behind the bearer-token gate, with Problem
+Details, ETags, ranges, and cursor pagination. Six snapshot REST routes are now specified in
+`specification/api/openapi.yaml` but have no adapter.
+No REST endpoint, transport handler, running server, UI, or in-game command consumes `core.snapshot`
+or `core.diff` yet, and exact-byte preservation for existing NFD filenames is not implemented. The
+file/validation adapters have server-free tests only; the full integration suite has not run, and no
+in-game `/deploymc` command has been exercised.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The

@@ -218,14 +218,21 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   runs passed, and `build verifyJava8` ran 311 tests with 0 failures, 0 errors, and 1 skipped
   symlink test; i18n and `git diff --check` also passed. A regression test caught and fixed the
   runtime rejecting schema-valid 2048 MiB snapshot and 4096 MiB upload budgets. No running-server
-  smoke, E2E, in-game command, or UI check was performed.
+  smoke, E2E, in-game command, or UI check was performed. The adapter merged in PR #169 at `08fe424`
+  with verification and post-merge evidence comments, passing CI, CodeQL, and Scorecard, and its
+  branch was deleted.
+- The WP-2.6 snapshot follow-up defines six authenticated routes in OpenAPI: list, metadata,
+  content, bounded diff, reversible restore, and retention prune. It pins opaque ids, quoted ETags,
+  inclusive-start/exclusive-end ranges, host-derived restore actors, path-scope notes, and stable
+  snapshot/diff error mapping. The snapshots have a Java 8 store but no adapter yet. `npm run lint`
+  in `tools/spec` passed locally on 2026-11-21.
 
 ## In flight
 
-- The WP-2.6 file/validation adapter branch is pending review and merge. Its routes stay behind the
-  bearer-token gate with no bypass; the single provisioned token remains admin-equivalent until
-  Phase 3 RBAC. Snapshot routes remain a separate follow-up specification and adapter stage.
-- No WP-2.1-WP-2.5 feature branches remain, and the merged `spec/wp-2.6-file-endpoints` branch was
+- The WP-2.6 snapshot-route specification branch is pending review and merge. Its routes will stay
+  behind the bearer-token gate with no bypass; the single provisioned token remains admin-equivalent
+  until Phase 3 RBAC. Snapshot adapter implementation follows the merged contract.
+- No WP-2.1-WP-2.5 or WP-2.6 file/validation branches remain; both merged WP-2.6 branches were
   deleted after evidence was posted. Evidence is recorded in the status pages and pull-request
   comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
@@ -239,9 +246,9 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Finish review of the WP-2.6 file/validation adapter PR, then post verification and post-merge
-   evidence comments and delete the branch.
-2. Add the snapshot routes in a second WP-2.6 specification PR, then implement their adapters.
+1. Finish review of the WP-2.6 snapshot-route specification PR, then post verification and
+   post-merge evidence comments and delete the branch.
+2. Implement the snapshot adapters against the merged contract and post the same evidence comments.
 3. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
    order.
 4. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
