@@ -37,7 +37,7 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation), Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.4 are merged. The Java, Web,
+Phase 0 (foundation), Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.5 are merged. The Java, Web,
 CLI, and Python skeletons exist and are verified, along with the localization
 tooling, core project documents, and Japanese README. Build/test, lint, i18n, CodeQL, dependency
 review, Scorecard, and two compatibility jobs run in CI, and branch protection with required checks
@@ -62,12 +62,17 @@ writes, restore-first reversibility, retention, verify/repair, conservative GC, 
 at `2a4e7f8` and its Java 8 implementation in [PR #163](https://github.com/woxlo1/DeployMC/pull/163)
 at `80a3f0b` with issue #53 closed. `core.diff` adds bounded line/word diffs, hardened YAML/JSON
 semantic diffs, metadata-only ZIP/JAR descriptor diffs, stable machine codes, and inclusive 2 MiB
-textual limits. PR checks and post-merge CI, CodeQL, and Scorecard passed for WP-2.1, WP-2.2, both
-WP-2.3 stages, and both WP-2.4 stages; implementation evidence is recorded in `docs/development`.
+textual limits. WP-2.5 merged its normative contract in [PR #165](https://github.com/woxlo1/DeployMC/pull/165)
+at `6cd6015` and its Java 8 implementation in [PR #166](https://github.com/woxlo1/DeployMC/pull/166)
+at `9363e0c` with issue #54 closed. `core.validation` adds bounded YAML, JSON, TOML, and `.properties`
+validators, strict UTF-8 decoding, stable localized findings, deterministic registry matching, a
+byte-preserving YAML scalar editor, and a host-wired fail-closed `core.files` save gate. PR checks and
+post-merge CI, CodeQL, and Scorecard passed for WP-2.1, WP-2.2, both WP-2.3 stages, both WP-2.4 stages,
+and both WP-2.5 stages; implementation evidence is recorded in `docs/development`.
 No REST endpoint, transport handler, running server, UI, or in-game command consumes the resolver,
-`core.files`, `core.snapshot`, or `core.diff` yet, and exact-byte preservation for existing NFD
-filenames is not implemented. The full integration suite has not run, and no in-game `/deploymc`
-command has been exercised.
+`core.files`, `core.snapshot`, `core.diff`, or `core.validation` yet, and exact-byte preservation for
+existing NFD filenames is not implemented. The full integration suite has not run, and no in-game
+`/deploymc` command has been exercised.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
@@ -78,7 +83,7 @@ Verified commands (2026-11-21 for Java, 2026-11-18 for the other toolchains; Win
 `node tools/build/verify-all.cjs`, which orders Web before Java:
 
 ```powershell
-.\gradlew.bat build            # compiles all Java modules, runs 261 Java tests (1 skipped)
+.\gradlew.bat build            # compiles all Java modules, runs 288 Java tests (1 skipped)
                               # and runs the Spotless check
 .\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
 .\gradlew.bat spotlessApply    # formats Java sources and repository text files

@@ -1,8 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.4,
+Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 and the WP-2.5 specification merged and closed). GitHub evidence below was verified against `main`
-through `6cd6015` after PR #165; earlier evidence is recorded below.
+through `9363e0c` after PR #166; earlier evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -37,11 +37,13 @@ This is the session-level status page. For per-component facts use
   contract, merged in PR #158 at `879bdc5`; the Java 8 `core.snapshot` implementation merged in PR
   #159 at `0425c8`, and issue #52 closed as completed. WP-2.4 first stage merged in PR #162 at
   `2a4e7f8`; the Java 8 `core.diff` implementation merged in PR #163 at `80a3f0b`, and issue #53
-  closed as completed. Verification and post-merge evidence are recorded below.
+  closed as completed. WP-2.5 first stage merged in PR #165 at `6cd6015`; the Java 8 `core.validation`
+  implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. Verification and
+  post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
-  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) is
-  complete through its engine. WP-2.5 (issue #54) now has a normative validator contract and ADR-0016;
-  its implementation and WP-2.6 (#55) remain open, as does category 3-5 work.
+  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
+  WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) and category
+  3-5 work remain open.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -439,6 +441,19 @@ delete, immutable byte-array snapshots, bounded pre-validation reads, warning ex
 determinism. The one-command `node tools/build/verify-all.cjs` then reported `PASS` for `web`, `java`,
 `cli`, `python`, `spec`, `i18n`, and `compat`. D-008 records the unresolved contract wording for
 structural budgets.
+
+## WP-2.5 implementation merge evidence
+
+PR #166 merged to `main` at `9363e0c70c4666558959560fe8ca5fe58f80e920` and closed issue #54 as
+completed. All 17 required pull-request checks passed before merge. Post-merge workflows on `main`
+succeeded: CI
+[44893521743](https://github.com/woxlo1/DeployMC/actions/runs/44893521743), CodeQL
+[44893521769](https://github.com/woxlo1/DeployMC/actions/runs/44893521769), and Scorecard
+[44893521898](https://github.com/woxlo1/DeployMC/actions/runs/44893521898). The explicit verification
+comment is at <https://github.com/woxlo1/DeployMC/pull/166#issuecomment-7061084189>, and the
+post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/166#issuecomment-7061152266>. The local and remote
+`feature/wp-2.5-validation` branches were deleted; local `main` was left at `9363e0c`.
 
 ## Earlier pull-request evidence
 

@@ -249,6 +249,13 @@ one-command `node tools/build/verify-all.cjs` then reported `PASS` for `web`, `j
 7 remains open as D-008: YAML and TOML node/depth budgets currently abort with
 `validation.limit-exceeded`, while JSON depth produces `validation.json-depth`.
 
+The implementation merged in [PR #166](https://github.com/woxlo1/DeployMC/pull/166) at `9363e0c` with
+issue #54 closed. All required PR checks passed before merge. Post-merge workflows on `main` succeeded:
+CI [44893521743](https://github.com/woxlo1/DeployMC/actions/runs/44893521743), CodeQL
+[44893521769](https://github.com/woxlo1/DeployMC/actions/runs/44893521769), and Scorecard
+[44893521898](https://github.com/woxlo1/DeployMC/actions/runs/44893521898). The post-merge evidence
+comment is at <https://github.com/woxlo1/DeployMC/pull/166#issuecomment-7061152266>.
+
 ## Repository configuration, not a product feature
 
 WP-0.8 added six issue forms with a security contact redirect, a pull request template, a CODEOWNERS
