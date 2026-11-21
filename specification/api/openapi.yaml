@@ -12,10 +12,11 @@ info:
     **Status: partial.** The authentication gate, health endpoints, the
     `GET /api/v1/server` application handler, and the WP-2.6 file and validation transport
     adapters are implemented. The adapters have server-free contract tests, but no
-    running-server smoke test or Web UI consumes them yet. Until 0.4.0 every valid token
+    running-server smoke test or Web UI consumes them yet. The WP-2.6 snapshot routes are
+    normative here and are not implemented by any adapter. Until 0.4.0 every valid token
     is admin-equivalent; role and path scoping arrive with RBAC. The remaining server
-    resource fields and the snapshot, deployment, console, and audit resources are defined
-    for later work packages.
+    resource fields and the deployment, console, and audit resources are defined for later
+    work packages.
 
     Rules that apply to every operation:
 
@@ -57,6 +58,11 @@ tags:
     description: Sandboxed file listing, reading, writing, moving, upload, and deletion.
   - name: Validation
     description: Server-authoritative content validation for sandbox paths.
+  - name: Snapshots
+    description: |
+      Immutable, content-addressed history for sandbox paths. Metadata and content can
+      contain configuration secrets, so every operation requires authentication and is
+      subject to the source path's authorization scope once RBAC arrives.
 
 paths:
   /healthz:
@@ -675,6 +681,354 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /api/v1/snapshots:
+    get:
+      operationId: listSnapshots
+      tags: [Snapshots]
+      summary: List snapshots for a sandbox path
+      description: |
+        Lists immutable snapshot records for one sandbox-relative path. The path is
+        resolved through the sandbox before any store access; protected paths are
+        rejected. The path need not exist in the live tree because deletion snapshots
+        remain in history. Records are ordered newest first by `created-at`, then by
+        opaque id. An empty history is a successful empty page, not `404`.
+
+        Metadata can contain configuration secrets. Every request is authenticated, and
+        once RBAC arrives the caller must also hold `snapshots.read` on this path scope.
+        Absolute host paths and store-relative file names are never returned.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SandboxPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of snapshot metadata, newest first.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/snapshots/{id}:
+    get:
+      operationId: getSnapshot
+      tags: [Snapshots]
+      summary: Read one snapshot record
+      description: |
+        Returns the authoritative metadata for one immutable snapshot. The `ETag` is a
+        quoted snapshot id because a committed record never changes. An unknown id and a
+        syntactically invalid id both return `404` with `snapshots.not-found`; the server
+        does not distinguish them. Once RBAC arrives, the caller must hold
+        `snapshots.read` on the record's sandbox path scope.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SnapshotId'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: The snapshot metadata record.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotRecord'
+        '304':
+          description: The supplied `If-None-Match` matches this immutable record.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/snapshots/{id}/content:
+    get:
+      operationId: getSnapshotContent
+      tags: [Snapshots]
+      summary: Download the exact bytes of one snapshot
+      description: |
+        Returns the exact uncompressed content addressed by the record's hash. The
+        `ETag` is the quoted `sha256:<hex>` revision, so a client can compare it with the
+        record. `Range` uses an inclusive start and an exclusive end, matching the file
+        content route. Deletion and directory markers have no content and return `404`
+        with `snapshots.not-found`.
+
+        This route can expose secrets captured from configuration files. It requires
+        authentication and, once RBAC arrives, `snapshots.read` on the record's path
+        scope. The response never includes a host path or an internal blob name.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SnapshotId'
+        - name: Range
+          in: header
+          required: false
+          description: Inclusive start and exclusive end, for example `bytes=0-1023`.
+          schema:
+            type: string
+            pattern: '^bytes=\d*-\d*$'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: The complete snapshot bytes.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Accept-Ranges:
+              description: Always `bytes`.
+              schema:
+                type: string
+                const: bytes
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: The requested byte range.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Content-Range:
+              description: Range and total size, for example `bytes 0-1023/2048`.
+              schema:
+                type: string
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '304':
+          description: The supplied `If-None-Match` matches the snapshot revision.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '416':
+          $ref: '#/components/responses/RangeNotSatisfiable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/snapshots/diff:
+    get:
+      operationId: diffSnapshots
+      tags: [Snapshots]
+      summary: Compare two snapshots
+      description: |
+        Compares two immutable snapshots with the bounded `core.diff` engine. `mode=auto`
+        selects line, semantic YAML/JSON, or JAR metadata comparison from the record
+        kinds; an explicit mode overrides detection. Both ids must exist in the same
+        store and pass the caller's path-scope check once RBAC arrives.
+
+        `diff.invalid-input` maps to `400` and `diff.too-large` maps to `413`. A successful
+        response has status `identical` or `changed`, and never embeds a host path. Diff
+        text can expose configuration secrets and is therefore authenticated.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - name: a
+          in: query
+          required: true
+          description: Snapshot id used as the before side.
+          schema:
+            $ref: '#/components/schemas/SnapshotId'
+        - name: b
+          in: query
+          required: true
+          description: Snapshot id used as the after side.
+          schema:
+            $ref: '#/components/schemas/SnapshotId'
+        - name: mode
+          in: query
+          required: false
+          description: Input interpretation; `auto` feature-detects from the recorded kind.
+          schema:
+            type: string
+            enum: [auto, text, yaml, json, jar]
+            default: auto
+      responses:
+        '200':
+          description: A bounded diff result.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotDiff'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/snapshots/{id}/restore:
+    post:
+      operationId: restoreSnapshot
+      tags: [Snapshots]
+      summary: Restore one snapshot to its recorded path
+      description: |
+        Restores the selected snapshot to the exact sandbox-relative path recorded in its
+        metadata. Clients cannot choose a different target. The server derives the actor
+        from the authenticated identity; no request body can spoof it.
+
+        Restore is reversible: the current target state is captured with reason `restore`
+        before mutation, including a deletion marker when the target is missing. When the
+        target exists, `If-Match` must contain its current revision; a missing precondition
+        is `428` and a stale revision is `412` with `snapshots.restore-conflict`. Restore of
+        a deletion marker removes only the recorded target after that capture. An id that
+        names a directory marker is rejected as `snapshots.corrupt`.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SnapshotId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: The restored id and the new pre-restore snapshot id.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/snapshots/prune:
+    post:
+      operationId: pruneSnapshots
+      tags: [Snapshots]
+      summary: Prune snapshots for one path or one id
+      description: |
+        Applies host retention rules to exactly one target: either a sandbox-relative
+        `path` or an opaque snapshot `id`, never both. Protected records stay: the newest
+        three versions of every path, records referenced by a non-terminal deployment,
+        and records younger than the configured minimum age.
+
+        Prune removes metadata and per-path index entries only. Blobs remain until a host
+        garbage-collection pass, so a recent prune can still be repaired. This route never
+        starts GC, changes other paths, or exposes store-relative file names.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PruneRequest'
+      responses:
+        '200':
+          description: Counts from the prune run.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
 components:
   securitySchemes:
     cloudflareAccess:
@@ -766,6 +1120,15 @@ components:
         type: string
         maxLength: 1024
         pattern: '^(?!/)(?!.*\\)(?!.*//)(?!\.\.(?:/|$))(?!.*/\.\.(?:/|$)).*$'
+    SnapshotId:
+      name: id
+      in: path
+      required: true
+      description: |
+        Opaque snapshot id. An unknown or syntactically invalid id is reported as
+        `snapshots.not-found` without distinguishing the two cases.
+      schema:
+        $ref: '#/components/schemas/SnapshotId'
     Cursor:
       name: cursor
       in: query
@@ -1459,3 +1822,431 @@ components:
           items:
             type: string
             maxLength: 256
+
+    SnapshotId:
+      type: string
+      minLength: 31
+      maxLength: 31
+      pattern: '^snap_[0-9a-z]{26}$'
+      description: Opaque snapshot id. It is never derived from a host path.
+
+    SnapshotRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - capture
+        - path
+        - kind
+        - hash
+        - size
+        - mode
+        - createdAt
+        - actor
+        - reason
+        - deploymentId
+        - parent
+        - pluginMetadata
+      properties:
+        id:
+          $ref: '#/components/schemas/SnapshotId'
+        capture:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Id shared by every record captured by one request.
+        path:
+          type: string
+          maxLength: 1024
+          description: Normalized sandbox-relative path. Never an absolute host path.
+        kind:
+          type: string
+          enum: [file, jar, deleted, directory]
+        hash:
+          type: [string, 'null']
+          pattern: '^sha256:[0-9a-f]{64}$'
+          description: Full content revision, or `null` for deletion and directory markers.
+        size:
+          type: integer
+          minimum: 0
+          description: Exact byte length, or `0` for a non-content marker.
+        mode:
+          type: [string, 'null']
+          pattern: '^[0-7]{4}$'
+          description: POSIX mode as four octal digits when available.
+        createdAt:
+          type: string
+          format: date-time
+          description: UTC RFC 3339 instant with an explicit `Z`.
+        actor:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Host-derived authenticated actor id, never a request-supplied value.
+        reason:
+          type: string
+          enum: [edit, delete, rename, deploy, restore]
+        deploymentId:
+          type: [string, 'null']
+          maxLength: 128
+          description: Owning deployment id when applicable.
+        parent:
+          type: [string, 'null']
+          description: Previous snapshot id for the same path, or `null`.
+        pluginMetadata:
+          type: [object, 'null']
+          additionalProperties: false
+          description: Descriptor summary for JAR snapshots, or `null`.
+          properties:
+            name:
+              type: string
+              maxLength: 512
+            version:
+              type: string
+              maxLength: 256
+            descriptor-summary:
+              type: string
+              maxLength: 4096
+
+    SnapshotList:
+      type: object
+      additionalProperties: false
+      required: [path, items, nextCursor]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative path whose history was listed.
+        items:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/SnapshotRecord'
+        nextCursor:
+          type: [string, 'null']
+          maxLength: 512
+          description: Opaque cursor for the next page, or `null` on the last page.
+        total:
+          type: integer
+          minimum: 0
+          description: Exact count of records for this path.
+
+    RestoreResult:
+      type: object
+      additionalProperties: false
+      required: [restoredSnapshotId, preRestoreSnapshotId]
+      properties:
+        restoredSnapshotId:
+          $ref: '#/components/schemas/SnapshotId'
+        preRestoreSnapshotId:
+          $ref: '#/components/schemas/SnapshotId'
+          description: New reversible snapshot of the target's previous state.
+
+    PruneRequest:
+      type: object
+      additionalProperties: false
+      description: Exactly one of `path` or `id` is required.
+      oneOf:
+        - required: [path]
+        - required: [id]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative path whose eligible snapshots may be pruned.
+        id:
+          $ref: '#/components/schemas/SnapshotId'
+
+    RetentionReport:
+      type: object
+      additionalProperties: false
+      required:
+        - considered
+        - protectedRecords
+        - pruned
+        - failed
+        - storeBytesBefore
+        - storeBytesAfter
+      properties:
+        considered:
+          type: integer
+          minimum: 0
+        protectedRecords:
+          type: integer
+          minimum: 0
+          description: Records kept by the newest-three, deployment, or age invariants.
+        pruned:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+        storeBytesBefore:
+          type: integer
+          minimum: 0
+        storeBytesAfter:
+          type: integer
+          minimum: 0
+          description: Blobs remain after prune; this reports only current store bytes.
+
+    DiffContentInfo:
+      type: object
+      additionalProperties: false
+      required: [size, sha256]
+      properties:
+        size:
+          type: integer
+          minimum: 0
+        sha256:
+          type: string
+          pattern: '^sha256:[0-9a-f]{64}$'
+
+    DiffLineChange:
+      type: object
+      additionalProperties: false
+      required: [kind, oldLine, newLine, text, ending]
+      properties:
+        kind:
+          type: string
+          enum: [context, removed, added]
+        oldLine:
+          type: [integer, 'null']
+          minimum: 1
+        newLine:
+          type: [integer, 'null']
+          minimum: 1
+        text:
+          type: string
+          maxLength: 1048576
+          description: Decoded line text without its terminator.
+        ending:
+          type: string
+          enum: [LF, CRLF, CR, EOF]
+
+    DiffLineHunk:
+      type: object
+      additionalProperties: false
+      required: [oldStart, oldLines, newStart, newLines, lines]
+      properties:
+        oldStart:
+          type: integer
+          minimum: 1
+        oldLines:
+          type: integer
+          minimum: 0
+        newStart:
+          type: integer
+          minimum: 1
+        newLines:
+          type: integer
+          minimum: 0
+        lines:
+          type: array
+          maxItems: 4096
+          items:
+            $ref: '#/components/schemas/DiffLineChange'
+
+    DiffWordSegment:
+      type: object
+      additionalProperties: false
+      required: [kind, text]
+      properties:
+        kind:
+          type: string
+          enum: [unchanged, removed, added]
+        text:
+          type: string
+          maxLength: 1048576
+
+    DiffWordDiff:
+      type: object
+      additionalProperties: false
+      required: [oldLine, newLine, oldSegments, newSegments]
+      properties:
+        oldLine:
+          type: integer
+          minimum: 1
+        newLine:
+          type: integer
+          minimum: 1
+        oldSegments:
+          type: array
+          maxItems: 4096
+          items:
+            $ref: '#/components/schemas/DiffWordSegment'
+        newSegments:
+          type: array
+          maxItems: 4096
+          items:
+            $ref: '#/components/schemas/DiffWordSegment'
+
+    DiffSemanticChange:
+      type: object
+      additionalProperties: false
+      required: [kind, path, before, beforeType, after, afterType, from, to, value, valueType, beforeOrder, afterOrder]
+      description: |
+        Optional fields are `null` when they do not apply to the change kind. Values are
+        bounded scalar representations, not raw structured content.
+      properties:
+        kind:
+          type: string
+          enum: [added, removed, changed, renamed, reordered]
+        path:
+          type: [string, 'null']
+          maxLength: 1024
+        before:
+          type: [string, 'null']
+          maxLength: 4096
+        beforeType:
+          type: [string, 'null']
+          maxLength: 64
+        after:
+          type: [string, 'null']
+          maxLength: 4096
+        afterType:
+          type: [string, 'null']
+          maxLength: 64
+        from:
+          type: [string, 'null']
+          maxLength: 1024
+        to:
+          type: [string, 'null']
+          maxLength: 1024
+        value:
+          type: [string, 'null']
+          maxLength: 4096
+        valueType:
+          type: [string, 'null']
+          maxLength: 64
+        beforeOrder:
+          type: [array, 'null']
+          maxItems: 1024
+          items:
+            type: string
+            maxLength: 1024
+        afterOrder:
+          type: [array, 'null']
+          maxItems: 1024
+          items:
+            type: string
+            maxLength: 1024
+
+    DiffJarDependencyChange:
+      type: object
+      additionalProperties: false
+      required: [name, kind, scope]
+      properties:
+        name:
+          type: string
+          maxLength: 1024
+        kind:
+          type: string
+          enum: [added, removed, scope-changed]
+        scope:
+          type: string
+          maxLength: 128
+
+    DiffJarDescriptor:
+      type: object
+      additionalProperties: false
+      required: [name, status, fieldChanges, dependencyChanges]
+      properties:
+        name:
+          type: string
+          maxLength: 512
+        status:
+          type: string
+          maxLength: 64
+        fieldChanges:
+          type: array
+          maxItems: 512
+          items:
+            $ref: '#/components/schemas/DiffSemanticChange'
+        dependencyChanges:
+          type: array
+          maxItems: 1024
+          items:
+            $ref: '#/components/schemas/DiffJarDependencyChange'
+
+    DiffJarMetadata:
+      type: object
+      additionalProperties: false
+      required: [hashChanged, sizeDelta, entriesAdded, entriesRemoved, descriptors]
+      properties:
+        hashChanged:
+          type: boolean
+        sizeDelta:
+          type: integer
+        entriesAdded:
+          type: array
+          maxItems: 4096
+          items:
+            type: string
+            maxLength: 1024
+        entriesRemoved:
+          type: array
+          maxItems: 4096
+          items:
+            type: string
+            maxLength: 1024
+        descriptors:
+          type: array
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/DiffJarDescriptor'
+
+    SnapshotDiff:
+      type: object
+      additionalProperties: false
+      required:
+        - a
+        - b
+        - status
+        - strategy
+        - before
+        - after
+        - notes
+        - lineHunks
+        - wordDiffs
+        - semanticChanges
+        - jarMetadata
+      properties:
+        a:
+          $ref: '#/components/schemas/SnapshotId'
+        b:
+          $ref: '#/components/schemas/SnapshotId'
+        status:
+          type: string
+          enum: [identical, changed]
+        strategy:
+          type: string
+          enum: [none, line, semantic, text-fallback, jar-metadata]
+        before:
+          $ref: '#/components/schemas/DiffContentInfo'
+        after:
+          $ref: '#/components/schemas/DiffContentInfo'
+        notes:
+          type: array
+          maxItems: 64
+          items:
+            type: string
+            maxLength: 512
+        lineHunks:
+          type: array
+          maxItems: 4096
+          items:
+            $ref: '#/components/schemas/DiffLineHunk'
+        wordDiffs:
+          type: array
+          maxItems: 4096
+          items:
+            $ref: '#/components/schemas/DiffWordDiff'
+        semanticChanges:
+          type: array
+          maxItems: 4096
+          items:
+            $ref: '#/components/schemas/DiffSemanticChange'
+        jarMetadata:
+          oneOf:
+            - $ref: '#/components/schemas/DiffJarMetadata'
+            - type: 'null'

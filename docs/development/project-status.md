@@ -1,9 +1,9 @@
 # Project Status
 
 Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-and the WP-2.6 file/validation specification merged and closed). GitHub evidence below was verified
-against `main` through `8970728` after PR #168; the WP-2.6 adapter branch is pending merge and its
-local evidence is recorded below.
+and both merged WP-2.6 file/validation stages). GitHub evidence below was verified against `main`
+through `08fe424` after PR #169; the WP-2.6 snapshot-route specification branch is pending merge and
+its local evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -40,12 +40,13 @@ This is the session-level status page. For per-component facts use
   `2a4e7f8`; the Java 8 `core.diff` implementation merged in PR #163 at `80a3f0b`, and issue #53
   closed as completed. WP-2.5 first stage merged in PR #165 at `6cd6015`; the Java 8 `core.validation`
   implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. WP-2.6 first stage
-  merged in PR #168 at `8970728`; the file/validation adapters are implemented locally and pending
-  merge. Verification and post-merge evidence are recorded below.
+  merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`. The
+  snapshot-route specification is pending merge. Verification and post-merge evidence are recorded
+  below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
-  WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has its
-  file/validation adapter pending merge; snapshot routes and category 3-5 work remain open.
+  WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
+  file/validation adapters; snapshot routes and category 3-5 work remain open.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -507,6 +508,32 @@ delegation. A regression test caught and fixed a runtime bug that rejected schem
 snapshot and 4096 MiB upload budgets. No running-server smoke test, E2E run, in-game `/deploymc`
 execution, or Web UI browser check was performed after this wiring, and the full integration suite
 has not run. The single provisioned token remains admin-equivalent until Phase 3 RBAC.
+
+## WP-2.6 adapter merge evidence
+
+PR #169 merged the adapters to `main` at
+`08fe4245af2d2de474d644e71ca79339cc57dfd3`. The explicit verification comment is at
+<https://github.com/woxlo1/DeployMC/pull/169#issuecomment-7062245147> and the post-merge evidence
+comment is at <https://github.com/woxlo1/DeployMC/pull/169#issuecomment-7062327345>. Post-merge
+workflows passed: CI [44901920780](https://github.com/woxlo1/DeployMC/actions/runs/44901920780),
+CodeQL [44901920707](https://github.com/woxlo1/DeployMC/actions/runs/44901920707), and Scorecard
+[44901920664](https://github.com/woxlo1/DeployMC/actions/runs/44901920664). The local and remote
+`feature/wp-2.6-file-validation-endpoints` branches were deleted after the evidence was posted.
+
+## WP-2.6 snapshot specification verification (local, pre-merge)
+
+On 2026-11-21, the `spec/wp-2.6-snapshot-endpoints` branch added six `/api/v1/snapshots` operations
+to `specification/api/openapi.yaml`: list, metadata, content, diff, restore, and prune. The contract
+pins opaque `snap_` ids, quoted ETags, start-inclusive/end-exclusive ranges, host-derived restore
+actors, protected-record prune invariants, path-scope checks for RBAC, and snapshot/diff error
+mapping. It deliberately records that no adapter exists yet.
+
+```text
+npm run lint
+OpenAPI, AsyncAPI, configuration example, and state-machine lint passed
+```
+
+No snapshot adapter, contract test, running server, or UI check is claimed for these routes.
 
 ## Earlier pull-request evidence
 

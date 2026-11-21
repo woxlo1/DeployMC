@@ -6,13 +6,13 @@
 
 | Document | Defines | Implementation status |
 |---|---|---|
-| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Auth gate, health, server info, and file/validation adapters implemented; remaining resource handlers are not |
+| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Auth gate, health, server info, and file/validation adapters implemented; snapshot routes are defined but not implemented, as are the remaining resource handlers |
 | [api/asyncapi.yaml](api/asyncapi.yaml) | WebSocket envelope, channels, subscribe/unsubscribe/ping, and event schemas | Upgrade authentication implemented; event protocol is not |
 | [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Auth, file, snapshot, diff, and validation codes have Java implementations; validation and file codes are mapped to REST Problem Details; diff codes are not |
 | [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | Structural validation implemented |
 | [config/example.config.yaml](config/example.config.yaml) | Complete schema-valid example | Example only |
 | [files/file-operations.md](files/file-operations.md) | Sandboxed file operations, revisions, atomic writes, limits, and snapshot boundary | Core service and authenticated REST adapters implemented; running-server smoke and UI not exercised |
-| [snapshot/snapshot-store.md](snapshot/snapshot-store.md) | Content-addressed history format, metadata, retention, restore, GC, verify/repair, and locking | Java 8 `core.snapshot` implemented; endpoints not implemented |
+| [snapshot/snapshot-store.md](snapshot/snapshot-store.md) | Content-addressed history format, metadata, retention, restore, GC, verify/repair, and locking | Java 8 `core.snapshot` implemented; six REST operations are specified but their adapter is not implemented |
 | [diff/diff-engine.md](diff/diff-engine.md) | Bounded line, word, YAML/JSON semantic, and JAR metadata diff contract | Java 8 `core.diff` implemented; REST handler not implemented |
 | [validation/content-validation.md](validation/content-validation.md) | WP-2.5 validator, registry, save-time gate, validation result, and comment-preserving YAML edit contract | Java 8 `core.validation`, the `core.files` gate, and the authenticated REST adapter implemented; running-server smoke and UI not exercised |
 | [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification | No writer |

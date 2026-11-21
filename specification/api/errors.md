@@ -3,8 +3,9 @@
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
 > implementations and are mapped to REST Problem Details by the WP-2.6 file/validation adapters;
-> snapshot codes are produced by the WP-2.3 store, diff codes are produced by the Java 8 `core.diff`
-> engine, and validation codes are produced by the Java 8 `core.validation` engine.
+> snapshot codes are produced by the WP-2.3 store and have a WP-2.6 REST mapping defined in
+> `api/openapi.yaml`, diff codes are produced by the Java 8 `core.diff` engine and are mapped by the
+> snapshot-diff contract, and validation codes are produced by the Java 8 `core.validation` engine.
 > D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
 > Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.
@@ -155,6 +156,9 @@ an implementation that lacks the feature.
 
 ### Snapshots
 
+The REST mapping for these codes is defined by the six `/api/v1/snapshots` operations in
+`api/openapi.yaml`. The snapshot adapter is not implemented yet.
+
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|
 | `snapshots.not-found` | 404 | no | The snapshot id or metadata record does not exist or was pruned. |
@@ -162,14 +166,14 @@ an implementation that lacks the feature.
 | `snapshots.restore-conflict` | 412 | no | The target changed since the snapshot was taken and a precondition was not satisfied. |
 | `snapshots.store-unavailable` | 503 | yes | The store is closed, locked, busy with an active deployment, or has an unsupported format version. |
 
-### Diff (implemented in `core.diff`; REST mapping is not implemented)
+### Diff (implemented in `core.diff`; REST mapping is defined by snapshot diff and not implemented)
 
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|
 | `diff.too-large` | 413 | no | A textual side exceeds 2 MiB, or another diff computation limit is exceeded. |
 | `diff.invalid-input` | 400 | no | Text is not valid UTF-8, or JAR metadata is not a supported ZIP. |
 
-### Validation (implemented in `core.validation`; REST mapping arrives in WP-2.6)
+### Validation (implemented in `core.validation`; REST mapping implemented in WP-2.6)
 
 Top-level codes returned by the validation endpoint or a save-time write:
 

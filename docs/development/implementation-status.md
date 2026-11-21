@@ -1,8 +1,9 @@
 # Implementation Status
 
-Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.5
-merged; issues #47-#54 closed. The WP-2.6 file/validation specification merged in PR #168 at
-`8970728`; its transport adapters are implemented locally and pending merge.)
+Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+and both merged WP-2.6 file/validation stages; issues #47-#54 closed. PR #168 merged the contract at
+`8970728` and PR #169 merged the adapters at `08fe424`. The WP-2.6 snapshot-route specification is
+pending merge.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -24,7 +25,8 @@ DeployMC, and a clean explicit disable with Netty threads released. This is smok
 support tier or a full feature validation. The transport rejects every route except `/healthz`,
 `/readyz`, and authenticated handlers without a valid token. Implemented handlers are
 `GET /api/v1/server` and the WP-2.6 file/validation routes; snapshot, deployment, console, and audit
-resources still have no handlers. The WP-2.1 sandbox resolver, protected-path rules, and security
+resources still have no handlers. Six snapshot REST operations are now specified but unimplemented.
+The WP-2.1 sandbox resolver, protected-path rules, and security
 corpus are implemented, and WP-2.2 `core.files` resolves every request path through that resolver.
 The WP-2.6 adapter consumes the resolver and file service behind the token gate, but has only
 server-free tests; no running server or UI consumes them. The merged WP-2.3 snapshot store contract
@@ -75,6 +77,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.5 validation specification | Normative validator result model, stable validation codes, format profiles, registry precedence, save-time gate, endpoint result shape, and byte-preserving YAML scalar edit contract | `npm run lint` and `npm test` in `tools/spec`; ADR-0016 and `specification/validation/content-validation.md` |
 | WP-2.5 validation engine | Java 8 `core.validation` with bounded YAML/JSON/TOML/properties validators, strict UTF-8 decoding, stable issue codes and pointers, deterministic registry precedence, fail-closed save-time gate in `core.files`, and byte-preserving YAML scalar edits | 27 focused validation tests, full Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.6 file/validation adapters | Eight authenticated file/validation routes with Problem Details `errors[]`, strict bounded request JSON, localized findings, ETag/`If-Match`, byte ranges, cursor pagination, and a host-wired `FileApiRuntime` that opens/closes the snapshot store | 14 focused transport tests, 8 focused Bukkit tests, full Gradle `build verifyJava8`, i18n, and `git diff --check`; no running-server smoke or UI integration |
+| WP-2.6 snapshot specification | Six authenticated snapshot routes for history listing, metadata, exact content, bounded diff, reversible restore, and host-retention prune, with opaque ids, ETags, ranges, path-scope notes, and stable error mapping | `npm run lint` in `tools/spec`, including Redocly OpenAPI validation; the adapter is not implemented |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
@@ -294,6 +297,26 @@ end-to-end run, in-game `/deploymc` execution, or Web UI browser check was perfo
 wiring, and the full integration suite has not run. Until 0.4.0 the token remains admin-equivalent;
 snapshot routes are a separate WP-2.6 follow-up; exact-byte preservation for existing NFD filenames
 is still not implemented.
+
+The adapter stage merged in [PR #169](https://github.com/woxlo1/DeployMC/pull/169) at
+`08fe4245af2d2de474d644e71ca79339cc57dfd3`. The explicit verification comment is at
+<https://github.com/woxlo1/DeployMC/pull/169#issuecomment-7062245147> and the post-merge evidence
+comment is at <https://github.com/woxlo1/DeployMC/pull/169#issuecomment-7062327345>. Post-merge
+`main` runs passed: CI
+[44901920780](https://github.com/woxlo1/DeployMC/actions/runs/44901920780), CodeQL
+[44901920707](https://github.com/woxlo1/DeployMC/actions/runs/44901920707), and Scorecard
+[44901920664](https://github.com/woxlo1/DeployMC/actions/runs/44901920664). The local and remote
+`feature/wp-2.6-file-validation-endpoints` branches were deleted after the evidence was posted.
+
+The WP-2.6 snapshot follow-up adds six normative `/api/v1/snapshots` operations. `GET` list uses a
+required sandbox path and opaque cursor; `GET {id}` and `GET {id}/content` use an opaque id and
+quoted ETags; content ranges are start-inclusive/end-exclusive; `GET diff` compares two ids through
+the bounded `core.diff` result envelope; `POST {id}/restore` restores only the record's own path and
+captures the current state first; and `POST prune` accepts exactly one path or id and never starts
+GC. The contract requires authentication, forbids host paths, derives the restore actor from the
+authenticated identity, and reserves path-scope checks for RBAC. On 2026-11-21, `npm run lint` in
+`tools/spec` passed with valid OpenAPI, AsyncAPI, configuration, and state-machine output. No
+snapshot adapter, contract test, or running-server check exists for these routes yet.
 
 ## Repository configuration, not a product feature
 
