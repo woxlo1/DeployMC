@@ -112,8 +112,10 @@ validation of plugin behavior, custom YAML tags, and any request-controlled bypa
 
 - `core.validation` and the `FileOperationsService` gate described in the contract are implemented.
 - Add the `POST /api/v1/files/validate` route in WP-2.6 with contract tests generated from OpenAPI.
-- Resolve D-008: the contract lists YAML node/depth finding codes, but the implemented budget breach
-  follows the save-time limit path. WP-2.6 must map this consistently before endpoint tests are final.
+  The route contract is defined; the transport adapter is not implemented.
+- D-008 is resolved: every structural budget failure is top-level `validation.limit-exceeded` with a
+  format-specific issue code in `errors[]`. WP-2.6 must move the JSON depth path to that shape
+  before endpoint tests are final.
 - Add a later ADR before exposing validator registration through the public Java API.
 
 ## Evidence and validation
