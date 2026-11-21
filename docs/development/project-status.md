@@ -1,8 +1,9 @@
 # Project Status
 
 Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.2
-merged and closed; WP-2.3 specification stage merged). GitHub evidence below was verified against
-`main` through `879bdc5` after PR #158; earlier evidence is recorded below.
+merged and closed; WP-2.3 specification stage merged and implementation locally verified). GitHub
+evidence below was verified against `main` through `879bdc5` after PR #158; earlier evidence is
+recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -34,7 +35,8 @@ This is the session-level status page. For per-component facts use
   policy, localized rejections, and security corpus, merged in PR #153 at `748bbc8`; the issue closed
   as completed. WP-2.2 (issue #51), the sandboxed file operations service, merged in PR #155 at
   `017c2ab`; the issue closed as completed. WP-2.3 first stage, the normative snapshot store
-  contract, merged in PR #158 at `879bdc5`; issue #52 remains open until the implementation stage.
+  contract, merged in PR #158 at `879bdc5`; the implementation is complete locally on
+  `feature/wp-2.3-snapshot-store` and issue #52 remains open until its PR is merged.
   Verification and post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
@@ -241,6 +243,42 @@ Scorecard 44723836649  success
 
 The local and remote `feature/wp-2.2-file-operations` branches were deleted after the merge, and
 local `main` was left clean at `017c2ab`.
+
+## WP-2.3 implementation verification (local, pre-merge)
+
+These commands were run on 2026-11-21 on `feature/wp-2.3-snapshot-store` before opening the
+implementation PR:
+
+```text
+$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\deploymc-ascii"
+.\gradlew.bat spotlessApply --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+
+node tools/build/verify-all.cjs
+PASS web
+PASS java
+PASS cli
+PASS python
+PASS spec
+PASS i18n
+PASS compat
+
+Java JUnit XML totals: 230 tests, 0 failures, 0 errors, 1 skipped
+SnapshotStoreTest: 25 tests, 0 failures, 0 errors, 0 skipped
+git diff --check
+(no output)
+```
+
+The Java all-toolchain step ran `build verifyJava8 --console=plain --no-configuration-cache`, and the
+single skipped test remains the WP-2.1 symlink test that needs privileges unavailable on this host.
+The 25 snapshot tests cover format handling, canonical blob deduplication, index parent links,
+revision and root validation, rejected paths, foreign-root requests, restore reversibility for files
+and deletion markers, stale-target rejection, retention, GC guards and grace periods, verify/repair,
+staging cleanup, concurrent capture, file-service integration, localized diagnostics, and the
+single-instance data lock. A stale Spotless incremental cache from a different ASCII junction had to
+be removed before formatting; no source file was changed by that cleanup. No REST endpoint, transport
+handler, running server, UI, or in-game command consumes `SnapshotStore`, and issue #52 remains open
+until the implementation PR is merged.
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,

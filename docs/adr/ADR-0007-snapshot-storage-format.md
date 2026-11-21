@@ -132,10 +132,11 @@ shared Java 8 path.
 
 ### Follow-up
 
-- Implement the store contract in
-  [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md).
-- Add tests for deduplication, retention, GC during an active deployment, corruption
-  detection, restore reversibility, and the single-instance lock.
+- The store contract in
+  [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md) is
+  implemented in `core.snapshot`; integrate it with a host-controlled deployment engine next.
+- Tests cover deduplication, retention, GC during an active deployment, corruption detection,
+  restore reversibility, and the single-instance lock; add server-backed integration coverage.
 - Benchmark compression options before changing the format.
 - Document that snapshots are not a backup of worlds or player data.
 
@@ -144,8 +145,12 @@ shared Java 8 path.
 - The layout and rules follow master specification section 24.4. Format 1, ids, metadata fields,
   retention invariants, GC preconditions, and verify/repair behavior are normative in
   [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md).
-- **Not verified:** this ADR and the normative specification record the design; no store code has
-  been written and no retention or GC test has run yet.
+- The format-1 store was implemented in Java 8 `core.snapshot` and verified locally on 2026-11-21:
+  25 snapshot tests passed inside a full Gradle build of 230 tests (0 failures, 0 errors, 1 skipped
+  symlink test), `verifyJava8` passed, and `node tools/build/verify-all.cjs` reported `PASS` for all
+  seven toolchains. Spec lint and i18n checks passed.
+- **Not yet verified:** no REST endpoint, transport handler, running server, UI, or in-game command
+  consumes the store; no live server backup/restore was exercised. Compression stays out of format 1.
 - The single-instance lock is also relevant to deployment recovery; see
   [ADR-0008](ADR-0008-deployment-state-machine.md).
 

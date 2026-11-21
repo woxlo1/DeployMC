@@ -172,14 +172,23 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44849766325](https://github.com/woxlo1/DeployMC/actions/runs/44849766325) passed. PR comments
   are at <https://github.com/woxlo1/DeployMC/pull/158#issuecomment-7054994035> and
   <https://github.com/woxlo1/DeployMC/pull/158#issuecomment-7055098742>. The temporary spec branch
-  was deleted locally and remotely. No store code exists yet.
+  was deleted locally and remotely. That stage added no store code.
+- WP-2.3 implementation is complete locally on `feature/wp-2.3-snapshot-store` and awaits a PR.
+  It adds Java 8 `core.snapshot`: format-1 JSON records, immutable SHA-256 blobs under `objects/ab/`,
+  snapshot and per-path indexes, root-validated `SnapshotHook.capture`, restore-first reversibility
+  for files and deletion markers, retention, verify/repair, conservative GC, and a single-instance
+  `data.lock`. `SnapshotRequest` carries actor, deployment id, and deterministic plugin metadata;
+  `FileOperationsService` passes the canonical sandbox root to the store. On 2026-11-21,
+  `.\gradlew.bat spotlessApply --console=plain --no-configuration-cache` and
+  `node tools/build/verify-all.cjs` passed with all seven toolchains reporting `PASS`. The Java build
+  ran 230 tests (0 failures, 0 errors, 1 skipped symlink test), including 25 snapshot-store tests.
+  No REST endpoint, transport handler, running server, UI, or in-game command consumes the store.
 
 ## In flight
 
-- WP-2.3 implementation is in flight on `feature/wp-2.3-snapshot-store`, branched from `879bdc5`.
-  The specification stage is merged and issue #52 remains open. No implementation commits exist yet.
-  The implementation must satisfy the merged contract and update status only after tests actually
-  run.
+- WP-2.3 implementation is committed on `feature/wp-2.3-snapshot-store`, branched from `879bdc5`,
+  and locally verified against the merged contract. Issue #52 remains open until the PR is merged.
+  Post-merge CI, CodeQL, and Scorecard evidence must be added before the branch is deleted.
 - Earlier WP-1.7, WP-1.8, WP-1.9, WP-2.1, and WP-2.2 work is merged, with evidence recorded in the
   status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
@@ -193,19 +202,20 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Implement WP-2.3 snapshot store (#52) against the merged normative contract: content-addressed
-   blobs, atomic metadata/index writes, restore-first reversibility, retention, conservative GC,
-   verify/repair, and the single-instance lock behind `SnapshotHook`. Add contract tests and keep
-   destructive file operations fail closed.
+1. Open the WP-2.3 implementation PR, post the explicit verification comment, wait for all required
+   checks, squash-merge it, and record the post-merge CI, CodeQL, Scorecard, and issue #52 evidence.
 2. Continue with WP-2.4-WP-2.6 (#53-#55), then category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130) in issue order.
-3. Update project status, implementation status, and this handoff at the end of each session.
+3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+   session when repository state changes.
 
 ## Gotchas
 
 - On this Windows host, the repository path contains non-ASCII characters. Use the ASCII junction
   for Gradle and set `CARGO_TARGET_DIR` to an ASCII path for Cargo; see [environment](environment.md).
-  The one-command `node tools/build/verify-all.cjs` handles both.
+  The one-command `node tools/build/verify-all.cjs` handles both. If Spotless reports that a target
+  is outside the project dir, stop Gradle and delete the generated `core/build/spotless/spotlessJava`
+  and `spotlessMisc` caches created under the previous junction.
 - `gh milestone list` is not supported; query `gh api repos/woxlo1/DeployMC/milestones`.
 - Conventional Commit body and footer lines must be at most 120 characters; PR #139 needed an amend
   because `Refs #45` was parsed as a footer on an over-long line.

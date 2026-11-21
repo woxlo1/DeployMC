@@ -2,8 +2,8 @@
 
 Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.2
 merged; issues #47, #48, #49, #50, and #51 closed. WP-2.2 merged in PR #155 at `017c2ab` with green
-PR and post-merge checks. The WP-2.3 specification merged in PR #158 at `879bdc5`; issue #52 stays
-open until the store is implemented.)
+PR and post-merge checks. The WP-2.3 specification merged in PR #158 at `879bdc5`; the implementation
+is complete locally on the feature branch and issue #52 stays open until it is merged.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -27,9 +27,12 @@ support tier or a full feature validation. The transport rejects every route exc
 snapshot, deployment, console, and audit resources have no handlers. The WP-2.1 sandbox resolver,
 protected-path rules, and security corpus are implemented, and WP-2.2 adds `core.files`, which
 resolves every request path through that resolver. No transport handler, running server, or in-game
-command consumes the resolver or file service yet. The WP-2.3 snapshot store contract is normative,
-but there is no store implementation, deployment engine, authorization, audit log, or Web UI screen;
-the packaged Web UI has not been rendered in a browser.
+command consumes the resolver or file service yet. The WP-2.3 snapshot store contract is normative
+and now has a Java 8 `core.snapshot` implementation with content-addressed blobs, atomic metadata,
+restore-first reversibility, retention, verify/repair, conservative GC, and a single-instance lock.
+No REST endpoint, transport handler, running server, UI, or in-game command consumes the store; there
+is no deployment engine, authorization, audit log, or Web UI screen, and the packaged Web UI has not
+been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -41,7 +44,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 205 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, and file operation cases | Gradle `test` tasks; JUnit XML: 205 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 230 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, file operation, and snapshot store cases | Gradle `test` tasks; JUnit XML: 230 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 51 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
@@ -60,22 +63,25 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.1 sandbox resolver | Canonical resolver with an injectable file-system boundary, resolver-only `SandboxPath`, host-controlled policy, Windows name rules on every host, default reparse-point rejection, root revalidation, post-open file-key checks, protected/deny globs, and localized rejections | 16 sandbox tests (15 passed, 1 skipped locally without symlink privileges), full Gradle build, Java 8 check, all-toolchain verification, and the 2,736-payload corpus plus seeded fuzz test |
 | WP-2.2 file operations | Sandboxed list/stat/read/range/download/create/mkdir/write/upload/move/delete, SHA-256 full-file revisions, same-directory temporary writes with one atomic commit, revision and file-identity conflict checks, host-controlled limits, explicit recursive-delete confirmation, and a fail-closed snapshot boundary | 24 new file-operation tests, full Gradle build (205 Java tests), Java 8 check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.3 snapshot specification | Normative `.deploymc/history/` layout, format 1, immutable blobs, atomic metadata/index writes, stable snapshot ids, restore-first reversibility, retention, GC preconditions, verify/repair, and single-instance lock | `npm run lint` and `npm test` in `tools/spec` (14 tests); post-merge CI, CodeQL, and Scorecard at `879bdc5` |
+| WP-2.3 snapshot store | Java 8 `core.snapshot` implementation of format-1 JSON records, SHA-256 blob deduplication, sandbox-root validation, restore-first reversibility, retention, verify/repair, conservative GC, and `data.lock`; 46 localized diagnostic keys in English/Japanese | 25 focused snapshot tests in a 230-test Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 
 The most recent recorded all-toolchain run was `node tools/build/verify-all.cjs` on
-`feature/wp-2.2-file-operations` before its merge, with `DEPLOYMC_JAVA_ROOT` set to the existing
-ASCII junction; it reported `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`.
-The focused file command `.\gradlew.bat spotlessApply :core:test --tests '*File*' --console=plain
---no-configuration-cache` completed 26 tests: 24 new WP-2.2 tests and 2 existing tests whose names
-matched the filter; all passed. The full Gradle build ran 205 Java tests with 0 failures, 0 errors,
-and 1 skipped symlink test, which this unprivileged Windows host cannot run. The earlier WP-2.1
-sandbox suite completed 16 tests (15 passed, 1 skipped), and
-`python tests/security/sandbox/generate_corpus.py` produced `reject=2736 allow=29`. Web runs before
-Java in the all-toolchain script and in the CI Java job because the plugin build packages `web/dist`
-into the JAR. WP-1.8 was merged in
+`feature/wp-2.3-snapshot-store` before its implementation PR was opened, with `DEPLOYMC_JAVA_ROOT`
+set to the existing ASCII junction; it reported `PASS` for `web`, `java`, `cli`, `python`, `spec`,
+`i18n`, and `compat`. Spotless was applied with
+`.\gradlew.bat spotlessApply --console=plain --no-configuration-cache` from that same junction before
+the run. The full Gradle build ran 230 Java tests with 0 failures, 0 errors, and 1 skipped symlink
+test, which this unprivileged Windows host cannot run; the 25 snapshot-store tests are included in
+that total. The earlier WP-2.2 focused file command `.\gradlew.bat spotlessApply :core:test --tests
+'*File*' --console=plain --no-configuration-cache` completed 26 tests: 24 new WP-2.2 tests and 2
+existing tests whose names matched the filter; all passed. The earlier WP-2.1 sandbox suite completed
+16 tests (15 passed, 1 skipped), and `python tests/security/sandbox/generate_corpus.py` produced
+`reject=2736 allow=29`. Web runs before Java in the all-toolchain script and in the CI Java job
+because the plugin build packages `web/dist` into the JAR. WP-1.8 was merged in
 [PR #151](https://github.com/woxlo1/DeployMC/pull/151) at
 `839b789ae8483f83dcb4b430641b7f0eafccb303`; the PR head run
 [44704128125](https://github.com/woxlo1/DeployMC/actions/runs/44704128125) passed every required
@@ -142,8 +148,20 @@ AsyncAPI, configuration, and state-machine checks in `tools/spec`, and `npm test
 [44849766469](https://github.com/woxlo1/DeployMC/actions/runs/44849766469), and Scorecard
 [44849766325](https://github.com/woxlo1/DeployMC/actions/runs/44849766325) passed. The superseded
 specification PR #157 and its branch were closed and removed; the feature branch for the
-implementation stage is separate. This stage defines the contract only: no store, retention engine,
-restore path, repair command, or lock exists in code, and issue #52 remains open.
+implementation stage is separate. That stage defines the contract only.
+
+The implementation stage adds `core.snapshot` on `feature/wp-2.3-snapshot-store`: format-1 JSON
+records, immutable SHA-256 blobs under `objects/ab/`, snapshot and per-path indexes, root-validated
+capture through `SnapshotHook`, restore-first reversibility for files and deletion markers,
+host-controlled retention, verify/repair reports, GC guarded by verify plus an active-deployment
+check and a 24 h grace period, and an OS data-directory lock with an in-process fair lock.
+`SnapshotRequest` now carries actor, deployment id, and deterministic plugin metadata;
+`SnapshotEntry.deleted(...)` preserves an absent target so a restore remains reversible.
+`FileOperationsService` passes the canonical sandbox root to the hook so a foreign-root request
+fails closed. On 2026-11-21, `.\gradlew.bat spotlessApply --console=plain --no-configuration-cache`
+and `node tools/build/verify-all.cjs` passed locally; the Java build ran 230 tests (0 failures,
+0 errors, 1 skipped symlink test), including 25 snapshot tests. No REST endpoint, transport handler,
+running server, UI, or in-game command consumes the store, and issue #52 remains open until merge.
 
 ## Repository configuration, not a product feature
 
