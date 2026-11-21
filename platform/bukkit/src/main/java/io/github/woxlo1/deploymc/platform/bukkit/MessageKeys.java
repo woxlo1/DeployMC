@@ -22,6 +22,11 @@ public final class MessageKeys {
   public static final String LIFECYCLE_START_FAILED = "lifecycle.startFailed";
   public static final String STARTUP_TRANSPORT_FAILED = "startup.transportFailed";
   public static final String LIFECYCLE_TRANSPORT_STOP_FAILED = "lifecycle.transportStopFailed";
+  public static final String STARTUP_FILE_API_FAILED = "startup.fileApi.failed";
+  public static final String STARTUP_FILE_API_INVALID_CONFIG = "startup.fileApi.invalidConfig";
+  public static final String STARTUP_FILE_API_SNAPSHOT_DIRECTORY =
+      "startup.fileApi.snapshotDirectory";
+  public static final String LIFECYCLE_FILE_API_STOP_FAILED = "lifecycle.fileApiStopFailed";
   public static final String WARNING_DATA_FOLDER = "warning.dataFolder";
   public static final String COMMAND_USAGE = "command.usage";
   public static final String COMMAND_PERMISSION_DENIED = "command.permissionDenied";
