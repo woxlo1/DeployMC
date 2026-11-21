@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -28,21 +29,61 @@ public final class ConfigYamlParser {
   private ConfigYamlParser() {}
 
   public static YamlValue parse(String source) throws ConfigException {
+    return parse(source, false, MAX_CODE_POINTS);
+  }
+
+  /** Parses exactly one YAML document; a second document is rejected. */
+  public static YamlValue parseSingleDocument(String source) throws ConfigException {
+    return parseSingleDocument(source, MAX_CODE_POINTS);
+  }
+
+  /** Parses exactly one document with an explicit code-point budget. */
+  public static YamlValue parseSingleDocument(String source, int codePointLimit)
+      throws ConfigException {
+    if (codePointLimit <= 0) {
+      throw new IllegalArgumentException("codePointLimit must be positive");
+    }
+    return parse(source, true, codePointLimit);
+  }
+
+  private static YamlValue parse(String source, boolean singleDocument, int codePointLimit)
+      throws ConfigException {
     LoaderOptions options = new LoaderOptions();
     options.setAllowDuplicateKeys(false);
     options.setAllowRecursiveKeys(false);
     options.setMaxAliasesForCollections(0);
     options.setNestingDepthLimit(MAX_NESTING_DEPTH);
-    options.setCodePointLimit(MAX_CODE_POINTS);
+    options.setCodePointLimit(codePointLimit);
     options.setTagInspector(tag -> false);
 
     try {
       Yaml yaml = new Yaml(new SafeConstructor(options));
-      Node root = yaml.compose(new StringReader(source));
+      Node root;
+      if (singleDocument) {
+        Iterator<Node> documents = yaml.composeAll(new StringReader(source)).iterator();
+        if (!documents.hasNext()) {
+          return new YamlValue(null, 1, 1);
+        }
+        root = documents.next();
+        if (documents.hasNext()) {
+          throw new ConfigException(
+              ConfigMessages.format(Locale.ROOT, "config.error.parse", "multiple documents"));
+        }
+      } else {
+        root = yaml.compose(new StringReader(source));
+      }
       if (root == null) {
         return new YamlValue(null, 1, 1);
       }
       return convert(root, Collections.newSetFromMap(new IdentityHashMap<Node, Boolean>()));
+    } catch (ConfigException exception) {
+      if (singleDocument) {
+        throw exception;
+      }
+      throw new ConfigException(
+          ConfigMessages.format(
+              Locale.ROOT, "config.error.parse", String.valueOf(exception.getMessage())),
+          exception);
     } catch (RuntimeException exception) {
       throw new ConfigException(
           ConfigMessages.format(

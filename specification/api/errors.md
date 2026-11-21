@@ -2,9 +2,9 @@
 
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
-> implementations; snapshot codes are defined for the WP-2.3 store. Diff codes are reserved for the
-> WP-2.4 engine. Codes are added with the feature that produces them; an unused code stays out of
-> the table.
+> implementations; snapshot codes are produced by the WP-2.3 store, and diff codes are produced by
+> the Java 8 `core.diff` engine. Codes are added with the feature that produces them; an unused code
+> stays out of the table.
 
 ## Why a catalog
 
@@ -156,7 +156,7 @@ an implementation that lacks the feature.
 | `snapshots.restore-conflict` | 412 | no | The target changed since the snapshot was taken and a precondition was not satisfied. |
 | `snapshots.store-unavailable` | 503 | yes | The store is closed, locked, busy with an active deployment, or has an unsupported format version. |
 
-### Diff
+### Diff (implemented in `core.diff`; REST mapping is not implemented)
 
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|

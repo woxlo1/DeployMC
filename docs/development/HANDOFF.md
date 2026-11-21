@@ -190,14 +190,20 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055770391>. The local and remote
   `feature/wp-2.3-snapshot-store` branches were deleted. No REST endpoint, transport handler,
   running server, UI, or in-game command consumes the store.
+- WP-2.4 first stage merged in PR #162 at `2a4e7f8d0d038a7e4175dc6912df460a1a1a5b22`; it adds the
+  normative diff contract, ADR-0015, and `diff.*` error codes. The implementation stage adds Java 8
+  `core.diff`: bounded Myers line/word diffs, hardened YAML/JSON semantic diffs with text fallback,
+  metadata-only ZIP/JAR descriptor diffs, stable note codes, and inclusive 2 MiB boundary handling.
+  On 2026-11-21, the 31 focused `DiffEngineTest` cases passed, `spotlessApply` passed, and
+  `node tools/build/verify-all.cjs` reported `PASS` for all seven toolchains with 261 Java tests
+  (0 failures, 0 errors, 1 skipped symlink test). No REST endpoint consumes the engine yet.
 
 ## In flight
 
-- WP-2.4 (issue #53) is in its specification stage on `spec/wp-2.4-diff-engine`. It adds the
-  normative diff contract, ADR-0015, and reserved `diff.*` error codes; no Java engine exists yet.
-  The implementation must follow on a separate branch after the contract is merged.
-- No implementation branch is in flight. WP-2.1 through WP-2.3 are merged with evidence recorded in
-  the status pages and pull-request comments.
+- WP-2.4 implementation (issue #53) is on `feature/wp-2.4-diff-engine`. The contract stage is
+  already merged; local verification is complete and the branch is ready for the implementation PR.
+- No other implementation branch is in flight. WP-2.1 through WP-2.3 are merged with evidence
+  recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 78 (#53-#130). Milestones `0.1.0` through `0.10.0` exist.
 
@@ -209,8 +215,9 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Continue with WP-2.4-WP-2.6 (#53-#55), then category 3 (#115-#120), category 4 (#121-#123), and
-   category 5 (#124-#130) in issue order.
+1. Finish the WP-2.4 implementation PR (explicit comment, required checks, merge, evidence comment,
+   branch cleanup), then continue with WP-2.5-WP-2.6 (#54-#55), category 3 (#115-#120), category 4
+   (#121-#123), and category 5 (#124-#130) in issue order.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

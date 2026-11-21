@@ -1,7 +1,7 @@
 # Diff engine contract
 
 > Status: 2026-11-21. This document defines the normative WP-2.4 diff contract.
-> It does not claim that an implementation exists.
+> Java 8 `core.diff` implements it; REST handlers remain out of scope.
 
 DeployMC shows changes between two file revisions in the editor, snapshot view, and deployment
 review screen. The diff engine is a pure Java 8 computation over two byte arrays. It never resolves
