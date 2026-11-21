@@ -62,9 +62,14 @@ beyond it fails.
 | `maxKeyLength` | 1,024 | Characters in one mapping key or property key |
 | `maxIssues` | 200 | Findings returned in one result |
 
-Exceeding any limit throws `ValidationLimitException`, which maps to `validation.limit-exceeded`.
-The `maxIssues` limit truncates findings after sorting by severity, code, path, line, column, and
-offset; it must never produce different findings for the same input across runs.
+Exceeding any limit other than `maxIssues` throws `ValidationLimitException`. The API maps every
+limit failure to the top-level `validation.limit-exceeded` Problem with HTTP 413. When the exhausted limit is a
+format-specific structural budget, the response also carries one `errors[]` entry whose `code` is
+the matching issue code from section 6 (`validation.yaml-node-limit`, `validation.yaml-depth`,
+`validation.yaml-alias-limit`, `validation.json-depth`, `validation.toml-node-limit`, or
+`validation.toml-depth`). A limit is never reported as `validation.failed`. The `maxIssues` limit
+truncates findings after sorting by severity, code, path, line, column, and offset; it must never
+produce different findings for the same input across runs.
 
 ## 4. Result model
 
@@ -182,13 +187,16 @@ Problem codes:
 | `validation.yaml-alias-limit` | ERROR | An alias reference or expansion budget is exceeded; recursive or excessive aliases are rejected. |
 | `validation.yaml-tag-rejected` | ERROR | A non-standard YAML tag or custom type was requested. |
 | `validation.yaml-multiple-documents` | ERROR | More than one YAML document was present. |
-| `validation.yaml-node-limit` | ERROR | The composed node budget was exceeded. |
+| `validation.yaml-node-limit` | ERROR | The composed node budget was exceeded; reported under `validation.limit-exceeded`. |
+| `validation.yaml-depth` | ERROR | YAML nesting exceeded `maxDepth`; reported under `validation.limit-exceeded`. |
 | `validation.json-syntax` | ERROR | JSON does not conform to the accepted grammar. |
 | `validation.json-duplicate-key` | ERROR | A JSON object key occurs twice. |
-| `validation.json-depth` | ERROR | JSON nesting exceeds the configured depth. |
+| `validation.json-depth` | ERROR | JSON nesting exceeded `maxDepth`; reported under `validation.limit-exceeded`. |
 | `validation.toml-syntax` | ERROR | TOML syntax is malformed. |
 | `validation.toml-duplicate-key` | ERROR | A key or table is defined twice. |
 | `validation.toml-unsupported` | ERROR | A construct outside the supported TOML profile was used. |
+| `validation.toml-node-limit` | ERROR | The TOML node budget was exceeded; reported under `validation.limit-exceeded`. |
+| `validation.toml-depth` | ERROR | TOML nesting exceeded `maxDepth`; reported under `validation.limit-exceeded`. |
 | `validation.properties-syntax` | ERROR | A properties line has no valid key or cannot be continued safely. |
 | `validation.properties-invalid-escape` | ERROR | A backslash escape or Unicode escape is malformed. |
 | `validation.properties-duplicate-key` | WARNING | A key is defined more than once; the last value wins. |
@@ -207,8 +215,10 @@ breaking API change unless the addition is purely additive.
   and a tag inspector that allows only standard tags.
 - Exactly one document is allowed. An empty document is valid.
 - Alias references are counted through the composed node graph. A cycle or a reference count beyond
-  the configured budget is `validation.yaml-alias-limit`; it is never expanded recursively by this
-  validator.
+  the configured budget is the structural finding `validation.yaml-alias-limit`, reported under
+  top-level `validation.limit-exceeded`; it is never expanded recursively by this validator.
+- Exceeding `maxNodes` is `validation.yaml-node-limit`; exceeding `maxDepth` is
+  `validation.yaml-depth`. Both are structural findings reported under `validation.limit-exceeded`.
 - Scanner errors caused by forbidden tabs are `validation.yaml-tab`. Other scanner or composer
   errors are `validation.yaml-syntax`.
 - Positions come from SnakeYAML marks when available; otherwise `line=0`, `column=0`, and
@@ -220,8 +230,9 @@ breaking API change unless the addition is purely additive.
   `NaN`/`Infinity`, no duplicate object keys, and no unpaired surrogate escapes.
 - Numbers are validated lexically; the validator does not require a particular numeric range or
   floating-point implementation.
-- Depth beyond `maxDepth` is `validation.json-depth`; other grammar failures are
-  `validation.json-syntax`, and repeated object keys are `validation.json-duplicate-key`.
+- Depth beyond `maxDepth` is the structural finding `validation.json-depth`, reported under
+  top-level `validation.limit-exceeded`. Other grammar failures are `validation.json-syntax`, and
+  repeated object keys are `validation.json-duplicate-key`.
 - The parser is a bounded recursive-descent parser. It never calls `eval`, reflection, JNDI, or a
   script engine.
 
@@ -235,6 +246,8 @@ breaking API change unless the addition is purely additive.
   parser cannot bound are `validation.toml-unsupported`. This is a supported profile, not a claim of
   full TOML 1.0 conformance.
 - A repeated key, table, or array-of-tables entry in the same scope is `validation.toml-duplicate-key`.
+- Exceeding `maxNodes` is `validation.toml-node-limit`; exceeding `maxDepth` is
+  `validation.toml-depth`. Both are structural findings reported under `validation.limit-exceeded`.
 - Other malformed input is `validation.toml-syntax`.
 
 ### 7.4 `.properties`
@@ -259,9 +272,10 @@ breaking API change unless the addition is purely additive.
   the atomic move. The temporary file is cleaned up on every failure.
 - An ERROR finding aborts the operation with `FileOperationException.Reason.VALIDATION_FAILED` and
   top-level code `validation.failed`. No target file is changed and no snapshot is captured.
-- `ValidationLimitException` maps to `Reason.VALIDATION_LIMIT` / `validation.limit-exceeded`. Any
-  other `ValidationException` maps to `Reason.VALIDATOR_UNAVAILABLE` /
-  `validation.validator-unavailable`. All three fail closed.
+- `ValidationLimitException` maps to `Reason.VALIDATION_LIMIT` / `validation.limit-exceeded`. When
+  the exhausted limit is a format structural budget, the HTTP adapter also emits one `errors[]` entry
+  with the format-specific issue code. Any other `ValidationException` maps to
+  `Reason.VALIDATOR_UNAVAILABLE` / `validation.validator-unavailable`. All three fail closed.
 - A WARNING does not block the write. Methods returning `ValidatedFileResult` expose the full result
   so the caller can surface or log warnings; existing `write`/`upload` signatures continue to return
   `FileInfo` and silently accept warnings.
@@ -282,8 +296,9 @@ WP-2.6 will add `POST /api/v1/files/validate`. Its contract is:
 - Success returns the result shape in section 4 with HTTP 200, including `matched=false` for
   unmatched types and including warnings.
 - One or more ERROR findings return Problem `validation.failed` with status 422 and one `errors[]`
-  entry per finding. A limit failure returns `validation.limit-exceeded`; an unexpected validator
-  failure returns `validation.validator-unavailable`.
+  entry per finding. A limit failure returns `validation.limit-exceeded` with status 413 and, for a
+  format structural budget, one `errors[]` entry carrying the format-specific issue code. An
+  unexpected validator failure returns `validation.validator-unavailable`.
 - `detail` strings are localized through `Accept-Language` with English fallback. Codes, pointers,
   line/column, and severity are not localized.
 - The response never includes the submitted content, an absolute host path, or a raw parser message.

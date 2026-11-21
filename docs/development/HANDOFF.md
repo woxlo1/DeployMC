@@ -207,11 +207,14 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   scalar editor. On 2026-11-21, 27 focused validation tests passed, JUnit XML totals were 288 tests
   (0 failures, 0 errors, 1 skipped symlink test), and `node tools/build/verify-all.cjs` reported
   `PASS` for all seven toolchains. All required PR checks and post-merge CI, CodeQL, and Scorecard
-  passed. D-008 records the unresolved structural-budget wording. No REST endpoint or running server
+  passed. D-008 was resolved by the owner on 2026-11-21 in favour of one
+  `validation.limit-exceeded` shape for every structural budget. No REST endpoint or running server
   consumes the validators yet.
 
 ## In flight
 
+- The WP-2.6 file and validation specification branch defines the authenticated file and validation
+  routes, their schemas, and the D-008 limit mapping. Its adapters are not implemented.
 - No WP-2.5 feature branch remains; local and remote `feature/wp-2.5-validation` were deleted after
   merge evidence was posted. WP-2.1 through WP-2.5 are merged with evidence recorded in the status
   pages and pull-request comments.
@@ -221,20 +224,24 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 ## Blocked
 
 - Nothing blocks the next category 2 work.
-- Owner decisions D-001 through D-008 in [decisions pending](decisions-pending.md) affect later
-  compatibility, Cloudflare, distribution, community, and WP-2.6 endpoint error-mapping work.
+- Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
+  compatibility, Cloudflare, distribution, and community work.
 
 ## Exact next steps
 
-1. Merge this documentation evidence PR, then post verification and post-merge evidence comments and
-   delete the branch.
-2. Start WP-2.6 (#55) spec-first: add authenticated file, validation, and snapshot routes to OpenAPI,
-   then implement thin service adapters, ETag/`If-Match`, pagination, and generated contract tests.
-   Resolve D-008 before final validation error mapping. Keep the single provisioned token
-   admin-equivalent until Phase 3 RBAC and document that pre-0.4.0 limitation.
-3. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+1. Merge this WP-2.6 file and validation specification PR, then post verification and post-merge
+   evidence comments and delete the branch.
+2. Implement the WP-2.6 thin adapters: JSON response writer, Problem Details with `errors[]`,
+   ETag/`If-Match`, cursor pagination, the unified D-008 limit mapping (a format-specific issue
+   code in `errors[]`, including JSON depth), a `core.files` guard that rejects the sandbox root as
+   a mutation target, a `files.not-found` mapping for a missing parent directory instead of
+   `files.io`, and contract tests generated from OpenAPI. Keep the single provisioned token
+   admin-equivalent until Phase 3 RBAC and document that pre-0.4.0 limitation in the README and
+   release notes.
+3. Add the snapshot routes in a second WP-2.6 specification PR, then implement their adapters.
+4. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
    order.
-4. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+5. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

@@ -1,11 +1,11 @@
 # File operations contract
 
 > Status: 2026-11-21. The `core.files` service described here is implemented and unit-tested.
-> No REST endpoint, running server, or UI consumes it yet; WP-2.6 will add the thin HTTP adapter.
-> WP-2.5 defines an optional validation gate that is not implemented yet.
+> WP-2.5 added the optional validation gate, which is implemented and host-wired. No REST endpoint,
+> running server, or UI consumes the service yet; WP-2.6 adds the thin HTTP adapter.
 
 This document is normative for the service boundary introduced by WP-2.2. It does not claim that
-validators or file endpoints are implemented.
+file endpoints are implemented.
 
 ## Trust boundary
 

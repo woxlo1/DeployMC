@@ -9,10 +9,11 @@ info:
     binds to `127.0.0.1` by default, and is authenticated by host-provisioned bearer
     tokens in 0.1.0. Remote access requires a TLS terminator.
 
-    **Status: partial skeleton.** The authentication gate, health endpoints, and the
-    `GET /api/v1/server` application handler are implemented. The remaining server
-    resource fields, shared components, and all file, snapshot, deployment, console,
-    and audit resources are defined for later work packages.
+    **Status: partial.** The authentication gate, health endpoints, and the
+    `GET /api/v1/server` application handler are implemented. The file and validation
+    operations defined here are the WP-2.6 contract; their transport adapters are not
+    implemented yet. The remaining server resource fields and the snapshot, deployment,
+    console, and audit resources are defined for later work packages.
 
     Rules that apply to every operation:
 
@@ -50,6 +51,10 @@ tags:
     description: Unauthenticated liveness and readiness probes. They reveal no sensitive data.
   - name: Server
     description: Information about the running DeployMC and Minecraft server.
+  - name: Files
+    description: Sandboxed file listing, reading, writing, moving, upload, and deletion.
+  - name: Validation
+    description: Server-authoritative content validation for sandbox paths.
 
 paths:
   /healthz:
@@ -164,6 +169,510 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /api/v1/files:
+    get:
+      operationId: listFiles
+      tags: [Files]
+      summary: List directory entries
+      description: |
+        Lists one sandbox directory. The path is resolved through the sandbox before any
+        file-system access. Entries rejected by the resolver are omitted, never revealed.
+        Ordering is deterministic by sandbox-relative path. A listing that exceeds the
+        host entry cap is paginated with an opaque cursor.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SandboxPath'
+        - name: depth
+          in: query
+          required: false
+          description: Maximum directory depth to include. `1` lists direct children.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 64
+            default: 1
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of entries in deterministic path order.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: createFileEntry
+      tags: [Files]
+      summary: Create a file or directory
+      description: |
+        Creates a new file or directory. An existing target is never replaced; the caller must
+        use `PUT /api/v1/files/content` with `If-Match` to overwrite. Text content is submitted
+        as a JSON string; binary content uses `POST /api/v1/files/upload`. The configured
+        validation gate runs before the file is committed.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntryRequest'
+      responses:
+        '201':
+          description: The entry was created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Location:
+              $ref: '#/components/headers/Location'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWriteResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: deleteFileEntry
+      tags: [Files]
+      summary: Delete a file or directory
+      description: |
+        Deletes one file or an empty directory. Recursive deletion requires `recursive=true`
+        and an `expectedEntryCount` that matches the current tree size, including the root.
+        A file delete requires `If-Match` with the current revision. The sandbox root
+        cannot be deleted (`files.invalid-operation`). The configured snapshot hook
+        captures the target before deletion; a missing hook fails closed.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SandboxPath'
+        - name: recursive
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: expectedEntryCount
+          in: query
+          required: false
+          description: Required when `recursive=true`; must match the current tree size.
+          schema:
+            type: integer
+            minimum: 1
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: The entry was deleted.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/files/content:
+    get:
+      operationId: readFileContent
+      tags: [Files]
+      summary: Read file content
+      description: |
+        Returns the complete file or a byte range. The `ETag` is the full-file revision
+        (`sha256:<lowercase hex>`), so a stale `If-Match` is detected even for a range read.
+        Binary content is returned as bytes, never as a JSON string.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SandboxPath'
+        - name: Range
+          in: header
+          required: false
+          description: Inclusive start and exclusive end, for example `bytes=0-1023`.
+          schema:
+            type: string
+            pattern: '^bytes=\d*-\d*$'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: The complete file content.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Accept-Ranges:
+              description: Always `bytes`.
+              schema:
+                type: string
+                const: bytes
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: The requested byte range.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Content-Range:
+              description: Range and total size, for example `bytes 0-1023/2048`.
+              schema:
+                type: string
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '304':
+          description: The supplied `If-None-Match` matches the current revision.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '416':
+          $ref: '#/components/responses/RangeNotSatisfiable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      operationId: writeFileContent
+      tags: [Files]
+      summary: Write file content
+      description: |
+        Atomically replaces an existing file, or creates a missing one. Replacing an existing
+        file requires `If-Match` with the current revision; a missing precondition is
+        `request.precondition-required` and a stale one is `files.revision-conflict`. The
+        configured validation gate runs before the target is snapshotted and replaced.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SandboxPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: The existing file was replaced.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWriteResult'
+        '201':
+          description: A missing file was created.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWriteResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/files/move:
+    post:
+      operationId: moveFileEntry
+      tags: [Files]
+      summary: Move or rename an entry
+      description: |
+        Moves a file or directory. Overwriting the destination requires `overwrite=true` and,
+        for a file source, `If-Match` with the current source revision. Both source and an
+        overwritten destination are snapshotted before the move. Neither endpoint may be
+        the sandbox root (`files.invalid-operation`).
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+      responses:
+        '200':
+          description: The entry was moved.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/files/upload:
+    post:
+      operationId: uploadFileContent
+      tags: [Files]
+      summary: Upload file content
+      description: |
+        Streams bytes into a same-directory temporary file, validates the staged content, then
+        commits with one atomic move. The upload maximum is the smaller of the host upload and
+        file limits. Replacing an existing file requires `If-Match`. The response reports the
+        resulting entry and any non-blocking validation warnings.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SandboxPath'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: The existing file was replaced.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWriteResult'
+        '201':
+          description: A missing file was created.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWriteResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/files/validate:
+    post:
+      operationId: validateFileContent
+      tags: [Validation]
+      summary: Validate content for a sandbox path
+      description: |
+        Runs the host-configured validator registry against submitted content for a path,
+        without writing any file. The path is resolved through the sandbox first. An unmatched
+        file type returns `matched=false` and must never be presented as validated. ERROR
+        findings return `validation.failed`; a limit returns `validation.limit-exceeded` with a
+        format-specific issue code in `errors[]`; an unexpected validator failure returns
+        `validation.validator-unavailable`.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+      responses:
+        '200':
+          description: The validation result, including warnings and unmatched types.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
 components:
   securitySchemes:
     cloudflareAccess:
@@ -203,8 +712,8 @@ components:
       description: |
         Opaque revision identifier for the representation. Clients send it in
         `If-Match` for writes and `If-None-Match` for conditional reads. The exact
-        format is an implementation detail; the current design uses
-        `sha256-<lowercase hex>` for file content and a derived value for aggregate
+        format is an implementation detail; the current design uses a quoted
+        `"sha256:<lowercase hex>"` file revision and a derived value for aggregate
         resources.
       schema:
         type: string
@@ -242,6 +751,19 @@ components:
         format: uri-reference
 
   parameters:
+    SandboxPath:
+      name: path
+      in: query
+      required: true
+      description: |
+        Sandbox-relative path. An empty value means the sandbox root. Absolute host
+        paths, backslashes, repeated slashes, and `..` segments are rejected by the
+        resolver before any file-system access. Protected paths are never read or
+        written.
+      schema:
+        type: string
+        maxLength: 1024
+        pattern: '^(?!/)(?!.*\\)(?!.*//)(?!\.\.(?:/|$))(?!.*/\.\.(?:/|$)).*$'
     Cursor:
       name: cursor
       in: query
@@ -270,11 +792,12 @@ components:
     IfMatch:
       name: If-Match
       in: header
-      required: true
+      required: false
       description: |
-        Required for destructive or overwriting operations on an existing resource.
-        A missing precondition is an error. A stale value returns `412` with the
-        current revision, never a silent overwrite.
+        Required when the operation targets an existing file or replaces an existing
+        destination; optional when it creates a missing file. A missing precondition on an
+        existing target is `428` with `request.precondition-required`. A stale value
+        returns `412` with the current revision, never a silent overwrite.
       schema:
         type: string
         minLength: 1
@@ -356,6 +879,61 @@ components:
           $ref: '#/components/headers/RequestId'
         ETag:
           $ref: '#/components/headers/ETag'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PayloadTooLarge:
+      description: |
+        The request body, file, upload, listing, deletion, or validation input exceeds a
+        host-controlled limit. The `code` distinguishes `request.too-large`,
+        `files.too-large`, `files.delete-limit-exceeded`, and
+        `validation.limit-exceeded`.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnsupportedMediaType:
+      description: The `Content-Type` is not supported for this operation.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    RangeNotSatisfiable:
+      description: The requested byte range is malformed or lies outside the file.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Range:
+          description: Unsatisfied range with the complete file size, for example `bytes */2048`.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnprocessableContent:
+      description: |
+        The request is syntactically valid but the content was rejected. Validation
+        findings use `validation.failed` and carry one `errors[]` entry per finding.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PreconditionRequired:
+      description: A destructive write omitted the required `If-Match` precondition.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
       content:
         application/problem+json:
           schema:
@@ -599,8 +1177,10 @@ components:
           description: Whether retrying the same request later may succeed.
         errors:
           type: array
-          maxItems: 100
-          description: Field- or path-level validation problems.
+          maxItems: 200
+          description: |
+            Field- or path-level validation problems, bounded by the host `maxIssues`
+            budget (default 200).
           items:
             $ref: '#/components/schemas/ProblemIssue'
       examples:
@@ -614,7 +1194,7 @@ components:
           errors:
             - pointer: /path
               code: files.revision-mismatch
-              detail: Expected sha256-a1b2..., found sha256-c3d4...
+              detail: Expected sha256:a1b2..., found sha256:c3d4...
 
     ProblemIssue:
       type: object
@@ -633,6 +1213,31 @@ components:
         detail:
           type: string
           maxLength: 1000
+        severity:
+          type: string
+          enum: [ERROR, WARNING]
+          description: Present on content-validation findings.
+        line:
+          type: integer
+          minimum: 0
+          description: 1-based decoded line, or 0 when unavailable. Validation findings only.
+        column:
+          type: integer
+          minimum: 0
+          description: 1-based decoded column, or 0 when unavailable. Validation findings only.
+        offset:
+          type: integer
+          minimum: -1
+          description: 0-based byte offset, or -1 when unavailable. Validation findings only.
+        parameters:
+          type: array
+          maxItems: 8
+          description: |
+            Safe values used only for localized message formatting. Never raw content,
+            credentials, tokens, or absolute host paths.
+          items:
+            type: string
+            maxLength: 256
 
     Page:
       type: object
@@ -653,3 +1258,202 @@ components:
           type: integer
           minimum: 0
           description: Optional exact count. Omitted when counting would be unbounded.
+
+    FileEntry:
+      type: object
+      additionalProperties: false
+      required: [path, kind, size, revision, lastModified]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative path. Never an absolute host path.
+        kind:
+          type: string
+          enum: [file, directory]
+        size:
+          type: integer
+          minimum: 0
+          description: File size in bytes; `0` for a directory.
+        revision:
+          type: [string, 'null']
+          pattern: '^sha256:[0-9a-f]{64}$'
+          description: |
+            Full-file revision used as the `ETag` source. `null` for a directory.
+        lastModified:
+          type: string
+          format: date-time
+          description: Last modification time in UTC.
+
+    FileList:
+      type: object
+      additionalProperties: false
+      required: [path, items, nextCursor]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative path of the listed directory; empty means the root.
+        items:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/FileEntry'
+        nextCursor:
+          type: [string, 'null']
+          maxLength: 512
+          description: Opaque cursor for the next page, or `null` on the last page.
+        total:
+          type: integer
+          minimum: 0
+          description: Optional exact count. Omitted when counting would be unbounded.
+
+    FileWriteResult:
+      type: object
+      additionalProperties: false
+      required: [entry, validation]
+      properties:
+        entry:
+          $ref: '#/components/schemas/FileEntry'
+        validation:
+          description: |
+            Host-gate result for the committed bytes, or `null` when no validation gate is
+            configured. Warnings never block a write.
+          oneOf:
+            - $ref: '#/components/schemas/ValidationResponse'
+            - type: 'null'
+
+    CreateEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [path, kind]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative path of the new entry. The sandbox root is rejected.
+        kind:
+          type: string
+          enum: [file, directory]
+        content:
+          type: string
+          description: |
+            UTF-8 text content. Required for `file` and forbidden for `directory`.
+            Binary content uses `POST /api/v1/files/upload`.
+      if:
+        properties:
+          kind:
+            const: file
+      then:
+        required: [content]
+        properties:
+          content:
+            type: string
+      else:
+        properties:
+          content: false
+
+    MoveRequest:
+      type: object
+      additionalProperties: false
+      required: [from, to]
+      properties:
+        from:
+          type: string
+          maxLength: 1024
+          description: Existing sandbox-relative source path. The sandbox root is rejected.
+        to:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative destination path. The sandbox root is rejected.
+        overwrite:
+          type: boolean
+          default: false
+          description: Replace an existing destination. A file source still needs `If-Match`.
+
+    ValidateRequest:
+      type: object
+      additionalProperties: false
+      required: [path, content]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: |
+            Sandbox-relative path used only to select a validator. The path is resolved
+            through the sandbox before any validator runs, and no file is written.
+        content:
+          type: string
+          description: |
+            UTF-8 text to validate. The server encodes it as UTF-8 bytes. Byte-exact
+            validation of non-UTF-8 content happens through a write or upload request.
+
+    ValidationResponse:
+      type: object
+      additionalProperties: false
+      required: [path, matched, format, valid, issues]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Sandbox-relative path that was validated.
+        matched:
+          type: boolean
+          description: |
+            `false` when no validator matches the path. An unmatched result must never be
+            presented as validated.
+        format:
+          type: [string, 'null']
+          enum: [yaml, json, toml, properties, null]
+          description: Validator id, or `null` when unmatched.
+        valid:
+          type: boolean
+          description: '`false` when at least one ERROR finding exists. Warnings do not block.'
+        issues:
+          type: array
+          maxItems: 200
+          description: Bounded by the host `maxIssues` budget (default 200).
+          items:
+            $ref: '#/components/schemas/ValidationFinding'
+
+    ValidationFinding:
+      type: object
+      additionalProperties: false
+      required: [severity, code, pointer, line, column, offset, detail]
+      properties:
+        severity:
+          type: string
+          enum: [ERROR, WARNING]
+        code:
+          type: string
+          pattern: '^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$'
+          description: Stable issue code from the error catalog. Never localized.
+        pointer:
+          type: string
+          maxLength: 1024
+          description: |
+            Empty for the whole document; otherwise an RFC 6901 JSON Pointer into the
+            document. Never an absolute host path.
+        line:
+          type: integer
+          minimum: 0
+          description: 1-based decoded line, or 0 when unavailable.
+        column:
+          type: integer
+          minimum: 0
+          description: 1-based decoded column, or 0 when unavailable.
+        offset:
+          type: integer
+          minimum: -1
+          description: 0-based raw byte offset, or -1 when unavailable.
+        detail:
+          type: string
+          maxLength: 1000
+          description: Localized explanation negotiated through `Accept-Language`.
+        parameters:
+          type: array
+          maxItems: 8
+          description: Safe values used only for localized message formatting.
+          items:
+            type: string
+            maxLength: 256

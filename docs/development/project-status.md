@@ -439,8 +439,9 @@ escapes, YAML alias/cycle and node boundaries, JSON scalar and array error point
 validation, byte-preserving YAML scalar edits, write-time gate ordering for create/write/upload/move/
 delete, immutable byte-array snapshots, bounded pre-validation reads, warning exposure, and repeated-run
 determinism. The one-command `node tools/build/verify-all.cjs` then reported `PASS` for `web`, `java`,
-`cli`, `python`, `spec`, `i18n`, and `compat`. D-008 records the unresolved contract wording for
-structural budgets.
+`cli`, `python`, `spec`, `i18n`, and `compat`. D-008 was resolved by the owner on 2026-11-21 in
+favour of one `validation.limit-exceeded` shape for every structural budget; the JSON depth path
+still needs the WP-2.6 change.
 
 ## WP-2.5 implementation merge evidence
 

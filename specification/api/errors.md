@@ -4,7 +4,8 @@
 > codes referenced by the API specification. Authentication and file-operation codes have
 > implementations; snapshot codes are produced by the WP-2.3 store, diff codes are produced by the
 > Java 8 `core.diff` engine, and validation codes are produced by the Java 8 `core.validation` engine.
-> The `validation.yaml-node-limit` wording remains open under D-008. Codes are added with the feature
+> D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
+> Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.
 
 ## Why a catalog
@@ -34,7 +35,7 @@ Errors use RFC 9457 Problem Details with DeployMC extensions, served as
     {
       "pointer": "/path",
       "code": "files.revision-mismatch",
-      "detail": "Expected sha256-a1b2..., found sha256-c3d4..."
+      "detail": "Expected sha256:a1b2..., found sha256:c3d4..."
     }
   ]
 }
@@ -53,7 +54,9 @@ Rules:
   `Retry-After` header, when present, is authoritative for timing.
 - `errors` contains field- or path-level issues, each with a stable `code` and a
   `pointer`. For JSON bodies the pointer is a JSON Pointer; for files it is a
-  sandbox-relative path. It never contains an absolute host path.
+  sandbox-relative path. It never contains an absolute host path. A content-validation
+  finding also carries `severity`, `line`, `column`, `offset`, and optional `parameters`;
+  those fields are absent for other error families.
 - Details never include tokens, credentials, JWTs, file contents, or host paths outside
   the sandbox.
 - A `401` response does not disclose whether an identity exists. A `403` does not disclose
@@ -165,17 +168,18 @@ an implementation that lacks the feature.
 | `diff.too-large` | 413 | no | A textual side exceeds 2 MiB, or another diff computation limit is exceeded. |
 | `diff.invalid-input` | 400 | no | Text is not valid UTF-8, or JAR metadata is not a supported ZIP. |
 
-### Validation (specified in WP-2.5; not implemented)
+### Validation (implemented in `core.validation`; REST mapping arrives in WP-2.6)
 
 Top-level codes returned by the validation endpoint or a save-time write:
 
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|
 | `validation.failed` | 422 | no | At least one ERROR finding was produced. |
-| `validation.limit-exceeded` | 413 | no | An input or work limit was exceeded. |
+| `validation.limit-exceeded` | 413 | no | An input or work limit was exceeded, including a format structural budget. |
 | `validation.validator-unavailable` | 503 | yes | A registered validator failed unexpectedly; the write is aborted. |
 
-Issue codes appear only in `errors[]` and in `ValidationIssue.code`, never as the top-level `code`:
+Issue codes appear only in `errors[]` and in `ValidationIssue.code`, never as the top-level `code`.
+A structural-budget issue code accompanies the top-level `validation.limit-exceeded` Problem:
 
 | Code | Severity | Meaning |
 |---|---|---|
@@ -183,16 +187,19 @@ Issue codes appear only in `errors[]` and in `ValidationIssue.code`, never as th
 | `validation.yaml-syntax` | ERROR | YAML scanner or parser error. |
 | `validation.yaml-duplicate-key` | ERROR | A mapping key occurs twice in one mapping. |
 | `validation.yaml-tab` | ERROR | A tab is used where YAML forbids it, such as indentation. |
-| `validation.yaml-alias-limit` | ERROR | An alias reference or expansion budget is exceeded. |
+| `validation.yaml-alias-limit` | ERROR | An alias reference or expansion budget is exceeded; reported under `validation.limit-exceeded`. |
 | `validation.yaml-tag-rejected` | ERROR | A non-standard YAML tag or custom type was requested. |
 | `validation.yaml-multiple-documents` | ERROR | More than one YAML document was present. |
-| `validation.yaml-node-limit` | ERROR | The composed node budget was exceeded. |
+| `validation.yaml-node-limit` | ERROR | The composed node budget was exceeded; reported under `validation.limit-exceeded`. |
+| `validation.yaml-depth` | ERROR | YAML nesting exceeded `maxDepth`; reported under `validation.limit-exceeded`. |
 | `validation.json-syntax` | ERROR | JSON does not conform to the accepted grammar. |
 | `validation.json-duplicate-key` | ERROR | A JSON object key occurs twice. |
-| `validation.json-depth` | ERROR | JSON nesting exceeds the configured depth. |
+| `validation.json-depth` | ERROR | JSON nesting exceeded `maxDepth`; reported under `validation.limit-exceeded`. |
 | `validation.toml-syntax` | ERROR | TOML syntax is malformed. |
 | `validation.toml-duplicate-key` | ERROR | A key or table is defined twice. |
 | `validation.toml-unsupported` | ERROR | A construct outside the supported TOML profile was used. |
+| `validation.toml-node-limit` | ERROR | The TOML node budget was exceeded; reported under `validation.limit-exceeded`. |
+| `validation.toml-depth` | ERROR | TOML nesting exceeded `maxDepth`; reported under `validation.limit-exceeded`. |
 | `validation.properties-syntax` | ERROR | A properties line has no valid key or cannot be continued safely. |
 | `validation.properties-invalid-escape` | ERROR | A backslash escape or Unicode escape is malformed. |
 | `validation.properties-duplicate-key` | WARNING | A key is defined more than once; the last value wins. |

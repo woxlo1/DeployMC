@@ -245,9 +245,11 @@ JUnit XML totals were 288 tests, 0 failures, 0 errors, and 1 skipped symlink tes
 validation tests; the skipped test requires privileges unavailable on this Windows host. Plugin JAR
 verification reported `4567069 bytes, 2657 classes (0 versioned), max common bytecode 52`. The
 one-command `node tools/build/verify-all.cjs` then reported `PASS` for `web`, `java`, `cli`, `python`,
-`spec`, `i18n`, and `compat`. The structural-budget wording conflict between contract sections 4 and
-7 remains open as D-008: YAML and TOML node/depth budgets currently abort with
-`validation.limit-exceeded`, while JSON depth produces `validation.json-depth`.
+`spec`, `i18n`, and `compat`. D-008 was resolved by the owner on 2026-11-21: every structural
+budget failure is top-level `validation.limit-exceeded` with a format-specific issue code in
+`errors[]`. YAML and TOML node/depth budgets already abort with `validation.limit-exceeded`; the
+JSON depth path still returns a `validation.json-depth` ERROR finding and must move to that shape in
+WP-2.6.
 
 The implementation merged in [PR #166](https://github.com/woxlo1/DeployMC/pull/166) at `9363e0c` with
 issue #54 closed. All required PR checks passed before merge. Post-merge workflows on `main` succeeded:
