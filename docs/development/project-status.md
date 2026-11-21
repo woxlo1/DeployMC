@@ -40,7 +40,8 @@ This is the session-level status page. For per-component facts use
   closed as completed. Verification and post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) is
-  complete through its engine; WP-2.5-WP-2.6 (#54-#55) and category 3-5 work remain open.
+  complete through its engine. WP-2.5 (issue #54) now has a normative validator contract and ADR-0016;
+  its implementation and WP-2.6 (#55) remain open, as does category 3-5 work.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -374,6 +375,24 @@ The CI run includes the pinned Paper 26.3 smoke entry on Ubuntu and Windows. Ver
 after the merge: 77 open issues (#54-#130) and 17 open Dependabot PRs (#23-#39), tracked for triage by
 #121. The local and remote `feature/wp-2.4-diff-engine` branches were deleted, and local `main` was
 left clean at `80a3f0b`.
+
+## WP-2.5 specification verification (local, pre-merge)
+
+These commands were run on 2026-11-21 on `spec/wp-2.5-validation` before opening the specification PR:
+
+```text
+git diff --check
+(no output)
+
+cd tools/spec
+npm run lint
+npm test
+OpenAPI, AsyncAPI, configuration example, and state-machine lint passed
+14 tests, 0 failures, 0 cancelled, 0 skipped, 0 todo
+```
+
+The specification PR adds the normative validator contract, ADR-0016, validation error codes, and
+status updates only. It adds no Java code and claims no validator implementation.
 
 ## Earlier pull-request evidence
 

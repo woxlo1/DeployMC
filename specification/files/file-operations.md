@@ -1,10 +1,11 @@
 # File operations contract
 
-> Status: 2026-11-20. The `core.files` service described here is implemented and unit-tested.
+> Status: 2026-11-21. The `core.files` service described here is implemented and unit-tested.
 > No REST endpoint, running server, or UI consumes it yet; WP-2.6 will add the thin HTTP adapter.
+> WP-2.5 defines an optional validation gate that is not implemented yet.
 
 This document is normative for the service boundary introduced by WP-2.2. It does not claim that
-snapshots, validators, or file endpoints are implemented.
+validators or file endpoints are implemented.
 
 ## Trust boundary
 
@@ -33,18 +34,20 @@ snapshots, validators, or file endpoints are implemented.
 1. Resolve and validate the sandbox path, acquire the in-process stripe lock, and read the current
    file state.
 2. Reject an existing target when no expected revision was supplied; reject a stale revision.
-3. Capture a snapshot of the old file when the target exists.
-4. Create a temporary file in the target's own directory, with owner-only POSIX permissions where
+3. Validate the proposed content through the configured validation gate. An ERROR finding, a limit
+   failure, or an unexpected validator failure aborts before any snapshot or target mutation.
+4. Capture a snapshot of the old file when the target exists.
+5. Create a temporary file in the target's own directory, with owner-only POSIX permissions where
    supported.
-5. Stream bytes into the temporary file while hashing them. Enforce the host-controlled byte limit
+6. Stream bytes into the temporary file while hashing them. Enforce the host-controlled byte limit
    before writing each chunk.
-6. Force the temporary file to stable storage. Re-check the target's revision and file identity.
-7. Commit with one `ATOMIC_MOVE` (plus `REPLACE_EXISTING` for an overwrite). If the platform cannot
+7. Force the temporary file to stable storage. Re-check the target's revision and file identity.
+8. Commit with one `ATOMIC_MOVE` (plus `REPLACE_EXISTING` for an overwrite). If the platform cannot
    perform an atomic move, fail with `files.atomic-move-unsupported`; never fall back to a
    non-atomic replacement.
-8. Force the parent directory where supported, then return the new revision from a fresh `stat`.
+9. Force the parent directory where supported, then return the new revision from a fresh `stat`.
 
-A process termination before step 7 leaves the old file; after step 7 it leaves the complete new
+A process termination before step 8 leaves the old file; after step 8 it leaves the complete new
 file. Temporary files are cleaned up in a `finally` block. Directory fsync is best effort because
 the JDK does not expose it portably; the content fsync and single atomic commit are mandatory.
 
@@ -63,6 +66,9 @@ the JDK does not expose it portably; the content fsync and single atomic commit 
 - Uploads stream into the same temporary-file path as writes; content is hashed while streaming and
   the caller's declared size, when supplied, is checked up front. The effective upload maximum is
   the smaller of `max-upload-size` and `max-file-size`.
+- When a validation gate is configured, an upload is validated from the staged temporary bytes before
+  the old target is snapshotted and before the atomic move. A validation failure deletes the staged
+  file and leaves the target unchanged.
 - Host-controlled defaults are 10 MiB per file, 64 MiB per upload, 5,000 listing entries, and 1,000
   deletion entries. Request data can never raise these values.
 - Listing is sorted by sandbox-relative path and caps accepted entries at `max-list-entries`.
@@ -84,8 +90,20 @@ the JDK does not expose it portably; the content fsync and single atomic commit 
 - Every captured entry is re-validated immediately before deletion or move. Entries are deleted
   deepest-first, then the parent directory.
 
+## Save-time validation
+
+WP-2.5 defines a `ValidationGate` in [content validation](../validation/content-validation.md).
+The gate is host-wired; no request parameter may add, remove, or weaken it. Validation happens after
+path resolution and precondition checks, and before a snapshot is captured or a target is changed.
+An ERROR finding maps to `validation.failed`; a limit failure maps to `validation.limit-exceeded`;
+an unexpected validator failure maps to `validation.validator-unavailable`. All three fail closed
+and leave the target unchanged. A WARNING does not block the write. `ValidatedFileResult` exposes
+the full result so transport callers can surface warnings; the legacy `write` and `upload` methods
+continue to return `FileInfo`.
+
 ## Error mapping
 
 See [api/errors.md](../api/errors.md). Sandbox rejections map to `files.path-rejected`, except
-protected paths, which map to `files.protected`. Localized English and Japanese diagnostic catalogs
-live beside the Java implementation; stable codes are the API-facing values.
+protected paths, which map to `files.protected`. Validation failures map to the `validation.*` codes
+above. Localized English and Japanese diagnostic catalogs live beside the Java implementation;
+stable codes are the API-facing values.
