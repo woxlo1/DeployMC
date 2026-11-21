@@ -157,9 +157,9 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44723836580](https://github.com/woxlo1/DeployMC/actions/runs/44723836580), and Scorecard
   [44723836649](https://github.com/woxlo1/DeployMC/actions/runs/44723836649) passed. The local and
   remote `feature/wp-2.2-file-operations` branches were deleted. No REST endpoint, transport
-  handler, running server, or UI consumes the service, and no snapshot store exists yet.
+  handler, running server, or UI consumes the service; WP-2.3 later added the snapshot store.
 - WP-2.3 first stage merged in PR #158 at `879bdc5acd2abea4af9a14dd3ea9bd2b79d374ef` on
-  2026-11-21; issue #52 stays open. It adds the normative
+  2026-11-21; issue #52 was later closed by the implementation stage. It adds the normative
   [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md):
   `.deploymc/history/` layout, format 1, immutable uncompressed SHA-256 blobs, atomic JSON
   metadata/index writes, `snap_[0-9a-z]{26}` ids, restore-first reversibility, 50/90-day/2 GiB
@@ -173,26 +173,30 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   are at <https://github.com/woxlo1/DeployMC/pull/158#issuecomment-7054994035> and
   <https://github.com/woxlo1/DeployMC/pull/158#issuecomment-7055098742>. The temporary spec branch
   was deleted locally and remotely. That stage added no store code.
-- WP-2.3 implementation is complete locally on `feature/wp-2.3-snapshot-store` and awaits a PR.
-  It adds Java 8 `core.snapshot`: format-1 JSON records, immutable SHA-256 blobs under `objects/ab/`,
-  snapshot and per-path indexes, root-validated `SnapshotHook.capture`, restore-first reversibility
-  for files and deletion markers, retention, verify/repair, conservative GC, and a single-instance
-  `data.lock`. `SnapshotRequest` carries actor, deployment id, and deterministic plugin metadata;
-  `FileOperationsService` passes the canonical sandbox root to the store. On 2026-11-21,
-  `.\gradlew.bat spotlessApply --console=plain --no-configuration-cache` and
-  `node tools/build/verify-all.cjs` passed with all seven toolchains reporting `PASS`. The Java build
-  ran 230 tests (0 failures, 0 errors, 1 skipped symlink test), including 25 snapshot-store tests.
-  No REST endpoint, transport handler, running server, UI, or in-game command consumes the store.
+- WP-2.3 implementation merged in PR #159 at `0425c814018091543929444042dcd6d885bd75d5` on
+  2026-11-21; issue #52 closed as completed at 2026-11-21T02:11:54Z. It adds Java 8 `core.snapshot`:
+  format-1 JSON records, immutable SHA-256 blobs under `objects/ab/`, snapshot and per-path indexes,
+  root-validated `SnapshotHook.capture`, restore-first reversibility for files and deletion markers,
+  retention, verify/repair, conservative GC, and a single-instance `data.lock`. `SnapshotRequest`
+  carries actor, deployment id, and deterministic plugin metadata; `FileOperationsService` passes the
+  canonical sandbox root to the store. On 2026-11-21, `.\gradlew.bat spotlessApply --console=plain
+  --no-configuration-cache` and `node tools/build/verify-all.cjs` passed with all seven toolchains
+  reporting `PASS`. The Java build ran 230 tests (0 failures, 0 errors, 1 skipped symlink test),
+  including 25 snapshot-store tests. All PR checks passed at head `f0fd908`; post-merge `main`
+  CI [44854531337](https://github.com/woxlo1/DeployMC/actions/runs/44854531337), CodeQL
+  [44854531422](https://github.com/woxlo1/DeployMC/actions/runs/44854531422), and Scorecard
+  [44854531350](https://github.com/woxlo1/DeployMC/actions/runs/44854531350) passed. PR comments are
+  at <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055673480> and
+  <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055770391>. The local and remote
+  `feature/wp-2.3-snapshot-store` branches were deleted. No REST endpoint, transport handler,
+  running server, UI, or in-game command consumes the store.
 
 ## In flight
 
-- WP-2.3 implementation is committed on `feature/wp-2.3-snapshot-store`, branched from `879bdc5`,
-  and locally verified against the merged contract. Issue #52 remains open until the PR is merged.
-  Post-merge CI, CodeQL, and Scorecard evidence must be added before the branch is deleted.
-- Earlier WP-1.7, WP-1.8, WP-1.9, WP-2.1, and WP-2.2 work is merged, with evidence recorded in the
-  status pages and pull-request comments.
+- No implementation branch is in flight. WP-2.1 through WP-2.3 are merged with evidence recorded in
+  the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 79 (#52-#130). Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 78 (#53-#130). Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -202,11 +206,9 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Open the WP-2.3 implementation PR, post the explicit verification comment, wait for all required
-   checks, squash-merge it, and record the post-merge CI, CodeQL, Scorecard, and issue #52 evidence.
-2. Continue with WP-2.4-WP-2.6 (#53-#55), then category 3 (#115-#120), category 4 (#121-#123), and
+1. Continue with WP-2.4-WP-2.6 (#53-#55), then category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130) in issue order.
-3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

@@ -14,7 +14,9 @@ has landed.
       atomic writes, and a fail-closed snapshot boundary) are merged and #50-#51 are closed. No REST
       file endpoint or Web UI explorer exists yet (#55, #63-#65).
 - [ ] Snapshots with diff and one-click restore, retention, and integrity verification.
-      Evidence: not yet; #52-#53.
+      Partial: PR #158 (contract) and PR #159 (`core.snapshot`) are merged and #52 is closed. The
+      store has retention, verify/repair, GC, and reversible restore primitives; no diff engine,
+      application-level one-click restore, or live-server backup/restore exists yet (#53).
 - [ ] JAR deployment pipeline with staging, validation, controlled restart, health verification,
       automatic rollback, crash recovery, and boot-loop protection. Evidence: not yet; #72-#80.
 - [ ] Real-time console with filtering, commands, backpressure, and audit. Evidence: not yet;
