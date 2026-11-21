@@ -200,35 +200,41 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   `80a3f0b` with issue #53 closed; all PR checks and post-merge CI, CodeQL, and Scorecard passed.
   No REST endpoint consumes the engine yet.
 - WP-2.5 first stage merged in PR #165 at `6cd6015a141d8a108b7507a9f801b646679698cc`; it defines the
-  content validation contract and ADR-0016. The implementation adds Java 8 `core.validation` with
+  content validation contract and ADR-0016. The Java 8 implementation merged in PR #166 at
+  `9363e0c70c4666558959560fe8ca5fe58f80e920` with issue #54 closed. It adds `core.validation` with
   bounded YAML, JSON, TOML, and properties validators, strict UTF-8 decoding, stable codes and
   pointers, a deterministic registry, a fail-closed `core.files` gate, and a byte-preserving YAML
   scalar editor. On 2026-11-21, 27 focused validation tests passed, JUnit XML totals were 288 tests
   (0 failures, 0 errors, 1 skipped symlink test), and `node tools/build/verify-all.cjs` reported
-  `PASS` for all seven toolchains. D-008 records the unresolved structural-budget wording. The
-  implementation PR is pending merge; no REST endpoint or running server consumes the validators.
+  `PASS` for all seven toolchains. All required PR checks and post-merge CI, CodeQL, and Scorecard
+  passed. D-008 records the unresolved structural-budget wording. No REST endpoint or running server
+  consumes the validators yet.
 
 ## In flight
 
-- `feature/wp-2.5-validation` contains the validator implementation, save-time gate, localization,
-  focused tests, and status updates, pending PR review and CI. WP-2.1 through WP-2.4 and the WP-2.5
-  specification are merged with evidence recorded in the status pages and pull-request comments.
+- No WP-2.5 feature branch remains; local and remote `feature/wp-2.5-validation` were deleted after
+  merge evidence was posted. WP-2.1 through WP-2.5 are merged with evidence recorded in the status
+  pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 77 (#54-#130). Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 76 (#55-#130). Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
 - Nothing blocks the next category 2 work.
-- Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
-  compatibility, Cloudflare, distribution, and community work, not Phase 0.
+- Owner decisions D-001 through D-008 in [decisions pending](decisions-pending.md) affect later
+  compatibility, Cloudflare, distribution, community, and WP-2.6 endpoint error-mapping work.
 
 ## Exact next steps
 
-1. Open and merge the WP-2.5 implementation PR for issue #54, then post verification and post-merge
-   evidence comments and delete the feature branch.
-2. Continue with WP-2.6 (#55), then category 3 (#115-#120), category 4 (#121-#123), and category 5
-   (#124-#130) in issue order.
-3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+1. Merge this documentation evidence PR, then post verification and post-merge evidence comments and
+   delete the branch.
+2. Start WP-2.6 (#55) spec-first: add authenticated file, validation, and snapshot routes to OpenAPI,
+   then implement thin service adapters, ETag/`If-Match`, pagination, and generated contract tests.
+   Resolve D-008 before final validation error mapping. Keep the single provisioned token
+   admin-equivalent until Phase 3 RBAC and document that pre-0.4.0 limitation.
+3. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+   order.
+4. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

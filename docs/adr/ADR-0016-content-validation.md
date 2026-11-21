@@ -129,8 +129,10 @@ validation of plugin behavior, custom YAML tags, and any request-controlled bypa
   `verifyJava8`, `node tools/i18n/check`, `tools/spec` lint, and `node tools/build/verify-all.cjs`
   passed with all seven toolchains reporting `PASS`. Exact commands and JAR verification output are
   recorded in [project status](../development/project-status.md#wp-25-implementation-verification-local-pre-merge).
-- **Verified in CI:** implementation PR checks are pending at the time of this update; post-merge
-  evidence will be recorded in project status and the implementation PR comment.
+- **Verified in CI (2026-11-21):** all required checks passed for PR #166; post-merge CI, CodeQL, and
+  Scorecard succeeded on `main` at `9363e0c`. Run IDs and evidence links are recorded in
+  [project status](../development/project-status.md#wp-25-implementation-merge-evidence) and the
+  implementation PR comment.
 - **Not verified:** no performance benchmark, TOML 1.0 conformance claim, randomized fuzz result, or
   full YAML round-trip claim is made.
 
