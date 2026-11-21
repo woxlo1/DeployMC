@@ -1,9 +1,9 @@
 # Implementation Status
 
 Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.3
-merged; issues #47-#52 closed. WP-2.3 specification merged in PR #158 at `879bdc5`; the
-implementation merged in PR #159 at `0425c8` with green PR and post-merge checks. The WP-2.4 diff
-contract is normative; its implementation is pending.)
+merged; issues #47-#52 closed. WP-2.3 merged in PR #158 at `879bdc5` and PR #159 at `0425c8`. The
+WP-2.4 contract merged in PR #162 at `2a4e7f8`; this work package adds the `core.diff`
+implementation.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -31,9 +31,11 @@ command consumes the resolver or file service yet. The merged WP-2.3 snapshot st
 Java 8 `core.snapshot` implementation with content-addressed blobs, atomic metadata, restore-first
 reversibility, retention, verify/repair, conservative GC, and a single-instance lock.
 No REST endpoint, transport handler, running server, UI, or in-game command consumes the store. The
-WP-2.4 diff contract defines bounded line, word, YAML/JSON semantic, and JAR metadata results, but no
-diff engine exists yet. There is no deployment engine, authorization, audit log, or Web UI screen,
-and the packaged Web UI has not been rendered in a browser.
+WP-2.4 contract now has a Java 8 `core.diff` implementation for bounded line, word, YAML/JSON
+semantic, and JAR metadata results. No REST endpoint, transport handler, running server, UI, or
+in-game command consumes the engine, and there is no application-level one-click restore. There is
+no deployment engine, authorization, audit log, or Web UI screen, and the packaged Web UI has not
+been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -45,7 +47,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 230 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, file operation, and snapshot store cases | Gradle `test` tasks; JUnit XML: 230 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 261 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, file operation, snapshot store, and diff engine cases | Gradle `test` tasks; JUnit XML: 261 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 51 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
@@ -65,13 +67,14 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.2 file operations | Sandboxed list/stat/read/range/download/create/mkdir/write/upload/move/delete, SHA-256 full-file revisions, same-directory temporary writes with one atomic commit, revision and file-identity conflict checks, host-controlled limits, explicit recursive-delete confirmation, and a fail-closed snapshot boundary | 24 new file-operation tests, full Gradle build (205 Java tests), Java 8 check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.3 snapshot specification | Normative `.deploymc/history/` layout, format 1, immutable blobs, atomic metadata/index writes, stable snapshot ids, restore-first reversibility, retention, GC preconditions, verify/repair, and single-instance lock | `npm run lint` and `npm test` in `tools/spec` (14 tests); post-merge CI, CodeQL, and Scorecard at `879bdc5` |
 | WP-2.3 snapshot store | Java 8 `core.snapshot` implementation of format-1 JSON records, SHA-256 blob deduplication, sandbox-root validation, restore-first reversibility, retention, verify/repair, conservative GC, and `data.lock`; 46 localized diagnostic keys in English/Japanese | 25 focused snapshot tests in a 230-test Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
-| WP-2.4 diff specification | Normative 2 MiB textual cap, stable line/word/semantic/JAR result envelope, deterministic ordering, fallback rules, and `diff.*` error codes | `npm run lint` and `npm test` in `tools/spec`; no diff implementation or contract test yet |
+| WP-2.4 diff specification | Normative 2 MiB textual cap, stable line/word/semantic/JAR result envelope, deterministic ordering, fallback rules, and `diff.*` error codes | `npm run lint` and `npm test` in `tools/spec` at the merged contract stage |
+| WP-2.4 diff engine | Java 8 bounded Myers line diff with word segments, hardened YAML/JSON key-path diff with text fallback, metadata-only ZIP/JAR descriptor diff, sorted stable notes, and exact 2 MiB boundary handling | 31 focused `DiffEngineTest` cases, full Gradle build (261 Java tests), Java 8 bytecode check, all-toolchain verification (`PASS` for all seven toolchains), spec lint, and i18n check |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 
-The final implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
+The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
 `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`. Spotless had been applied with
 `.\gradlew.bat spotlessApply --console=plain --no-configuration-cache` from that same junction before
@@ -172,6 +175,25 @@ comments are at <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-705567
 [44854531350](https://github.com/woxlo1/DeployMC/actions/runs/44854531350). The local and remote
 `feature/wp-2.3-snapshot-store` branches were deleted after the merge. No REST endpoint, transport
 handler, running server, UI, or in-game command consumes the store.
+
+WP-2.4 implementation (issue #53) adds Java 8 `core.diff`: a pure byte-array engine with bounded
+Myers line and word diffs, hardened YAML/JSON key-path diffs with stable text fallback, metadata-only
+ZIP central-directory and plugin-descriptor diffs, sorted machine-code notes, and inclusive 2 MiB
+textual limits. It never opens a file, resolves a path, executes a process, or reads host
+configuration. On 2026-11-21, `.\gradlew.bat :core:test --tests '*Diff*' --console=plain
+--no-configuration-cache` passed all 31 `DiffEngineTest` cases, and `.\gradlew.bat spotlessApply
+--console=plain --no-configuration-cache` passed. With `DEPLOYMC_JAVA_ROOT` set to the ASCII junction,
+`node tools/build/verify-all.cjs` reported `PASS web`, `PASS java`, `PASS cli`, `PASS python`,
+`PASS spec`, `PASS i18n`, and `PASS compat`. Its Java step ran `build verifyJava8 --console=plain
+--no-configuration-cache`; JUnit XML totals were 261 tests, 0 failures, 0 errors, and 1 skipped
+symlink test. Plugin JAR verification reported `4492483 bytes, 2619 classes (0 versioned), max common
+bytecode 52`. The 31 tests cover identical and empty inputs, both sides of the 2 MiB boundary,
+lowered limits, CR/LF/CRLF and EOF endings, BOM handling, invalid UTF-8, deterministic moved-block
+output, YAML rename and pure reorder, pointer escaping, parse fallback, word segmentation, JAR
+version and dependency changes, ZIP edge cases, truncated or invalid central directories, ZIP64
+rejection, descriptor BOM and duplicate handling, invalid entry names, JSON escaping, and repeated-run
+stability. No REST endpoint, transport handler, running server, UI, or in-game command consumes the
+engine.
 
 ## Repository configuration, not a product feature
 

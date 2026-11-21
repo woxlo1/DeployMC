@@ -38,8 +38,9 @@ This is the session-level status page. For per-component facts use
   #159 at `0425c8`, and issue #52 closed as completed. Verification and post-merge evidence are
   recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
-  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`)
-  starts the diff engine with a normative contract; its implementation is pending.
+  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) has a
+  merged normative contract and an implemented Java 8 `core.diff` engine with local verification
+  recorded below. Issue #53 remains open until the implementation PR is merged.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -317,6 +318,42 @@ Scorecard 44854531350  success
 
 The local and remote `feature/wp-2.3-snapshot-store` branches were deleted, and local `main` was left
 clean at `0425c814`.
+
+## WP-2.4 verification (local, pre-merge)
+
+These commands were run on 2026-11-21 on `feature/wp-2.4-diff-engine` before opening the implementation
+PR:
+
+```text
+$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\deploymc-ascii"
+.\gradlew.bat :core:test --tests '*Diff*' --console=plain --no-configuration-cache
+DiffEngineTest: 31 tests, 0 failures, 0 errors, 0 skipped
+
+.\gradlew.bat spotlessApply --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+
+node tools/build/verify-all.cjs
+PASS web
+PASS java
+PASS cli
+PASS python
+PASS spec
+PASS i18n
+PASS compat
+
+Java JUnit XML totals: 261 tests, 0 failures, 0 errors, 1 skipped
+Plugin JAR verification: 4492483 bytes, 2619 classes (0 versioned), max common bytecode 52
+git diff --check
+(no output)
+```
+
+The Java all-toolchain step ran `build verifyJava8 --console=plain --no-configuration-cache`, and the
+single skipped test remains the WP-2.1 symlink test that needs privileges unavailable on this host.
+The 31 focused tests cover the full normative evidence list: deterministic identical and empty
+results, both sides of the 2 MiB boundary, preserved line endings, moved-block stability, YAML rename
+and reorder, function-style pointer escaping, text fallback, word segments, JAR descriptor changes,
+invalid and ZIP64 archives, and repeated-run JSON stability. The engine is not consumed by any REST
+handler, transport route, running server, UI, or in-game command.
 
 ## Earlier pull-request evidence
 

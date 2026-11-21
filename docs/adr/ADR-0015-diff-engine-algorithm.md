@@ -96,7 +96,8 @@ and an addition group. No new diff dependency is added in this work package.
 
 ### Follow-up
 
-- Implement `core.diff` in Java 8 and add tests for the evidence list in the normative contract.
+- Keep the focused evidence tests when a transport handler is added; the Java 8 engine itself is
+  implemented for WP-2.4.
 - Add localized English and Japanese messages only at the future UI/API boundary; keep stable codes
   in the engine result.
 - Revisit the no-dependency decision if a measured, Java 8 compatible library materially reduces
@@ -106,11 +107,16 @@ and an addition group. No new diff dependency is added in this work package.
 
 - **Decided from design:** the owner approved WP-2.4 and the repository requires an ADR for the diff
   algorithm choice. The contract in
-  [`specification/diff/diff-engine.md`](../../specification/diff/diff-engine.md) is normative but no
-  implementation exists in this ADR's specification stage.
-- **Not yet verified:** no benchmark, Java 8 compile, unit test, CI run, or payload test is claimed
-  by this decision record. The implementation stage must replace this paragraph with exact commands
-  and results without rewriting the decision above.
+  [`specification/diff/diff-engine.md`](../../specification/diff/diff-engine.md) is normative.
+- **Implemented:** `core.diff` uses the accepted in-house bounded Myers implementation, the existing
+  hardened SnakeYAML parser, and direct ZIP central-directory reads. No new dependency was added.
+  On 2026-11-21, `.\gradlew.bat :core:test --tests '*Diff*' --console=plain --no-configuration-cache`
+  passed all 31 `DiffEngineTest` cases; `.\gradlew.bat spotlessApply --console=plain
+  --no-configuration-cache` passed; and `node tools/build/verify-all.cjs`, with
+  `DEPLOYMC_JAVA_ROOT` set to the ASCII junction, reported `PASS` for `web`, `java`, `cli`, `python`,
+  `spec`, `i18n`, and `compat`. JUnit XML totals were 261 tests, 0 failures, 0 errors, and 1 skipped
+  symlink test. Full validation commands and results are also recorded in
+  [implementation status](../development/implementation-status.md); no benchmark is claimed.
 - The accepted Java 8 bytecode baseline is recorded in [ADR-0002](ADR-0002-java-8-bytecode-baseline.md);
   shading and relocation constraints are recorded in [ADR-0004](ADR-0004-shading-and-relocation.md).
 
