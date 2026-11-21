@@ -97,12 +97,19 @@ Rules:
 - `verify` re-hashes stored blobs and reports corruption; a repair/report command is
   planned.
 - Restoring a snapshot first snapshots the current state, so a restore is reversible.
+- Format version 1 is `1\n` in `format-version`. An absent file in an empty store is initialized;
+  a higher or unparseable version fails closed. Future changes require a documented migration.
+- Snapshot ids match `snap_[0-9a-z]{26}`. Blobs are exact uncompressed bytes addressed by a
+  `sha256:<64 lowercase hex>` hash; metadata files are atomic JSON records.
+- Garbage collection requires verify to pass, no active deployment, the data-directory lock, a
+  24-hour grace period for unreferenced blobs, and a complete reachability scan before deletion.
 - Snapshots may contain secrets from configuration files. They are protected by the same
   RBAC path scopes as the original file and are never exposed through an unauthenticated
   route. Encryption at rest is not provided by default; the host file system is trusted.
 
-Compression is not fixed by this ADR. It will be chosen by a benchmark in a later work
-package; no native dependency is acceptable in the shared Java 8 path.
+Compression is deliberately excluded from format 1. It will be chosen by a benchmark in a
+later work package and requires a format migration; no native dependency is acceptable in the
+shared Java 8 path.
 
 ## Consequences
 
@@ -125,18 +132,20 @@ package; no native dependency is acceptable in the shared Java 8 path.
 
 ### Follow-up
 
-- Define the exact JSON schemas and `format-version` value.
-- Implement startup recovery for `tmp/` and incomplete index writes.
+- Implement the store contract in
+  [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md).
 - Add tests for deduplication, retention, GC during an active deployment, corruption
   detection, restore reversibility, and the single-instance lock.
-- Benchmark compression options before adding one.
+- Benchmark compression options before changing the format.
 - Document that snapshots are not a backup of worlds or player data.
 
 ## Evidence and validation
 
-- The layout and rules follow master specification section 24.4.
-- **Not verified:** no store code exists, no format file has been written, and no
-  retention or GC test has run. This ADR records the design.
+- The layout and rules follow master specification section 24.4. Format 1, ids, metadata fields,
+  retention invariants, GC preconditions, and verify/repair behavior are normative in
+  [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md).
+- **Not verified:** this ADR and the normative specification record the design; no store code has
+  been written and no retention or GC test has run yet.
 - The single-instance lock is also relevant to deployment recovery; see
   [ADR-0008](ADR-0008-deployment-state-machine.md).
 
