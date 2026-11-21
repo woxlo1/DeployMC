@@ -68,12 +68,13 @@ at `9363e0c` with issue #54 closed. `core.validation` adds bounded YAML, JSON, T
 validators, strict UTF-8 decoding, stable localized findings, deterministic registry matching, a
 byte-preserving YAML scalar editor, and a host-wired fail-closed `core.files` save gate. PR checks and
 post-merge CI, CodeQL, and Scorecard passed for WP-2.1, WP-2.2, both WP-2.3 stages, both WP-2.4 stages,
-both WP-2.5 stages, and both WP-2.6 file/validation stages; implementation evidence is recorded in
+both WP-2.5 stages, and all three merged WP-2.6 stages; implementation evidence is recorded in
 `docs/development`. WP-2.6 merged the file/validation REST specification in
-[PR #168](https://github.com/woxlo1/DeployMC/pull/168) at `8970728` and its authenticated adapters in
-[PR #169](https://github.com/woxlo1/DeployMC/pull/169) at `08fe424`. The adapters consume the
+[PR #168](https://github.com/woxlo1/DeployMC/pull/168) at `8970728`, its authenticated adapters in
+[PR #169](https://github.com/woxlo1/DeployMC/pull/169) at `08fe424`, and the snapshot-route contract
+in [PR #170](https://github.com/woxlo1/DeployMC/pull/170) at `bf82e26`. The adapters consume the
 sandbox resolver, `core.files`, and `core.validation` behind the bearer-token gate, with Problem
-Details, ETags, ranges, and cursor pagination. Six snapshot REST routes are now specified in
+Details, ETags, ranges, and cursor pagination. Six snapshot REST routes are specified in
 `specification/api/openapi.yaml` but have no adapter.
 No REST endpoint, transport handler, running server, UI, or in-game command consumes `core.snapshot`
 or `core.diff` yet, and exact-byte preservation for existing NFD filenames is not implemented. The
