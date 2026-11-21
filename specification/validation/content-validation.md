@@ -135,6 +135,9 @@ public interface ContentValidator {
 
 public interface ValidationGate {
   ValidationResult validate(String relativePath, byte[] content) throws ValidationException;
+
+  // Host byte budget for pre-validation reads; null when the custom gate has no known budget.
+  default ValidationLimits limits() { return null; }
 }
 ```
 
