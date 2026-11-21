@@ -1,10 +1,11 @@
 # Architecture Overview
 
-> **Status: design baseline (2026-11-17), implementation notes added 2026-11-18.** This document
+> **Status: design baseline (2026-11-17), implementation notes updated 2026-11-21.** This document
 > describes the intended architecture and the boundaries that later implementation must respect.
 > The Java modules now contain value objects, capability reporting, SPI interfaces, a Bukkit
-> adapter, and an embedded Netty transport. The sandbox, snapshot store, deployment pipeline,
-> authentication, application routes, and Web UI features do not exist yet.
+> adapter, an embedded Netty transport, token authentication, a sandbox resolver, and a sandboxed
+> file operations service. The snapshot store, deployment pipeline, RBAC, audit log, REST file
+> handlers, and Web UI screens do not exist yet.
 
 ## Purpose
 
@@ -68,11 +69,11 @@ binds to loopback by default in every mode.
 
 | Component | Responsibility | Current state |
 |---|---|---|
-| `transport` | HTTP/WebSocket listeners, request parsing, limits, request IDs, upgrade handling | Netty 4.1.141.Final server behind internal interfaces; no registered product routes |
-| `core` | Platform-independent domain and application services | `SemanticVersion`, capability reporting, SPI interfaces |
+| `transport` | HTTP/WebSocket listeners, request parsing, limits, request IDs, upgrade handling | Netty 4.1.141.Final server behind internal interfaces, fail-closed token gate, and `GET /api/v1/server`; other application routes are not registered |
+| `core` | Platform-independent domain and application services | Value objects, capability catalog, SPI, configuration loader, token authentication, sandbox resolver, and `core.files` service |
 | `api` | Small, stable Java API for other plugins; shared public value objects | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` |
-| `platform/*` | Adapters that translate SPI calls to one server platform | Version/config value objects only |
-| `plugin` | Shadow JAR aggregation, plugin descriptors, wiring | Relocated Shadow JAR with automated packaging verification and CI size report; no server load |
+| `platform/*` | Adapters that translate SPI calls to one server platform | Bukkit adapter with server-free tests and a pinned Paper smoke run at `839b789`; other adapters are not implemented |
+| `plugin` | Shadow JAR aggregation, plugin descriptors, wiring | Relocated Shadow JAR with automated packaging verification and CI size report; smoke-loaded on Paper, not a support tier |
 | `web` | React single-page UI served by the plugin | Buildable skeleton |
 | `cli` | Rust command-line client over the public API | Buildable skeleton |
 | `sdk/*` | Generated and hand-polished clients | Python skeleton; TypeScript and Java planned |
@@ -82,11 +83,11 @@ Core services are planned as separate packages rather than separate Gradle modul
 
 | Package (planned unless noted) | Responsibility |
 |---|---|
-| `sandbox` | Path resolution, jail enforcement, protected paths, bounded file operations |
+| `sandbox` (implemented) | Path resolution, jail enforcement, protected paths, bounded file operations |
 | `files` (implemented) | Sandboxed list/stat/read/write/create/mkdir/move/delete/upload/download, revisions, atomic commits, limits |
 | `snapshot` | Content-addressed history, retention, diff, restore, integrity verification |
 | `deploy` | Staging, validation, persisted state machine, restart orchestration, rollback |
-| `auth` | Cloudflare JWT verification, token store, one-time local tokens, sessions |
+| `auth` (token part implemented) | Host-provisioned token store, one-time creation, and a fail-closed gate; Cloudflare JWT and sessions are not implemented |
 | `rbac` | Roles, permissions, path scopes, explain mode |
 | `audit` | Append-only hash-chained audit log, query, export |
 | `console` | Bounded log ring buffer, filtering, command dispatch policy |

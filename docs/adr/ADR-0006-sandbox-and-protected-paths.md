@@ -135,9 +135,11 @@ upload size, directory entries per listing, path length, and concurrent operatio
   CI [44716375506](https://github.com/woxlo1/DeployMC/actions/runs/44716375506),
   CodeQL [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542), and Scorecard
   [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed.
-- The corpus and fuzz workflow have not yet run on a scheduled GitHub Actions event, and no file API
-  or running server consumes `SandboxPath`. Exact-byte preservation for an existing NFD filename is
-  not implemented; comparison keys are NFC.
+- The corpus and fuzz workflow have not yet run on a scheduled GitHub Actions event. WP-2.2 added
+  `core.files` (PR #155 at `017c2ab`), which consumes `SandboxPath` through `SandboxResolver` with
+  full-byte revisions and atomic commits; no REST endpoint, transport handler, or running server
+  consumes it yet. Exact-byte preservation for an existing NFD filename is not implemented;
+  comparison keys are NFC.
 - The threat model identifies path escape as a primary attack path and records the implemented
   controls and residual risk in A2.
 

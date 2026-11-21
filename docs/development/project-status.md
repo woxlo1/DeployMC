@@ -1,8 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-20 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and WP-2.1 merged and
-closed; WP-2.2 file operations implemented and locally verified). GitHub evidence below was verified
-against `main` at `7762a8f` after PR #154; earlier evidence is recorded below.
+Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.2
+merged and closed). GitHub evidence below was verified against `main` at `017c2ab` after PR #155;
+earlier evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -32,9 +32,8 @@ This is the session-level status page. For per-component facts use
   conflicting Netty fixture and before/after-disable thread dumps, merged in PR #151 at `839b789`;
   the issue closed as completed. WP-2.1 (issue #50), the canonical sandbox resolver, host-controlled
   policy, localized rejections, and security corpus, merged in PR #153 at `748bbc8`; the issue closed
-  as completed. WP-2.2 (issue #51), the sandboxed file operations service, is implemented and
-  locally verified; its merge evidence is recorded in the issue and pull request. Verification is
-  recorded below.
+  as completed. WP-2.2 (issue #51), the sandboxed file operations service, merged in PR #155 at
+  `017c2ab`; the issue closed as completed. Verification and post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -95,6 +94,27 @@ open PRs: 17 (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
 open issues: 80 (#51-#130)
+```
+
+Verified GitHub state on 2026-11-21 after PR #155 was merged and issue #51 was closed:
+
+```text
+git log -1 --oneline origin/main
+017c2ab feat(files): add sandboxed file operations service (#155)
+
+gh pr view 155 --json number,state,mergedAt,mergeCommit,url
+number=155 state=MERGED mergedAt=2026-11-20T10:59:32Z
+mergeCommit=017c2abd1549e6c3aa8f947f6324df9da97ccb59
+url=https://github.com/woxlo1/DeployMC/pull/155
+
+gh issue view 51 --json number,state,stateReason,closedAt
+number=51 state=CLOSED stateReason=COMPLETED closedAt=2026-11-20T10:59:33Z
+
+gh pr list --state open --limit 1000
+open PRs: 17 (#23-#39 Dependabot updates)
+
+gh issue list --state open --limit 1000
+open issues: 79 (#52-#130)
 ```
 
 `git branch --list 'feature/wp-2.1-sandbox-resolver'` and the matching
@@ -159,10 +179,10 @@ Scorecard 44716375486 success
 ```
 
 These are GitHub Actions run IDs, linked from [implementation status](implementation-status.md).
-The scheduled fuzz workflow has not run on a schedule yet, and no file API or server process uses
-`SandboxPath`.
+The scheduled fuzz workflow has not run on a schedule yet, and at that point no file API or server
+process used `SandboxPath`; WP-2.2 later added `core.files` on top of the resolver.
 
-## WP-2.2 verification (local, pre-merge)
+## WP-2.2 verification (local and post-merge)
 
 These commands were run on 2026-11-20 on `feature/wp-2.2-file-operations`:
 
@@ -199,6 +219,26 @@ destructive-operation fail-closed behavior, move conflicts, concurrency, and det
 points before and after the atomic commit. The skipped test remains the WP-2.1 symlink test that
 needs privileges unavailable on this host. No REST endpoint, transport handler, running server, or UI
 consumes `FileOperationsService`.
+
+### WP-2.2 PR and post-merge evidence
+
+At PR head `595fde0`, all required checks passed after the Linux concurrency test was updated to
+accept either documented conflict reason. PR comments recorded the implementation, the CI
+investigation, and the post-merge evidence:
+<https://github.com/woxlo1/DeployMC/pull/155#issuecomment-7037691314>,
+<https://github.com/woxlo1/DeployMC/pull/155#issuecomment-7037772338>, and
+<https://github.com/woxlo1/DeployMC/pull/155#issuecomment-7054409687>.
+
+At merge commit `017c2ab`, all post-merge `main` workflows completed successfully:
+
+```text
+CI        44723836623  success
+CodeQL    44723836580  success
+Scorecard 44723836649  success
+```
+
+The local and remote `feature/wp-2.2-file-operations` branches were deleted after the merge, and
+local `main` was left clean at `017c2ab`.
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
@@ -450,11 +490,11 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49, #50 (all done) ->
-category 2 (#51-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130).
-WP-2.1 is merged, issue #50 is closed, post-merge evidence is recorded, and the feature branch is
-deleted. Identify the next open category 2 item before starting later work. Start later items only
-when earlier items are complete or the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49, #50, #51 (all done)
+-> category 2 (#52-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5
+(#124-#130). WP-2.2 is merged, issue #51 is closed, post-merge evidence is recorded, and the feature
+branch is deleted. The next open category 2 item is #52 (WP-2.3 snapshot store); start later items
+only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 

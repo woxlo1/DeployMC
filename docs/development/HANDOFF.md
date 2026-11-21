@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
@@ -136,27 +136,37 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed. The feature
   branch was deleted locally and remotely. No running-server validation or file-API integration is
   claimed.
-- WP-2.2 (issue #51) adds `core.files`: sandboxed list/stat/read/range/download/create/mkdir/
-  write/upload/move/delete with `sha256:` full-file revisions, same-directory temporary writes and a
-  single atomic commit, revision and file-identity conflict detection, host-controlled limits,
-  explicit recursive-delete confirmation, and fail-closed overwrite/move/delete behind
-  `SnapshotHook`. English and Japanese diagnostic catalogs, stable error codes, and a normative
-  file-operations specification were added. On 2026-11-20, `.\gradlew.bat spotlessApply :core:test
-  --tests '*File*' --console=plain --no-configuration-cache` completed 26 tests (24 new WP-2.2 tests
-  plus 2 existing matching tests) with no failures; `.\gradlew.bat build verifyJava8` ran 205 Java
-  tests with 0 failures, 0 errors, and 1 skipped symlink test; `node tools/i18n/check`, `git diff
-  --check`, and `node tools/build/verify-all.cjs` passed with all seven toolchains reporting `PASS`.
-  No REST endpoint, transport handler, running server, or UI consumes the service, and no snapshot
-  store exists yet.
+- WP-2.2 (issue #51) merged in PR #155 at `017c2abd1549e6c3aa8f947f6324df9da97ccb59`; the issue
+  closed as completed at 2026-11-20T10:59:33Z. It adds `core.files`: sandboxed
+  list/stat/read/range/download/create/mkdir/write/upload/move/delete with `sha256:` full-file
+  revisions, same-directory temporary writes and a single atomic commit, revision and file-identity
+  conflict detection, host-controlled limits, explicit recursive-delete confirmation, and
+  fail-closed overwrite/move/delete behind `SnapshotHook`. English and Japanese diagnostic catalogs,
+  stable error codes, and a normative file-operations specification were added. On 2026-11-20,
+  `.\gradlew.bat spotlessApply :core:test --tests '*File*' --console=plain
+  --no-configuration-cache` completed 26 tests (24 new WP-2.2 tests plus 2 existing matching tests)
+  with no failures; `.\gradlew.bat build verifyJava8` ran 205 Java tests with 0 failures, 0 errors,
+  and 1 skipped symlink test; `node tools/i18n/check`, `git diff --check`, and
+  `node tools/build/verify-all.cjs` passed with all seven toolchains reporting `PASS`. PR comments
+  recorded implementation, CI investigation, and post-merge evidence at
+  <https://github.com/woxlo1/DeployMC/pull/155#issuecomment-7037691314>,
+  <https://github.com/woxlo1/DeployMC/pull/155#issuecomment-7037772338>, and
+  <https://github.com/woxlo1/DeployMC/pull/155#issuecomment-7054409687>. All required checks passed
+  at PR head `595fde0`; post-merge `main` CI
+  [44723836623](https://github.com/woxlo1/DeployMC/actions/runs/44723836623), CodeQL
+  [44723836580](https://github.com/woxlo1/DeployMC/actions/runs/44723836580), and Scorecard
+  [44723836649](https://github.com/woxlo1/DeployMC/actions/runs/44723836649) passed. The local and
+  remote `feature/wp-2.2-file-operations` branches were deleted. No REST endpoint, transport
+  handler, running server, or UI consumes the service, and no snapshot store exists yet.
 
 ## In flight
 
-- WP-2.2 file operations are implemented and verified locally under issue #51. No endpoint, server,
-  or UI consumes the service, and the real snapshot store remains WP-2.3 work.
-- Earlier WP-1.7, WP-1.8, WP-1.9, and WP-2.1 work is merged, with evidence recorded in the status
-  pages and pull-request comments.
+- No work package is in flight. WP-2.2 is merged, issue #51 is closed, and post-merge evidence is
+  recorded; the next item is WP-2.3 snapshot store (#52).
+- Earlier WP-1.7, WP-1.8, WP-1.9, WP-2.1, and WP-2.2 work is merged, with evidence recorded in the
+  status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 80 (#51-#130). Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 79 (#52-#130). Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -166,9 +176,11 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Complete WP-2.2 review, required checks, merge, and post-merge evidence, then close issue #51.
-2. Identify the next open Phase 2 item, then continue with category 3 (#115-#120), category 4
-   (#121-#123), and category 5 (#124-#130).
+1. Start WP-2.3 snapshot store (#52): update the normative specification first, then implement a
+   content-addressed store, retention, restore, and integrity checks behind `SnapshotHook`, with
+   contract tests and fail-closed destructive operations.
+2. Continue with WP-2.4-WP-2.6 (#53-#55), then category 3 (#115-#120), category 4 (#121-#123), and
+   category 5 (#124-#130) in issue order.
 3. Update project status, implementation status, and this handoff at the end of each session.
 
 ## Gotchas
@@ -190,7 +202,7 @@ Last updated: 2026-11-20. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 - PowerShell splits a bare `-Pdeploymc.verifyJarFile=...` Gradle argument. Use
   `--project-prop=deploymc.verifyJarFile=...` before the task name when running
   `:plugin:verifyPluginJarFixture`.
-- Discussions stay enabled with default categories and zero threads. Do not create custom
-  categories or a pinned post.
+- Discussions had zero threads on 2026-11-21. The owner asked for genuine design discussion, not
+  activity for its own sake; do not create custom categories, a pinned post, or fake threads.
 - The license decision is closed: Apache-2.0, ADR-0013. Do not reopen it without owner approval.
 - Never claim originality from the naming check; exact-name GitHub repositories exist.
