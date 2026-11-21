@@ -145,10 +145,15 @@ shared Java 8 path.
 - The layout and rules follow master specification section 24.4. Format 1, ids, metadata fields,
   retention invariants, GC preconditions, and verify/repair behavior are normative in
   [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md).
-- The format-1 store was implemented in Java 8 `core.snapshot` and verified locally on 2026-11-21:
-  25 snapshot tests passed inside a full Gradle build of 230 tests (0 failures, 0 errors, 1 skipped
-  symlink test), `verifyJava8` passed, and `node tools/build/verify-all.cjs` reported `PASS` for all
-  seven toolchains. Spec lint and i18n checks passed.
+- The format-1 store was implemented in Java 8 `core.snapshot` and merged in
+  [PR #159](https://github.com/woxlo1/DeployMC/pull/159) at `0425c81` on 2026-11-21; issue #52 closed
+  as completed. 25 snapshot tests passed inside a full Gradle build of 230 tests (0 failures,
+  0 errors, 1 skipped symlink test), `verifyJava8` passed, and `node tools/build/verify-all.cjs`
+  reported `PASS` for all seven toolchains. Spec lint and i18n checks passed. All PR checks passed at
+  head `f0fd908`; post-merge CI
+  [44854531337](https://github.com/woxlo1/DeployMC/actions/runs/44854531337), CodeQL
+  [44854531422](https://github.com/woxlo1/DeployMC/actions/runs/44854531422), and Scorecard
+  [44854531350](https://github.com/woxlo1/DeployMC/actions/runs/44854531350) passed.
 - **Not yet verified:** no REST endpoint, transport handler, running server, UI, or in-game command
   consumes the store; no live server backup/restore was exercised. Compression stays out of format 1.
 - The single-instance lock is also relevant to deployment recovery; see
