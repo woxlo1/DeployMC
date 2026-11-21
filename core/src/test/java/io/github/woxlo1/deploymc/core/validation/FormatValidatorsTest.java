@@ -50,18 +50,31 @@ class FormatValidatorsTest {
         assertThrows(ValidationLimitException.class, () -> yaml("abcd", tiny)).limitName());
 
     ValidationLimits nodeLimited = new ValidationLimits(1024L, 256, 16, 8, 4, 2, 64, 32);
-    assertEquals(
-        "maxNodes",
+    ValidationLimitException yamlNodeLimit =
         assertThrows(
-                ValidationLimitException.class, () -> yaml("a:\n  b:\n    c: 1\n", nodeLimited))
-            .limitName());
+            ValidationLimitException.class, () -> yaml("a:\n  b:\n    c: 1\n", nodeLimited));
+    assertEquals("maxNodes", yamlNodeLimit.limitName());
+    assertEquals("validation.yaml-node-limit", yamlNodeLimit.issueCode());
 
-    ValidationResult aliases =
-        yaml("base: &base\n  value: 1\ncopy1: *base\ncopy2: *base\n", ValidationLimits.small());
-    assertTrue(hasCode(aliases, "validation.yaml-alias-limit"), aliases.issues().toString());
+    ValidationLimits depthLimited = new ValidationLimits(1024L, 256, 16, 1, 64, 2, 64, 32);
+    ValidationLimitException yamlDepth =
+        assertThrows(ValidationLimitException.class, () -> yaml("a:\n  b: 1\n", depthLimited));
+    assertEquals("validation.yaml-depth", yamlDepth.issueCode());
 
-    ValidationResult cycle = yaml("loop: &loop\n  self: *loop\n", ValidationLimits.small());
-    assertTrue(hasCode(cycle, "validation.yaml-alias-limit"), cycle.issues().toString());
+    ValidationLimitException aliasLimit =
+        assertThrows(
+            ValidationLimitException.class,
+            () ->
+                yaml(
+                    "base: &base\n  value: 1\ncopy1: *base\ncopy2: *base\n",
+                    ValidationLimits.small()));
+    assertEquals("validation.yaml-alias-limit", aliasLimit.issueCode());
+
+    ValidationLimitException cycle =
+        assertThrows(
+            ValidationLimitException.class,
+            () -> yaml("loop: &loop\n  self: *loop\n", ValidationLimits.small()));
+    assertEquals("validation.yaml-alias-limit", cycle.issueCode());
   }
 
   @Test
@@ -79,9 +92,13 @@ class FormatValidatorsTest {
     ValidationResult duplicate = json("{\"a\": 1, \"a\": 2}");
     assertTrue(hasCode(duplicate, "validation.json-duplicate-key"));
 
-    ValidationResult depth =
-        json("[[[[1]]]]", new ValidationLimits(1024L, 64, 16, 3, 64, 2, 16, 16));
-    assertTrue(hasCode(depth, "validation.json-depth"));
+    ValidationLimitException depth =
+        assertThrows(
+            ValidationLimitException.class,
+            () -> json("[[[[1]]]]", new ValidationLimits(1024L, 64, 16, 3, 64, 2, 16, 16)));
+    assertEquals("validation.limit-exceeded", depth.code());
+    assertEquals("validation.json-depth", depth.issueCode());
+    assertEquals("maxDepth", depth.limitName());
 
     ValidationResult invalidUtf8 =
         new JsonValidator().validate("data.json", new byte[] {'"', (byte) 0xff, '"'}, DEFAULTS);
@@ -125,6 +142,21 @@ class FormatValidatorsTest {
 
     ValidationResult malformed = toml("a = \n");
     assertTrue(hasCode(malformed, "validation.toml-syntax"));
+  }
+
+  @Test
+  void tomlStructuralBudgetsUseLimitFailuresWithIssueCodes() throws Exception {
+    ValidationLimitException nodeLimit =
+        assertThrows(
+            ValidationLimitException.class,
+            () -> toml("a = [1, 2]\n", new ValidationLimits(1024L, 256, 16, 8, 2, 2, 64, 32)));
+    assertEquals("validation.toml-node-limit", nodeLimit.issueCode());
+
+    ValidationLimitException depth =
+        assertThrows(
+            ValidationLimitException.class,
+            () -> toml("a = [[1]]\n", new ValidationLimits(1024L, 256, 16, 1, 64, 2, 64, 32)));
+    assertEquals("validation.toml-depth", depth.issueCode());
   }
 
   @Test
@@ -229,8 +261,12 @@ class FormatValidatorsTest {
   }
 
   private static ValidationResult toml(String content) throws Exception {
+    return toml(content, DEFAULTS);
+  }
+
+  private static ValidationResult toml(String content, ValidationLimits limits) throws Exception {
     return new TomlValidator()
-        .validate("config.toml", content.getBytes(StandardCharsets.UTF_8), DEFAULTS);
+        .validate("config.toml", content.getBytes(StandardCharsets.UTF_8), limits);
   }
 
   private static ValidationResult properties(String content) throws Exception {

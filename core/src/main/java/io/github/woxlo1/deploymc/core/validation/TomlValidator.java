@@ -14,6 +14,8 @@ public final class TomlValidator implements ContentValidator {
   private static final String CODE_SYNTAX = "validation.toml-syntax";
   private static final String CODE_DUPLICATE = "validation.toml-duplicate-key";
   private static final String CODE_UNSUPPORTED = "validation.toml-unsupported";
+  private static final String ISSUE_NODE_LIMIT = "validation.toml-node-limit";
+  private static final String ISSUE_DEPTH = "validation.toml-depth";
 
   private static final int IMPLICIT = 0;
   private static final int TABLE = 1;
@@ -662,13 +664,13 @@ public final class TomlValidator implements ContentValidator {
     private void countNode() throws ValidationLimitException {
       nodes++;
       if (nodes > limits.maxNodes()) {
-        throw new ValidationLimitException("maxNodes", nodes, limits.maxNodes());
+        throw new ValidationLimitException(ISSUE_NODE_LIMIT, "maxNodes", nodes, limits.maxNodes());
       }
     }
 
     private void checkDepth(int depth) throws ValidationLimitException {
       if (depth > limits.maxDepth()) {
-        throw new ValidationLimitException("maxDepth", depth, limits.maxDepth());
+        throw new ValidationLimitException(ISSUE_DEPTH, "maxDepth", depth, limits.maxDepth());
       }
     }
 

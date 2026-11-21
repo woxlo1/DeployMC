@@ -12,7 +12,7 @@ public final class JsonValidator implements ContentValidator {
   private static final String FORMAT = "json";
   private static final String SYNTAX = "validation.json-syntax";
   private static final String DUPLICATE_KEY = "validation.json-duplicate-key";
-  private static final String DEPTH = "validation.json-depth";
+  private static final String DEPTH_ISSUE = "validation.json-depth";
 
   @Override
   public String id() {
@@ -71,9 +71,7 @@ public final class JsonValidator implements ContentValidator {
 
     private void parseValue(int depth, String pointer) throws ValidationLimitException {
       if (depth > limits.maxDepth()) {
-        addIssue(DEPTH, index, pointer);
-        aborted = true;
-        return;
+        throw new ValidationLimitException(DEPTH_ISSUE, "maxDepth", depth, limits.maxDepth());
       }
       countNode();
       if (index >= text.length()) {
