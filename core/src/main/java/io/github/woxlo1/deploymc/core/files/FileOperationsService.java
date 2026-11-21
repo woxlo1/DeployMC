@@ -341,6 +341,9 @@ public final class FileOperationsService {
       throws FileOperationException {
     SandboxPath source = resolve(sourcePath, SandboxAccessMode.WRITE);
     SandboxPath destination = resolve(destinationPath, SandboxAccessMode.WRITE);
+    if (source.relativePath().isEmpty() || destination.relativePath().isEmpty()) {
+      throw new FileOperationException(FileOperationException.Reason.INVALID_OPERATION, "");
+    }
     return withLocks(
         () -> {
           PathState sourceState = requireState(source);
@@ -397,6 +400,9 @@ public final class FileOperationsService {
           } catch (AtomicMoveNotSupportedException unsupported) {
             throw new FileOperationException(
                 FileOperationException.Reason.ATOMIC_MOVE_UNSUPPORTED, unsupported);
+          } catch (NoSuchFileException missing) {
+            throw new FileOperationException(
+                FileOperationException.Reason.NOT_FOUND, destination.relativePath());
           } catch (IOException failure) {
             throw new FileOperationException(
                 FileOperationException.Reason.IO, sourcePath, failure.getClass().getSimpleName());
@@ -413,6 +419,9 @@ public final class FileOperationsService {
   public int delete(String requestPath, DeleteRequest request) throws FileOperationException {
     Objects.requireNonNull(request, "request");
     SandboxPath path = resolve(requestPath, SandboxAccessMode.WRITE);
+    if (path.relativePath().isEmpty()) {
+      throw new FileOperationException(FileOperationException.Reason.INVALID_OPERATION, "");
+    }
     return withLocks(
         () -> {
           PathState state = requireState(path);
@@ -550,13 +559,7 @@ public final class FileOperationsService {
       }
       return result;
     } catch (ValidationLimitException limit) {
-      throw new FileOperationException(
-          FileOperationException.Reason.VALIDATION_LIMIT,
-          limit,
-          relativePath,
-          limit.limitName(),
-          Long.valueOf(limit.observed()),
-          Long.valueOf(limit.maximum()));
+      throw FileOperationException.validationLimit(relativePath, limit);
     } catch (ValidationException failure) {
       throw new FileOperationException(
           FileOperationException.Reason.VALIDATOR_UNAVAILABLE,
@@ -600,16 +603,6 @@ public final class FileOperationsService {
     return Math.min((long) Integer.MAX_VALUE, maximum);
   }
 
-  private static FileOperationException validationLimit(
-      String relativePath, String limitName, long observed, long maximum) {
-    return new FileOperationException(
-        FileOperationException.Reason.VALIDATION_LIMIT,
-        relativePath,
-        limitName,
-        Long.valueOf(observed),
-        Long.valueOf(maximum));
-  }
-
   private static FileOperationException validationReadFailure(
       String relativePath, IOException cause) {
     return new FileOperationException(
@@ -624,7 +617,7 @@ public final class FileOperationsService {
       throws FileOperationException {
     long maximum = validationReadLimitBytes();
     if (expectedSize > maximum) {
-      throw validationLimit(relativePath, "maxBytes", expectedSize, maximum);
+      throw FileOperationException.validationLimit(relativePath, "maxBytes", expectedSize, maximum);
     }
     ByteArrayOutputStream output = new ByteArrayOutputStream((int) Math.min(expectedSize, 8192L));
     byte[] buffer = new byte[COPY_BUFFER_SIZE];
@@ -638,7 +631,8 @@ public final class FileOperationsService {
         }
         output.write(buffer, 0, read);
         if (output.size() > maximum) {
-          throw validationLimit(relativePath, "maxBytes", output.size(), maximum);
+          throw FileOperationException.validationLimit(
+              relativePath, "maxBytes", output.size(), maximum);
         }
         if (output.size() > expectedSize) {
           throw new FileOperationException(
@@ -919,6 +913,9 @@ public final class FileOperationsService {
       return new CommittedWrite(FileRevision.fromDigest(digest), written);
     } catch (FileOperationException failure) {
       throw failure;
+    } catch (NoSuchFileException missing) {
+      throw new FileOperationException(
+          FileOperationException.Reason.NOT_FOUND, path.relativePath());
     } catch (IOException failure) {
       throw new FileOperationException(
           FileOperationException.Reason.IO,

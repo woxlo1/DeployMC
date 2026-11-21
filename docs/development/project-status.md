@@ -1,8 +1,9 @@
 # Project Status
 
 Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-and the WP-2.5 specification merged and closed). GitHub evidence below was verified against `main`
-through `9363e0c` after PR #166; earlier evidence is recorded below.
+and the WP-2.6 file/validation specification merged and closed). GitHub evidence below was verified
+against `main` through `8970728` after PR #168; the WP-2.6 adapter branch is pending merge and its
+local evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -38,12 +39,13 @@ This is the session-level status page. For per-component facts use
   #159 at `0425c8`, and issue #52 closed as completed. WP-2.4 first stage merged in PR #162 at
   `2a4e7f8`; the Java 8 `core.diff` implementation merged in PR #163 at `80a3f0b`, and issue #53
   closed as completed. WP-2.5 first stage merged in PR #165 at `6cd6015`; the Java 8 `core.validation`
-  implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. Verification and
-  post-merge evidence are recorded below.
+  implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. WP-2.6 first stage
+  merged in PR #168 at `8970728`; the file/validation adapters are implemented locally and pending
+  merge. Verification and post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
-  WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) and category
-  3-5 work remain open.
+  WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has its
+  file/validation adapter pending merge; snapshot routes and category 3-5 work remain open.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -455,6 +457,56 @@ comment is at <https://github.com/woxlo1/DeployMC/pull/166#issuecomment-70610841
 post-merge evidence comment is at
 <https://github.com/woxlo1/DeployMC/pull/166#issuecomment-7061152266>. The local and remote
 `feature/wp-2.5-validation` branches were deleted; local `main` was left at `9363e0c`.
+
+## WP-2.6 specification merge evidence
+
+PR #168 merged the file/validation REST contract to `main` at
+`8970728b7872ebe844c510144533485ba4b197ce`. The explicit verification comment is at
+<https://github.com/woxlo1/DeployMC/pull/168#issuecomment-7061469819> and the post-merge evidence
+comment is at <https://github.com/woxlo1/DeployMC/pull/168#issuecomment-7061542061>. Post-merge
+workflows passed: CI [44896183648](https://github.com/woxlo1/DeployMC/actions/runs/44896183648),
+CodeQL [44896183641](https://github.com/woxlo1/DeployMC/actions/runs/44896183641), and Scorecard
+[44896183615](https://github.com/woxlo1/DeployMC/actions/runs/44896183615). The local and remote
+`spec/wp-2.6-file-endpoints` branches were deleted after the evidence was posted.
+
+## WP-2.6 file/validation adapter verification (local, pre-merge)
+
+These commands were run on 2026-11-21 on `feature/wp-2.6-file-validation-endpoints`. Gradle commands
+ran through the ASCII junction at `C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii`; the stale
+`.gradle/configuration-cache` directory was removed before Spotless ran again.
+
+```text
+.\gradlew.bat spotlessApply --no-configuration-cache --console=plain
+BUILD SUCCESSFUL
+
+.\gradlew.bat :transport:test --tests '*ProblemDetailsTest' --tests '*FileApiHandlerTest'
+--no-configuration-cache --console=plain
+BUILD SUCCESSFUL; 14 tests, 0 failures, 0 errors
+
+.\gradlew.bat :platform:bukkit:test --tests '*FileApiRuntimeTest'
+--tests '*DeployMCHttpHandlerTest' --no-configuration-cache --console=plain
+BUILD SUCCESSFUL; 8 tests, 0 failures, 0 errors
+
+.\gradlew.bat build verifyJava8 --no-configuration-cache --console=plain
+BUILD SUCCESSFUL; JUnit XML totals: 311 tests, 0 failures, 0 errors, 1 skipped symlink test
+Plugin JAR verification: 4604278 bytes, 2665 classes (0 versioned), max common bytecode 52
+
+node tools/i18n/check
+i18n check passed: 0 error(s), 0 warning(s)
+
+git diff --check
+(no output)
+```
+
+The transport tests cover Problem serialization, create/list/read/range/write/move/delete/upload/
+validate routes, ETag/`If-Match`, cursor tampering, recursive-delete confirmation, D-008 limit
+mapping, localized findings, sandbox root rejection, traversal, and unsupported media types. The
+Bukkit tests cover service construction from host configuration, snapshot-store close/reopen,
+schema-maximum budgets, fail-closed snapshot-directory and sandbox-root settings, and exact file-route
+delegation. A regression test caught and fixed a runtime bug that rejected schema-valid 2048 MiB
+snapshot and 4096 MiB upload budgets. No running-server smoke test, E2E run, in-game `/deploymc`
+execution, or Web UI browser check was performed after this wiring, and the full integration suite
+has not run. The single provisioned token remains admin-equivalent until Phase 3 RBAC.
 
 ## Earlier pull-request evidence
 

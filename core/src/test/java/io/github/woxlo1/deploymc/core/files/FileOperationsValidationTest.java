@@ -82,7 +82,7 @@ class FileOperationsValidationTest {
     Files.write(tempDir.resolve("data.txt"), original);
     FileInfo before = service.stat("data.txt");
     Behavior limitBehavior = new Behavior();
-    limitBehavior.failure = new ValidationLimitException("maxDepth", 9, 8);
+    limitBehavior.failure = new ValidationLimitException("validation.json-depth", "maxDepth", 9, 8);
     service = serviceWith(limitBehavior);
 
     FileOperationException limitFailure =
@@ -93,6 +93,7 @@ class FileOperationsValidationTest {
                     "data.txt", "replacement".getBytes(StandardCharsets.UTF_8), before.revision()));
     assertEquals(FileOperationException.Reason.VALIDATION_LIMIT, limitFailure.reason());
     assertEquals("validation.limit-exceeded", limitFailure.code());
+    assertEquals("validation.json-depth", limitFailure.issueCode());
     assertArrayEquals(original, Files.readAllBytes(tempDir.resolve("data.txt")));
     assertTrue(snapshots.empty());
 

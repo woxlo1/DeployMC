@@ -34,6 +34,39 @@ class DeployMCHttpHandlerTest {
     assertEquals("{\"api\":true}", new String(response.body(), StandardCharsets.UTF_8));
   }
 
+  @Test
+  void delegatesFileApiPathsToTheFileHandler() throws Exception {
+    HttpHandler api =
+        request -> {
+          throw new AssertionError("file routes must not reach the general API handler");
+        };
+    HttpHandler files = request -> HttpResponse.json(200, "{\"files\":true}");
+    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, files);
+
+    assertEquals(200, handler.handle(request("/api/v1/files")).status());
+    assertEquals(200, handler.handle(request("/api/v1/files/content")).status());
+    assertEquals(
+        "{\"files\":true}",
+        new String(handler.handle(request("/api/v1/files/move")).body(), StandardCharsets.UTF_8));
+  }
+
+  @Test
+  void doesNotDelegateLookalikeOrGeneralApiPaths() throws Exception {
+    HttpHandler api = request -> HttpResponse.json(200, "{\"api\":true}");
+    HttpHandler files =
+        request -> {
+          throw new AssertionError("only exact file API routes may reach the file handler");
+        };
+    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, files);
+
+    assertEquals(
+        "{\"api\":true}",
+        new String(handler.handle(request("/api/v1/files-other")).body(), StandardCharsets.UTF_8));
+    assertEquals(
+        "{\"api\":true}",
+        new String(handler.handle(request("/api/v1/server")).body(), StandardCharsets.UTF_8));
+  }
+
   private static HttpRequest request(String path) {
     return new HttpRequest(
         "test-request",

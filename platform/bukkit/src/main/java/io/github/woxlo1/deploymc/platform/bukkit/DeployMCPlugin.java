@@ -13,6 +13,7 @@ import io.github.woxlo1.deploymc.transport.TransportConfig;
 import io.github.woxlo1.deploymc.transport.TransportException;
 import io.github.woxlo1.deploymc.transport.TransportMessages;
 import java.io.File;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
@@ -29,6 +30,7 @@ public final class DeployMCPlugin extends JavaPlugin {
   private BukkitPlatformAdapter adapter;
   private ConfigManager configManager;
   private NettyTransportServer transport;
+  private FileApiRuntime fileApi;
 
   @Override
   public void onLoad() {
@@ -49,6 +51,7 @@ public final class DeployMCPlugin extends JavaPlugin {
     LocalizedMessages messages = fallback;
     BukkitPlatformAdapter created = null;
     NettyTransportServer createdTransport = null;
+    FileApiRuntime createdFileApi = null;
     try {
       ConfigManager createdConfigManager =
           new ConfigManager(
@@ -70,15 +73,25 @@ public final class DeployMCPlugin extends JavaPlugin {
 
       created = new BukkitPlatformAdapter(this, plan, messages);
 
-      TransportMessages transportMessages =
-          TransportMessages.of(ConfigLanguage.toLocale(view.language()));
+      Locale locale = ConfigLanguage.toLocale(view.language());
+      TransportMessages transportMessages = TransportMessages.of(locale);
       TransportConfig transportConfig = TransportConfig.builder(plan.bind()).build();
+      File pluginsDirectory = getDataFolder().getParentFile();
+      if (pluginsDirectory == null) {
+        throw new StartupConfigurationException(
+            MessageKeys.STARTUP_FILE_API_INVALID_CONFIG,
+            Collections.singletonMap("setting", "plugins directory"));
+      }
+      createdFileApi =
+          FileApiRuntime.create(
+              view, pluginsDirectory.toPath(), locale, transportConfig.maxBodyBytes());
       createdTransport =
           new NettyTransportServer(
               transportConfig,
               new DeployMCHttpHandler(
                   new ServerInfoHandler(
-                      plan.pluginVersion(), created.info(), created.capabilities())),
+                      plan.pluginVersion(), created.info(), created.capabilities()),
+                  createdFileApi.handler()),
               new NoopWebSocketListener(),
               new DefaultTransportPolicy(transportConfig),
               new PluginRequestLogger(getLogger(), transportMessages),
@@ -94,7 +107,7 @@ public final class DeployMCPlugin extends JavaPlugin {
       PluginCommand command = getCommand("deploymc");
       if (command == null) {
         getLogger().severe(messages.format(MessageKeys.COMMAND_REGISTRATION_FAILED));
-        disableAfterFailure(created, createdTransport);
+        disableAfterFailure(created, createdTransport, createdFileApi);
         return;
       }
       DeployMCCommandExecutor executor =
@@ -106,9 +119,10 @@ public final class DeployMCPlugin extends JavaPlugin {
       adapter = created;
       configManager = createdConfigManager;
       transport = createdTransport;
+      fileApi = createdFileApi;
     } catch (StartupConfigurationException exception) {
       getLogger().severe(messages.format(exception.messageKey(), exception.values()));
-      disableAfterFailure(created, createdTransport);
+      disableAfterFailure(created, createdTransport, createdFileApi);
     } catch (TokenStoreException exception) {
       String key;
       switch (exception.reason()) {
@@ -127,22 +141,24 @@ public final class DeployMCPlugin extends JavaPlugin {
           .severe(
               messages.format(
                   key, Collections.singletonMap("detail", String.valueOf(exception.detail()))));
-      disableAfterFailure(created, createdTransport);
+      disableAfterFailure(created, createdTransport, createdFileApi);
     } catch (TransportException exception) {
       Map<String, String> values = Collections.singletonMap("error", exception.error().code());
       getLogger().severe(messages.format(MessageKeys.STARTUP_TRANSPORT_FAILED, values));
-      disableAfterFailure(created, createdTransport);
+      disableAfterFailure(created, createdTransport, createdFileApi);
     } catch (ConfigException | RuntimeException exception) {
       Map<String, String> values =
           java.util.Collections.singletonMap("error", String.valueOf(exception.getMessage()));
       getLogger().severe(fallback.format(MessageKeys.LIFECYCLE_START_FAILED, values));
-      disableAfterFailure(created, createdTransport);
+      disableAfterFailure(created, createdTransport, createdFileApi);
     }
   }
 
   @Override
   public void onDisable() {
     stopTransport();
+    closeFileApi(fileApi);
+    fileApi = null;
     if (adapter != null) {
       adapter.close();
       adapter = null;
@@ -151,8 +167,11 @@ public final class DeployMCPlugin extends JavaPlugin {
   }
 
   private void disableAfterFailure(
-      BukkitPlatformAdapter created, NettyTransportServer createdTransport) {
+      BukkitPlatformAdapter created,
+      NettyTransportServer createdTransport,
+      FileApiRuntime createdFileApi) {
     stopTransport(createdTransport);
+    closeFileApi(createdFileApi);
     if (created != null) {
       created.close();
     }
@@ -180,6 +199,22 @@ public final class DeployMCPlugin extends JavaPlugin {
           .severe(
               LocalizedMessages.of(Locale.getDefault())
                   .format(MessageKeys.LIFECYCLE_TRANSPORT_STOP_FAILED, values));
+    }
+  }
+
+  private void closeFileApi(FileApiRuntime target) {
+    if (target == null) {
+      return;
+    }
+    try {
+      target.close();
+    } catch (IOException exception) {
+      Map<String, String> values =
+          Collections.singletonMap("error", String.valueOf(exception.getMessage()));
+      getLogger()
+          .severe(
+              LocalizedMessages.of(Locale.getDefault())
+                  .format(MessageKeys.LIFECYCLE_FILE_API_STOP_FAILED, values));
     }
   }
 }

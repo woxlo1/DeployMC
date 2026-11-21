@@ -30,6 +30,9 @@ public final class YamlValidator implements ContentValidator {
 
   private static final Set<Tag> STANDARD_TAGS = standardTags();
   private static final int MAX_TAG_PARAMETER_LENGTH = 256;
+  private static final String ALIAS_ISSUE = "validation.yaml-alias-limit";
+  private static final String NODE_ISSUE = "validation.yaml-node-limit";
+  private static final String DEPTH_ISSUE = "validation.yaml-depth";
 
   @Override
   public String id() {
@@ -112,7 +115,7 @@ public final class YamlValidator implements ContentValidator {
       List<ValidationIssue> issues)
       throws ValidationLimitException {
     if (++state.visits > limits.maxNodes()) {
-      throw new ValidationLimitException("maxNodes", state.visits, limits.maxNodes());
+      throw new ValidationLimitException(NODE_ISSUE, "maxNodes", state.visits, limits.maxNodes());
     }
 
     Integer known = state.references.get(node);
@@ -130,24 +133,19 @@ public final class YamlValidator implements ContentValidator {
     }
 
     if (state.stack.containsKey(node)) {
-      issues.add(
-          issue(
-              "validation.yaml-alias-limit",
-              pointer,
-              node.getStartMark(),
-              input,
-              Collections.<String>emptyList()));
-      return;
+      throw new ValidationLimitException(
+          ALIAS_ISSUE,
+          "maxAliasExpansionsPerNode",
+          (long) limits.maxAliasExpansionsPerNode() + 1L,
+          limits.maxAliasExpansionsPerNode());
     }
     if (state.visited.containsKey(node)) {
       if (references > limits.maxAliasExpansionsPerNode()) {
-        issues.add(
-            issue(
-                "validation.yaml-alias-limit",
-                pointer,
-                node.getStartMark(),
-                input,
-                Collections.<String>emptyList()));
+        throw new ValidationLimitException(
+            ALIAS_ISSUE,
+            "maxAliasExpansionsPerNode",
+            references,
+            limits.maxAliasExpansionsPerNode());
       }
       return;
     }
@@ -219,7 +217,7 @@ public final class YamlValidator implements ContentValidator {
   private static int nextDepth(int depth, ValidationLimits limits) throws ValidationLimitException {
     int nested = depth + 1;
     if (nested > limits.maxDepth()) {
-      throw new ValidationLimitException("maxDepth", nested, limits.maxDepth());
+      throw new ValidationLimitException(DEPTH_ISSUE, "maxDepth", nested, limits.maxDepth());
     }
     return nested;
   }
@@ -269,7 +267,7 @@ public final class YamlValidator implements ContentValidator {
     String message = failureText(failure).toLowerCase(Locale.ROOT);
     if (message.contains("nesting depth")) {
       throw new ValidationLimitException(
-          "maxDepth", (long) limits.maxDepth() + 1L, limits.maxDepth());
+          DEPTH_ISSUE, "maxDepth", (long) limits.maxDepth() + 1L, limits.maxDepth());
     }
     if (message.contains("codepointlimit") || message.contains("code point limit")) {
       throw new ValidationLimitException(
@@ -278,14 +276,11 @@ public final class YamlValidator implements ContentValidator {
     if (message.contains("aliases")
         || message.contains("recursive")
         || message.contains("recursion")) {
-      issues.add(
-          issue(
-              "validation.yaml-alias-limit",
-              "",
-              problemMark(failure),
-              input,
-              Collections.<String>emptyList()));
-      return;
+      throw new ValidationLimitException(
+          ALIAS_ISSUE,
+          "maxAliasExpansionsPerNode",
+          (long) limits.maxAliasExpansionsPerNode() + 1L,
+          limits.maxAliasExpansionsPerNode());
     }
     if (isTabFailure(failure)) {
       ValidationIssue tab =

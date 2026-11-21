@@ -24,9 +24,16 @@ releases. **Nothing here has been released.** Entries under `Unreleased` describ
   AI-assisted Japanese README marked as unreviewed.
 - Core project documents: contribution guide, code of conduct, security policy, support policy,
   roadmap, governance, authors, and this changelog.
+- Authenticated file and validation REST adapters over the sandbox resolver, `core.files`, and
+  `core.validation`: RFC 9457 Problem Details with localized findings, stable error codes,
+  ETag/`If-Match`, byte ranges, cursor pagination, strict request parsing, and fail-closed snapshot
+  configuration.
 
 ### Security
 
 - Security policy with private vulnerability reporting enabled for the repository.
+- File and validation routes remain behind the bearer-token gate. Until 0.4.0 every valid token is
+  admin-equivalent and is not scoped by role or path; do not share tokens between principals with
+  different permissions.
 
 [Unreleased]: https://github.com/woxlo1/DeployMC/commits/main

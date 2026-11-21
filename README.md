@@ -23,14 +23,16 @@ English · [日本語](docs/i18n/README.ja.md)
 | CI workflows and branch protection | Working on `main` |
 | Specifications (REST, WebSocket, configuration, audit, deployment) | Normative drafts; implemented subsets are marked in `specification/README.md` |
 | Authentication foundation | Host-provisioned bearer tokens with a fail-closed HTTP/WebSocket gate; no RBAC yet |
+| Authenticated file and validation REST API | Sandboxed list/read/write/move/delete/upload/validate routes with Problem Details, ETag/`If-Match`, ranges, and cursor pagination; server-free adapter tests pass, but no running-server smoke test or UI consumes them yet |
 | Plugin runtime, API, Web UI, CLI, SDKs | A pinned Paper smoke run observes plugin enable, authenticated `/api/v1/server`, library isolation, and clean shutdown; no support tier or product feature set is claimed yet |
 
 A more detailed, always current status is maintained in
 [`docs/development/implementation-status.md`](docs/development/implementation-status.md).
 
-> **Token permissions:** until 0.4.0 every valid token is **admin-equivalent**. Tokens are not
-> scoped by role or path yet. Do not share a token between principals that need different
-> permissions. See [token records](specification/security/token-records.md).
+> **Token permissions:** until 0.4.0 every valid token is **admin-equivalent**, including for the
+> file and validation API. Tokens are not scoped by role or path yet. Do not share a token between
+> principals that need different permissions. See
+> [token records](specification/security/token-records.md).
 
 ## Why DeployMC
 
