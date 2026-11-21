@@ -3,8 +3,9 @@
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
 > implementations; snapshot codes are produced by the WP-2.3 store, and diff codes are produced by
-> the Java 8 `core.diff` engine. Codes are added with the feature that produces them; an unused code
-> stays out of the table.
+> the Java 8 `core.diff` engine. WP-2.5 validation codes are specified but do not yet have an
+> implementation. Codes are added with the feature that produces them; an unused code stays out of
+> the table.
 
 ## Why a catalog
 
@@ -68,6 +69,7 @@ Rules:
 | `server.` | Lifecycle | Not ready, shutting down, overloaded, capability unavailable |
 | `files.` | Sandbox and file API | Path rejected, not found, too large, revision conflict |
 | `snapshots.` | Snapshot store | Not found, corrupt, restore conflict |
+| `validation.` | Content validation | Invalid content, exhausted limit, or validator failure |
 | `diff.` | Diff engine | Input exceeds a bound or cannot be decoded |
 | `deployments.` | Deployment engine | Invalid state, busy, validation/verification/rollback failure |
 | `console.` | Console | Capture unavailable, buffer gap, command rejected |
@@ -162,6 +164,42 @@ an implementation that lacks the feature.
 |---|---|---|---|
 | `diff.too-large` | 413 | no | A textual side exceeds 2 MiB, or another diff computation limit is exceeded. |
 | `diff.invalid-input` | 400 | no | Text is not valid UTF-8, or JAR metadata is not a supported ZIP. |
+
+### Validation (specified in WP-2.5; not implemented)
+
+Top-level codes returned by the validation endpoint or a save-time write:
+
+| Code | HTTP | Retryable | Meaning |
+|---|---|---|---|
+| `validation.failed` | 422 | no | At least one ERROR finding was produced. |
+| `validation.limit-exceeded` | 413 | no | An input or work limit was exceeded. |
+| `validation.validator-unavailable` | 503 | yes | A registered validator failed unexpectedly; the write is aborted. |
+
+Issue codes appear only in `errors[]` and in `ValidationIssue.code`, never as the top-level `code`:
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `validation.encoding` | ERROR | Input is not strict UTF-8 or contains a forbidden NUL. |
+| `validation.yaml-syntax` | ERROR | YAML scanner or parser error. |
+| `validation.yaml-duplicate-key` | ERROR | A mapping key occurs twice in one mapping. |
+| `validation.yaml-tab` | ERROR | A tab is used where YAML forbids it, such as indentation. |
+| `validation.yaml-alias-limit` | ERROR | An alias reference or expansion budget is exceeded. |
+| `validation.yaml-tag-rejected` | ERROR | A non-standard YAML tag or custom type was requested. |
+| `validation.yaml-multiple-documents` | ERROR | More than one YAML document was present. |
+| `validation.yaml-node-limit` | ERROR | The composed node budget was exceeded. |
+| `validation.json-syntax` | ERROR | JSON does not conform to the accepted grammar. |
+| `validation.json-duplicate-key` | ERROR | A JSON object key occurs twice. |
+| `validation.json-depth` | ERROR | JSON nesting exceeds the configured depth. |
+| `validation.toml-syntax` | ERROR | TOML syntax is malformed. |
+| `validation.toml-duplicate-key` | ERROR | A key or table is defined twice. |
+| `validation.toml-unsupported` | ERROR | A construct outside the supported TOML profile was used. |
+| `validation.properties-syntax` | ERROR | A properties line has no valid key or cannot be continued safely. |
+| `validation.properties-invalid-escape` | ERROR | A backslash escape or Unicode escape is malformed. |
+| `validation.properties-duplicate-key` | WARNING | A key is defined more than once; the last value wins. |
+| `validation.comment-edit-unsupported` | ERROR | The YAML edit target or replacement cannot be preserved safely. |
+
+The full normative behavior, pointers, positions, and limits are defined in
+[content validation](../validation/content-validation.md).
 
 ### Deployments
 

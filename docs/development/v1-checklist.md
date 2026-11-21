@@ -11,8 +11,9 @@ has landed.
 
 - [ ] Sandboxed file explorer/editor with server-side validation, optimistic concurrency, and
       protected paths. Partial: PR #153 (`SandboxResolver`) and PR #155 (`core.files` with revisions,
-      atomic writes, and a fail-closed snapshot boundary) are merged and #50-#51 are closed. No REST
-      file endpoint or Web UI explorer exists yet (#55, #63-#65).
+      atomic writes, and a fail-closed snapshot boundary) are merged and #50-#51 are closed. WP-2.5
+      now has a normative validator contract and ADR-0016, but no validator code or save-time gate.
+      No REST file endpoint or Web UI explorer exists yet (#54-#55, #63-#65).
 - [ ] Snapshots with diff and one-click restore, retention, and integrity verification.
       Partial: PR #158 (contract) and PR #159 (`core.snapshot`) are merged and #52 is closed. The
       store has retention, verify/repair, GC, and reversible restore primitives. WP-2.4 merged its

@@ -64,10 +64,11 @@ Numbering is never reused. File names use zero-padded four-digit numbers.
 | [0013](ADR-0013-license.md) | License selection | Accepted | 2026-11-17 |
 | [0014](ADR-0014-platform-support-tiers.md) | Platform support tiers and compatibility harness | Accepted | 2026-11-17 |
 | [0015](ADR-0015-diff-engine-algorithm.md) | Diff engine algorithm and dependency policy | Accepted | 2026-11-21 |
+| [0016](ADR-0016-content-validation.md) | Content validation parser and edit strategy | Accepted | 2026-11-21 |
 
 ## Notes on evidence
 
-The repository is in Phase 0. Most ADRs record a design decision that has not been
+The repository is pre-alpha. Many ADRs record a design decision that has not been
 validated against a running server. Each ADR has an **Evidence and validation** section
 that states exactly what was run and what remains unproven. A reader should never infer
 from the word `Accepted` that a feature works.

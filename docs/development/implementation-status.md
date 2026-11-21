@@ -69,6 +69,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.3 snapshot store | Java 8 `core.snapshot` implementation of format-1 JSON records, SHA-256 blob deduplication, sandbox-root validation, restore-first reversibility, retention, verify/repair, conservative GC, and `data.lock`; 46 localized diagnostic keys in English/Japanese | 25 focused snapshot tests in a 230-test Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.4 diff specification | Normative 2 MiB textual cap, stable line/word/semantic/JAR result envelope, deterministic ordering, fallback rules, and `diff.*` error codes | `npm run lint` and `npm test` in `tools/spec` at the merged contract stage |
 | WP-2.4 diff engine | Java 8 bounded Myers line diff with word segments, hardened YAML/JSON key-path diff with text fallback, metadata-only ZIP/JAR descriptor diff, sorted stable notes, and exact 2 MiB boundary handling | 31 focused `DiffEngineTest` cases, full Gradle build (261 Java tests), Java 8 bytecode check, all-toolchain verification (`PASS` for all seven toolchains), spec lint, and i18n check |
+| WP-2.5 validation specification | Normative validator result model, stable validation codes, format profiles, registry precedence, save-time gate, endpoint result shape, and byte-preserving YAML scalar edit contract | ADR-0016 and `specification/validation/content-validation.md`; implementation not started |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
@@ -207,6 +208,15 @@ Python on both hosts, i18n, CodeQL, and semantic title validation. Post-merge `m
 [44887980567](https://github.com/woxlo1/DeployMC/actions/runs/44887980567), and Scorecard
 [44887980590](https://github.com/woxlo1/DeployMC/actions/runs/44887980590). The local and remote
 `feature/wp-2.4-diff-engine` branches were deleted after the merge.
+
+WP-2.5 first stage defines the [content validation contract](../../specification/validation/content-validation.md)
+and ADR-0016 before implementation. It specifies pure, bounded validators for YAML, JSON, TOML, and
+`.properties`; deterministic registry precedence; warning/error separation; a fail-closed save-time
+gate; the authoritative validation endpoint result; and a byte-preserving YAML scalar editor. No
+validator code exists yet, and no REST endpoint consumes validators. The implementation stage must
+add `core.validation`, wire the gate into `core.files`, and record the evidence listed in the
+contract. On 2026-11-21, `npm run lint` in `tools/spec` passed the OpenAPI, AsyncAPI, configuration,
+and state-machine checks, and `npm test` ran 14 tests with 0 failures.
 
 ## Repository configuration, not a product feature
 
