@@ -31,6 +31,9 @@ public final class FileOperationException extends Exception {
     SNAPSHOT_FAILED("files.snapshot-failed", "files.error.snapshotFailed"),
     ATOMIC_MOVE_UNSUPPORTED("files.atomic-move-unsupported", "files.error.atomicMoveUnsupported"),
     INVALID_OPERATION("files.invalid-operation", "files.error.invalidOperation"),
+    VALIDATION_FAILED("validation.failed", "files.error.validationFailed"),
+    VALIDATION_LIMIT("validation.limit-exceeded", "files.error.validationLimit"),
+    VALIDATOR_UNAVAILABLE("validation.validator-unavailable", "files.error.validatorUnavailable"),
     IO("files.io", "files.error.io");
 
     private final String code;
