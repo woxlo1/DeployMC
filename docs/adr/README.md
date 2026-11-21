@@ -63,6 +63,7 @@ Numbering is never reused. File names use zero-padded four-digit numbers.
 | [0012](ADR-0012-localization-architecture.md) | Localization architecture | Accepted | 2026-11-17 |
 | [0013](ADR-0013-license.md) | License selection | Accepted | 2026-11-17 |
 | [0014](ADR-0014-platform-support-tiers.md) | Platform support tiers and compatibility harness | Accepted | 2026-11-17 |
+| [0015](ADR-0015-diff-engine-algorithm.md) | Diff engine algorithm and dependency policy | Accepted | 2026-11-21 |
 
 ## Notes on evidence
 

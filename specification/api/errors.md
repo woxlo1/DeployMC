@@ -2,8 +2,9 @@
 
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
-> implementations; snapshot codes are defined for the WP-2.3 store. Codes are added with the
-> feature that produces them; an unused code stays out of the table.
+> implementations; snapshot codes are defined for the WP-2.3 store. Diff codes are reserved for the
+> WP-2.4 engine. Codes are added with the feature that produces them; an unused code stays out of
+> the table.
 
 ## Why a catalog
 
@@ -67,6 +68,7 @@ Rules:
 | `server.` | Lifecycle | Not ready, shutting down, overloaded, capability unavailable |
 | `files.` | Sandbox and file API | Path rejected, not found, too large, revision conflict |
 | `snapshots.` | Snapshot store | Not found, corrupt, restore conflict |
+| `diff.` | Diff engine | Input exceeds a bound or cannot be decoded |
 | `deployments.` | Deployment engine | Invalid state, busy, validation/verification/rollback failure |
 | `console.` | Console | Capture unavailable, buffer gap, command rejected |
 | `webhooks.` | Event delivery | Invalid target, delivery rejected by SSRF policy |
@@ -153,6 +155,13 @@ an implementation that lacks the feature.
 | `snapshots.corrupt` | 409 | no | Stored content, metadata, or index failed integrity verification. |
 | `snapshots.restore-conflict` | 412 | no | The target changed since the snapshot was taken and a precondition was not satisfied. |
 | `snapshots.store-unavailable` | 503 | yes | The store is closed, locked, busy with an active deployment, or has an unsupported format version. |
+
+### Diff
+
+| Code | HTTP | Retryable | Meaning |
+|---|---|---|---|
+| `diff.too-large` | 413 | no | A textual side exceeds 2 MiB, or another diff computation limit is exceeded. |
+| `diff.invalid-input` | 400 | no | Text is not valid UTF-8, or JAR metadata is not a supported ZIP. |
 
 ### Deployments
 
