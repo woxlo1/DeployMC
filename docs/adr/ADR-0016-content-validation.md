@@ -110,23 +110,29 @@ validation of plugin behavior, custom YAML tags, and any request-controlled bypa
 
 ### Follow-up
 
-- Implement `core.validation` and the `FileOperationsService` gate described in the contract.
+- `core.validation` and the `FileOperationsService` gate described in the contract are implemented.
 - Add the `POST /api/v1/files/validate` route in WP-2.6 with contract tests generated from OpenAPI.
+- Resolve D-008: the contract lists YAML node/depth finding codes, but the implemented budget breach
+  follows the save-time limit path. WP-2.6 must map this consistently before endpoint tests are final.
 - Add a later ADR before exposing validator registration through the public Java API.
-- Record exact local and CI commands with the implementation.
 
 ## Evidence and validation
 
 - **Decided from design (2026-11-21):** the parser boundaries, dependency choice, finding model, and
   edit limits are selected by this ADR and the normative contract.
-- **Verified locally:** not yet. The implementation work package must record exact commands and
-  results, including Java 8 bytecode verification and hostile-input tests.
-- **Verified in CI:** not yet at the time of this decision.
-- **Not verified:** no performance benchmark, TOML 1.0 conformance claim, or full YAML round-trip
-  claim is made.
-
-Do not mark this ADR's implementation as validated until the commands in the content validation
-contract have been executed and recorded.
+- **Implemented (2026-11-21):** the four validators use the selected strategy with no new runtime
+  dependency. A deterministic corpus covers syntax, hostile encodings, duplicate keys, tabs, tags,
+  aliases and cycles, depth/node/code-point boundaries, comments, and byte-preserving edits. No
+  randomized fuzz harness was added in this work package.
+- **Verified locally (2026-11-21):** 27 focused validation tests passed; the full Gradle build
+  produced 288 JUnit XML tests with 0 failures, 0 errors, and 1 skipped symlink test;
+  `verifyJava8`, `node tools/i18n/check`, `tools/spec` lint, and `node tools/build/verify-all.cjs`
+  passed with all seven toolchains reporting `PASS`. Exact commands and JAR verification output are
+  recorded in [project status](../development/project-status.md#wp-25-implementation-verification-local-pre-merge).
+- **Verified in CI:** implementation PR checks are pending at the time of this update; post-merge
+  evidence will be recorded in project status and the implementation PR comment.
+- **Not verified:** no performance benchmark, TOML 1.0 conformance claim, randomized fuzz result, or
+  full YAML round-trip claim is made.
 
 ## References
 

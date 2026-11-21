@@ -4,6 +4,13 @@ import io.github.woxlo1.deploymc.core.sandbox.SandboxAccessMode;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxPath;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxRejectionException;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxResolver;
+import io.github.woxlo1.deploymc.core.validation.Severity;
+import io.github.woxlo1.deploymc.core.validation.ValidationException;
+import io.github.woxlo1.deploymc.core.validation.ValidationGate;
+import io.github.woxlo1.deploymc.core.validation.ValidationIssue;
+import io.github.woxlo1.deploymc.core.validation.ValidationLimitException;
+import io.github.woxlo1.deploymc.core.validation.ValidationLimits;
+import io.github.woxlo1.deploymc.core.validation.ValidationResult;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,15 +65,25 @@ public final class FileOperationsService {
   private final FileOperationLimits limits;
   private final SnapshotHook snapshotHook;
   private final WriteCrashPoint crashPoint;
+  private final ValidationGate validationGate;
   private final Object[] locks = new Object[LOCK_STRIPES];
 
   public FileOperationsService(SandboxResolver resolver) {
-    this(resolver, FileOperationLimits.defaults(), null, WriteCrashPoint.NONE);
+    this(resolver, FileOperationLimits.defaults(), null, WriteCrashPoint.NONE, null);
   }
 
   public FileOperationsService(
       SandboxResolver resolver, FileOperationLimits limits, SnapshotHook snapshotHook) {
-    this(resolver, limits, snapshotHook, WriteCrashPoint.NONE);
+    this(resolver, limits, snapshotHook, WriteCrashPoint.NONE, null);
+  }
+
+  /** Creates a service with a host-wired validation gate. No request can change this gate. */
+  public FileOperationsService(
+      SandboxResolver resolver,
+      FileOperationLimits limits,
+      SnapshotHook snapshotHook,
+      ValidationGate validationGate) {
+    this(resolver, limits, snapshotHook, WriteCrashPoint.NONE, validationGate);
   }
 
   FileOperationsService(
@@ -74,10 +91,20 @@ public final class FileOperationsService {
       FileOperationLimits limits,
       SnapshotHook snapshotHook,
       WriteCrashPoint crashPoint) {
+    this(resolver, limits, snapshotHook, crashPoint, null);
+  }
+
+  FileOperationsService(
+      SandboxResolver resolver,
+      FileOperationLimits limits,
+      SnapshotHook snapshotHook,
+      WriteCrashPoint crashPoint,
+      ValidationGate validationGate) {
     this.resolver = Objects.requireNonNull(resolver, "resolver");
     this.limits = Objects.requireNonNull(limits, "limits");
     this.snapshotHook = snapshotHook;
     this.crashPoint = Objects.requireNonNull(crashPoint, "crashPoint");
+    this.validationGate = validationGate;
     for (int i = 0; i < locks.length; i++) {
       locks[i] = new Object();
     }
@@ -187,6 +214,12 @@ public final class FileOperationsService {
 
   /** Creates a new file. An existing target is never replaced. */
   public FileInfo create(String requestPath, byte[] content) throws FileOperationException {
+    return createValidated(requestPath, content).file();
+  }
+
+  /** Creates a new file and exposes the host gate result, which is null without a gate. */
+  public ValidatedFileResult createValidated(String requestPath, byte[] content)
+      throws FileOperationException {
     Objects.requireNonNull(content, "content");
     SandboxPath path = resolve(requestPath, SandboxAccessMode.CREATE);
     return withLocks(
@@ -196,16 +229,18 @@ public final class FileOperationsService {
             throw new FileOperationException(
                 FileOperationException.Reason.ALREADY_EXISTS, path.relativePath());
           }
-          CommittedWrite committed =
-              writeTempAndCommit(
-                  path,
-                  new ByteArrayInputStream(content),
-                  content.length,
-                  limits.maxFileSizeBytes(),
-                  false,
-                  null,
-                  null);
-          return stat(path.relativePath());
+          byte[] stagedContent = content.clone();
+          ValidationResult validation = validateContent(path.relativePath(), stagedContent);
+          writeTempAndCommit(
+              path,
+              new ByteArrayInputStream(stagedContent),
+              stagedContent.length,
+              limits.maxFileSizeBytes(),
+              false,
+              null,
+              null,
+              staged -> {});
+          return new ValidatedFileResult(stat(path.relativePath()), validation);
         },
         path.relativePath());
   }
@@ -235,30 +270,42 @@ public final class FileOperationsService {
   /** Atomically replaces an existing file only when the caller supplies its current revision. */
   public FileInfo write(String requestPath, byte[] content, String expectedRevision)
       throws FileOperationException {
+    return writeValidated(requestPath, content, expectedRevision).file();
+  }
+
+  /** Writes a file and exposes validation findings, including warnings. */
+  public ValidatedFileResult writeValidated(
+      String requestPath, byte[] content, String expectedRevision) throws FileOperationException {
     Objects.requireNonNull(content, "content");
     SandboxPath path = resolve(requestPath, SandboxAccessMode.WRITE);
     return withLocks(
         () -> {
           PathState existing = writePreconditions(path, expectedRevision);
-          if (existing != null) {
-            captureSingle(path.relativePath(), "before-overwrite", existing);
-          }
-          CommittedWrite committed =
-              writeTempAndCommit(
-                  path,
-                  new ByteArrayInputStream(content),
-                  content.length,
-                  limits.maxFileSizeBytes(),
-                  existing != null,
-                  existing == null ? null : existing.attributes,
-                  expectedRevision);
-          return stat(path.relativePath());
+          byte[] stagedContent = content.clone();
+          ValidationResult validation = validateContent(path.relativePath(), stagedContent);
+          writeTempAndCommit(
+              path,
+              new ByteArrayInputStream(stagedContent),
+              stagedContent.length,
+              limits.maxFileSizeBytes(),
+              existing != null,
+              existing == null ? null : existing.attributes,
+              expectedRevision,
+              staged -> captureExisting(existing, path));
+          return new ValidatedFileResult(stat(path.relativePath()), validation);
         },
         path.relativePath());
   }
 
   /** Streams an upload into a same-directory temporary file before the atomic commit. */
   public FileInfo upload(
+      String requestPath, InputStream content, long declaredSize, String expectedRevision)
+      throws FileOperationException {
+    return uploadValidated(requestPath, content, declaredSize, expectedRevision).file();
+  }
+
+  /** Uploads a file, validates the staged bytes, and exposes validation findings. */
+  public ValidatedFileResult uploadValidated(
       String requestPath, InputStream content, long declaredSize, String expectedRevision)
       throws FileOperationException {
     Objects.requireNonNull(content, "content");
@@ -270,19 +317,20 @@ public final class FileOperationsService {
     return withLocks(
         () -> {
           PathState existing = writePreconditions(path, expectedRevision);
-          if (existing != null) {
-            captureSingle(path.relativePath(), "before-overwrite", existing);
-          }
-          CommittedWrite committed =
-              writeTempAndCommit(
-                  path,
-                  content,
-                  declaredSize,
-                  Math.min(limits.maxUploadBytes(), limits.maxFileSizeBytes()),
-                  existing != null,
-                  existing == null ? null : existing.attributes,
-                  expectedRevision);
-          return stat(path.relativePath());
+          ValidationHolder holder = new ValidationHolder();
+          writeTempAndCommit(
+              path,
+              content,
+              declaredSize,
+              Math.min(limits.maxUploadBytes(), limits.maxFileSizeBytes()),
+              existing != null,
+              existing == null ? null : existing.attributes,
+              expectedRevision,
+              staged -> {
+                holder.result = validateStaged(path.relativePath(), staged);
+                captureExisting(existing, path);
+              });
+          return new ValidatedFileResult(stat(path.relativePath()), holder.result);
         },
         path.relativePath());
   }
@@ -312,12 +360,16 @@ public final class FileOperationsService {
             }
           }
           List<PathState> sourceTree = collectTree(source);
+          List<PathState> targetTree = targetState == null ? null : collectTree(targetState);
+          validateTree(sourceTree);
+          if (targetTree != null) {
+            validateTree(targetTree);
+          }
           List<SnapshotEntry> snapshot = new ArrayList<SnapshotEntry>();
           for (PathState entry : sourceTree) {
             snapshot.add(toSnapshotEntry(entry));
           }
-          if (targetState != null) {
-            List<PathState> targetTree = collectTree(targetState);
+          if (targetTree != null) {
             for (PathState entry : targetTree) {
               snapshot.add(toSnapshotEntry(entry));
             }
@@ -388,6 +440,7 @@ public final class FileOperationsService {
                   Integer.valueOf(tree.size()));
             }
           }
+          validateTree(tree);
           List<SnapshotEntry> snapshot = new ArrayList<SnapshotEntry>();
           for (PathState entry : tree) {
             snapshot.add(toSnapshotEntry(entry));
@@ -464,6 +517,146 @@ public final class FileOperationsService {
     }
     checkRevision(path.relativePath(), expectedRevision, existing.revision);
     return existing;
+  }
+
+  private void captureExisting(PathState existing, SandboxPath path) throws FileOperationException {
+    if (existing != null) {
+      captureSingle(path.relativePath(), "before-overwrite", existing);
+    }
+  }
+
+  /** Applies the host gate. Every failure mode aborts the write before any mutation. */
+  private ValidationResult validateContent(String relativePath, byte[] content)
+      throws FileOperationException {
+    if (validationGate == null) {
+      return null;
+    }
+    try {
+      ValidationResult result = validationGate.validate(relativePath, content);
+      if (!result.valid()) {
+        StringBuilder codes = new StringBuilder();
+        for (ValidationIssue issue : result.issues()) {
+          if (issue.severity() == Severity.ERROR) {
+            if (codes.length() > 0) {
+              codes.append(',');
+            }
+            codes.append(issue.code());
+          }
+        }
+        throw new FileOperationException(
+            FileOperationException.Reason.VALIDATION_FAILED,
+            relativePath,
+            codes.length() == 0 ? "validation.failed" : codes.toString());
+      }
+      return result;
+    } catch (ValidationLimitException limit) {
+      throw new FileOperationException(
+          FileOperationException.Reason.VALIDATION_LIMIT,
+          limit,
+          relativePath,
+          limit.limitName(),
+          Long.valueOf(limit.observed()),
+          Long.valueOf(limit.maximum()));
+    } catch (ValidationException failure) {
+      throw new FileOperationException(
+          FileOperationException.Reason.VALIDATOR_UNAVAILABLE,
+          failure,
+          relativePath,
+          failure.code());
+    }
+  }
+
+  private ValidationResult validateStaged(String relativePath, Path staged)
+      throws FileOperationException {
+    if (validationGate == null) {
+      return null;
+    }
+    long size;
+    try {
+      size = Files.size(staged);
+    } catch (IOException failure) {
+      throw validationReadFailure(relativePath, failure);
+    }
+    return validateContent(relativePath, readForValidation(staged, relativePath, size));
+  }
+
+  private void validateTree(List<PathState> states) throws FileOperationException {
+    if (validationGate == null) {
+      return;
+    }
+    for (PathState state : states) {
+      if (state.attributes.isRegularFile()) {
+        byte[] bytes =
+            readForValidation(
+                state.path.absolutePath(), state.path.relativePath(), state.attributes.size());
+        validateContent(state.path.relativePath(), bytes);
+      }
+    }
+  }
+
+  private long validationReadLimitBytes() {
+    ValidationLimits limits = validationGate.limits();
+    long maximum = limits == null ? (long) Integer.MAX_VALUE : limits.maxBytes();
+    return Math.min((long) Integer.MAX_VALUE, maximum);
+  }
+
+  private static FileOperationException validationLimit(
+      String relativePath, String limitName, long observed, long maximum) {
+    return new FileOperationException(
+        FileOperationException.Reason.VALIDATION_LIMIT,
+        relativePath,
+        limitName,
+        Long.valueOf(observed),
+        Long.valueOf(maximum));
+  }
+
+  private static FileOperationException validationReadFailure(
+      String relativePath, IOException cause) {
+    return new FileOperationException(
+        FileOperationException.Reason.VALIDATOR_UNAVAILABLE,
+        cause,
+        relativePath,
+        "validation.validator-unavailable",
+        cause.getClass().getSimpleName());
+  }
+
+  private byte[] readForValidation(Path absolutePath, String relativePath, long expectedSize)
+      throws FileOperationException {
+    long maximum = validationReadLimitBytes();
+    if (expectedSize > maximum) {
+      throw validationLimit(relativePath, "maxBytes", expectedSize, maximum);
+    }
+    ByteArrayOutputStream output = new ByteArrayOutputStream((int) Math.min(expectedSize, 8192L));
+    byte[] buffer = new byte[COPY_BUFFER_SIZE];
+    FileChannel channel = null;
+    try {
+      channel = FileChannel.open(absolutePath, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS);
+      while (true) {
+        int read = channel.read(ByteBuffer.wrap(buffer));
+        if (read < 0) {
+          break;
+        }
+        output.write(buffer, 0, read);
+        if (output.size() > maximum) {
+          throw validationLimit(relativePath, "maxBytes", output.size(), maximum);
+        }
+        if (output.size() > expectedSize) {
+          throw new FileOperationException(
+              FileOperationException.Reason.PATH_REJECTED, relativePath, "changed");
+        }
+      }
+    } catch (IOException failure) {
+      throw validationReadFailure(relativePath, failure);
+    } finally {
+      if (channel != null) {
+        try {
+          channel.close();
+        } catch (IOException ignored) {
+          // The read result is already finalized.
+        }
+      }
+    }
+    return output.toByteArray();
   }
 
   private void requireWritableFileTarget(SandboxPath path) throws FileOperationException {
@@ -655,7 +848,8 @@ public final class FileOperationsService {
       long maximumBytes,
       boolean replaceExisting,
       BasicFileAttributes before,
-      String expectedRevision)
+      String expectedRevision,
+      PreCommitAction beforeCommit)
       throws FileOperationException {
     if (declaredSize > maximumBytes) {
       throw new FileOperationException(
@@ -702,6 +896,7 @@ public final class FileOperationsService {
       } finally {
         channel.close();
       }
+      beforeCommit.run(temporary);
       recheckTarget(path, replaceExisting, before, expectedRevision);
       crashPoint.beforeCommit();
       try {
@@ -980,6 +1175,15 @@ public final class FileOperationsService {
   @FunctionalInterface
   private interface LockedBody<T> {
     T run() throws FileOperationException;
+  }
+
+  @FunctionalInterface
+  private interface PreCommitAction {
+    void run(Path staged) throws FileOperationException;
+  }
+
+  private static final class ValidationHolder {
+    private ValidationResult result;
   }
 
   private static final class CommittedWrite {

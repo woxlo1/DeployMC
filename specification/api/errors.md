@@ -2,10 +2,10 @@
 
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
-> implementations; snapshot codes are produced by the WP-2.3 store, and diff codes are produced by
-> the Java 8 `core.diff` engine. WP-2.5 validation codes are specified but do not yet have an
-> implementation. Codes are added with the feature that produces them; an unused code stays out of
-> the table.
+> implementations; snapshot codes are produced by the WP-2.3 store, diff codes are produced by the
+> Java 8 `core.diff` engine, and validation codes are produced by the Java 8 `core.validation` engine.
+> The `validation.yaml-node-limit` wording remains open under D-008. Codes are added with the feature
+> that produces them; an unused code stays out of the table.
 
 ## Why a catalog
 

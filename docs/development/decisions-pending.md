@@ -28,6 +28,7 @@ the related decisions are finalized.
 | D-005 | Should languages beyond Japanese be started before native reviewers exist? | Phase 0 i18n and later | Machine-translated content must be labeled and not presented as reviewed |
 | D-006 | Should a Discord server be created now, or should Discussions be the only community channel initially? | Phase 0 community setup | Community links in the README remain Discussions-only |
 | D-007 | What weekly time budget should the public roadmap assume? | Roadmap publication | Roadmap communication may be unrealistic |
+| D-008 | Should exhausted YAML/TOML structural budgets produce format-specific ERROR findings or the top-level `validation.limit-exceeded` Problem? Sections 4 and 6 list format codes; sections 7 and 8 describe budget failures as limits. | WP-2.6 endpoint contract tests | Endpoint behavior may disagree with the error catalog; the current implementation returns `validation.limit-exceeded` for YAML/TOML node and depth budgets and `validation.json-depth` for JSON depth |
 
 ## How to resolve a decision
 

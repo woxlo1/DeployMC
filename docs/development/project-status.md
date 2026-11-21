@@ -1,8 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.4
-merged and closed). GitHub evidence below was verified against `main` through `80a3f0b` after PR #163;
-earlier evidence is recorded below.
+Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.4,
+and the WP-2.5 specification merged and closed). GitHub evidence below was verified against `main`
+through `6cd6015` after PR #165; earlier evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -392,7 +392,53 @@ OpenAPI, AsyncAPI, configuration example, and state-machine lint passed
 ```
 
 The specification PR adds the normative validator contract, ADR-0016, validation error codes, and
-status updates only. It adds no Java code and claims no validator implementation.
+status updates only. It adds no Java code and claims no validator implementation. It merged in PR
+#165 at `6cd6015a141d8a108b7507a9f801b646679698cc`; all post-merge `main` workflows succeeded (CI
+44890406029, CodeQL 44890406052, Scorecard 44890406037). The post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/165#issuecomment-7060731358>.
+
+## WP-2.5 implementation verification (local, pre-merge)
+
+These commands were run on 2026-11-21 on `feature/wp-2.5-validation`. Gradle commands ran through the
+existing ASCII junction at `C:\Users\satos\AppData\Local\Temp\deploymc-ascii`:
+
+```text
+git diff --check
+(no output, with a CRLF-to-LF normalization notice for one Japanese properties file)
+
+.\gradlew.bat spotlessApply --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+
+.\gradlew.bat :core:test --tests '*ValidationCoreTest' --tests '*FileOperationsValidationTest'
+--tests '*FormatValidatorsTest' --console=plain --no-configuration-cache
+BUILD SUCCESSFUL; 27 tests, 0 failures, 0 errors
+
+.\gradlew.bat build --console=plain --no-configuration-cache
+BUILD SUCCESSFUL; JUnit XML totals: 288 tests, 0 failures, 0 errors, 1 skipped symlink test
+Plugin JAR verification: 4567069 bytes, 2657 classes (0 versioned), max common bytecode 52
+
+.\gradlew.bat verifyJava8 --console=plain --no-configuration-cache
+BUILD SUCCESSFUL
+
+node tools/i18n/check
+i18n check passed: 0 error(s), 0 warning(s)
+
+cd tools/spec && npm run lint
+OpenAPI, AsyncAPI, configuration example, and state-machine lint passed
+```
+
+The 27 tests cover strict UTF-8 and NUL rejection, BOM offsets, inclusive input limits, deterministic
+finding order and truncation, explicit unmatched results, path validation, registry precedence,
+fail-closed validator failures, localized English/Japanese details, YAML duplicate keys, tabs, custom
+tags, multiple documents, syntax positions, empty input and the code-point boundary, JSON syntax,
+duplicate keys, depth, invalid UTF-8 and valid nested documents, the TOML profile with unsupported,
+duplicate, and malformed cases, properties escapes, continuations, duplicate warnings and invalid
+escapes, YAML alias/cycle and node boundaries, JSON scalar and array error pointers, properties path
+validation, byte-preserving YAML scalar edits, write-time gate ordering for create/write/upload/move/
+delete, immutable byte-array snapshots, bounded pre-validation reads, warning exposure, and repeated-run
+determinism. The one-command `node tools/build/verify-all.cjs` then reported `PASS` for `web`, `java`,
+`cli`, `python`, `spec`, `i18n`, and `compat`. D-008 records the unresolved contract wording for
+structural budgets.
 
 ## Earlier pull-request evidence
 

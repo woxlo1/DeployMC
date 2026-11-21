@@ -1,9 +1,8 @@
 # Implementation Status
 
-Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.4
-merged; issues #47-#53 closed. WP-2.3 merged in PR #158 at `879bdc5` and PR #159 at `0425c8`. WP-2.4
-merged its contract in PR #162 at `2a4e7f8` and its `core.diff` implementation in PR #163 at
-`80a3f0b`.)
+Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.4, and
+the WP-2.5 specification merged; issues #47-#53 closed. WP-2.5 specification merged in PR #165 at
+`6cd6015`; its implementation is pending merge.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -33,9 +32,12 @@ reversibility, retention, verify/repair, conservative GC, and a single-instance 
 No REST endpoint, transport handler, running server, UI, or in-game command consumes the store. The
 WP-2.4 contract now has a Java 8 `core.diff` implementation for bounded line, word, YAML/JSON
 semantic, and JAR metadata results. No REST endpoint, transport handler, running server, UI, or
-in-game command consumes the engine, and there is no application-level one-click restore. There is
-no deployment engine, authorization, audit log, or Web UI screen, and the packaged Web UI has not
-been rendered in a browser.
+in-game command consumes the engine, and there is no application-level one-click restore. The WP-2.5
+contract now has a Java 8 `core.validation` implementation with bounded YAML, JSON, TOML, and
+properties validators, a deterministic registry, and a fail-closed save-time gate wired into
+`core.files`; no REST endpoint, transport handler, running server, UI, or in-game command consumes
+the validators yet. There is no deployment engine, authorization, audit log, or Web UI screen, and
+the packaged Web UI has not been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -69,7 +71,8 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.3 snapshot store | Java 8 `core.snapshot` implementation of format-1 JSON records, SHA-256 blob deduplication, sandbox-root validation, restore-first reversibility, retention, verify/repair, conservative GC, and `data.lock`; 46 localized diagnostic keys in English/Japanese | 25 focused snapshot tests in a 230-test Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.4 diff specification | Normative 2 MiB textual cap, stable line/word/semantic/JAR result envelope, deterministic ordering, fallback rules, and `diff.*` error codes | `npm run lint` and `npm test` in `tools/spec` at the merged contract stage |
 | WP-2.4 diff engine | Java 8 bounded Myers line diff with word segments, hardened YAML/JSON key-path diff with text fallback, metadata-only ZIP/JAR descriptor diff, sorted stable notes, and exact 2 MiB boundary handling | 31 focused `DiffEngineTest` cases, full Gradle build (261 Java tests), Java 8 bytecode check, all-toolchain verification (`PASS` for all seven toolchains), spec lint, and i18n check |
-| WP-2.5 validation specification | Normative validator result model, stable validation codes, format profiles, registry precedence, save-time gate, endpoint result shape, and byte-preserving YAML scalar edit contract | ADR-0016 and `specification/validation/content-validation.md`; implementation not started |
+| WP-2.5 validation specification | Normative validator result model, stable validation codes, format profiles, registry precedence, save-time gate, endpoint result shape, and byte-preserving YAML scalar edit contract | `npm run lint` and `npm test` in `tools/spec`; ADR-0016 and `specification/validation/content-validation.md` |
+| WP-2.5 validation engine | Java 8 `core.validation` with bounded YAML/JSON/TOML/properties validators, strict UTF-8 decoding, stable issue codes and pointers, deterministic registry precedence, fail-closed save-time gate in `core.files`, and byte-preserving YAML scalar edits | 27 focused validation tests, full Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
@@ -216,7 +219,35 @@ gate; the authoritative validation endpoint result; and a byte-preserving YAML s
 validator code exists yet, and no REST endpoint consumes validators. The implementation stage must
 add `core.validation`, wire the gate into `core.files`, and record the evidence listed in the
 contract. On 2026-11-21, `npm run lint` in `tools/spec` passed the OpenAPI, AsyncAPI, configuration,
-and state-machine checks, and `npm test` ran 14 tests with 0 failures.
+and state-machine checks, and `npm test` ran 14 tests with 0 failures. The specification merged in
+[PR #165](https://github.com/woxlo1/DeployMC/pull/165) at
+`6cd6015a141d8a108b7507a9f801b646679698cc`; post-merge `main` runs were CI
+[44890406029](https://github.com/woxlo1/DeployMC/actions/runs/44890406029), CodeQL
+[44890406052](https://github.com/woxlo1/DeployMC/actions/runs/44890406052), and Scorecard
+[44890406037](https://github.com/woxlo1/DeployMC/actions/runs/44890406037), all successful. The
+post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/165#issuecomment-7060731358>.
+
+WP-2.5 implementation adds `core.validation`: strict UTF-8 decoding with byte offsets, bounded
+validators for YAML, JSON, TOML, and `.properties`, stable issue codes and RFC 6901 pointers,
+localized English/Japanese details, deterministic finding order, a registry with exact-path,
+pattern, and extension precedence, and a byte-preserving single-scalar YAML editor. A host-wired
+`ValidationGate` runs after path resolution and preconditions and before snapshots, writes, moves,
+and deletes; errors, limits, and unexpected validator failures abort the operation, while warnings
+are exposed through `ValidatedFileResult`. No request parameter can change the gate or its limits,
+and no REST endpoint consumes the validators yet.
+
+On 2026-11-21, `git diff --check`, `node tools/i18n/check` (0 errors, 0 warnings), `npm run lint` in
+`tools/spec`, `.\\gradlew.bat spotlessApply --console=plain --no-configuration-cache`,
+`.\\gradlew.bat build --console=plain --no-configuration-cache`, and
+`.\\gradlew.bat verifyJava8 --console=plain --no-configuration-cache` passed from the ASCII junction.
+JUnit XML totals were 288 tests, 0 failures, 0 errors, and 1 skipped symlink test, including 27 new
+validation tests; the skipped test requires privileges unavailable on this Windows host. Plugin JAR
+verification reported `4567069 bytes, 2657 classes (0 versioned), max common bytecode 52`. The
+one-command `node tools/build/verify-all.cjs` then reported `PASS` for `web`, `java`, `cli`, `python`,
+`spec`, `i18n`, and `compat`. The structural-budget wording conflict between contract sections 4 and
+7 remains open as D-008: YAML and TOML node/depth budgets currently abort with
+`validation.limit-exceeded`, while JSON depth produces `validation.json-depth`.
 
 ## Repository configuration, not a product feature
 
@@ -520,6 +551,8 @@ The following are documented as intended behavior. They are **not** code.
 - Snapshot diff, application-level one-click restore, and running-server use of `core.snapshot`. The
   store, retention, verify/repair, GC, and reversible restore primitives are implemented, but no REST
   route, UI, or command consumes them.
+- REST validation endpoint and transport wiring of the `ValidationGate`; the core registry and gate
+  exist, but no HTTP route or running server uses them.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
@@ -542,7 +575,7 @@ The following are documented as intended behavior. They are **not** code.
 |---|---|
 | `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, seven workflows including scheduled sandbox fuzzing |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
-| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types, validated configuration loader and migration manager, host-provisioned token authentication, canonical sandbox resolver with localized rejection catalogs, and sandboxed file operations service with revisions and atomic commits; fake adapter in test sources |
+| `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types, validated configuration loader and migration manager, host-provisioned token authentication, canonical sandbox resolver with localized rejection catalogs, sandboxed file operations service with revisions, atomic commits, and a host-wired validation gate, bounded content validators, and a byte-preserving YAML scalar editor; fake adapter in test sources |
 | `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, classpath-only static asset handler with 12 tests, authentication/health gate with 4 tests, and localized 401 responses |
 | `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, token-aware startup and console token creation, and server-free tests |
 | `platform/standalone/` | Build placeholder with configuration value object |
@@ -556,7 +589,7 @@ The following are documented as intended behavior. They are **not** code.
 | `tools/build/` | One-command local verification for all seven toolchains; Windows path workarounds |
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
-| `specification/` | REST, WebSocket, error, config, audit, and deployment skeletons; threat model draft |
+| `specification/` | REST, WebSocket, error, config, audit, deployment, and content-validation contracts; threat model draft |
 | `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, conflicting-library fixture plugin, and the deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads |
 
 ## How to verify this page
