@@ -1,9 +1,9 @@
 # Implementation Status
 
-Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.3
-merged; issues #47-#52 closed. WP-2.3 merged in PR #158 at `879bdc5` and PR #159 at `0425c8`. The
-WP-2.4 contract merged in PR #162 at `2a4e7f8`; this work package adds the `core.diff`
-implementation.)
+Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.4
+merged; issues #47-#53 closed. WP-2.3 merged in PR #158 at `879bdc5` and PR #159 at `0425c8`. WP-2.4
+merged its contract in PR #162 at `2a4e7f8` and its `core.diff` implementation in PR #163 at
+`80a3f0b`.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -194,6 +194,19 @@ version and dependency changes, ZIP edge cases, truncated or invalid central dir
 rejection, descriptor BOM and duplicate handling, invalid entry names, JSON escaping, and repeated-run
 stability. No REST endpoint, transport handler, running server, UI, or in-game command consumes the
 engine.
+
+WP-2.4 implementation merged in [PR #163](https://github.com/woxlo1/DeployMC/pull/163) at
+`80a3f0b7eb50718d85ccca3d4d5a4f71b1a97633`; issue #53 closed as completed at
+2026-11-21T09:06:23Z. Explicit PR comments are at
+<https://github.com/woxlo1/DeployMC/pull/163#issuecomment-7060316351> and
+<https://github.com/woxlo1/DeployMC/pull/163#issuecomment-7060391484>. All PR checks passed at head
+`1a01f54`, including Java on both hosts, both compatibility jobs, Spec, Web, CLI on three hosts,
+Python on both hosts, i18n, CodeQL, and semantic title validation. Post-merge `main` runs at
+`80a3f0b` passed: CI
+[44887980566](https://github.com/woxlo1/DeployMC/actions/runs/44887980566), CodeQL
+[44887980567](https://github.com/woxlo1/DeployMC/actions/runs/44887980567), and Scorecard
+[44887980590](https://github.com/woxlo1/DeployMC/actions/runs/44887980590). The local and remote
+`feature/wp-2.4-diff-engine` branches were deleted after the merge.
 
 ## Repository configuration, not a product feature
 

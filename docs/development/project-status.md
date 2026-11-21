@@ -1,7 +1,7 @@
 # Project Status
 
-Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.3
-merged and closed). GitHub evidence below was verified against `main` through `0425c8` after PR #159;
+Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.4
+merged and closed). GitHub evidence below was verified against `main` through `80a3f0b` after PR #163;
 earlier evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
@@ -35,12 +35,12 @@ This is the session-level status page. For per-component facts use
   as completed. WP-2.2 (issue #51), the sandboxed file operations service, merged in PR #155 at
   `017c2ab`; the issue closed as completed. WP-2.3 first stage, the normative snapshot store
   contract, merged in PR #158 at `879bdc5`; the Java 8 `core.snapshot` implementation merged in PR
-  #159 at `0425c8`, and issue #52 closed as completed. Verification and post-merge evidence are
-  recorded below.
+  #159 at `0425c8`, and issue #52 closed as completed. WP-2.4 first stage merged in PR #162 at
+  `2a4e7f8`; the Java 8 `core.diff` implementation merged in PR #163 at `80a3f0b`, and issue #53
+  closed as completed. Verification and post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
-  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) has a
-  merged normative contract and an implemented Java 8 `core.diff` engine with local verification
-  recorded below. Issue #53 remains open until the implementation PR is merged.
+  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) is
+  complete through its engine; WP-2.5-WP-2.6 (#54-#55) and category 3-5 work remain open.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -354,6 +354,26 @@ results, both sides of the 2 MiB boundary, preserved line endings, moved-block s
 and reorder, function-style pointer escaping, text fallback, word segments, JAR descriptor changes,
 invalid and ZIP64 archives, and repeated-run JSON stability. The engine is not consumed by any REST
 handler, transport route, running server, UI, or in-game command.
+
+### WP-2.4 PR and post-merge evidence
+
+All PR checks passed at head `1a01f54`. Explicit verification comments were posted at
+<https://github.com/woxlo1/DeployMC/pull/163#issuecomment-7060316351> and
+<https://github.com/woxlo1/DeployMC/pull/163#issuecomment-7060391484>. Squash merge commit
+`80a3f0b7eb50718d85ccca3d4d5a4f71b1a97633` closed issue #53 as completed at
+2026-11-21T09:06:23Z. At merge commit `80a3f0b`, all post-merge `main` workflows completed
+successfully:
+
+```text
+CI        44887980566  success
+CodeQL    44887980567  success
+Scorecard 44887980590  success
+```
+
+The CI run includes the pinned Paper 26.3 smoke entry on Ubuntu and Windows. Verified GitHub state
+after the merge: 77 open issues (#54-#130) and 17 open Dependabot PRs (#23-#39), tracked for triage by
+#121. The local and remote `feature/wp-2.4-diff-engine` branches were deleted, and local `main` was
+left clean at `80a3f0b`.
 
 ## Earlier pull-request evidence
 
