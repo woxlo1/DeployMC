@@ -2,7 +2,8 @@
 
 Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.3
 merged; issues #47-#52 closed. WP-2.3 specification merged in PR #158 at `879bdc5`; the
-implementation merged in PR #159 at `0425c8` with green PR and post-merge checks.)
+implementation merged in PR #159 at `0425c8` with green PR and post-merge checks. The WP-2.4 diff
+contract is normative; its implementation is pending.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -29,9 +30,10 @@ resolves every request path through that resolver. No transport handler, running
 command consumes the resolver or file service yet. The merged WP-2.3 snapshot store contract has a
 Java 8 `core.snapshot` implementation with content-addressed blobs, atomic metadata, restore-first
 reversibility, retention, verify/repair, conservative GC, and a single-instance lock.
-No REST endpoint, transport handler, running server, UI, or in-game command consumes the store; there
-is no deployment engine, authorization, audit log, or Web UI screen, and the packaged Web UI has not
-been rendered in a browser.
+No REST endpoint, transport handler, running server, UI, or in-game command consumes the store. The
+WP-2.4 diff contract defines bounded line, word, YAML/JSON semantic, and JAR metadata results, but no
+diff engine exists yet. There is no deployment engine, authorization, audit log, or Web UI screen,
+and the packaged Web UI has not been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -63,6 +65,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.2 file operations | Sandboxed list/stat/read/range/download/create/mkdir/write/upload/move/delete, SHA-256 full-file revisions, same-directory temporary writes with one atomic commit, revision and file-identity conflict checks, host-controlled limits, explicit recursive-delete confirmation, and a fail-closed snapshot boundary | 24 new file-operation tests, full Gradle build (205 Java tests), Java 8 check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.3 snapshot specification | Normative `.deploymc/history/` layout, format 1, immutable blobs, atomic metadata/index writes, stable snapshot ids, restore-first reversibility, retention, GC preconditions, verify/repair, and single-instance lock | `npm run lint` and `npm test` in `tools/spec` (14 tests); post-merge CI, CodeQL, and Scorecard at `879bdc5` |
 | WP-2.3 snapshot store | Java 8 `core.snapshot` implementation of format-1 JSON records, SHA-256 blob deduplication, sandbox-root validation, restore-first reversibility, retention, verify/repair, conservative GC, and `data.lock`; 46 localized diagnostic keys in English/Japanese | 25 focused snapshot tests in a 230-test Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
+| WP-2.4 diff specification | Normative 2 MiB textual cap, stable line/word/semantic/JAR result envelope, deterministic ordering, fallback rules, and `diff.*` error codes | `npm run lint` and `npm test` in `tools/spec`; no diff implementation or contract test yet |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |

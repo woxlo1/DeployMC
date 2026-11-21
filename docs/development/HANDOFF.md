@@ -193,6 +193,9 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## In flight
 
+- WP-2.4 (issue #53) is in its specification stage on `spec/wp-2.4-diff-engine`. It adds the
+  normative diff contract, ADR-0015, and reserved `diff.*` error codes; no Java engine exists yet.
+  The implementation must follow on a separate branch after the contract is merged.
 - No implementation branch is in flight. WP-2.1 through WP-2.3 are merged with evidence recorded in
   the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.

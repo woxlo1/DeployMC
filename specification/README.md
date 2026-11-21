@@ -1,6 +1,6 @@
 # Specification skeletons
 
-> **Status: 2026-11-19.** These documents define normative contracts. Only the features
+> **Status: 2026-11-21.** These documents define normative contracts. Only the features
 > explicitly marked as implemented below have running code. A skeleton is normative for
 > design work, not evidence that a feature works.
 
@@ -12,7 +12,8 @@
 | [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | Structural validation implemented |
 | [config/example.config.yaml](config/example.config.yaml) | Complete schema-valid example | Example only |
 | [files/file-operations.md](files/file-operations.md) | Sandboxed file operations, revisions, atomic writes, limits, and snapshot boundary | Core service implemented; endpoints not implemented |
-| [snapshot/snapshot-store.md](snapshot/snapshot-store.md) | Content-addressed history format, metadata, retention, restore, GC, verify/repair, and locking | Normative design; implementation pending |
+| [snapshot/snapshot-store.md](snapshot/snapshot-store.md) | Content-addressed history format, metadata, retention, restore, GC, verify/repair, and locking | Java 8 `core.snapshot` implemented; endpoints not implemented |
+| [diff/diff-engine.md](diff/diff-engine.md) | Bounded line, word, YAML/JSON semantic, and JAR metadata diff contract | Normative design; implementation pending |
 | [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification | No writer |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
 | [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |

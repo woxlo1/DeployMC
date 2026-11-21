@@ -38,7 +38,8 @@ This is the session-level status page. For per-component facts use
   #159 at `0425c8`, and issue #52 closed as completed. Verification and post-merge evidence are
   recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
-  and category 3-5 work registered as issues #42-#130.
+  and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`)
+  starts the diff engine with a normative contract; its implementation is pending.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
