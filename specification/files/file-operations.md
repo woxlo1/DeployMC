@@ -72,8 +72,9 @@ the JDK does not expose it portably; the content fsync and single atomic commit 
 - Overwrite, move, and delete require a `SnapshotHook`. If none is configured, the operation fails
   with `files.snapshot-required` before any file is changed. The hook must return successfully
   before the mutation starts; a failure returns `files.snapshot-failed` and the files remain intact.
-- This is the boundary WP-2.3 will implement. It is deliberately not a fake or in-memory snapshot
-  store.
+- WP-2.3 defines the durable implementation in
+  [snapshot-store.md](../snapshot/snapshot-store.md). It is deliberately not a fake or in-memory
+  snapshot store.
 - A move refuses an existing destination unless overwriting is explicitly requested. Both the source
   tree and an overwritten destination tree are captured first.
 - Recursive deletion requires the caller to supply the current recursive entry count, including the

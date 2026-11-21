@@ -1,8 +1,9 @@
 # Error Code Catalog
 
-> **Status: skeleton (2026-11-17).** This catalog defines the structure and the initial
-> codes referenced by the API specification. No server implements these codes yet. Codes
-> are added with the feature that produces them; an unused code stays out of the table.
+> **Status: updated 2026-11-21.** This catalog defines the structure and the stable
+> codes referenced by the API specification. Authentication and file-operation codes have
+> implementations; snapshot codes are defined for the WP-2.3 store. Codes are added with the
+> feature that produces them; an unused code stays out of the table.
 
 ## Why a catalog
 
@@ -148,10 +149,10 @@ an implementation that lacks the feature.
 
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|
-| `snapshots.not-found` | 404 | no | The snapshot id does not exist or was pruned. |
-| `snapshots.corrupt` | 409 | no | Stored content failed integrity verification. |
+| `snapshots.not-found` | 404 | no | The snapshot id or metadata record does not exist or was pruned. |
+| `snapshots.corrupt` | 409 | no | Stored content, metadata, or index failed integrity verification. |
 | `snapshots.restore-conflict` | 412 | no | The target changed since the snapshot was taken and a precondition was not satisfied. |
-| `snapshots.store-unavailable` | 503 | yes | The snapshot store is not open or its format version is unsupported. |
+| `snapshots.store-unavailable` | 503 | yes | The store is closed, locked, busy with an active deployment, or has an unsupported format version. |
 
 ### Deployments
 
