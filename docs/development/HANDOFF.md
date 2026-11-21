@@ -158,11 +158,28 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44723836649](https://github.com/woxlo1/DeployMC/actions/runs/44723836649) passed. The local and
   remote `feature/wp-2.2-file-operations` branches were deleted. No REST endpoint, transport
   handler, running server, or UI consumes the service, and no snapshot store exists yet.
+- WP-2.3 first stage merged in PR #158 at `879bdc5acd2abea4af9a14dd3ea9bd2b79d374ef` on
+  2026-11-21; issue #52 stays open. It adds the normative
+  [`specification/snapshot/snapshot-store.md`](../../specification/snapshot/snapshot-store.md):
+  `.deploymc/history/` layout, format 1, immutable uncompressed SHA-256 blobs, atomic JSON
+  metadata/index writes, `snap_[0-9a-z]{26}` ids, restore-first reversibility, 50/90-day/2 GiB
+  retention with the newest three protected, a 24 h GC grace period, verify-before-GC, conservative
+  repair, and a single-instance `data.lock`. Superseded PR #157 was closed with an explanation; no
+  force push was used. On 2026-11-21, `git diff --check` was clean, `npm run lint` passed in
+  `tools/spec`, `npm test` in `tools/spec` ran 14 tests with 0 failures, and post-merge CI
+  [44849766505](https://github.com/woxlo1/DeployMC/actions/runs/44849766505), CodeQL
+  [44849766469](https://github.com/woxlo1/DeployMC/actions/runs/44849766469), and Scorecard
+  [44849766325](https://github.com/woxlo1/DeployMC/actions/runs/44849766325) passed. PR comments
+  are at <https://github.com/woxlo1/DeployMC/pull/158#issuecomment-7054994035> and
+  <https://github.com/woxlo1/DeployMC/pull/158#issuecomment-7055098742>. The temporary spec branch
+  was deleted locally and remotely. No store code exists yet.
 
 ## In flight
 
-- No work package is in flight. WP-2.2 is merged, issue #51 is closed, and post-merge evidence is
-  recorded; the next item is WP-2.3 snapshot store (#52).
+- WP-2.3 implementation is in flight on `feature/wp-2.3-snapshot-store`, branched from `879bdc5`.
+  The specification stage is merged and issue #52 remains open. No implementation commits exist yet.
+  The implementation must satisfy the merged contract and update status only after tests actually
+  run.
 - Earlier WP-1.7, WP-1.8, WP-1.9, WP-2.1, and WP-2.2 work is merged, with evidence recorded in the
   status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
@@ -176,9 +193,10 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Start WP-2.3 snapshot store (#52): update the normative specification first, then implement a
-   content-addressed store, retention, restore, and integrity checks behind `SnapshotHook`, with
-   contract tests and fail-closed destructive operations.
+1. Implement WP-2.3 snapshot store (#52) against the merged normative contract: content-addressed
+   blobs, atomic metadata/index writes, restore-first reversibility, retention, conservative GC,
+   verify/repair, and the single-instance lock behind `SnapshotHook`. Add contract tests and keep
+   destructive file operations fail closed.
 2. Continue with WP-2.4-WP-2.6 (#53-#55), then category 3 (#115-#120), category 4 (#121-#123), and
    category 5 (#124-#130) in issue order.
 3. Update project status, implementation status, and this handoff at the end of each session.

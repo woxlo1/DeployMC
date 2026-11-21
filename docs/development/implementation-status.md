@@ -2,7 +2,8 @@
 
 Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.2
 merged; issues #47, #48, #49, #50, and #51 closed. WP-2.2 merged in PR #155 at `017c2ab` with green
-PR and post-merge checks.)
+PR and post-merge checks. The WP-2.3 specification merged in PR #158 at `879bdc5`; issue #52 stays
+open until the store is implemented.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -26,8 +27,9 @@ support tier or a full feature validation. The transport rejects every route exc
 snapshot, deployment, console, and audit resources have no handlers. The WP-2.1 sandbox resolver,
 protected-path rules, and security corpus are implemented, and WP-2.2 adds `core.files`, which
 resolves every request path through that resolver. No transport handler, running server, or in-game
-command consumes the resolver or file service yet. There is no snapshot store, deployment engine,
-authorization, audit log, or Web UI screen; the packaged Web UI has not been rendered in a browser.
+command consumes the resolver or file service yet. The WP-2.3 snapshot store contract is normative,
+but there is no store implementation, deployment engine, authorization, audit log, or Web UI screen;
+the packaged Web UI has not been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -57,6 +59,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Configuration loader | Safe YAML parsing, schema validation, timestamped migration backup, atomic writes, immutable `ConfigView`, safe reload, localized diagnostics, and 250 deterministic fail-closed mutations | 53 `core` tests, full build, Java 8 check, and JAR inspection |
 | WP-2.1 sandbox resolver | Canonical resolver with an injectable file-system boundary, resolver-only `SandboxPath`, host-controlled policy, Windows name rules on every host, default reparse-point rejection, root revalidation, post-open file-key checks, protected/deny globs, and localized rejections | 16 sandbox tests (15 passed, 1 skipped locally without symlink privileges), full Gradle build, Java 8 check, all-toolchain verification, and the 2,736-payload corpus plus seeded fuzz test |
 | WP-2.2 file operations | Sandboxed list/stat/read/range/download/create/mkdir/write/upload/move/delete, SHA-256 full-file revisions, same-directory temporary writes with one atomic commit, revision and file-identity conflict checks, host-controlled limits, explicit recursive-delete confirmation, and a fail-closed snapshot boundary | 24 new file-operation tests, full Gradle build (205 Java tests), Java 8 check, all-toolchain verification, spec lint, and i18n check |
+| WP-2.3 snapshot specification | Normative `.deploymc/history/` layout, format 1, immutable blobs, atomic metadata/index writes, stable snapshot ids, restore-first reversibility, retention, GC preconditions, verify/repair, and single-instance lock | `npm run lint` and `npm test` in `tools/spec` (14 tests); post-merge CI, CodeQL, and Scorecard at `879bdc5` |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
@@ -128,6 +131,19 @@ which is the boundary for the later snapshot store. Recursive deletion requires 
 current entry count and obeys a host-controlled cap. A deterministic test injects termination
 immediately before and after the atomic commit; it does not launch or kill an operating-system
 process. No REST endpoint, transport handler, running server, or UI consumes the service yet.
+
+WP-2.3 first stage added the normative contract in
+[snapshot store](../../specification/snapshot/snapshot-store.md), merged in
+[PR #158](https://github.com/woxlo1/DeployMC/pull/158) at
+`879bdc5acd2abea4af9a14dd3ea9bd2b79d374ef`. On 2026-11-21, `npm run lint` passed the OpenAPI,
+AsyncAPI, configuration, and state-machine checks in `tools/spec`, and `npm test` ran 14 tests with
+0 failures. Required PR checks and post-merge CI
+[44849766505](https://github.com/woxlo1/DeployMC/actions/runs/44849766505), CodeQL
+[44849766469](https://github.com/woxlo1/DeployMC/actions/runs/44849766469), and Scorecard
+[44849766325](https://github.com/woxlo1/DeployMC/actions/runs/44849766325) passed. The superseded
+specification PR #157 and its branch were closed and removed; the feature branch for the
+implementation stage is separate. This stage defines the contract only: no store, retention engine,
+restore path, repair command, or lock exists in code, and issue #52 remains open.
 
 ## Repository configuration, not a product feature
 
@@ -428,8 +444,8 @@ The following are documented as intended behavior. They are **not** code.
   `token` mode is implemented and refuses startup for the other two modes.
 - REST/WebSocket file endpoints and running-server use of `FileOperationsService`. The core service
   consumes `SandboxPath`, but no application handler or transport route calls it yet.
-- Snapshot store, diff, restore, retention, and garbage collection. `SnapshotHook` is only an
-  injected boundary; no snapshot store exists.
+- Snapshot store implementation, diff, restore, retention, and garbage collection. The normative
+  contract exists, but `SnapshotHook` is only an injected boundary; no store code exists.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
