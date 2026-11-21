@@ -37,8 +37,8 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 
 ## Repository state
 
-Phase 0 (foundation), Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.2, and the WP-2.3 specification are
-merged. The Java, Web, CLI, and Python skeletons exist and are verified, along with the localization
+Phase 0 (foundation), Phase 1 WP-1.1-WP-1.9, and Phase 2 WP-2.1-WP-2.3 are merged. The Java, Web,
+CLI, and Python skeletons exist and are verified, along with the localization
 tooling, core project documents, and Japanese README. Build/test, lint, i18n, CodeQL, dependency
 review, Scorecard, and two compatibility jobs run in CI, and branch protection with required checks
 is enforced on `main`.
@@ -53,12 +53,13 @@ globs, root revalidation, post-open file-key checks, localized rejections, and a
 corpus/fuzz suite. WP-2.2 merged in [PR #155](https://github.com/woxlo1/DeployMC/pull/155) at
 `017c2ab` with issue #51 closed. It adds `core.files`, which resolves every request path through the
 resolver, returns sandbox-relative metadata, computes full-byte SHA-256 revisions, and commits writes
-with a single atomic move behind a fail-closed snapshot boundary. WP-2.3's normative snapshot-store
-contract merged in [PR #158](https://github.com/woxlo1/DeployMC/pull/158) at `879bdc5`; its Java 8
-`core.snapshot` implementation adds immutable SHA-256 blobs, atomic JSON metadata/index writes,
-restore-first reversibility, retention, verify/repair, conservative GC, and a single-instance
-`data.lock`. PR checks and post-merge CI, CodeQL, and Scorecard passed for WP-2.1, WP-2.2, and the
-WP-2.3 specification; implementation evidence is recorded in `docs/development`. No REST endpoint,
+with a single atomic move behind a fail-closed snapshot boundary. WP-2.3 merged its normative
+snapshot-store contract in [PR #158](https://github.com/woxlo1/DeployMC/pull/158) at `879bdc5` and
+its Java 8 implementation in [PR #159](https://github.com/woxlo1/DeployMC/pull/159) at `0425c8`,
+with issue #52 closed. `core.snapshot` adds immutable SHA-256 blobs, atomic JSON metadata/index
+writes, restore-first reversibility, retention, verify/repair, conservative GC, and a single-instance
+`data.lock`. PR checks and post-merge CI, CodeQL, and Scorecard passed for WP-2.1, WP-2.2, and both
+WP-2.3 stages; implementation evidence is recorded in `docs/development`. No REST endpoint,
 transport handler, running server, or in-game command consumes the resolver, `core.files`, or
 `core.snapshot` yet, and exact-byte preservation for existing NFD filenames is not implemented. The
 full integration suite has not run, and no in-game `/deploymc` command has been exercised.
@@ -67,12 +68,12 @@ To check every language toolchain at once, run `node tools/build/verify-all.cjs`
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
 individual commands below are for investigating one toolchain.
 
-Verified commands (2026-11-20 for Java, 2026-11-18 for the other toolchains; Windows 11, Gradle
+Verified commands (2026-11-21 for Java, 2026-11-18 for the other toolchains; Windows 11, Gradle
 8.10.2 wrapper, JDK 21 toolchain). The Java build packages `web/dist`, so build Web first or run
 `node tools/build/verify-all.cjs`, which orders Web before Java:
 
 ```powershell
-.\gradlew.bat build            # compiles all Java modules, runs 205 Java tests (1 skipped)
+.\gradlew.bat build            # compiles all Java modules, runs 230 Java tests (1 skipped)
                               # and runs the Spotless check
 .\gradlew.bat verifyJava8      # checks production class files target Java 8 bytecode
 .\gradlew.bat spotlessApply    # formats Java sources and repository text files

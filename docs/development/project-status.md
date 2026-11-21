@@ -1,9 +1,8 @@
 # Project Status
 
-Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.2
-merged and closed; WP-2.3 specification stage merged and implementation locally verified). GitHub
-evidence below was verified against `main` through `879bdc5` after PR #158; earlier evidence is
-recorded below.
+Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, and Phase 2 WP-2.1-WP-2.3
+merged and closed). GitHub evidence below was verified against `main` through `0425c8` after PR #159;
+earlier evidence is recorded below.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -35,9 +34,9 @@ This is the session-level status page. For per-component facts use
   policy, localized rejections, and security corpus, merged in PR #153 at `748bbc8`; the issue closed
   as completed. WP-2.2 (issue #51), the sandboxed file operations service, merged in PR #155 at
   `017c2ab`; the issue closed as completed. WP-2.3 first stage, the normative snapshot store
-  contract, merged in PR #158 at `879bdc5`; the implementation is complete locally on
-  `feature/wp-2.3-snapshot-store` and issue #52 remains open until its PR is merged.
-  Verification and post-merge evidence are recorded below.
+  contract, merged in PR #158 at `879bdc5`; the Java 8 `core.snapshot` implementation merged in PR
+  #159 at `0425c8`, and issue #52 closed as completed. Verification and post-merge evidence are
+  recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130.
 
@@ -119,6 +118,27 @@ open PRs: 17 (#23-#39 Dependabot updates)
 
 gh issue list --state open --limit 1000
 open issues: 79 (#52-#130)
+```
+
+Verified GitHub state on 2026-11-21 after PR #159 was merged and issue #52 was closed:
+
+```text
+git log -1 --oneline origin/main
+0425c81 feat(snapshot): implement content-addressed snapshot store (#159)
+
+gh pr view 159 --json number,state,mergedAt,mergeCommit,url
+number=159 state=MERGED mergedAt=2026-11-21T02:11:52Z
+mergeCommit=0425c814018091543929444042dcd6d885bd75d5
+url=https://github.com/woxlo1/DeployMC/pull/159
+
+gh issue view 52 --json number,state,stateReason,closedAt
+number=52 state=CLOSED stateReason=COMPLETED closedAt=2026-11-21T02:11:54Z
+
+gh pr list --state open --limit 1000
+open PRs: 17 (#23-#39 Dependabot updates)
+
+gh issue list --state open --limit 1000
+open issues: 78 (#53-#130)
 ```
 
 `git branch --list 'feature/wp-2.1-sandbox-resolver'` and the matching
@@ -244,7 +264,7 @@ Scorecard 44723836649  success
 The local and remote `feature/wp-2.2-file-operations` branches were deleted after the merge, and
 local `main` was left clean at `017c2ab`.
 
-## WP-2.3 implementation verification (local, pre-merge)
+## WP-2.3 verification (local, pre-merge)
 
 These commands were run on 2026-11-21 on `feature/wp-2.3-snapshot-store` before opening the
 implementation PR:
@@ -277,8 +297,27 @@ and deletion markers, stale-target rejection, retention, GC guards and grace per
 staging cleanup, concurrent capture, file-service integration, localized diagnostics, and the
 single-instance data lock. A stale Spotless incremental cache from a different ASCII junction had to
 be removed before formatting; no source file was changed by that cleanup. No REST endpoint, transport
-handler, running server, UI, or in-game command consumes `SnapshotStore`, and issue #52 remains open
-until the implementation PR is merged.
+handler, running server, UI, or in-game command consumes `SnapshotStore`.
+
+### WP-2.3 PR and post-merge evidence
+
+All PR checks passed at head `f0fd908`. Explicit verification comments were posted at
+<https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055673480> and
+<https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055770391>. Squash merge commit
+`0425c814018091543929444042dcd6d885bd75d5` closed issue #52 as completed at
+2026-11-21T02:11:54Z. At merge commit `0425c814`, all post-merge `main` workflows completed
+successfully:
+
+```text
+CI        44854531337  success
+CodeQL    44854531422  success
+Scorecard 44854531350  success
+```
+
+The local and remote `feature/wp-2.3-snapshot-store` branches were deleted, and local `main` was left
+clean at `0425c814`.
+
+## Earlier pull-request evidence
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
 failed only `Commit messages` because one body line exceeded 120 characters. The message was amended,
@@ -519,8 +558,9 @@ matrix remains empty and `softwareName` is still `Unknown`.
   review was performed. See [research](../research/README.md).
 - Japanese Web and plugin message strings are machine-translated drafts without native review. See
   [i18n status](i18n-status.md).
-- Many security-critical components are designed but not implemented. The WP-2.3 snapshot store
-  specification is complete, but no store code, restore path, retention engine, or GC exists. See
+- Many security-critical components are designed or only partially implemented. The WP-2.3 store,
+  restore primitives, retention, verify/repair, and GC now exist in `core.snapshot`, but no REST
+  route, transport handler, running server, UI, or command consumes them. See
   [implementation status](implementation-status.md) and [risks](risks.md).
 
 ## Open architectural and owner questions
@@ -531,12 +571,11 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 ## Next tasks
 
-Owner-directed order: #2, #7, #10, #41, #42, #43, #44, #45, #46, #47, #48, #49, #50, #51 (all done)
--> category 2 (#52-#114) -> category 3 (#115-#120) -> category 4 (#121-#123) -> category 5
-(#124-#130). WP-2.2 is merged, issue #51 is closed, post-merge evidence is recorded, and the feature
-branch is deleted. WP-2.3 specification PR #158 merged at `879bdc5` with green checks; the next step
-is the WP-2.3 implementation on issue #52. Start later items only when earlier items are complete or
-the owner explicitly approves.
+Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). WP-2.3 merged in PR #158 at
+`879bdc5` and PR #159 at `0425c8`; issue #52 is closed, post-merge evidence is recorded, and both
+feature branches are deleted. The next work package is WP-2.4 (issue #53, diff engine). Start later
+items only when earlier items are complete or the owner explicitly approves.
 
 ## Release checklist
 
