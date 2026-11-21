@@ -2,8 +2,9 @@
 
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
-> implementations; snapshot codes are produced by the WP-2.3 store, diff codes are produced by the
-> Java 8 `core.diff` engine, and validation codes are produced by the Java 8 `core.validation` engine.
+> implementations and are mapped to REST Problem Details by the WP-2.6 file/validation adapters;
+> snapshot codes are produced by the WP-2.3 store, diff codes are produced by the Java 8 `core.diff`
+> engine, and validation codes are produced by the Java 8 `core.validation` engine.
 > D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
 > Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.

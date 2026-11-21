@@ -210,14 +210,24 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   passed. D-008 was resolved by the owner on 2026-11-21 in favour of one
   `validation.limit-exceeded` shape for every structural budget. No REST endpoint or running server
   consumes the validators yet.
+- WP-2.6 first stage merged the file/validation REST specification in PR #168 at `8970728`, with
+  verification and post-merge evidence comments and successful CI, CodeQL, and Scorecard runs; the
+  `spec/wp-2.6-file-endpoints` branch was deleted. The adapter stage adds `transport.FileApiHandler`,
+  `transport.RequestJson`, RFC 9457 `errors[]` serialization, and Bukkit `FileApiRuntime` wiring
+  behind the existing token gate. On 2026-11-21, focused transport (14 tests) and Bukkit (8 tests)
+  runs passed, and `build verifyJava8` ran 311 tests with 0 failures, 0 errors, and 1 skipped
+  symlink test; i18n and `git diff --check` also passed. A regression test caught and fixed the
+  runtime rejecting schema-valid 2048 MiB snapshot and 4096 MiB upload budgets. No running-server
+  smoke, E2E, in-game command, or UI check was performed.
 
 ## In flight
 
-- The WP-2.6 file and validation specification branch defines the authenticated file and validation
-  routes, their schemas, and the D-008 limit mapping. Its adapters are not implemented.
-- No WP-2.5 feature branch remains; local and remote `feature/wp-2.5-validation` were deleted after
-  merge evidence was posted. WP-2.1 through WP-2.5 are merged with evidence recorded in the status
-  pages and pull-request comments.
+- The WP-2.6 file/validation adapter branch is pending review and merge. Its routes stay behind the
+  bearer-token gate with no bypass; the single provisioned token remains admin-equivalent until
+  Phase 3 RBAC. Snapshot routes remain a separate follow-up specification and adapter stage.
+- No WP-2.1-WP-2.5 feature branches remain, and the merged `spec/wp-2.6-file-endpoints` branch was
+  deleted after evidence was posted. Evidence is recorded in the status pages and pull-request
+  comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 76 (#55-#130). Milestones `0.1.0` through `0.10.0` exist.
 
@@ -229,19 +239,12 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Merge this WP-2.6 file and validation specification PR, then post verification and post-merge
+1. Finish review of the WP-2.6 file/validation adapter PR, then post verification and post-merge
    evidence comments and delete the branch.
-2. Implement the WP-2.6 thin adapters: JSON response writer, Problem Details with `errors[]`,
-   ETag/`If-Match`, cursor pagination, the unified D-008 limit mapping (a format-specific issue
-   code in `errors[]`, including JSON depth), a `core.files` guard that rejects the sandbox root as
-   a mutation target, a `files.not-found` mapping for a missing parent directory instead of
-   `files.io`, and contract tests generated from OpenAPI. Keep the single provisioned token
-   admin-equivalent until Phase 3 RBAC and document that pre-0.4.0 limitation in the README and
-   release notes.
-3. Add the snapshot routes in a second WP-2.6 specification PR, then implement their adapters.
-4. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+2. Add the snapshot routes in a second WP-2.6 specification PR, then implement their adapters.
+3. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
    order.
-5. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+4. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

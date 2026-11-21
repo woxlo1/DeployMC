@@ -9,11 +9,13 @@ info:
     binds to `127.0.0.1` by default, and is authenticated by host-provisioned bearer
     tokens in 0.1.0. Remote access requires a TLS terminator.
 
-    **Status: partial.** The authentication gate, health endpoints, and the
-    `GET /api/v1/server` application handler are implemented. The file and validation
-    operations defined here are the WP-2.6 contract; their transport adapters are not
-    implemented yet. The remaining server resource fields and the snapshot, deployment,
-    console, and audit resources are defined for later work packages.
+    **Status: partial.** The authentication gate, health endpoints, the
+    `GET /api/v1/server` application handler, and the WP-2.6 file and validation transport
+    adapters are implemented. The adapters have server-free contract tests, but no
+    running-server smoke test or Web UI consumes them yet. Until 0.4.0 every valid token
+    is admin-equivalent; role and path scoping arrive with RBAC. The remaining server
+    resource fields and the snapshot, deployment, console, and audit resources are defined
+    for later work packages.
 
     Rules that apply to every operation:
 
