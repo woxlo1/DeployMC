@@ -341,6 +341,9 @@ public final class FileOperationsService {
       throws FileOperationException {
     SandboxPath source = resolve(sourcePath, SandboxAccessMode.WRITE);
     SandboxPath destination = resolve(destinationPath, SandboxAccessMode.WRITE);
+    if (source.relativePath().isEmpty() || destination.relativePath().isEmpty()) {
+      throw new FileOperationException(FileOperationException.Reason.INVALID_OPERATION, "");
+    }
     return withLocks(
         () -> {
           PathState sourceState = requireState(source);
@@ -397,6 +400,9 @@ public final class FileOperationsService {
           } catch (AtomicMoveNotSupportedException unsupported) {
             throw new FileOperationException(
                 FileOperationException.Reason.ATOMIC_MOVE_UNSUPPORTED, unsupported);
+          } catch (NoSuchFileException missing) {
+            throw new FileOperationException(
+                FileOperationException.Reason.NOT_FOUND, destination.relativePath());
           } catch (IOException failure) {
             throw new FileOperationException(
                 FileOperationException.Reason.IO, sourcePath, failure.getClass().getSimpleName());
@@ -413,6 +419,9 @@ public final class FileOperationsService {
   public int delete(String requestPath, DeleteRequest request) throws FileOperationException {
     Objects.requireNonNull(request, "request");
     SandboxPath path = resolve(requestPath, SandboxAccessMode.WRITE);
+    if (path.relativePath().isEmpty()) {
+      throw new FileOperationException(FileOperationException.Reason.INVALID_OPERATION, "");
+    }
     return withLocks(
         () -> {
           PathState state = requireState(path);
@@ -904,6 +913,9 @@ public final class FileOperationsService {
       return new CommittedWrite(FileRevision.fromDigest(digest), written);
     } catch (FileOperationException failure) {
       throw failure;
+    } catch (NoSuchFileException missing) {
+      throw new FileOperationException(
+          FileOperationException.Reason.NOT_FOUND, path.relativePath());
     } catch (IOException failure) {
       throw new FileOperationException(
           FileOperationException.Reason.IO,

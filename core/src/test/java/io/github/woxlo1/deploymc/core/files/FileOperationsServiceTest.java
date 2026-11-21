@@ -241,8 +241,9 @@ class FileOperationsServiceTest {
 
   @Test
   void deleteEnforcesEntryCapBeforeConfirmation() throws Exception {
+    Files.createDirectories(tempDir.resolve("many"));
     for (int i = 0; i < 3; i++) {
-      Files.write(tempDir.resolve("many-" + i + ".txt"), new byte[] {(byte) i});
+      Files.write(tempDir.resolve("many/" + i + ".txt"), new byte[] {(byte) i});
     }
     service =
         new FileOperationsService(
@@ -253,9 +254,45 @@ class FileOperationsServiceTest {
     FileOperationException rejected =
         assertThrows(
             FileOperationException.class,
-            () -> service.delete("", DeleteRequest.recursive(3L, null)));
+            () -> service.delete("many", DeleteRequest.recursive(4L, null)));
     assertEquals(FileOperationException.Reason.DELETE_LIMIT, rejected.reason());
-    assertTrue(Files.exists(tempDir.resolve("many-0.txt")));
+    assertTrue(Files.exists(tempDir.resolve("many/0.txt")));
+  }
+
+  @Test
+  void sandboxRootCannotBeDeletedOrMoved() throws Exception {
+    FileOperationException deletion =
+        assertThrows(
+            FileOperationException.class,
+            () -> service.delete("", DeleteRequest.recursive(1L, null)));
+    assertEquals(FileOperationException.Reason.INVALID_OPERATION, deletion.reason());
+
+    FileOperationException move =
+        assertThrows(
+            FileOperationException.class, () -> service.move("", "elsewhere", false, null));
+    assertEquals(FileOperationException.Reason.INVALID_OPERATION, move.reason());
+
+    FileOperationException moveToRoot =
+        assertThrows(FileOperationException.class, () -> service.move("anything", "", false, null));
+    assertEquals(FileOperationException.Reason.INVALID_OPERATION, moveToRoot.reason());
+    assertTrue(Files.isDirectory(tempDir));
+  }
+
+  @Test
+  void missingParentDirectoryMapsToNotFound() throws Exception {
+    FileOperationException create =
+        assertThrows(
+            FileOperationException.class,
+            () -> service.create("missing/child.txt", new byte[] {1}));
+    assertEquals(FileOperationException.Reason.NOT_FOUND, create.reason());
+
+    FileOperationException upload =
+        assertThrows(
+            FileOperationException.class,
+            () ->
+                service.upload(
+                    "missing/child.bin", new ByteArrayInputStream(new byte[] {1}), 1L, null));
+    assertEquals(FileOperationException.Reason.NOT_FOUND, upload.reason());
   }
 
   @Test
