@@ -225,16 +225,16 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   content, bounded diff, reversible restore, and retention prune. It pins opaque ids, quoted ETags,
   inclusive-start/exclusive-end ranges, host-derived restore actors, path-scope notes, and stable
   snapshot/diff error mapping. The snapshots have a Java 8 store but no adapter yet. `npm run lint`
-  in `tools/spec` passed locally on 2026-11-21.
+  and `npm test` in `tools/spec` passed locally on 2026-11-21. The contract merged in PR #170 at
+  `bf82e26` with verification and post-merge evidence comments, passing CI, CodeQL, and Scorecard,
+  and its branch was deleted.
 
 ## In flight
 
-- The WP-2.6 snapshot-route specification branch is pending review and merge. Its routes will stay
-  behind the bearer-token gate with no bypass; the single provisioned token remains admin-equivalent
-  until Phase 3 RBAC. Snapshot adapter implementation follows the merged contract.
-- No WP-2.1-WP-2.5 or WP-2.6 file/validation branches remain; both merged WP-2.6 branches were
-  deleted after evidence was posted. Evidence is recorded in the status pages and pull-request
-  comments.
+- The WP-2.6 snapshot adapters are not implemented. Their routes will stay behind the bearer-token
+  gate with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
+- No WP-2.1-WP-2.5 branches remain, and all three merged WP-2.6 branches were deleted after evidence
+  was posted. Evidence is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 76 (#55-#130). Milestones `0.1.0` through `0.10.0` exist.
 
@@ -246,12 +246,10 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Finish review of the WP-2.6 snapshot-route specification PR, then post verification and
-   post-merge evidence comments and delete the branch.
-2. Implement the snapshot adapters against the merged contract and post the same evidence comments.
-3. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+1. Implement the snapshot adapters against the merged contract and post the same evidence comments.
+2. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
    order.
-4. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

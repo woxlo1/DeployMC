@@ -1,9 +1,8 @@
 # Project Status
 
 Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-and both merged WP-2.6 file/validation stages). GitHub evidence below was verified against `main`
-through `08fe424` after PR #169; the WP-2.6 snapshot-route specification branch is pending merge and
-its local evidence is recorded below.
+and all merged WP-2.6 specification and file/validation adapter stages). GitHub evidence below was
+verified against `main` through `bf82e26` after PR #170.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -40,9 +39,9 @@ This is the session-level status page. For per-component facts use
   `2a4e7f8`; the Java 8 `core.diff` implementation merged in PR #163 at `80a3f0b`, and issue #53
   closed as completed. WP-2.5 first stage merged in PR #165 at `6cd6015`; the Java 8 `core.validation`
   implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. WP-2.6 first stage
-  merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`. The
-  snapshot-route specification is pending merge. Verification and post-merge evidence are recorded
-  below.
+  merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`; and
+  the snapshot-route specification merged in PR #170 at `bf82e26`. Verification and post-merge
+  evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
@@ -531,7 +530,19 @@ mapping. It deliberately records that no adapter exists yet.
 ```text
 npm run lint
 OpenAPI, AsyncAPI, configuration example, and state-machine lint passed
+
+npm test
+14 tests, 0 failures
 ```
+
+The explicit verification comment is at
+<https://github.com/woxlo1/DeployMC/pull/170#issuecomment-7062418966>. PR #170 merged the contract to
+`main` at `bf82e265742a36914423ff2f3d62612a4326945d`. The post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/170#issuecomment-7062501576>. Post-merge workflows passed:
+CI [44903156530](https://github.com/woxlo1/DeployMC/actions/runs/44903156530), CodeQL
+[44903156565](https://github.com/woxlo1/DeployMC/actions/runs/44903156565), and Scorecard
+[44903156579](https://github.com/woxlo1/DeployMC/actions/runs/44903156579). The local and remote
+`spec/wp-2.6-snapshot-endpoints` branches were deleted after the evidence was posted.
 
 No snapshot adapter, contract test, running server, or UI check is claimed for these routes.
 
