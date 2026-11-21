@@ -605,7 +605,7 @@ public final class FileOperationsService {
       throw new FileOperationException(FileOperationException.Reason.SNAPSHOT_REQUIRED, rootPath);
     }
     try {
-      snapshotHook.capture(new SnapshotRequest(rootPath, reason, entries));
+      snapshotHook.capture(new SnapshotRequest(resolver.root().toString(), reason, entries));
     } catch (IOException failure) {
       throw new FileOperationException(
           FileOperationException.Reason.SNAPSHOT_FAILED,
