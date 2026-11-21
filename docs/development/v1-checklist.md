@@ -4,12 +4,15 @@ This checklist comes from Part 17 of the
 [master specification](DeployMC_Complete_Master_Development_Specification.md). A box may be checked
 only when the criterion is verified and an evidence link is attached. DeployMC is **not** v1.0.0
 until every box is checked or the owner explicitly accepts a documented gap in the release notes.
-All boxes are unchecked today (2026-11-18, pre-alpha).
+All boxes remain unchecked (2026-11-21, pre-alpha); partial evidence is noted where a work package
+has landed.
 
 ## 17.1 Functionality
 
 - [ ] Sandboxed file explorer/editor with server-side validation, optimistic concurrency, and
-      protected paths. Evidence: not yet; #50-#51, #63-#65.
+      protected paths. Partial: PR #153 (`SandboxResolver`) and PR #155 (`core.files` with revisions,
+      atomic writes, and a fail-closed snapshot boundary) are merged and #50-#51 are closed. No REST
+      file endpoint or Web UI explorer exists yet (#55, #63-#65).
 - [ ] Snapshots with diff and one-click restore, retention, and integrity verification.
       Evidence: not yet; #52-#53.
 - [ ] JAR deployment pipeline with staging, validation, controlled restart, health verification,
@@ -17,7 +20,8 @@ All boxes are unchecked today (2026-11-18, pre-alpha).
 - [ ] Real-time console with filtering, commands, backpressure, and audit. Evidence: not yet;
       #81-#86.
 - [ ] Authentication in `cloudflare`, `token`, and `local-onetime` modes; RBAC with path scopes;
-      audit log. Evidence: not yet; #49, #56-#62.
+      audit log. Partial: `token` mode merged in PR #149 and observed in the PR #151 smoke; the other
+      modes refuse startup. RBAC and audit are not implemented (#56-#62).
 - [ ] Public API v1 (REST, WebSocket, webhooks) fully specified, versioned, and conformance-tested.
       Evidence: not yet; skeletons only, #87-#89.
 - [ ] Java API module, TypeScript/Python/Java clients, CLI, and GitHub Action released.
@@ -26,13 +30,15 @@ All boxes are unchecked today (2026-11-18, pre-alpha).
 ## 17.2 Compatibility
 
 - [ ] Support matrix generated from real CI results; every Tier 1 entry green on the latest run.
-      Evidence: [empty matrix](../compatibility/support-matrix.md), harness #48.
+      Evidence: [empty matrix](../compatibility/support-matrix.md), harness #48. Pinned Paper 26.3
+      smoke entries passed on Ubuntu and Windows at `839b789`; no support tier is claimed.
 - [ ] Paper (latest), Folia, and at least one proxy platform in Tier 1. Evidence: not yet;
       #42, #96, #101.
 - [ ] Declared legacy range tested at the tiers claimed, with documented limitations.
       Evidence: not yet; #98.
 - [ ] Java 8 baseline bytecode verified; verified to start on every declared Java version.
-      Evidence: `verifyJava8` passes for class files; no server start test exists.
+      Evidence: `verifyJava8` passes for class files; one pinned Paper 26.3 start on Java 25 was
+      observed in the PR #151 smoke. No declared-version matrix exists yet.
 
 ## 17.3 Security
 

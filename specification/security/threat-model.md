@@ -1,10 +1,11 @@
 # Threat Model
 
-> **Status: draft, design-level with WP-2.1 implementation evidence (2026-11-20).** This document
-> describes the threats DeployMC is designed to address and the ones it explicitly does not.
-> The token authenticator and sandbox resolver now exist in code; RBAC, an audit log, and a
-> deployment engine do not. Nothing in this document has been validated against a running system:
-> the resolver has unit, corpus, and fuzz evidence, but no file API or server process uses it yet.
+> **Status: draft, design-level with WP-2.1 and WP-2.2 implementation evidence (2026-11-21).**
+> This document describes the threats DeployMC is designed to address and the ones it explicitly
+> does not. The token authenticator, sandbox resolver, and `core.files` service now exist in code;
+> RBAC, an audit log, and a deployment engine do not. Nothing in this document has been validated
+> against a running system beyond the WP-1.8 Paper smoke: the resolver and file service have unit,
+> corpus, fuzz, and crash-point evidence, but no REST handler or running server consumes them yet.
 > It will be revised as implementation and security tests produce further evidence.
 
 ## Why this document exists
@@ -128,11 +129,15 @@ Each path lists the primary controls. "Residual" states what remains after the c
   [44716375506](https://github.com/woxlo1/DeployMC/actions/runs/44716375506), CodeQL
   [44716375542](https://github.com/woxlo1/DeployMC/actions/runs/44716375542), and Scorecard
   [44716375486](https://github.com/woxlo1/DeployMC/actions/runs/44716375486) passed.
+  WP-2.2 merged in PR #155 at `017c2ab`: `core.files` resolves every request path through the
+  resolver, computes full-byte SHA-256 revisions, and commits writes atomically behind a fail-closed
+  snapshot boundary. No REST endpoint, transport handler, or running server uses it yet.
 - **Residual:** TOCTOU cannot be eliminated on every platform; root revalidation and the post-open
   file-key check narrow the window. A host administrator can create layouts the resolver rejects;
   that is a denial of convenience, not an escape. Existing NFD filenames are compared under NFC
-  but their exact bytes are not preserved. No file API or running server uses the resolver yet.
-  Server software or another plugin with host access is unaffected.
+  but their exact bytes are not preserved. `core.files` uses the resolver in tests, but no REST
+  endpoint or running server does yet. Server software or another plugin with host access is
+  unaffected.
 
 ### A3. Unauthorized action within the API
 
