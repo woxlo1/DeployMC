@@ -357,10 +357,22 @@ Four more follow-up PRs were squash-merged with explicit verification and eviden
   and one Java test passed locally and in PR CI on Ubuntu and Windows; full local toolchain
   verification passed. `ConfigCorpusTest` uses the real `ConfigValidator` and `ConfigManager`, but no
   server, host configuration, network resource, or in-game command was exercised.
+- PR #194 recorded docs-only catch-up evidence at
+  `706adff74070bfdda38f9555a7bfac421cad5716` on `2026-11-22T10:37:40Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/194#issuecomment-7077872089) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/194#issuecomment-7077950671). All required checks
+  and post-merge CI, CodeQL, and Scorecard runs passed.
+- PR #195 added generated large directory trees at
+  `3087abcaecadbebc197f0e0ef35c3a132b467493` on `2026-11-22T10:51:15Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/195#issuecomment-7078017502) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/195#issuecomment-7078102376). Four Python tests
+  passed locally and in PR CI on Ubuntu and Windows; full local toolchain verification passed.
+  Generated output stays in ignored or temporary directories; no listing API, benchmark, server, or
+  UI was exercised.
 
 All merged PART 35 follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and
 Scorecard runs; the local and remote branches were deleted after evidence was posted. Issue #115
-remains open until the remaining data-corpora stages land.
+remains open until the remaining data-corpora stage lands.
 
 ## In flight
 
@@ -368,9 +380,10 @@ remains open until the remaining data-corpora stages land.
   with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
 - No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches,
   `test/jwt-vectors-mock-jwks`, `test/hostile-input-fixtures`, `docs/issue-115-evidence-catchup-189`,
-  `test/log-corpora-fixtures`, `docs/issue-115-evidence-catchup-191`, and
-  `test/config-corpora-fixtures` were deleted after evidence was posted. The
-  `docs/issue-115-evidence-catchup-193` branch is temporary for this evidence update. Evidence is
+  `test/log-corpora-fixtures`, `docs/issue-115-evidence-catchup-191`,
+  `test/config-corpora-fixtures`, `docs/issue-115-evidence-catchup-193`, and
+  `test/large-tree-fixtures` were deleted after evidence was posted. The
+  `docs/issue-115-evidence-catchup-195` branch is temporary for this evidence update. Evidence is
   recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
