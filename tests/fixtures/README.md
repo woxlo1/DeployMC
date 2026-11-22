@@ -21,7 +21,8 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | Malformed archive and YAML-bomb generators | `../security/hostile-inputs/` | Available (generated at test time, manifest-pinned, no committed binaries) |
 | Log corpora with control and Unicode signals | `log-corpora/` | Available (generated at test time, manifest-pinned) |
 | Config corpora for valid, invalid, and legacy configurations | `config-corpora/` | Available (committed YAML, loader/validator tested) |
-| Large-tree and filter vectors | Planned under `./` | Not started |
+| Generated large directory trees | `large-trees/` | Available (generated at test time, manifest-pinned) |
+| Cross-implementation filter vectors | Planned under `./` | Not started |
 
 "Planned" is not evidence of support. This table is updated as each reviewable stage lands.
 
@@ -135,6 +136,19 @@ python -m unittest discover -s tests/fixtures/config-corpora -p 'test_*.py'
 `ConfigValidator` and `ConfigManager`. It confirms the two valid files load, the warning file keeps
 its root-key warning, and the five bad files fail closed with the expected localized message keys.
 No server, host configuration, network resource, or real secret is touched.
+
+`large-trees/generate_large_trees.py` regenerates 388 ASCII files in 27 directories, including a
+12-level chain, a 209-character filename, and two 64 KiB binary files. Output stays in an ignored
+`generated/` directory or a test `TemporaryDirectory`; the manifest pins counts, depth, total
+bytes, and a content digest. Four tests verify determinism, manifest agreement, path safety, and
+boundary shapes.
+
+```powershell
+python tests/fixtures/large-trees/generate_large_trees.py
+python -m unittest discover -s tests/fixtures/large-trees -p 'test_*.py'
+```
+
+No listing API, performance benchmark, server, or UI consumes the tree yet.
 
 ## Test environment hygiene
 

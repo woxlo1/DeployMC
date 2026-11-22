@@ -127,6 +127,9 @@ jobs:
       - name: Config corpus fixture unit tests
         shell: bash
         run: python -m unittest discover -s tests/fixtures/config-corpora -p 'test_*.py'
+      - name: Large tree fixture unit tests
+        shell: bash
+        run: python -m unittest discover -s tests/fixtures/large-trees -p 'test_*.py'
       - name: Run Paper smoke entry
         shell: bash
         run: |
