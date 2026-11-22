@@ -369,10 +369,28 @@ Four more follow-up PRs were squash-merged with explicit verification and eviden
   passed locally and in PR CI on Ubuntu and Windows; full local toolchain verification passed.
   Generated output stays in ignored or temporary directories; no listing API, benchmark, server, or
   UI was exercised.
+- PR #196 recorded docs-only catch-up evidence at
+  `289b9a4921378b799c9895963033b65112c35a8c` on `2026-11-22T11:01:31Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/196#issuecomment-7078138567) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/196#issuecomment-7078211932). All required checks
+  passed. Post-merge workflows passed: CI
+  [45015259954](https://github.com/woxlo1/DeployMC/actions/runs/45015259954), CodeQL
+  [45015259957](https://github.com/woxlo1/DeployMC/actions/runs/45015259957), Scorecard
+  [45015259900](https://github.com/woxlo1/DeployMC/actions/runs/45015259900).
+- PR #197 added cross-implementation filter vectors at
+  `9b7b5eecf33a63cc25f77de7316fe67eaa641df2` on `2026-11-22T11:14:35Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/197#issuecomment-7078276953) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/197#issuecomment-7078352425). Seven Python tests
+  passed locally and in PR CI on Ubuntu and Windows; full local toolchain verification passed.
+  Post-merge workflows passed: CI
+  [45016345367](https://github.com/woxlo1/DeployMC/actions/runs/45016345367), CodeQL
+  [45016345462](https://github.com/woxlo1/DeployMC/actions/runs/45016345462), Scorecard
+  [45016345537](https://github.com/woxlo1/DeployMC/actions/runs/45016345537). No product filter
+  parser consumes the manifest and no cross-implementation parity is claimed.
 
 All merged PART 35 follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and
-Scorecard runs; the local and remote branches were deleted after evidence was posted. Issue #115
-remains open until the remaining data-corpora stage lands.
+Scorecard runs; the local and remote branches were deleted after evidence was posted. All fixture
+and data stages for issue #115 are merged with evidence, so the issue is complete.
 
 ## In flight
 
@@ -381,10 +399,11 @@ remains open until the remaining data-corpora stage lands.
 - No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches,
   `test/jwt-vectors-mock-jwks`, `test/hostile-input-fixtures`, `docs/issue-115-evidence-catchup-189`,
   `test/log-corpora-fixtures`, `docs/issue-115-evidence-catchup-191`,
-  `test/config-corpora-fixtures`, `docs/issue-115-evidence-catchup-193`, and
-  `test/large-tree-fixtures` were deleted after evidence was posted. The
-  `docs/issue-115-evidence-catchup-195` branch is temporary for this evidence update. Evidence is
-  recorded in the status pages and pull-request comments.
+  `test/config-corpora-fixtures`, `docs/issue-115-evidence-catchup-193`,
+  `test/large-tree-fixtures`, `docs/issue-115-evidence-catchup-195`, and
+  `test/filter-vector-fixtures` were deleted after evidence was posted. The
+  `docs/issue-115-evidence-catchup-197` branch is temporary for this final evidence update. Evidence
+  is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
 
@@ -396,8 +415,8 @@ remains open until the remaining data-corpora stage lands.
 
 ## Exact next steps
 
-1. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
-   order.
+1. Continue with category 3 (#116-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+   order. Issue #115 is complete; its final consolidated evidence is recorded on the issue.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

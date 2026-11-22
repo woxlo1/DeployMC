@@ -82,7 +82,7 @@ REST routes in `specification/api/openapi.yaml` are implemented by `transport.Sn
 No running server, UI, or in-game command consumes those REST adapters yet, and exact-byte
 preservation for existing NFD filenames is not implemented. All REST adapters have server-free tests
 only; the full integration suite has not run, and no in-game `/deploymc` command has been exercised.
-PART 35 fixture evidence is merged through PR #195: stage 1 at `bdcd64a`, documentation evidence
+PART 35 fixture evidence is complete through PR #197: stage 1 at `bdcd64a`, documentation evidence
 in PR #175 at `a5ca873`, broken-enable in PR #176 at `7c2100e`, broken-descriptor in PR #177 at
 `2508043`, slow-enable in PR #178 at `a03435`, dependency in PR #180 at `4bcf20f`, conflicting-library
 alignment in PR #181 at `fd92cd0`, log-noise in PR #182 at `9b20b36`, catch-up evidence in PR #183 at
@@ -91,11 +91,13 @@ PR #185 at `3b85de8`, catch-up evidence in PR #186 at `cfd47b6`, JWT vectors wit
 JWKS server in PR #187 at `ce4fdc7`, hostile archive and YAML generators in PR #189 at `49f300a`,
 catch-up evidence in PR #190 at `49a9375`, log corpora in PR #191 at `2a253a1`, catch-up evidence in
 PR #192 at `211e57f`, config corpora in PR #193 at `2b6d0f5`, catch-up evidence in PR #194 at
-`706adff`, and generated large trees in PR #195 at `3087abc`. All have passing post-merge `main`
-workflows; issue #115 stays open for the remaining data-corpora stages. No server, UI, in-game
-command, harness, full integration suite, or E2E run consumes the new fixtures yet, no product JWT
-verifier exists, no product archive or YAML validator consumed the hostile-input corpus, no product
-console consumer reads the log corpora, and no listing API consumes the large trees. Config corpora
+`706adff`, generated large trees in PR #195 at `3087abc`, catch-up evidence in PR #196 at
+`289b9a4`, and cross-implementation filter vectors in PR #197 at `9b7b5ee`. All have passing
+post-merge `main` workflows; issue #115 is complete after all fixture/data stages merged with
+evidence. No server, UI, in-game command, harness, full integration suite, or E2E run consumes the
+new fixtures yet, no product JWT verifier exists, no product archive or YAML validator consumed the
+hostile-input corpus, no product console consumer reads the log corpora, no listing API consumes the
+large trees, and no product filter parser consumes the vectors or establishes parity. Config corpora
 are the exception: Java tests feed them through the real `ConfigValidator` and `ConfigManager`.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
