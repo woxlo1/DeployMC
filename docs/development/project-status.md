@@ -2,9 +2,9 @@
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `9b20b36` after
-PR #182. PART 35 fixtures through the log-noise stage are merged with local and post-merge
-evidence; issue #115 stays open for the remaining stages.)
+implementation). GitHub merge evidence below was verified against `main` through `ce4fdc7` after
+PR #187. PART 35 fixtures through the JWT vectors and mock JWKS stage are merged with local and
+post-merge evidence; issue #115 stays open for the remaining stages.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -55,8 +55,10 @@ This is the session-level status page. For per-component facts use
   `a03435`. PR #179 recorded catch-up evidence, PR #180 added the dependency fixture, PR #181
   aligned the conflicting-library fixture identity, and PR #182 added the log-noise fixture through
   `9b20b36`. PR #183 recorded catch-up evidence at `9fac5f1`, PR #184 added the source-built
-  wrong-platform fixture at `4819195`, and PR #185 added the versioned traversal-corpus manifest at
-  `3b85de8`. The issue remains open until the remaining data-corpora stages land.
+  wrong-platform fixture at `4819195`, PR #185 added the versioned traversal-corpus manifest at
+  `3b85de8`, PR #186 recorded catch-up evidence at `cfd47b6`, and PR #187 added deterministic JWT
+  vectors with a localhost mock JWKS server at `ce4fdc7`. The issue remains open until the remaining
+  data-corpora stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -749,12 +751,30 @@ in-game command execution was performed for these fixtures. PR #179 was document
   workflows passed: CI [44990052609](https://github.com/woxlo1/DeployMC/actions/runs/44990052609),
   CodeQL [44990052604](https://github.com/woxlo1/DeployMC/actions/runs/44990052604), Scorecard
   [44990052561](https://github.com/woxlo1/DeployMC/actions/runs/44990052561).
+- PR #186 recorded merged-stage evidence for PRs #183-#185 at
+  `cfd47b6e365dcd74518d5c51093538fac7a17662` on `2026-11-22T05:55:58Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/186#issuecomment-7074948038),
+  [commit-message fix](https://github.com/woxlo1/DeployMC/pull/186#issuecomment-7075001061), and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/186#issuecomment-7075066136). Post-merge
+  workflows passed: CI [44991495942](https://github.com/woxlo1/DeployMC/actions/runs/44991495942),
+  CodeQL [44991495929](https://github.com/woxlo1/DeployMC/actions/runs/44991495929), Scorecard
+  [44991495954](https://github.com/woxlo1/DeployMC/actions/runs/44991495954).
+- PR #187 added deterministic JWT vectors and a localhost mock JWKS server at
+  `ce4fdc7db3742c17f294813e53961eea98f02583` on `2026-11-22T06:13:36Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/187#issuecomment-7075173934) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/187#issuecomment-7075269244). Post-merge CI
+  [44992769433](https://github.com/woxlo1/DeployMC/actions/runs/44992769433) and Scorecard
+  [44992769504](https://github.com/woxlo1/DeployMC/actions/runs/44992769504) passed; CodeQL
+  [44992769372](https://github.com/woxlo1/DeployMC/actions/runs/44992769372) first failed during
+  autobuild because Maven Central returned HTTP 429, and a failed-job rerun passed.
 
 The local and remote branches `docs/issue-115-evidence-catchup`,
 `feature/issue-115-dependency-fixture`, `feature/issue-115-conflicting-libs-alignment`,
 `feature/issue-115-log-noise-fixture`, `docs/issue-115-fixture-evidence-catchup`,
-`feature/issue-115-wrong-platform-fixture`, and `feature/issue-115-traversal-os-expectations` were
-deleted after evidence was posted. Issue #115 remains open for the remaining data-corpora stages.
+`feature/issue-115-wrong-platform-fixture`, `feature/issue-115-traversal-os-expectations`,
+`docs/issue-115-evidence-catchup-185`, and `test/jwt-vectors-mock-jwks` were deleted after evidence
+was posted. The `docs/issue-115-evidence-catchup-187` branch is temporary for this evidence update.
+Issue #115 remains open for the remaining data-corpora stages.
 
 ## Earlier pull-request evidence
 
