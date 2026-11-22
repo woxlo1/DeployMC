@@ -22,7 +22,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | Log corpora with control and Unicode signals | `log-corpora/` | Available (generated at test time, manifest-pinned) |
 | Config corpora for valid, invalid, and legacy configurations | `config-corpora/` | Available (committed YAML, loader/validator tested) |
 | Generated large directory trees | `large-trees/` | Available (generated at test time, manifest-pinned) |
-| Cross-implementation filter vectors | Planned under `./` | Not started |
+| Cross-implementation filter vectors | `filter-vectors/` | Available (manifest-only, no parser consumer) |
 
 "Planned" is not evidence of support. This table is updated as each reviewable stage lands.
 
@@ -149,6 +149,20 @@ python -m unittest discover -s tests/fixtures/large-trees -p 'test_*.py'
 ```
 
 No listing API, performance benchmark, server, or UI consumes the tree yet.
+
+`filter-vectors/generate_filter_vectors.py` regenerates a byte-identical ASCII JSON manifest with
+24 vectors for the PART 24.8 filter expression language. It covers the documented examples plus
+Unicode, escaped quotes, boolean grouping, stable rejection codes, and declared length limits. Each
+accepted vector carries a canonical AST and an expected match against a fixed evaluation context.
+Seven tests verify generation, metadata, coverage, and shape. `consumerStatus` is
+`not-implemented` for Java, TypeScript, and Rust; no product parser or evaluator exists yet.
+
+```powershell
+python tests/fixtures/filter-vectors/generate_filter_vectors.py
+python -m unittest discover -s tests/fixtures/filter-vectors -p 'test_*.py'
+```
+
+The manifest claims no cross-implementation parity: it is shared input for future parsers only.
 
 ## Test environment hygiene
 
