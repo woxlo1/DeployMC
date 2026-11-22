@@ -2,8 +2,8 @@
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `a03435` after
-PR #178. PART 35 fixtures through the slow-enable stage are merged with local and post-merge
+implementation). GitHub merge evidence below was verified against `main` through `9b20b36` after
+PR #182. PART 35 fixtures through the log-noise stage are merged with local and post-merge
 evidence; issue #115 stays open for the remaining stages.)
 
 This is the session-level status page. For per-component facts use
@@ -52,7 +52,9 @@ This is the session-level status page. For per-component facts use
   category 3-5 work remains open. Issue #115 (PART 35 fixtures) is in progress: stage 1 merged the
   coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; PRs #175-#178
   added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
-  `a03435`. The issue remains open until all fixture stages land.
+  `a03435`. PR #179 recorded catch-up evidence, PR #180 added the dependency fixture, PR #181
+  aligned the conflicting-library fixture identity, and PR #182 added the log-noise fixture through
+  `9b20b36`. The issue remains open until all fixture stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -683,9 +685,51 @@ in-game command execution was performed for these fixtures.
 
 The local and remote branches `docs/issue-115-fixture-evidence`,
 `feature/issue-115-broken-enable-fixture`, `feature/issue-115-broken-descriptor-fixture`, and
-`feature/issue-115-slow-enable-fixture` were deleted after evidence was posted. Issue #115 remains
-open for the dependency, conflicting-library alignment, log-noise, wrong-platform, and data-corpora
-stages.
+`feature/issue-115-slow-enable-fixture` were deleted after evidence was posted.
+
+## PART 35 fixtures #179-#182 merge evidence
+
+The follow-up PRs were merged after all required checks passed. Each local verification used the
+ASCII junction and `node tools/build/verify-all.cjs` reported PASS for web, java, cli, python, spec,
+i18n, and compat. No running-server, harness, timeout, validator, full-integration, E2E, Web UI, or
+in-game command execution was performed for these fixtures. PR #179 was documentation-only.
+
+- PR #179 recorded catch-up evidence at `a8868d4bb5e0d9496e9bc2569cc2964da8d04e57` on
+  `2026-11-22T04:07:25Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/179#issuecomment-7073956949) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/179#issuecomment-7074018596). Post-merge
+  workflows passed: CI [44983645507](https://github.com/woxlo1/DeployMC/actions/runs/44983645507),
+  CodeQL [44983645437](https://github.com/woxlo1/DeployMC/actions/runs/44983645437), Scorecard
+  [44983645469](https://github.com/woxlo1/DeployMC/actions/runs/44983645469).
+- PR #180 added the source-built `DeployMCTestDependency` fixture at
+  `4bcf20f47e0fc886f9a1177ee0d11346d0ca6774` on `2026-11-22T04:16:51Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/180#issuecomment-7074056587) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/180#issuecomment-7074122174). Post-merge
+  workflows passed: CI [44984348108](https://github.com/woxlo1/DeployMC/actions/runs/44984348108),
+  CodeQL [44984348196](https://github.com/woxlo1/DeployMC/actions/runs/44984348196), Scorecard
+  [44984348143](https://github.com/woxlo1/DeployMC/actions/runs/44984348143).
+- PR #181 aligned the conflicting-library fixture identity at
+  `fd92cd015cd5dcf80e0d1feaa9f5b3bf939a40a6` on `2026-11-22T04:38:11Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074199434) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074321603). A commit-message
+  length failure and a temporary Maven Central 429 during CodeQL were resolved with the tree
+  unchanged; [CI fix](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074235950) and
+  [retry](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074255497) record both. Post-merge
+  workflows passed: CI [44985927120](https://github.com/woxlo1/DeployMC/actions/runs/44985927120),
+  CodeQL [44985927137](https://github.com/woxlo1/DeployMC/actions/runs/44985927137), Scorecard
+  [44985927106](https://github.com/woxlo1/DeployMC/actions/runs/44985927106).
+- PR #182 added the source-built `DeployMCTestLogNoise` fixture at
+  `9b20b366ebf29f361d106d1fa056dd901f344b11` on `2026-11-22T04:50:09Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/182#issuecomment-7074362365) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/182#issuecomment-7074443419). Post-merge
+  workflows passed: CI [44986778917](https://github.com/woxlo1/DeployMC/actions/runs/44986778917),
+  CodeQL [44986778940](https://github.com/woxlo1/DeployMC/actions/runs/44986778940), Scorecard
+  [44986779134](https://github.com/woxlo1/DeployMC/actions/runs/44986779134).
+
+The local and remote branches `docs/issue-115-evidence-catchup`,
+`feature/issue-115-dependency-fixture`, `feature/issue-115-conflicting-libs-alignment`, and
+`feature/issue-115-log-noise-fixture` were deleted after evidence was posted. Issue #115 remains
+open for the wrong-platform and data-corpora stages.
 
 ## Earlier pull-request evidence
 
