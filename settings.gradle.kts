@@ -12,4 +12,5 @@ include(
     ":tests:fixtures:plugins:deploymc-test-broken-enable",
     ":tests:fixtures:plugins:deploymc-test-broken-descriptor",
     ":tests:fixtures:plugins:deploymc-test-slow-enable",
+    ":tests:fixtures:plugins:deploymc-test-dependency",
 )
