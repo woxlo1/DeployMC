@@ -1,0 +1,323 @@
+{
+  "bom": false,
+  "consumerStatus": {
+    "java": "not-implemented",
+    "rust": "not-implemented",
+    "typescript": "not-implemented"
+  },
+  "corpusVersion": "2026-11-22.1",
+  "encoding": "UTF-8",
+  "evaluationContext": {
+    "now": "2026-01-15T09:00:00Z"
+  },
+  "generator": "tests/fixtures/filter-vectors/generate_filter_vectors.py",
+  "limits": {
+    "maxExpressionLength": 4096,
+    "maxNestingDepth": 16,
+    "maxRegexLength": 256
+  },
+  "lineSeparator": "LF",
+  "sampleEvent": {
+    "level": "WARN",
+    "logger": "MyRpgPlugin",
+    "plugin": "My Plugin",
+    "text": "timeout 12ms: NullPointerException, say \"hi\"",
+    "thread": "Server thread",
+    "timestamp": "2026-01-15T08:59:59Z"
+  },
+  "schemaVersion": 1,
+  "vectorCount": 24,
+  "vectors": [
+    {
+      "ast": {
+        "field": "level",
+        "kind": "comparison",
+        "operator": ">=",
+        "value": "WARN"
+      },
+      "category": "comparison",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "level>=WARN",
+      "id": "level-gte-warn"
+    },
+    {
+      "ast": {
+        "field": "level",
+        "kind": "comparison",
+        "operator": ">=",
+        "value": "ERROR"
+      },
+      "category": "comparison",
+      "expected": "accept",
+      "expectedMatch": false,
+      "expression": "level>=ERROR",
+      "id": "level-gte-error-no-match"
+    },
+    {
+      "ast": {
+        "field": "level",
+        "kind": "comparison",
+        "operator": "<=",
+        "value": "INFO"
+      },
+      "category": "comparison",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "level<=INFO",
+      "id": "level-lte-info"
+    },
+    {
+      "ast": {
+        "field": "logger",
+        "kind": "field",
+        "mode": "literal",
+        "value": "MyRpgPlugin"
+      },
+      "category": "field",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "logger:MyRpgPlugin",
+      "id": "logger-literal"
+    },
+    {
+      "ast": {
+        "field": "plugin",
+        "kind": "field",
+        "mode": "quoted",
+        "value": "My Plugin"
+      },
+      "category": "field",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "plugin:\"My Plugin\"",
+      "id": "plugin-quoted"
+    },
+    {
+      "ast": {
+        "field": "thread",
+        "kind": "field",
+        "mode": "regex",
+        "value": "Server thread"
+      },
+      "category": "field",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "thread:/Server thread/",
+      "id": "thread-regex"
+    },
+    {
+      "ast": {
+        "field": "text",
+        "kind": "field",
+        "mode": "substring",
+        "value": "NullPointerException"
+      },
+      "category": "field",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "text~\"NullPointerException\"",
+      "id": "text-substring"
+    },
+    {
+      "ast": {
+        "field": "text",
+        "kind": "field",
+        "mode": "regex",
+        "value": "timeout \\d+ms"
+      },
+      "category": "field",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "text~/timeout \\d+ms/",
+      "id": "text-regex"
+    },
+    {
+      "ast": {
+        "field": "since",
+        "kind": "time",
+        "value": "10m"
+      },
+      "category": "time",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "since:10m",
+      "id": "since-duration"
+    },
+    {
+      "ast": {
+        "field": "until",
+        "kind": "time",
+        "value": "2026-01-15T09:00Z"
+      },
+      "category": "time",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "until:2026-01-15T09:00Z",
+      "id": "until-timestamp"
+    },
+    {
+      "ast": {
+        "field": "logger",
+        "kind": "field",
+        "mode": "literal",
+        "value": "\u65e5\u672c\u8a9e\u30d7\u30e9\u30b0\u30a4\u30f3"
+      },
+      "category": "unicode",
+      "event": {
+        "level": "WARN",
+        "logger": "\u65e5\u672c\u8a9e\u30d7\u30e9\u30b0\u30a4\u30f3",
+        "plugin": "My Plugin",
+        "text": "timeout 12ms: NullPointerException, say \"hi\"",
+        "thread": "Server thread",
+        "timestamp": "2026-01-15T08:59:59Z"
+      },
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "logger:\u65e5\u672c\u8a9e\u30d7\u30e9\u30b0\u30a4\u30f3",
+      "id": "logger-unicode"
+    },
+    {
+      "ast": {
+        "field": "text",
+        "kind": "field",
+        "mode": "substring",
+        "value": "say \"hi\""
+      },
+      "category": "escape",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "text~\"say \\\"hi\\\"\"",
+      "id": "text-escaped-quote"
+    },
+    {
+      "ast": {
+        "kind": "boolean",
+        "operands": [
+          {
+            "kind": "not",
+            "operand": {
+              "field": "level",
+              "kind": "comparison",
+              "operator": "<=",
+              "value": "INFO"
+            }
+          },
+          {
+            "kind": "boolean",
+            "operands": [
+              {
+                "field": "logger",
+                "kind": "field",
+                "mode": "literal",
+                "value": "MyRpgPlugin"
+              },
+              {
+                "field": "plugin",
+                "kind": "field",
+                "mode": "quoted",
+                "value": "My Plugin"
+              }
+            ],
+            "operator": "OR"
+          }
+        ],
+        "operator": "AND"
+      },
+      "category": "boolean",
+      "expected": "accept",
+      "expectedMatch": true,
+      "expression": "NOT level<=INFO AND (logger:MyRpgPlugin OR plugin:\"My Plugin\")",
+      "id": "boolean-not-and-group"
+    },
+    {
+      "category": "syntax",
+      "expected": "reject",
+      "expression": "",
+      "id": "empty-expression",
+      "note": "Expression must not be empty.",
+      "reason": "syntax.empty"
+    },
+    {
+      "category": "syntax",
+      "expected": "reject",
+      "expression": "(logger:MyRpgPlugin",
+      "id": "unbalanced-parenthesis",
+      "note": "Opening parenthesis has no matching close.",
+      "reason": "syntax.unbalanced-parenthesis"
+    },
+    {
+      "category": "syntax",
+      "expected": "reject",
+      "expression": "text~\"oops",
+      "id": "unterminated-quote",
+      "note": "Quoted value has no closing quote.",
+      "reason": "syntax.unterminated-quote"
+    },
+    {
+      "category": "validation",
+      "expected": "reject",
+      "expression": "owner:admin",
+      "id": "unknown-field",
+      "note": "owner is not a declared filter field.",
+      "reason": "field.unknown"
+    },
+    {
+      "category": "validation",
+      "expected": "reject",
+      "expression": "level>=LOUD",
+      "id": "invalid-level",
+      "note": "LOUD is not a declared log level.",
+      "reason": "level.invalid"
+    },
+    {
+      "category": "validation",
+      "expected": "reject",
+      "expression": "since:10",
+      "id": "invalid-duration",
+      "note": "Relative duration needs a unit.",
+      "reason": "duration.invalid"
+    },
+    {
+      "category": "validation",
+      "expected": "reject",
+      "expression": "until:not-a-time",
+      "id": "invalid-timestamp",
+      "note": "Absolute time must be an ISO-8601 instant.",
+      "reason": "timestamp.invalid"
+    },
+    {
+      "category": "validation",
+      "expected": "reject",
+      "expression": "level~WARN",
+      "id": "unknown-operator",
+      "note": "Field comparisons use declared comparison operators.",
+      "reason": "operator.unknown"
+    },
+    {
+      "category": "limit",
+      "expected": "reject",
+      "expression": "text~/((a+)+)$/",
+      "id": "regex-complexity",
+      "note": "Nested quantifiers are rejected before evaluation.",
+      "reason": "regex.complexity"
+    },
+    {
+      "category": "limit",
+      "expected": "reject",
+      "expression": "text~/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/",
+      "id": "regex-too-long",
+      "note": "Regex body exceeds the declared length limit.",
+      "reason": "regex.too-long"
+    },
+    {
+      "category": "limit",
+      "expected": "reject",
+      "expression": "logger:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "id": "expression-too-long",
+      "note": "Expression exceeds the declared length limit.",
+      "reason": "expression.too-long"
+    }
+  ],
+  "vectorsSha256": "484e0c78f147b29cec8c1d20b03550409cf8daaedb01b9ce891107364252b404"
+}

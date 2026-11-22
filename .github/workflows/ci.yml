@@ -130,6 +130,9 @@ jobs:
       - name: Large tree fixture unit tests
         shell: bash
         run: python -m unittest discover -s tests/fixtures/large-trees -p 'test_*.py'
+      - name: Filter vector fixture unit tests
+        shell: bash
+        run: python -m unittest discover -s tests/fixtures/filter-vectors -p 'test_*.py'
       - name: Run Paper smoke entry
         shell: bash
         run: |
