@@ -326,8 +326,15 @@ Four more follow-up PRs were squash-merged with explicit verification and eviden
   passed locally and in PR CI on Ubuntu and Windows. A post-merge CodeQL autobuild hit a transient
   Maven Central 429; rerunning only the failed job produced a full pass. No product JWT verifier,
   server, or external JWKS endpoint was exercised.
+- PR #189 added manifest-pinned hostile archive and YAML generators at
+  `49f300af83b4ddee565bad4e57117963f5ac6aaa` on `2026-11-22T06:44:51Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/189#issuecomment-7075468913) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/189#issuecomment-7075543887). Four Python tests
+  passed locally and in PR CI on Ubuntu and Windows. Generated binaries stay in ignored or temporary
+  output. ZIP current-reader expectations are static source review; no product archive or YAML
+  validator, server, harness, or integration consumer was exercised.
 
-All thirteen follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
+All fourteen follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
 runs; the local and remote branches were deleted after evidence was posted. Issue #115 remains open
 until the remaining data-corpora stages land.
 
@@ -335,10 +342,10 @@ until the remaining data-corpora stages land.
 
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
   with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
-- No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches, and
-  `test/jwt-vectors-mock-jwks` were deleted after evidence was posted. The
-  `docs/issue-115-evidence-catchup-187` branch is temporary for this evidence update. Evidence is
-  recorded in the status pages and pull-request comments.
+- No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches,
+  `test/jwt-vectors-mock-jwks`, and `test/hostile-input-fixtures` were deleted after evidence was
+  posted. The `docs/issue-115-evidence-catchup-189` branch is temporary for this evidence update.
+  Evidence is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
 
