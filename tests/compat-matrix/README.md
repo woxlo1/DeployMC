@@ -13,9 +13,9 @@ generates a fresh bearer token per run. The token record is written directly to 
 host-controlled `plugins/DeployMC/tokens.d/` directory; the harness never parses a token from
 console output.
 
-The conflicting plugin is a test fixture, not a DeployMC dependency. It bundles unrelocated
-Netty 4.1.100.Final and registers a console-only command that disables DeployMC through the
-Bukkit API so the harness can take a before/after-disable thread dump pair.
+The conflicting plugin is the `DeployMCTestConflictingLibs` test fixture, not a DeployMC dependency.
+It bundles unrelocated Netty 4.1.100.Final and registers a console-only command that disables
+DeployMC through the Bukkit API so the harness can take a before/after-disable thread dump pair.
 
 Generated tokens, server logs, and work directories are not committed. `.gitignore` excludes
 `.cache/`, `results/`, and `work/`.
@@ -40,7 +40,7 @@ python tests/compat-matrix/harness.py cache-key --entry paper-26.3
 python tests/compat-matrix/harness.py run `
   --entry paper-26.3 `
   --plugin-jar plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar `
-  --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/legacy-netty-fixture-1.0.0.jar `
+  --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/deploymc-test-conflicting-libs-1.0.0.jar `
   --result tests/compat-matrix/results/compat-v1-local.json `
   --java 'path\to\jdk-25\bin\java.exe'
 ```

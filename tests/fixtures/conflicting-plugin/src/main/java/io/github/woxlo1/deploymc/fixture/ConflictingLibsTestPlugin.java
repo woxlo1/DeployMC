@@ -14,7 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * command that disables DeployMC through the Bukkit API, so the harness can compare thread dumps
  * before and after an explicit plugin disable rather than relying on a server shutdown.
  */
-public final class LegacyNettyPlugin extends JavaPlugin {
+public final class ConflictingLibsTestPlugin extends JavaPlugin {
 
   private static final String TARGET_PLUGIN = "DeployMC";
   private static final String DISABLE_COMMAND = "fixture-disable-deploymc";
@@ -22,7 +22,9 @@ public final class LegacyNettyPlugin extends JavaPlugin {
   @Override
   public void onEnable() {
     getLogger()
-        .info("LegacyNettyFixture enabled; bundled class=" + ReferenceCountUtil.class.getName());
+        .info(
+            "DeployMCTestConflictingLibs enabled; bundled class="
+                + ReferenceCountUtil.class.getName());
     PluginCommand command = getCommand(DISABLE_COMMAND);
     if (command != null) {
       command.setExecutor(this);
