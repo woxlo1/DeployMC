@@ -5,9 +5,10 @@ all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #1
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
 the authenticated snapshot adapters at `136ce00`. PART 35 stage 1 merged in PR #174 at `bdcd64a`,
-the broken-enable fixture in PR #176 at `7c2100e`, and the broken-descriptor fixture in PR #177 at
-`2508043`, all with passing post-merge `main` workflows. A source-built slow-enable fixture is staged
-with local build evidence only; issue #115 stays open for the remaining stages.)
+the broken-enable fixture in PR #176 at `7c2100e`, the broken-descriptor fixture in PR #177 at
+`2508043`, and the slow-enable fixture in PR #178 at `a03435`, all with passing post-merge `main`
+workflows. A source-built dependency fixture is staged with local build evidence only; issue #115
+stays open for the remaining stages.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -99,7 +100,8 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |
 | PART 35 broken-descriptor fixture | Test-only `DeployMCTestBrokenDescriptor` JAR with a generated `plugin.yml` that omits the required `main` entry | Targeted clean build produced the JAR and compiled test class; descriptor omission and class major 52 inspected; PR #177 merged at `2508043` with post-merge CI/CodeQL/Scorecard pass; no validation run, server, or harness use |
-| PART 35 slow-enable fixture | Test-only `DeployMCTestSlowEnable` plugin that sleeps during `onEnable`, with config/system-property delay injection and a 30s default | Targeted clean build produces the JAR; descriptor/config and class major 52 inspected; no timeout test, server, or harness execution yet |
+| PART 35 slow-enable fixture | Test-only `DeployMCTestSlowEnable` plugin that sleeps during `onEnable`, with config/system-property delay injection and a 30s default | Targeted clean build produced the JAR; descriptor/config and class major 52 inspected; PR #178 merged at `a03435` with post-merge CI/CodeQL/Scorecard pass; no timeout test, server, or harness execution |
+| PART 35 dependency fixture | Test-only `DeployMCTestDependency` plugin whose descriptor declares the absent hard dependency `DeployMCTestMissingDependency` | Targeted clean build produces the JAR; descriptor dependency entry and class major 52 inspected; no dependency warning test, server, or harness execution yet |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for

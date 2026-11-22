@@ -12,7 +12,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-broken-enable` | `plugins/deploymc-test-broken-enable/` | Available (source-built JAR; deliberate `onEnable` failure) |
 | `deploymc-test-broken-descriptor` | `plugins/deploymc-test-broken-descriptor/` | Available (source-built JAR; descriptor omits required `main`) |
 | `deploymc-test-slow-enable` | `plugins/deploymc-test-slow-enable/` | Available (source-built JAR; injectable 30s default delay) |
-| `deploymc-test-dependency` | `plugins/` | Planned |
+| `deploymc-test-dependency` | `plugins/deploymc-test-dependency/` | Available (source-built JAR; missing hard dependency) |
 | `deploymc-test-conflicting-libs` | `conflicting-plugin/` (`LegacyNettyFixture`) | Partial; name and registry alignment remain |
 | `deploymc-test-log-noise` | `plugins/` | Planned |
 | `deploymc-test-wrong-platform` | `plugins/` | Planned |
@@ -32,6 +32,7 @@ From the repository root:
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-broken-enable:build
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-broken-descriptor:build
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-slow-enable:build
+.\gradlew.bat :tests:fixtures:plugins:deploymc-test-dependency:build
 .\gradlew.bat :tests:fixtures:conflicting-plugin:shadowJar
 ```
 
@@ -43,6 +44,8 @@ produces `deploymc-test-broken-descriptor-1.0.0.jar`; its generated `plugin.yml`
 the required `main` entry so validation can be observed rejecting the JAR. The slow-enable plugin
 produces `deploymc-test-slow-enable-1.0.0.jar`; it sleeps for `slow-enable-millis` (default 30000) or
 the `deploymc.fixture.slow-enable.millis` system property to exercise verification timeout behavior.
+The dependency plugin produces `deploymc-test-dependency-1.0.0.jar`; its generated `plugin.yml`
+declares the absent hard dependency `DeployMCTestMissingDependency` to exercise dependency warnings.
 
 ## Test environment hygiene
 
