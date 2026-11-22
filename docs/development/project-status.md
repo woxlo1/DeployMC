@@ -54,7 +54,9 @@ This is the session-level status page. For per-component facts use
   added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
   `a03435`. PR #179 recorded catch-up evidence, PR #180 added the dependency fixture, PR #181
   aligned the conflicting-library fixture identity, and PR #182 added the log-noise fixture through
-  `9b20b36`. The issue remains open until all fixture stages land.
+  `9b20b36`. PR #183 recorded catch-up evidence at `9fac5f1`, PR #184 added the source-built
+  wrong-platform fixture at `4819195`, and PR #185 added the versioned traversal-corpus manifest at
+  `3b85de8`. The issue remains open until the remaining data-corpora stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -725,11 +727,34 @@ in-game command execution was performed for these fixtures. PR #179 was document
   workflows passed: CI [44986778917](https://github.com/woxlo1/DeployMC/actions/runs/44986778917),
   CodeQL [44986778940](https://github.com/woxlo1/DeployMC/actions/runs/44986778940), Scorecard
   [44986779134](https://github.com/woxlo1/DeployMC/actions/runs/44986779134).
+- PR #183 recorded merged-stage evidence for PRs #179-#182 at
+  `9fac5f1a45a14a557717d34bbe749864a06c09aa` on `2026-11-22T05:06:04Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/183#issuecomment-7074479712),
+  [commit-message fix](https://github.com/woxlo1/DeployMC/pull/183#issuecomment-7074521401), and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/183#issuecomment-7074588509). Post-merge
+  workflows passed: CI [44987917059](https://github.com/woxlo1/DeployMC/actions/runs/44987917059),
+  CodeQL [44987917093](https://github.com/woxlo1/DeployMC/actions/runs/44987917093), Scorecard
+  [44987917097](https://github.com/woxlo1/DeployMC/actions/runs/44987917097).
+- PR #184 added the source-built wrong-platform fixture at
+  `4819195bea80322ae0086621a5f62f6622e2173c` on `2026-11-22T05:17:24Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/184#issuecomment-7074637223) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/184#issuecomment-7074691718). Post-merge
+  workflows passed: CI [44988758023](https://github.com/woxlo1/DeployMC/actions/runs/44988758023),
+  CodeQL [44988758031](https://github.com/woxlo1/DeployMC/actions/runs/44988758031), Scorecard
+  [44988757990](https://github.com/woxlo1/DeployMC/actions/runs/44988757990).
+- PR #185 added the versioned per-OS traversal corpus expectations at
+  `3b85de8f9249e6049b2c2ea0b742c03600213184` on `2026-11-22T05:35:13Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/185#issuecomment-7074806104) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/185#issuecomment-7074871792). Post-merge
+  workflows passed: CI [44990052609](https://github.com/woxlo1/DeployMC/actions/runs/44990052609),
+  CodeQL [44990052604](https://github.com/woxlo1/DeployMC/actions/runs/44990052604), Scorecard
+  [44990052561](https://github.com/woxlo1/DeployMC/actions/runs/44990052561).
 
 The local and remote branches `docs/issue-115-evidence-catchup`,
-`feature/issue-115-dependency-fixture`, `feature/issue-115-conflicting-libs-alignment`, and
-`feature/issue-115-log-noise-fixture` were deleted after evidence was posted. Issue #115 remains
-open for the wrong-platform and data-corpora stages.
+`feature/issue-115-dependency-fixture`, `feature/issue-115-conflicting-libs-alignment`,
+`feature/issue-115-log-noise-fixture`, `docs/issue-115-fixture-evidence-catchup`,
+`feature/issue-115-wrong-platform-fixture`, and `feature/issue-115-traversal-os-expectations` were
+deleted after evidence was posted. Issue #115 remains open for the remaining data-corpora stages.
 
 ## Earlier pull-request evidence
 

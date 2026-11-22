@@ -82,12 +82,14 @@ REST routes in `specification/api/openapi.yaml` are implemented by `transport.Sn
 No running server, UI, or in-game command consumes those REST adapters yet, and exact-byte
 preservation for existing NFD filenames is not implemented. All REST adapters have server-free tests
 only; the full integration suite has not run, and no in-game `/deploymc` command has been exercised.
-PART 35 fixture evidence is merged through PR #182: stage 1 at `bdcd64a`, documentation evidence
+PART 35 fixture evidence is merged through PR #185: stage 1 at `bdcd64a`, documentation evidence
 in PR #175 at `a5ca873`, broken-enable in PR #176 at `7c2100e`, broken-descriptor in PR #177 at
 `2508043`, slow-enable in PR #178 at `a03435`, dependency in PR #180 at `4bcf20f`, conflicting-library
-alignment in PR #181 at `fd92cd0`, and log-noise in PR #182 at `9b20b36`. All have passing
-post-merge `main` workflows; issue #115 stays open for the remaining fixture stages. No server, UI,
-in-game command, harness, full integration suite, or E2E run consumes the new fixtures yet.
+alignment in PR #181 at `fd92cd0`, log-noise in PR #182 at `9b20b36`, catch-up evidence in PR #183 at
+`9fac5f1`, wrong-platform in PR #184 at `4819195`, and versioned per-OS traversal expectations in
+PR #185 at `3b85de8`. All have passing post-merge `main` workflows; issue #115 stays open for the
+remaining data-corpora stages. No server, UI, in-game command, harness, full integration suite, or
+E2E run consumes the new fixtures yet.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The

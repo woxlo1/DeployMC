@@ -8,9 +8,10 @@ the authenticated snapshot adapters at `136ce00`. PART 35 stage 1 merged in PR #
 the broken-enable fixture in PR #176 at `7c2100e`, the broken-descriptor fixture in PR #177 at
 `2508043`, the slow-enable fixture in PR #178 at `a03435`, the dependency fixture in PR #180 at
 `4bcf20f`, the conflicting-library alignment in PR #181 at `fd92cd0`, and the log-noise fixture in
-PR #182 at `9b20b36`, all with passing post-merge `main` workflows. A source-built wrong-platform
-fixture and a versioned traversal-corpus manifest are staged with local evidence only; issue #115
-stays open for the remaining stages.)
+PR #182 at `9b20b36`. PR #183 recorded catch-up evidence at `9fac5f1`, PR #184 added the
+source-built wrong-platform fixture at `4819195`, and PR #185 added the versioned traversal-corpus
+manifest at `3b85de8`, all with passing post-merge `main` workflows. Issue #115 stays open for the
+remaining data-corpora stages.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -68,7 +69,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 328 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, file operation, snapshot store, diff engine, validation, file/validation REST adapter, and snapshot REST adapter cases | Gradle `test` tasks; JUnit XML: 328 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 331 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, and snapshot REST adapter cases | Gradle `test` tasks; JUnit XML: 331 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 63 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
@@ -106,8 +107,8 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 35 dependency fixture | Test-only `DeployMCTestDependency` plugin whose descriptor declares the absent hard dependency `DeployMCTestMissingDependency` | Targeted clean build produced the JAR; descriptor dependency entry and class major 52 inspected; PR #180 merged at `4bcf20f` with post-merge CI/CodeQL/Scorecard pass; no dependency warning test, server, or harness execution |
 | PART 35 conflicting-library alignment | `DeployMCTestConflictingLibs` shadow JAR with unrelocated Netty 4.1.100.Final and canonical harness registry constants | Targeted clean shadow build produced the canonical JAR; ZIP descriptor, canonical class, 2,988 unrelocated Netty classes, and class major 52 inspected; offline harness suite grew to 15 passing tests; PR #181 merged at `fd92cd0` with post-merge CI/CodeQL/Scorecard pass; no running server or full harness execution |
 | PART 35 log-noise fixture | Test-only `DeployMCTestLogNoise` plugin that emits all Java logging levels at config/system-property tick rates and cancels its tasks on disable | Targeted clean build produced the JAR; ZIP descriptor, seven config rates, and class major 52 inspected; PR #182 merged at `9b20b36` with post-merge CI/CodeQL/Scorecard pass; no backpressure test, server, or harness execution |
-| PART 35 wrong-platform fixture | Test-only JAR with a Velocity `velocity-plugin.json` descriptor and no Bukkit `plugin.yml` | Targeted clean build produced the JAR; Velocity descriptor, absence of `plugin.yml`, and class major 52 inspected; no validator run, server, or harness execution |
-| PART 35 traversal per-OS expectations | Versioned `corpus-manifest.properties` with schema/corpus versions, SHA-256 digests, nine categories, and a per-OS override mechanism; all current outcomes are `os=all` because the resolver applies Windows rules on every host | Generator regenerated byte-identically with 2,736 reject and 29 allow payloads decoded identically to the prior corpus; 19 sandbox tests (18 passed, 1 skipped) and 3 Python determinism tests passed; no scheduled fuzz run or cross-OS CI execution yet |
+| PART 35 wrong-platform fixture | Test-only JAR with a Velocity `velocity-plugin.json` descriptor and no Bukkit `plugin.yml` | Targeted clean build produced the JAR; Velocity descriptor, absence of `plugin.yml`, and class major 52 inspected; PR #184 merged at `4819195` with post-merge CI/CodeQL/Scorecard pass; no validator run, server, or harness execution |
+| PART 35 traversal per-OS expectations | Versioned `corpus-manifest.properties` with schema/corpus versions, SHA-256 digests, nine categories, and a per-OS override mechanism; all current outcomes are `os=all` because the resolver applies Windows rules on every host | Generator regenerated byte-identically with 2,736 reject and 29 allow payloads decoded identically to the prior corpus; 19 sandbox tests (18 passed, 1 skipped), 3 Python determinism tests, and the full local toolchain check passed; PR CI corpus tests passed on Ubuntu and Windows; PR #185 merged at `3b85de8` with post-merge CI/CodeQL/Scorecard pass; no scheduled fuzz run, server, or harness execution |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
@@ -728,7 +729,7 @@ The following are documented as intended behavior. They are **not** code.
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
 | `specification/` | REST, WebSocket, error, config, audit, deployment, and content-validation contracts; threat model draft |
-| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, conflicting-library fixture plugin, deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads, PART 35 coverage map, and source-built versioned healthy plugin emitting 1.0.0/1.1.0 JARs |
+| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 15 offline tests, conflicting-library and wrong-platform fixture plugins, deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads plus a versioned per-OS manifest, PART 35 coverage map, and source-built versioned healthy plugin emitting 1.0.0/1.1.0 JARs |
 
 ## How to verify this page
 
