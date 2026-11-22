@@ -3,7 +3,7 @@
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
 implementation). GitHub merge evidence below was verified against `main` through `136ce00` after
-PR #172.
+PR #172. The first PART 35 fixture stage has targeted local build evidence only.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -48,7 +48,9 @@ This is the session-level status page. For per-component facts use
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
-  category 3-5 work remains open.
+  category 3-5 work remains open. Issue #115 (PART 35 fixtures) is in progress: stage 1 adds the
+  coverage map and a source-built versioned healthy plugin; the issue remains open until all fixture
+  stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -614,6 +616,16 @@ passed: CI [44974693821](https://github.com/woxlo1/DeployMC/actions/runs/4497469
 [44974693864](https://github.com/woxlo1/DeployMC/actions/runs/44974693864), and Scorecard
 [44974693855](https://github.com/woxlo1/DeployMC/actions/runs/44974693855). The local and remote
 `feature/wp-2.6-snapshot-adapters` branches were deleted after the evidence was posted.
+
+## PART 35 fixture stage 1 verification (local, pre-merge)
+
+The coverage map is in `tests/fixtures/README.md`. The targeted Gradle clean build
+`:tests:fixtures:plugins:deploymc-test-a:clean :tests:fixtures:plugins:deploymc-test-a:build` ran
+through the ASCII junction with `--no-configuration-cache` and produced `deploymc-test-a-1.0.0.jar`
+and `deploymc-test-a-1.1.0.jar`. ZIP inspection showed matching `plugin.yml` versions and
+`fixture-message` config values, and class-byte inspection showed major 52 for both `main` and
+`version110` outputs. No running-server, full-integration, E2E, Web UI, or in-game command execution
+was performed. CI remains the merge authority.
 
 ## Earlier pull-request evidence
 
