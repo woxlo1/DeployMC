@@ -82,6 +82,10 @@ REST routes in `specification/api/openapi.yaml` are implemented by `transport.Sn
 No running server, UI, or in-game command consumes those REST adapters yet, and exact-byte
 preservation for existing NFD filenames is not implemented. All REST adapters have server-free tests
 only; the full integration suite has not run, and no in-game `/deploymc` command has been exercised.
+Issue #115 stage 1 merged the PART 35 coverage map and versioned healthy plugin in
+[PR #174](https://github.com/woxlo1/DeployMC/pull/174) at `bdcd64a`; issue #115 stays open for the
+remaining fixture stages. No server, UI, in-game command, harness, full integration suite, or E2E
+run consumes the new fixtures yet.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The

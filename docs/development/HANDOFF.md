@@ -253,14 +253,20 @@ Stage 1 of issue #115 adds the PART 35 coverage map at `tests/fixtures/README.md
 test-only `DeployMCTestA` plugin with stable identity and 1.0.0/1.1.0 JARs. A targeted Gradle clean
 build produced both JARs; descriptor/config ZIP entries and Java 8 class major 52 were inspected. No
 harness, running server, full integration suite, E2E run, Web UI, or in-game command consumes the
-fixtures yet. Issue #115 remains open until the remaining PART 35 plugins and corpora land.
+fixtures yet. Issue #115 remains open until the remaining PART 35 plugins and corpora land. PR #174
+squash-merged this stage at `bdcd64a6a329ce9c3c37a541ee850137d44b30d9` on `2026-11-22T02:56:30Z`.
+The verification comment is at
+<https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073079151> and the post-merge evidence
+comment is at <https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073263008>; post-merge CI,
+CodeQL, and Scorecard passed, and the local and remote feature branches were deleted.
 
 ## In flight
 
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
   with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
-- No WP-2.1-WP-2.5 branches remain, and WP-2.6 feature/evidence branches were deleted after evidence
-  was posted. Evidence is recorded in the status pages and pull-request comments.
+- No WP-2.1-WP-2.5 branches remain, and WP-2.6 and PART 35 stage-1 feature/evidence branches were
+  deleted after evidence was posted. Evidence is recorded in the status pages and pull-request
+  comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
 

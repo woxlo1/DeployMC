@@ -2,8 +2,9 @@
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `136ce00` after
-PR #172. The first PART 35 fixture stage has targeted local build evidence only.)
+implementation). GitHub merge evidence below was verified against `main` through `bdcd64a` after
+PR #174. The first PART 35 fixture stage is merged with local and post-merge evidence; issue #115
+stays open for the remaining stages.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -48,9 +49,9 @@ This is the session-level status page. For per-component facts use
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
-  category 3-5 work remains open. Issue #115 (PART 35 fixtures) is in progress: stage 1 adds the
-  coverage map and a source-built versioned healthy plugin; the issue remains open until all fixture
-  stages land.
+  category 3-5 work remains open. Issue #115 (PART 35 fixtures) is in progress: stage 1 merged the
+  coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; the issue remains
+  open until all fixture stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -629,6 +630,20 @@ tasks were changed to use task-local values and `.\gradlew.bat build verifyJava8
 rerun through the same junction with configuration cache enabled: `BUILD SUCCESSFUL` and the cache
 entry was stored. No running-server, full-integration, E2E, Web UI, or in-game command execution was
 performed. CI remains the merge authority.
+
+## PART 35 fixture stage 1 merge evidence
+
+The explicit verification comment for head commit `5f2a8be` is at
+<https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073079151>, with the CI failure and fix
+follow-up at <https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073148995>. PR #174
+squash-merged to `main` at `bdcd64a6a329ce9c3c37a541ee850137d44b30d9` on `2026-11-22T02:56:30Z`. The
+post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073263008>. Post-merge `main` workflows
+passed: CI [44978349816](https://github.com/woxlo1/DeployMC/actions/runs/44978349816), CodeQL
+[44978349824](https://github.com/woxlo1/DeployMC/actions/runs/44978349824), and Scorecard
+[44978349870](https://github.com/woxlo1/DeployMC/actions/runs/44978349870). The local and remote
+`feature/issue-115-plugin-fixtures` branches were deleted after the evidence was posted. Issue #115
+remains open for the remaining PART 35 stages.
 
 ## Earlier pull-request evidence
 
