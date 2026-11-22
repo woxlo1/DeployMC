@@ -17,7 +17,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-log-noise` | `plugins/deploymc-test-log-noise/` | Available (source-built JAR; configurable all-level rates) |
 | `deploymc-test-wrong-platform` | `plugins/deploymc-test-wrong-platform/` | Available (source-built JAR; Velocity descriptor, no `plugin.yml`) |
 | Traversal corpus with per-OS expectations | `../security/sandbox/` | Available (versioned manifest, categories, digests, and per-OS override mechanism) |
-| JWT vectors, throwaway keys, mock JWKS | Planned under `../security/` | Not started |
+| JWT vectors, throwaway keys, mock JWKS | `../security/jwt/` | Available (deterministic vectors, in-memory keys, localhost mock JWKS) |
 | Malformed archive and YAML-bomb generators | Planned under `../security/` | Not started |
 | Log, config, large-tree, and filter vectors | Planned under `../fixtures/` | Not started |
 
@@ -75,6 +75,20 @@ python -m unittest discover -s tests/security/sandbox -p 'test_*.py'
 
 The corpus currently contains 2,736 reject and 29 allow payloads. No scheduled fuzz run or
 cross-OS corpus execution has been performed from these fixtures.
+
+`../security/jwt/generate_jwt_vectors.py` regenerates 11 versioned vectors, two public JWKS
+documents, and a SHA-256 manifest. Three throwaway 2048-bit RSA keys are regenerated in memory from
+fixed seeds; no private key is written or committed. The vectors cover valid, expired,
+nbf-in-future, wrong audience, wrong issuer, `alg=none`, algorithm confusion, tampered signature,
+unknown kid, rotated key, and retired key after rotation. `../security/jwt/mock_jwks_server.py`
+serves those public keys from a dynamic localhost port with rotation and 503 states.
+
+```powershell
+python tests/security/jwt/generate_jwt_vectors.py
+python -m unittest discover -s tests/security/jwt -p 'test_*.py'
+```
+
+No product JWT verifier, running server, or external JWKS endpoint consumes these fixtures yet.
 
 ## Test environment hygiene
 
