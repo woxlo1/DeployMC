@@ -297,10 +297,25 @@ Four more follow-up PRs were squash-merged with explicit verification and eviden
   `9b20b366ebf29f361d106d1fa056dd901f344b11` on `2026-11-22T04:50:09Z`;
   [verification](https://github.com/woxlo1/DeployMC/pull/182#issuecomment-7074362365) and
   [evidence](https://github.com/woxlo1/DeployMC/pull/182#issuecomment-7074443419).
+- PR #183 recorded merged-stage evidence for PRs #179-#182 at
+  `9fac5f1a45a14a557717d34bbe749864a06c09aa` on `2026-11-22T05:06:04Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/183#issuecomment-7074479712),
+  [commit-message fix](https://github.com/woxlo1/DeployMC/pull/183#issuecomment-7074521401), and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/183#issuecomment-7074588509).
+- PR #184 added the source-built wrong-platform fixture at
+  `4819195bea80322ae0086621a5f62f6622e2173c` on `2026-11-22T05:17:24Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/184#issuecomment-7074637223) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/184#issuecomment-7074691718).
+- PR #185 added the versioned per-OS traversal corpus expectations at
+  `3b85de8f9249e6049b2c2ea0b742c03600213184` on `2026-11-22T05:35:13Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/185#issuecomment-7074806104) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/185#issuecomment-7074871792). The PR CI
+  corpus tests passed on Ubuntu and Windows; no scheduled fuzz run, server, or harness execution
+  was performed locally.
 
-All eight follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
+All eleven follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
 runs; the local and remote branches were deleted after evidence was posted. Issue #115 remains open
-until the remaining PART 35 plugins and corpora land.
+until the remaining data-corpora stages land.
 
 ## In flight
 
