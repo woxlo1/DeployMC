@@ -19,7 +19,8 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | Traversal corpus with per-OS expectations | `../security/sandbox/` | Available (versioned manifest, categories, digests, and per-OS override mechanism) |
 | JWT vectors, throwaway keys, mock JWKS | `../security/jwt/` | Available (deterministic vectors, in-memory keys, localhost mock JWKS) |
 | Malformed archive and YAML-bomb generators | `../security/hostile-inputs/` | Available (generated at test time, manifest-pinned, no committed binaries) |
-| Log, config, large-tree, and filter vectors | Planned under `../fixtures/` | Not started |
+| Log corpora with control and Unicode signals | `log-corpora/` | Available (generated at test time, manifest-pinned) |
+| Config, large-tree, and filter vectors | Planned under `./` | Not started |
 
 "Planned" is not evidence of support. This table is updated as each reviewable stage lands.
 
@@ -104,6 +105,19 @@ python -m unittest discover -s tests/security/hostile-inputs -p 'test_*.py'
 ```
 
 No product validator, running server, or integration consumer uses these fixtures yet.
+
+`log-corpora/generate_log_corpora.py` regenerates four UTF-8 corpora: multi-line stack traces, ANSI
+and OSC control sequences, boundary and oversized lines, and unusual Unicode. Outputs stay in an
+ignored `generated/` directory or a test `TemporaryDirectory`; the manifest pins digests, byte and
+code-point counts, and `current.consumer=not-implemented`. The manifest and six tests are committed;
+no generated log text is committed.
+
+```powershell
+python tests/fixtures/log-corpora/generate_log_corpora.py
+python -m unittest discover -s tests/fixtures/log-corpora -p 'test_*.py'
+```
+
+No console consumer, server, Web UI, or rendering code uses these corpora yet.
 
 ## Test environment hygiene
 

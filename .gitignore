@@ -72,3 +72,4 @@ temp/
 *.tmp
 *.log
 tests/security/hostile-inputs/generated/
+tests/fixtures/log-corpora/generated/

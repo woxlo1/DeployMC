@@ -146,6 +146,10 @@ function buildSteps() {
           command: `${q(basePython)} -m unittest discover -s tests/security/hostile-inputs -p ${q("test_*.py")}`,
           cwd: root,
         },
+        {
+          command: `${q(basePython)} -m unittest discover -s tests/fixtures/log-corpora -p ${q("test_*.py")}`,
+          cwd: root,
+        },
       ],
     },
   ];

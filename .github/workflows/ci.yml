@@ -121,6 +121,9 @@ jobs:
       - name: Hostile input fixture unit tests
         shell: bash
         run: python -m unittest discover -s tests/security/hostile-inputs -p 'test_*.py'
+      - name: Log corpus fixture unit tests
+        shell: bash
+        run: python -m unittest discover -s tests/fixtures/log-corpora -p 'test_*.py'
       - name: Run Paper smoke entry
         shell: bash
         run: |
