@@ -241,16 +241,20 @@ Last updated: 2026-11-22. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   assertions passed; the full build ran 328 tests with 0 failures, 0 errors, and 1 skipped symlink
   test. All seven toolchains reported `PASS` through `verify-all.cjs`, i18n reported 0 errors and 0
   warnings, and `git diff --check` was clean. No running-server smoke, full integration suite, E2E
-  run, in-game command, or UI check was performed.
+  run, in-game command, or UI check was performed. It merged in PR #172 at `136ce00` with issue #55
+  closed as completed. The verification comment is at
+  <https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072665699> and the post-merge evidence
+  comment is at <https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072756119>; post-merge CI,
+  CodeQL, and Scorecard passed, and its local and remote feature branches were deleted.
 
 ## In flight
 
-- The snapshot adapter PR is under review. Its routes stay behind the bearer-token gate with no
-  bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
-- No WP-2.1-WP-2.5 branches remain, and all four previously merged WP-2.6 branches were deleted after
-  evidence was posted. Evidence is recorded in the status pages and pull-request comments.
+- No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
+  with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
+- No WP-2.1-WP-2.5 branches remain, and WP-2.6 feature/evidence branches were deleted after evidence
+  was posted. Evidence is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 76 (#55-#130). Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -260,11 +264,9 @@ Last updated: 2026-11-22. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Merge the snapshot adapter PR, post the post-merge evidence comment, close issue #55, record the
-   merge evidence in the status pages, and delete the local and remote feature branch.
-2. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+1. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
    order.
-3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

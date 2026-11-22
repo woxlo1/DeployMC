@@ -1,9 +1,9 @@
 # Project Status
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-all merged WP-2.6 specification and file/validation adapter stages, and the snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `88a6541` after
-PR #171; the snapshot adapter merge evidence is added after its PR merges.
+all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
+implementation). GitHub merge evidence below was verified against `main` through `136ce00` after
+PR #172.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -41,14 +41,14 @@ This is the session-level status page. For per-component facts use
   closed as completed. WP-2.5 first stage merged in PR #165 at `6cd6015`; the Java 8 `core.validation`
   implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. WP-2.6 first stage
   merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`; the
-  snapshot-route specification merged in PR #170 at `bf82e26`; and its merge evidence merged in PR
-  #171 at `88a6541`. The snapshot REST adapters are implemented in this change. Verification and
-  post-merge evidence are recorded below.
+  snapshot-route specification merged in PR #170 at `bf82e26`; its merge evidence merged in PR #171 at
+  `88a6541`; and the authenticated snapshot REST adapters merged in PR #172 at `136ce00` with issue
+  #55 closed as completed. Verification and post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
-  file/validation adapters and implements all six snapshot routes; issue #55 closes after merge
-  evidence, and category 3-5 work remains open.
+  file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
+  category 3-5 work remains open.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -602,6 +602,18 @@ authenticated actor, prune accepts one target and never starts GC, and error det
 host paths, tokens, or file content. No running-server smoke test, full integration suite, E2E run,
 in-game `/deploymc` execution, or Web UI browser check was performed. The single provisioned token
 remains admin-equivalent until Phase 3 RBAC.
+
+## WP-2.6 snapshot adapter merge evidence
+
+The explicit verification comment for head commit `8763082` is at
+<https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072665699>. PR #172 squash-merged to
+`main` at `136ce00ffc67b472872d8966306e29e1e5f36b39` on `2026-11-22T02:08:39Z`, and issue #55 closed
+as completed at `2026-11-22T02:08:41Z`. The post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072756119>. Post-merge `main` workflows
+passed: CI [44974693821](https://github.com/woxlo1/DeployMC/actions/runs/44974693821), CodeQL
+[44974693864](https://github.com/woxlo1/DeployMC/actions/runs/44974693864), and Scorecard
+[44974693855](https://github.com/woxlo1/DeployMC/actions/runs/44974693855). The local and remote
+`feature/wp-2.6-snapshot-adapters` branches were deleted after the evidence was posted.
 
 ## Earlier pull-request evidence
 
