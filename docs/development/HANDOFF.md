@@ -253,18 +253,38 @@ Stage 1 of issue #115 adds the PART 35 coverage map at `tests/fixtures/README.md
 test-only `DeployMCTestA` plugin with stable identity and 1.0.0/1.1.0 JARs. A targeted Gradle clean
 build produced both JARs; descriptor/config ZIP entries and Java 8 class major 52 were inspected. No
 harness, running server, full integration suite, E2E run, Web UI, or in-game command consumes the
-fixtures yet. Issue #115 remains open until the remaining PART 35 plugins and corpora land. PR #174
-squash-merged this stage at `bdcd64a6a329ce9c3c37a541ee850137d44b30d9` on `2026-11-22T02:56:30Z`.
-The verification comment is at
+fixtures yet. PR #174 squash-merged this stage at `bdcd64a6a329ce9c3c37a541ee850137d44b30d9` on
+`2026-11-22T02:56:30Z`. The verification comment is at
 <https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073079151> and the post-merge evidence
-comment is at <https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073263008>; post-merge CI,
-CodeQL, and Scorecard passed, and the local and remote feature branches were deleted.
+comment is at <https://github.com/woxlo1/DeployMC/pull/174#issuecomment-7073263008>.
+
+Four follow-up PRs were squash-merged with explicit verification and evidence comments:
+
+- PR #175 recorded the stage-1 evidence at `a5ca87345b213838f0aa7f39135390f1d4ac4d81` on
+  `2026-11-22T03:12:22Z`; [verification](https://github.com/woxlo1/DeployMC/pull/175#issuecomment-7073361203)
+  and [evidence](https://github.com/woxlo1/DeployMC/pull/175#issuecomment-7073504322).
+- PR #176 added the source-built `DeployMCTestBrokenEnable` fixture at
+  `7c2100e5663c68becc31110d1f4c645939241e60` on `2026-11-22T03:33:06Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/176#issuecomment-7073565824) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/176#issuecomment-7073646436).
+- PR #177 added the source-built `DeployMCTestBrokenDescriptor` fixture at
+  `250804358a3c99a8a623bc339423201ccfa7d09c` on `2026-11-22T03:44:09Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/177#issuecomment-7073702671) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/177#issuecomment-7073790173).
+- PR #178 added the source-built `DeployMCTestSlowEnable` fixture at
+  `a034352bed3b8a47d4daf5f15aaf896223ad10d0` on `2026-11-22T03:56:16Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/178#issuecomment-7073841525) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/178#issuecomment-7073916898).
+
+Every follow-up had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard runs;
+the local and remote branches were deleted after evidence was posted. Issue #115 remains open until
+the remaining PART 35 plugins and corpora land.
 
 ## In flight
 
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
   with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
-- No WP-2.1-WP-2.5 branches remain, and WP-2.6 and PART 35 stage-1 feature/evidence branches were
+- No WP-2.1-WP-2.5 branches remain, and WP-2.6 and all merged PART 35 feature/evidence branches were
   deleted after evidence was posted. Evidence is recorded in the status pages and pull-request
   comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
