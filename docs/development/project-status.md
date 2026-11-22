@@ -2,8 +2,8 @@
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `2a253a1` after
-PR #191. PART 35 fixtures through the log corpora stage are merged with local and post-merge
+implementation). GitHub merge evidence below was verified against `main` through `2b6d0f5` after
+PR #193. PART 35 fixtures through the config corpora stage are merged with local and post-merge
 evidence; issue #115 stays open for the remaining stages.)
 
 This is the session-level status page. For per-component facts use
@@ -58,8 +58,9 @@ This is the session-level status page. For per-component facts use
   wrong-platform fixture at `4819195`, PR #185 added the versioned traversal-corpus manifest at
   `3b85de8`, PR #186 recorded catch-up evidence at `cfd47b6`, PR #187 added deterministic JWT vectors
   with a localhost mock JWKS server at `ce4fdc7`, PR #189 added hostile archive and YAML generators
-  at `49f300a`, PR #190 recorded catch-up evidence at `49a9375`, and PR #191 added log corpora at
-  `2a253a1`. The issue remains open until the remaining data-corpora stages land.
+  at `49f300a`, PR #190 recorded catch-up evidence at `49a9375`, PR #191 added log corpora at
+  `2a253a1`, PR #192 recorded catch-up evidence at `211e57f`, and PR #193 added config corpora at
+  `2b6d0f5`. The issue remains open until the remaining data-corpora stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -794,6 +795,24 @@ in-game command execution was performed for these fixtures. PR #179 was document
   [45010024232](https://github.com/woxlo1/DeployMC/actions/runs/45010024232), Scorecard
   [45010024242](https://github.com/woxlo1/DeployMC/actions/runs/45010024242). No product console
   consumer, server, Web UI, or renderer was exercised.
+- PR #192 recorded docs-only catch-up evidence at
+  `211e57f54cd00e15fff187bccf29e24dca6399b4` on `2026-11-22T10:06:53Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/192#issuecomment-7077541582) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/192#issuecomment-7077623183). All required
+  checks passed. Post-merge workflows passed: CI
+  [45010825570](https://github.com/woxlo1/DeployMC/actions/runs/45010825570), CodeQL
+  [45010825571](https://github.com/woxlo1/DeployMC/actions/runs/45010825571), Scorecard
+  [45010825633](https://github.com/woxlo1/DeployMC/actions/runs/45010825633).
+- PR #193 added manifest-pinned config corpora at
+  `2b6d0f54cf69f32bfaa93b996914c434a53d0531` on `2026-11-22T10:26:30Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/193#issuecomment-7077762217) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/193#issuecomment-7077835172). Four Python tests
+  and one Java test passed locally and in PR CI on Ubuntu and Windows; full local toolchain
+  verification passed. Post-merge workflows passed: CI
+  [45012455730](https://github.com/woxlo1/DeployMC/actions/runs/45012455730), CodeQL
+  [45012455726](https://github.com/woxlo1/DeployMC/actions/runs/45012455726), Scorecard
+  [45012455722](https://github.com/woxlo1/DeployMC/actions/runs/45012455722). No server or host
+  configuration was read.
 
 The local and remote branches `docs/issue-115-evidence-catchup`,
 `feature/issue-115-dependency-fixture`, `feature/issue-115-conflicting-libs-alignment`,
@@ -801,8 +820,9 @@ The local and remote branches `docs/issue-115-evidence-catchup`,
 `feature/issue-115-wrong-platform-fixture`, `feature/issue-115-traversal-os-expectations`,
 `docs/issue-115-evidence-catchup-185`, `docs/issue-115-evidence-catchup-187`,
 `test/jwt-vectors-mock-jwks`, `test/hostile-input-fixtures`, `docs/issue-115-evidence-catchup-189`,
-and `test/log-corpora-fixtures` were deleted after evidence was posted. The
-`docs/issue-115-evidence-catchup-191` branch is temporary for this evidence update.
+`test/log-corpora-fixtures`, `docs/issue-115-evidence-catchup-191`, and
+`test/config-corpora-fixtures` were deleted after evidence was posted. The
+`docs/issue-115-evidence-catchup-193` branch is temporary for this evidence update.
 Issue #115 remains open for the remaining data-corpora stages.
 
 ## Earlier pull-request evidence
