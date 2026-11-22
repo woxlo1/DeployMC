@@ -9,7 +9,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | Requirement | Location | Status |
 |---|---|---|
 | `deploymc-test-a` v1.0.0 and v1.1.0 | `plugins/deploymc-test-a/` | Available (source-built JARs) |
-| `deploymc-test-broken-enable` | `plugins/` | Planned |
+| `deploymc-test-broken-enable` | `plugins/deploymc-test-broken-enable/` | Available (source-built JAR; deliberate `onEnable` failure) |
 | `deploymc-test-broken-descriptor` | `plugins/` | Planned |
 | `deploymc-test-slow-enable` | `plugins/` | Planned |
 | `deploymc-test-dependency` | `plugins/` | Planned |
@@ -29,11 +29,14 @@ From the repository root:
 
 ```powershell
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-a:build
+.\gradlew.bat :tests:fixtures:plugins:deploymc-test-broken-enable:build
 .\gradlew.bat :tests:fixtures:conflicting-plugin:shadowJar
 ```
 
 The versioned plugin produces `deploymc-test-a-1.0.0.jar` and `deploymc-test-a-1.1.0.jar`. Both use a
 stable plugin name so a deployment test can replace the JAR without changing the plugin identity.
+The broken-enable plugin produces `deploymc-test-broken-enable-1.0.0.jar`; it saves its config and
+then throws during `onEnable` to exercise failure and rollback signals.
 
 ## Test environment hygiene
 
