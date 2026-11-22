@@ -276,9 +276,31 @@ Four follow-up PRs were squash-merged with explicit verification and evidence co
   [verification](https://github.com/woxlo1/DeployMC/pull/178#issuecomment-7073841525) and
   [evidence](https://github.com/woxlo1/DeployMC/pull/178#issuecomment-7073916898).
 
-Every follow-up had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard runs;
-the local and remote branches were deleted after evidence was posted. Issue #115 remains open until
-the remaining PART 35 plugins and corpora land.
+Four more follow-up PRs were squash-merged with explicit verification and evidence comments:
+
+- PR #179 recorded merged-stage evidence at `a8868d4bb5e0d9496e9bc2569cc2964da8d04e57` on
+  `2026-11-22T04:07:25Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/179#issuecomment-7073956949) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/179#issuecomment-7074018596).
+- PR #180 added the source-built `DeployMCTestDependency` fixture at
+  `4bcf20f47e0fc886f9a1177ee0d11346d0ca6774` on `2026-11-22T04:16:51Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/180#issuecomment-7074056587) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/180#issuecomment-7074122174).
+- PR #181 aligned the conflicting-library fixture identity at
+  `fd92cd015cd5dcf80e0d1feaa9f5b3bf939a40a6` on `2026-11-22T04:38:11Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074199434) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074321603). The initial
+  commit-message length failure and a temporary Maven Central 429 during CodeQL were resolved and
+  recorded in [CI fix](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074235950) and
+  [retry](https://github.com/woxlo1/DeployMC/pull/181#issuecomment-7074255497) comments.
+- PR #182 added the source-built `DeployMCTestLogNoise` fixture at
+  `9b20b366ebf29f361d106d1fa056dd901f344b11` on `2026-11-22T04:50:09Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/182#issuecomment-7074362365) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/182#issuecomment-7074443419).
+
+All eight follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
+runs; the local and remote branches were deleted after evidence was posted. Issue #115 remains open
+until the remaining PART 35 plugins and corpora land.
 
 ## In flight
 
