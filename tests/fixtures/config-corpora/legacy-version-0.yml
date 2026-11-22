@@ -1,0 +1,4 @@
+config-version: 0
+language: en
+auth:
+  mode: token

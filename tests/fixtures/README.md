@@ -20,7 +20,8 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | JWT vectors, throwaway keys, mock JWKS | `../security/jwt/` | Available (deterministic vectors, in-memory keys, localhost mock JWKS) |
 | Malformed archive and YAML-bomb generators | `../security/hostile-inputs/` | Available (generated at test time, manifest-pinned, no committed binaries) |
 | Log corpora with control and Unicode signals | `log-corpora/` | Available (generated at test time, manifest-pinned) |
-| Config, large-tree, and filter vectors | Planned under `./` | Not started |
+| Config corpora for valid, invalid, and legacy configurations | `config-corpora/` | Available (committed YAML, loader/validator tested) |
+| Large-tree and filter vectors | Planned under `./` | Not started |
 
 "Planned" is not evidence of support. This table is updated as each reviewable stage lands.
 
@@ -118,6 +119,22 @@ python -m unittest discover -s tests/fixtures/log-corpora -p 'test_*.py'
 ```
 
 No console consumer, server, Web UI, or rendering code uses these corpora yet.
+
+`config-corpora/generate_config_corpora.py` regenerates seven small ASCII YAML files byte-identically:
+current valid, warning-only valid, two invalid values, legacy version 0, future version 2, and
+missing version. The manifest pins digests, expected loader outcomes, and expected validator finding
+keys. Unlike the other security corpora, these files are committed because they are small and are
+fed directly to Java tests.
+
+```powershell
+python tests/fixtures/config-corpora/generate_config_corpora.py
+python -m unittest discover -s tests/fixtures/config-corpora -p 'test_*.py'
+```
+
+`core.config.ConfigCorpusTest` reads the same files from the test classpath through
+`ConfigValidator` and `ConfigManager`. It confirms the two valid files load, the warning file keeps
+its root-key warning, and the five bad files fail closed with the expected localized message keys.
+No server, host configuration, network resource, or real secret is touched.
 
 ## Test environment hygiene
 

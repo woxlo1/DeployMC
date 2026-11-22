@@ -20,3 +20,10 @@ tasks.named<org.gradle.language.jvm.tasks.ProcessResources>("processResources") 
         into("config")
     }
 }
+
+// Config corpora live with the other fixture tests and are read by ConfigCorpusTest.
+tasks.named<org.gradle.language.jvm.tasks.ProcessResources>("processTestResources") {
+    from(rootProject.layout.projectDirectory.dir("tests/fixtures/config-corpora")) {
+        into("config-corpora")
+    }
+}
