@@ -30,8 +30,8 @@ val generatePluginYml by tasks.registering {
         file.parentFile.mkdirs()
         file.writeText(
             listOf(
-                "name: LegacyNettyFixture",
-                "main: io.github.woxlo1.deploymc.fixture.LegacyNettyPlugin",
+                "name: DeployMCTestConflictingLibs",
+                "main: io.github.woxlo1.deploymc.fixture.ConflictingLibsTestPlugin",
                 "version: \"1.0.0\"",
                 "api-version: '1.13'",
                 "commands:",
@@ -51,7 +51,7 @@ tasks.named("processResources") { dependsOn(generatePluginYml) }
 tasks.named("sourcesJar") { dependsOn(generatePluginYml) }
 
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    archiveBaseName.set("legacy-netty-fixture")
+    archiveBaseName.set("deploymc-test-conflicting-libs")
     archiveVersion.set("1.0.0")
     archiveClassifier.set("")
     exclude("module-info.class")
