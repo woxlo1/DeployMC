@@ -2,9 +2,9 @@
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `bdcd64a` after
-PR #174. The first PART 35 fixture stage is merged with local and post-merge evidence; issue #115
-stays open for the remaining stages.)
+implementation). GitHub merge evidence below was verified against `main` through `a03435` after
+PR #178. PART 35 fixtures through the slow-enable stage are merged with local and post-merge
+evidence; issue #115 stays open for the remaining stages.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -50,8 +50,9 @@ This is the session-level status page. For per-component facts use
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
   category 3-5 work remains open. Issue #115 (PART 35 fixtures) is in progress: stage 1 merged the
-  coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; the issue remains
-  open until all fixture stages land.
+  coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; PRs #175-#178
+  added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
+  `a03435`. The issue remains open until all fixture stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -644,6 +645,47 @@ passed: CI [44978349816](https://github.com/woxlo1/DeployMC/actions/runs/4497834
 [44978349870](https://github.com/woxlo1/DeployMC/actions/runs/44978349870). The local and remote
 `feature/issue-115-plugin-fixtures` branches were deleted after the evidence was posted. Issue #115
 remains open for the remaining PART 35 stages.
+
+## PART 35 fixtures #175-#178 merge evidence
+
+The follow-up PRs were merged after all required checks passed. Each local build used the ASCII
+junction and `node tools/build/verify-all.cjs` reported PASS for web, java, cli, python, spec, i18n,
+and compat. No running-server, harness, timeout, validator, full-integration, E2E, Web UI, or
+in-game command execution was performed for these fixtures.
+
+- PR #175 recorded the stage-1 evidence at `a5ca87345b213838f0aa7f39135390f1d4ac4d81` on
+  `2026-11-22T03:12:22Z`; [verification](https://github.com/woxlo1/DeployMC/pull/175#issuecomment-7073361203)
+  and [evidence](https://github.com/woxlo1/DeployMC/pull/175#issuecomment-7073504322). Post-merge
+  workflows passed: CI [44979557264](https://github.com/woxlo1/DeployMC/actions/runs/44979557264),
+  CodeQL [44979557228](https://github.com/woxlo1/DeployMC/actions/runs/44979557228), Scorecard
+  [44979557219](https://github.com/woxlo1/DeployMC/actions/runs/44979557219).
+- PR #176 added the source-built `DeployMCTestBrokenEnable` fixture at
+  `7c2100e5663c68becc31110d1f4c645939241e60` on `2026-11-22T03:33:06Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/176#issuecomment-7073565824) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/176#issuecomment-7073646436). Post-merge
+  workflows passed: CI [44981158073](https://github.com/woxlo1/DeployMC/actions/runs/44981158073),
+  CodeQL [44981158144](https://github.com/woxlo1/DeployMC/actions/runs/44981158144), Scorecard
+  [44981158056](https://github.com/woxlo1/DeployMC/actions/runs/44981158056).
+- PR #177 added the source-built `DeployMCTestBrokenDescriptor` fixture at
+  `250804358a3c99a8a623bc339423201ccfa7d09c` on `2026-11-22T03:44:09Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/177#issuecomment-7073702671) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/177#issuecomment-7073790173). Post-merge
+  workflows passed: CI [44981967425](https://github.com/woxlo1/DeployMC/actions/runs/44981967425),
+  CodeQL [44981967564](https://github.com/woxlo1/DeployMC/actions/runs/44981967564), Scorecard
+  [44981967446](https://github.com/woxlo1/DeployMC/actions/runs/44981967446).
+- PR #178 added the source-built `DeployMCTestSlowEnable` fixture at
+  `a034352bed3b8a47d4daf5f15aaf896223ad10d0` on `2026-11-22T03:56:16Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/178#issuecomment-7073841525) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/178#issuecomment-7073916898). Post-merge
+  workflows passed: CI [44982831143](https://github.com/woxlo1/DeployMC/actions/runs/44982831143),
+  CodeQL [44982831147](https://github.com/woxlo1/DeployMC/actions/runs/44982831147), Scorecard
+  [44982831179](https://github.com/woxlo1/DeployMC/actions/runs/44982831179).
+
+The local and remote branches `docs/issue-115-fixture-evidence`,
+`feature/issue-115-broken-enable-fixture`, `feature/issue-115-broken-descriptor-fixture`, and
+`feature/issue-115-slow-enable-fixture` were deleted after evidence was posted. Issue #115 remains
+open for the dependency, conflicting-library alignment, log-noise, wrong-platform, and data-corpora
+stages.
 
 ## Earlier pull-request evidence
 
