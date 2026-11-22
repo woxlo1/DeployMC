@@ -5,8 +5,9 @@ all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #1
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
 the authenticated snapshot adapters at `136ce00`. The first PART 35 fixture stage merged in PR #174
-at `bdcd64a` with targeted local build evidence and passing post-merge `main` workflows; issue #115
-stays open for the remaining stages.)
+at `bdcd64a` with targeted local build evidence and passing post-merge `main` workflows. A source-built
+broken-enable fixture is staged with local build evidence only; issue #115 stays open for the remaining
+stages.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -96,6 +97,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 5 route-enumeration and gate tests, 63 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
+| PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; no running server, harness, or rollback execution yet |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
