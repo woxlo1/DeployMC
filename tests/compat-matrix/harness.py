@@ -37,7 +37,7 @@ HEX64 = re.compile(r"^[0-9a-f]{64}$")
 DONE_SIGNAL = re.compile(r"\bDone\s*\(", re.IGNORECASE)
 BEGIN_MARKER = "<!-- BEGIN GENERATED SMOKE MATRIX -->"
 END_MARKER = "<!-- END GENERATED SMOKE MATRIX -->"
-CONFLICT_PLUGIN_NAME = "LegacyNettyFixture"
+CONFLICT_PLUGIN_NAME = "DeployMCTestConflictingLibs"
 CONFLICT_PLUGIN_VERSION = "1.0.0"
 NETTY_THREAD_PREFIX = "DeployMC-netty-"
 DISABLE_COMMAND = "fixture-disable-deploymc"
@@ -90,7 +90,7 @@ DEFAULT_CONFLICT_JAR = (
     / "conflicting-plugin"
     / "build"
     / "libs"
-    / "legacy-netty-fixture-1.0.0.jar"
+    / "deploymc-test-conflicting-libs-1.0.0.jar"
 )
 
 UrlOpen = Callable[..., Any]
@@ -325,7 +325,7 @@ def prepare_sandbox(
 
     shutil.copyfile(str(server_jar), str(root / "server.jar"))
     shutil.copyfile(str(plugin_jar), str(plugins / "DeployMC.jar"))
-    shutil.copyfile(str(conflict_jar), str(plugins / "LegacyNettyFixture.jar"))
+    shutil.copyfile(str(conflict_jar), str(plugins / (CONFLICT_PLUGIN_NAME + ".jar")))
     write_config(template, plugins / "DeployMC" / "config.yml", api_port)
     write_server_properties(root / "server.properties", minecraft_port)
     (root / "eula.txt").write_text(

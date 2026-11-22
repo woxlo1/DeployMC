@@ -61,6 +61,13 @@ class FakeStdin:
 
 
 class HarnessTest(unittest.TestCase):
+    def test_conflicting_fixture_identity_is_canonical(self) -> None:
+        self.assertEqual(harness.CONFLICT_PLUGIN_NAME, "DeployMCTestConflictingLibs")
+        self.assertEqual(
+            harness.DEFAULT_CONFLICT_JAR.name,
+            "deploymc-test-conflicting-libs-1.0.0.jar",
+        )
+
     def test_provision_token_stores_only_the_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             token_dir = Path(directory) / "tokens.d"
@@ -280,7 +287,9 @@ class HarnessTest(unittest.TestCase):
             self.assertIn("port: 40123", config)
             self.assertIn("server-port=40223", properties)
             self.assertNotIn("server-port=40123", properties)
-            conflict_copy = sandbox["root"] / "plugins" / "LegacyNettyFixture.jar"
+            conflict_copy = (
+                sandbox["root"] / "plugins" / (harness.CONFLICT_PLUGIN_NAME + ".jar")
+            )
             self.assertEqual(conflict_copy.read_bytes(), b"conflict")
             with self.assertRaises(harness.HarnessError):
                 harness.prepare_sandbox(
