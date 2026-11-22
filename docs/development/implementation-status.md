@@ -4,7 +4,8 @@ Last updated: 2026-11-22 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 
 all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #168 merged the
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
-the authenticated snapshot adapters at `136ce00`.)
+the authenticated snapshot adapters at `136ce00`. The first PART 35 fixture stage adds a source-built
+versioned healthy plugin and a coverage map with targeted local build evidence only.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -26,7 +27,9 @@ DeployMC, and a clean explicit disable with Netty threads released. This is smok
 support tier or a full feature validation. The transport rejects every route except `/healthz`,
 `/readyz`, and authenticated handlers without a valid token. Implemented handlers are
 `GET /api/v1/server`, the WP-2.6 file/validation routes, and the six WP-2.6 snapshot routes;
-deployment, console, and audit resources still have no handlers.
+deployment, console, and audit resources still have no handlers. The first PART 35 fixture stage adds
+a source-built `DeployMCTestA` plugin with 1.0.0 and 1.1.0 JARs, but no harness or server run consumes
+it yet.
 The WP-2.1 sandbox resolver, protected-path rules, and security
 corpus are implemented, and WP-2.2 `core.files` resolves every request path through that resolver.
 The WP-2.6 file/validation adapter consumes the resolver and file service behind the token gate, but
@@ -84,6 +87,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 5 route-enumeration and gate tests, 63 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
+| PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; no running server or harness use |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
@@ -704,7 +708,7 @@ The following are documented as intended behavior. They are **not** code.
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
 | `specification/` | REST, WebSocket, error, config, audit, deployment, and content-validation contracts; threat model draft |
-| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, conflicting-library fixture plugin, and the deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads |
+| `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 14 offline tests, conflicting-library fixture plugin, deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads, PART 35 coverage map, and source-built versioned healthy plugin emitting 1.0.0/1.1.0 JARs |
 
 ## How to verify this page
 

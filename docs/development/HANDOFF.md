@@ -247,6 +247,14 @@ Last updated: 2026-11-22. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   comment is at <https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072756119>; post-merge CI,
   CodeQL, and Scorecard passed, and its local and remote feature branches were deleted.
 
+## Recently added fixtures
+
+Stage 1 of issue #115 adds the PART 35 coverage map at `tests/fixtures/README.md` and a source-built
+test-only `DeployMCTestA` plugin with stable identity and 1.0.0/1.1.0 JARs. A targeted Gradle clean
+build produced both JARs; descriptor/config ZIP entries and Java 8 class major 52 were inspected. No
+harness, running server, full integration suite, E2E run, Web UI, or in-game command consumes the
+fixtures yet. Issue #115 remains open until the remaining PART 35 plugins and corpora land.
+
 ## In flight
 
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate

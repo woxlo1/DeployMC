@@ -8,4 +8,5 @@ include(
     ":platform:standalone",
     ":plugin",
     ":tests:fixtures:conflicting-plugin",
+    ":tests:fixtures:plugins:deploymc-test-a",
 )
