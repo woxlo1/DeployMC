@@ -10,4 +10,5 @@ include(
     ":tests:fixtures:conflicting-plugin",
     ":tests:fixtures:plugins:deploymc-test-a",
     ":tests:fixtures:plugins:deploymc-test-broken-enable",
+    ":tests:fixtures:plugins:deploymc-test-broken-descriptor",
 )
