@@ -15,45 +15,56 @@ repositories {
     }
 }
 
-fun descriptor(fixtureVersion: String): String =
-    listOf(
-            "name: DeployMCTestA",
-            "main: io.github.woxlo1.deploymc.fixture.VersionedTestPlugin",
-            "version: \"$fixtureVersion\"",
-            "api-version: '1.13'",
-            "commands:",
-            "  dmctest:",
-            "    description: Test-only version report",
-            "    usage: /dmctest",
-        )
-        .joinToString("\n") + "\n"
-
-fun config(fixtureVersion: String): String = "fixture-message: deploymc-test-a $fixtureVersion\n"
-
 val generated100 = layout.buildDirectory.dir("generated-resources/deploymc-test-a-1.0.0")
 val generated110 = layout.buildDirectory.dir("generated-resources/deploymc-test-a-1.1.0")
 
 val generateDescriptor100 by tasks.registering {
-    inputs.property("fixtureVersion", "1.0.0")
+    val fixtureVersion = "1.0.0"
+    inputs.property("fixtureVersion", fixtureVersion)
     val pluginYml = generated100.map { it.file("plugin.yml") }
     val configYml = generated100.map { it.file("config.yml") }
     outputs.files(pluginYml, configYml)
     doLast {
         pluginYml.get().asFile.parentFile.mkdirs()
-        pluginYml.get().asFile.writeText(descriptor("1.0.0"))
-        configYml.get().asFile.writeText(config("1.0.0"))
+        pluginYml.get().asFile.writeText(
+            listOf(
+                    "name: DeployMCTestA",
+                    "main: io.github.woxlo1.deploymc.fixture.VersionedTestPlugin",
+                    "version: \"$fixtureVersion\"",
+                    "api-version: '1.13'",
+                    "commands:",
+                    "  dmctest:",
+                    "    description: Test-only version report",
+                    "    usage: /dmctest",
+                )
+                .joinToString("\n") + "\n"
+        )
+        configYml.get().asFile.writeText("fixture-message: deploymc-test-a $fixtureVersion\n")
     }
 }
 
 val generateDescriptor110 by tasks.registering {
-    inputs.property("fixtureVersion", "1.1.0")
+    val fixtureVersion = "1.1.0"
+    inputs.property("fixtureVersion", fixtureVersion)
     val pluginYml = generated110.map { it.file("plugin.yml") }
     val configYml = generated110.map { it.file("config.yml") }
     outputs.files(pluginYml, configYml)
     doLast {
         pluginYml.get().asFile.parentFile.mkdirs()
-        pluginYml.get().asFile.writeText(descriptor("1.1.0"))
-        configYml.get().asFile.writeText(config("1.1.0"))
+        pluginYml.get().asFile.writeText(
+            listOf(
+                    "name: DeployMCTestA",
+                    "main: io.github.woxlo1.deploymc.fixture.VersionedTestPlugin",
+                    "version: \"$fixtureVersion\"",
+                    "api-version: '1.13'",
+                    "commands:",
+                    "  dmctest:",
+                    "    description: Test-only version report",
+                    "    usage: /dmctest",
+                )
+                .joinToString("\n") + "\n"
+        )
+        configYml.get().asFile.writeText("fixture-message: deploymc-test-a $fixtureVersion\n")
     }
 }
 
