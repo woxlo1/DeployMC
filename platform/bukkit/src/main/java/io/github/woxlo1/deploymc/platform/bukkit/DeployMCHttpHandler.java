@@ -11,19 +11,26 @@ import java.util.Objects;
 public final class DeployMCHttpHandler implements HttpHandler {
 
   private static final String FILE_API_PREFIX = "/api/v1/files";
+  private static final String SNAPSHOT_API_PREFIX = "/api/v1/snapshots";
 
   private final HealthHandler health = new HealthHandler();
   private final HttpHandler api;
   private final HttpHandler files;
+  private final HttpHandler snapshots;
   private final HttpHandler assets;
 
   public DeployMCHttpHandler(HttpHandler api) {
-    this(api, null);
+    this(api, null, null);
   }
 
   public DeployMCHttpHandler(HttpHandler api, HttpHandler files) {
+    this(api, files, null);
+  }
+
+  public DeployMCHttpHandler(HttpHandler api, HttpHandler files, HttpHandler snapshots) {
     this.api = Objects.requireNonNull(api, "api");
     this.files = files;
+    this.snapshots = snapshots;
     this.assets = new StaticAssetHandler(api);
   }
 
@@ -37,6 +44,9 @@ public final class DeployMCHttpHandler implements HttpHandler {
     if (isFileApiPath(path) && files != null) {
       return files.handle(request);
     }
+    if (isSnapshotApiPath(path) && snapshots != null) {
+      return snapshots.handle(request);
+    }
     if (path.startsWith("/api/")) {
       return api.handle(request);
     }
@@ -45,5 +55,9 @@ public final class DeployMCHttpHandler implements HttpHandler {
 
   private static boolean isFileApiPath(String path) {
     return FILE_API_PREFIX.equals(path) || path.startsWith(FILE_API_PREFIX + "/");
+  }
+
+  private static boolean isSnapshotApiPath(String path) {
+    return SNAPSHOT_API_PREFIX.equals(path) || path.startsWith(SNAPSHOT_API_PREFIX + "/");
   }
 }

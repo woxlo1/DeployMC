@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.auth.Identity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -17,6 +18,7 @@ public final class HttpRequest {
   private final String query;
   private final Map<String, List<String>> headers;
   private final byte[] body;
+  private final Identity identity;
 
   public HttpRequest(
       String id,
@@ -25,6 +27,17 @@ public final class HttpRequest {
       String query,
       Map<String, List<String>> headers,
       byte[] body) {
+    this(id, method, path, query, headers, body, null);
+  }
+
+  public HttpRequest(
+      String id,
+      String method,
+      String path,
+      String query,
+      Map<String, List<String>> headers,
+      byte[] body,
+      Identity identity) {
     this.id = Objects.requireNonNull(id, "id");
     this.method = Objects.requireNonNull(method, "method");
     this.path = Objects.requireNonNull(path, "path");
@@ -36,6 +49,7 @@ public final class HttpRequest {
     }
     this.headers = Collections.unmodifiableMap(copy);
     this.body = Objects.requireNonNull(body, "body").clone();
+    this.identity = identity;
   }
 
   public String id() {
@@ -65,5 +79,13 @@ public final class HttpRequest {
   public String header(String name) {
     List<String> values = headers.get(name.toLowerCase(Locale.ROOT));
     return values == null || values.isEmpty() ? null : values.get(0);
+  }
+
+  /**
+   * The identity established by the transport authentication gate, never from a header. It is
+   * {@code null} for unauthenticated probes and for direct handler tests.
+   */
+  public Identity identity() {
+    return identity;
   }
 }

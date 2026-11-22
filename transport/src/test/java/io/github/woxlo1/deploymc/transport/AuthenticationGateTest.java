@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
+import io.github.woxlo1.deploymc.core.auth.Identity;
 import io.github.woxlo1.deploymc.core.auth.TokenAuthenticator;
 import io.github.woxlo1.deploymc.core.auth.TokenRecord;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
@@ -25,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -108,6 +110,28 @@ class AuthenticationGateTest {
   }
 
   @Test
+  void carriesAuthenticatedIdentityInsteadOfClientHeaders() throws Exception {
+    AtomicReference<String> observed = new AtomicReference<String>();
+    HttpHandler handler =
+        request -> {
+          Identity identity = request.identity();
+          observed.set(identity == null ? "none" : identity.id());
+          return HttpResponse.json(200, "{\"ok\":true}");
+        };
+
+    NettyTransportServer server = newServer(new NoopLogger(), handler);
+    try {
+      server.start();
+      String response =
+          rawRequest(server.port(), "GET", "/api/v1/server", TOKEN + "\r\nX-Identity: attacker");
+      assertTrue(response.startsWith("HTTP/1.1 200"), response);
+      assertEquals("t-gate", observed.get());
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
   void neverLogsAuthorizationHeader() throws Exception {
     CapturingLogger logger = new CapturingLogger();
     NettyTransportServer server = newServer(logger);
@@ -140,6 +164,11 @@ class AuthenticationGateTest {
   }
 
   private NettyTransportServer newServer(RequestLogger requestLogger) throws Exception {
+    return newServer(requestLogger, new HealthAwareHandler());
+  }
+
+  private NettyTransportServer newServer(RequestLogger requestLogger, HttpHandler httpHandler)
+      throws Exception {
     TokenStore store = TokenStore.load(tempDir.resolve("tokens.d"));
     byte[] digest =
         MessageDigest.getInstance("SHA-256").digest(TOKEN.getBytes(StandardCharsets.UTF_8));
@@ -149,7 +178,7 @@ class AuthenticationGateTest {
         TransportConfig.builder(HttpBindConfig.of("127.0.0.1", 0, false)).build();
     return new NettyTransportServer(
         config,
-        new HealthAwareHandler(),
+        httpHandler,
         new NoopWebSocketListener(),
         new DefaultTransportPolicy(config),
         requestLogger,

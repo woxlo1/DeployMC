@@ -85,6 +85,23 @@ public final class MessageKeys {
   public static final String FILES_IO_TITLE = "problem.files.io.title";
   public static final String FILES_IO_DETAIL = "problem.files.io.detail";
 
+  public static final String SNAPSHOTS_NOT_FOUND_TITLE = "problem.snapshots.not-found.title";
+  public static final String SNAPSHOTS_NOT_FOUND_DETAIL = "problem.snapshots.not-found.detail";
+  public static final String SNAPSHOTS_CORRUPT_TITLE = "problem.snapshots.corrupt.title";
+  public static final String SNAPSHOTS_CORRUPT_DETAIL = "problem.snapshots.corrupt.detail";
+  public static final String SNAPSHOTS_RESTORE_CONFLICT_TITLE =
+      "problem.snapshots.restore-conflict.title";
+  public static final String SNAPSHOTS_RESTORE_CONFLICT_DETAIL =
+      "problem.snapshots.restore-conflict.detail";
+  public static final String SNAPSHOTS_STORE_UNAVAILABLE_TITLE =
+      "problem.snapshots.store-unavailable.title";
+  public static final String SNAPSHOTS_STORE_UNAVAILABLE_DETAIL =
+      "problem.snapshots.store-unavailable.detail";
+  public static final String DIFF_INVALID_INPUT_TITLE = "problem.diff.invalid-input.title";
+  public static final String DIFF_INVALID_INPUT_DETAIL = "problem.diff.invalid-input.detail";
+  public static final String DIFF_TOO_LARGE_TITLE = "problem.diff.too-large.title";
+  public static final String DIFF_TOO_LARGE_DETAIL = "problem.diff.too-large.detail";
+
   public static final String VALIDATION_FAILED_TITLE = "problem.validation.failed.title";
   public static final String VALIDATION_FAILED_DETAIL = "problem.validation.failed.detail";
   public static final String VALIDATION_LIMIT_TITLE = "problem.validation.limit-exceeded.title";

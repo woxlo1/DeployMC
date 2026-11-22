@@ -11,6 +11,7 @@ import io.github.woxlo1.deploymc.core.snapshot.SnapshotStoreException;
 import io.github.woxlo1.deploymc.core.validation.ValidatorRegistry;
 import io.github.woxlo1.deploymc.transport.FileApiHandler;
 import io.github.woxlo1.deploymc.transport.HttpHandler;
+import io.github.woxlo1.deploymc.transport.SnapshotApiHandler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,10 +37,13 @@ public final class FileApiRuntime implements AutoCloseable {
 
   private final SnapshotStore snapshots;
   private final HttpHandler handler;
+  private final HttpHandler snapshotHandler;
 
-  private FileApiRuntime(SnapshotStore snapshots, HttpHandler handler) {
+  private FileApiRuntime(
+      SnapshotStore snapshots, HttpHandler handler, HttpHandler snapshotHandler) {
     this.snapshots = snapshots;
     this.handler = handler;
+    this.snapshotHandler = snapshotHandler;
   }
 
   public static FileApiRuntime create(
@@ -102,7 +106,9 @@ public final class FileApiRuntime implements AutoCloseable {
       FileOperationsService files = new FileOperationsService(resolver, limits, opened, validators);
       FileApiHandler handler =
           new FileApiHandler(resolver, files, validators, locale, maximumBodyBytes);
-      return new FileApiRuntime(opened, handler);
+      SnapshotApiHandler snapshotsHandler =
+          new SnapshotApiHandler(resolver, opened, locale, maximumBodyBytes);
+      return new FileApiRuntime(opened, handler, snapshotsHandler);
     } catch (RuntimeException failure) {
       try {
         opened.close();
@@ -115,6 +121,10 @@ public final class FileApiRuntime implements AutoCloseable {
 
   public HttpHandler handler() {
     return handler;
+  }
+
+  public HttpHandler snapshotHandler() {
+    return snapshotHandler;
   }
 
   @Override

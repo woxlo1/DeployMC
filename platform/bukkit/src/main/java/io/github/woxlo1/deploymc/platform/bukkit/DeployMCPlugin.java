@@ -91,7 +91,8 @@ public final class DeployMCPlugin extends JavaPlugin {
               new DeployMCHttpHandler(
                   new ServerInfoHandler(
                       plan.pluginVersion(), created.info(), created.capabilities()),
-                  createdFileApi.handler()),
+                  createdFileApi.handler(),
+                  createdFileApi.snapshotHandler()),
               new NoopWebSocketListener(),
               new DefaultTransportPolicy(transportConfig),
               new PluginRequestLogger(getLogger(), transportMessages),

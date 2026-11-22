@@ -152,7 +152,7 @@ public final class FileApiHandler implements HttpHandler {
       throws FileOperationException, RequestProblem {
     String path = requiredQuery(query, "path");
     int depth = intQuery(query, "depth", DEFAULT_DEPTH, 1, MAX_DEPTH);
-    int limit = intQuery(query, "limit", DEFAULT_LIST_LIMIT, 1, MAX_LIST_LIMIT);
+    int limit = clampedIntQuery(query, "limit", DEFAULT_LIST_LIMIT, 1, MAX_LIST_LIMIT);
     int offset = 0;
     String cursor = optionalQuery(query, "cursor");
     if (cursor != null) {
@@ -668,6 +668,24 @@ public final class FileApiHandler implements HttpHandler {
       throw RequestProblem.invalid();
     }
     return value;
+  }
+
+  private static int clampedIntQuery(
+      Map<String, String> query, String name, int fallback, int minimum, int maximum)
+      throws RequestProblem {
+    String value = query.get(name);
+    if (value == null) {
+      return fallback;
+    }
+    try {
+      int number = Integer.parseInt(value);
+      if (number < minimum) {
+        throw RequestProblem.invalid();
+      }
+      return Math.min(number, maximum);
+    } catch (NumberFormatException invalid) {
+      throw RequestProblem.invalid();
+    }
   }
 
   private static int intQuery(

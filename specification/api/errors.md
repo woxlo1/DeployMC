@@ -3,9 +3,9 @@
 > **Status: updated 2026-11-21.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
 > implementations and are mapped to REST Problem Details by the WP-2.6 file/validation adapters;
-> snapshot codes are produced by the WP-2.3 store and have a WP-2.6 REST mapping defined in
-> `api/openapi.yaml`, diff codes are produced by the Java 8 `core.diff` engine and are mapped by the
-> snapshot-diff contract, and validation codes are produced by the Java 8 `core.validation` engine.
+> snapshot codes are produced by the WP-2.3 store and mapped by the WP-2.6 snapshot adapters, diff
+> codes are produced by the Java 8 `core.diff` engine and mapped by the snapshot diff route, and
+> validation codes are produced by the Java 8 `core.validation` engine.
 > D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
 > Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.
@@ -156,8 +156,8 @@ an implementation that lacks the feature.
 
 ### Snapshots
 
-The REST mapping for these codes is defined by the six `/api/v1/snapshots` operations in
-`api/openapi.yaml`. The snapshot adapter is not implemented yet.
+The six `/api/v1/snapshots` operations in `api/openapi.yaml` map these codes to REST Problem
+Details through the authenticated snapshot adapter.
 
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|
@@ -166,7 +166,7 @@ The REST mapping for these codes is defined by the six `/api/v1/snapshots` opera
 | `snapshots.restore-conflict` | 412 | no | The target changed since the snapshot was taken and a precondition was not satisfied. |
 | `snapshots.store-unavailable` | 503 | yes | The store is closed, locked, busy with an active deployment, or has an unsupported format version. |
 
-### Diff (implemented in `core.diff`; REST mapping is defined by snapshot diff and not implemented)
+### Diff (implemented in `core.diff`; REST mapping is implemented by the snapshot diff route)
 
 | Code | HTTP | Retryable | Meaning |
 |---|---|---|---|

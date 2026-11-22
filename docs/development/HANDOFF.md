@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-22. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
@@ -188,8 +188,9 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   [44854531350](https://github.com/woxlo1/DeployMC/actions/runs/44854531350) passed. PR comments are
   at <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055673480> and
   <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-7055770391>. The local and remote
-  `feature/wp-2.3-snapshot-store` branches were deleted. No REST endpoint, transport handler,
-  running server, UI, or in-game command consumes the store.
+  `feature/wp-2.3-snapshot-store` branches were deleted. At that stage no REST endpoint or transport
+  handler consumed the store; WP-2.6 later added the snapshot REST adapters, still without a running
+  server, UI, or in-game command.
 - WP-2.4 first stage merged in PR #162 at `2a4e7f8d0d038a7e4175dc6912df460a1a1a5b22`; it adds the
   normative diff contract, ADR-0015, and `diff.*` error codes. The implementation stage adds Java 8
   `core.diff`: bounded Myers line/word diffs, hardened YAML/JSON semantic diffs with text fallback,
@@ -198,7 +199,7 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   `node tools/build/verify-all.cjs` reported `PASS` for all seven toolchains with 261 Java tests
   (0 failures, 0 errors, 1 skipped symlink test). The implementation merged in PR #163 at
   `80a3f0b` with issue #53 closed; all PR checks and post-merge CI, CodeQL, and Scorecard passed.
-  No REST endpoint consumes the engine yet.
+  At that stage no REST endpoint consumed the engine; the WP-2.6 snapshot diff route now does.
 - WP-2.5 first stage merged in PR #165 at `6cd6015a141d8a108b7507a9f801b646679698cc`; it defines the
   content validation contract and ADR-0016. The Java 8 implementation merged in PR #166 at
   `9363e0c70c4666558959560fe8ca5fe58f80e920` with issue #54 closed. It adds `core.validation` with
@@ -224,17 +225,30 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 - The WP-2.6 snapshot follow-up defines six authenticated routes in OpenAPI: list, metadata,
   content, bounded diff, reversible restore, and retention prune. It pins opaque ids, quoted ETags,
   inclusive-start/exclusive-end ranges, host-derived restore actors, path-scope notes, and stable
-  snapshot/diff error mapping. The snapshots have a Java 8 store but no adapter yet. `npm run lint`
-  and `npm test` in `tools/spec` passed locally on 2026-11-21. The contract merged in PR #170 at
-  `bf82e26` with verification and post-merge evidence comments, passing CI, CodeQL, and Scorecard,
-  and its branch was deleted.
+  snapshot/diff error mapping. `npm run lint` and `npm test` in `tools/spec` passed locally on
+  2026-11-21. The contract merged in PR #170 at `bf82e26` with verification and post-merge evidence
+  comments, passing CI, CodeQL, and Scorecard, and its branch was deleted. The evidence PR #171
+  merged at `88a6541`; its branch was also deleted.
+- The snapshot adapter stage adds `transport.SnapshotApiHandler` over `SandboxResolver`,
+  `SnapshotStore`, and `core.diff`, wired through `FileApiRuntime`, `DeployMCPlugin`, and
+  `DeployMCHttpHandler`. It adds a verified `SnapshotStore.readContent` method and a public
+  `DiffJson.toSnapshotDiffJson` projection that matches the OpenAPI schema. `HttpRequest` now carries
+  the authenticated `Identity` from the Netty channel, never from a client header. Review fixes pin
+  absence under the store lock during restore, protect records younger than the minimum age from
+  every prune path, clamp oversized `limit` values, honour `Accept-Language` q-values, cap diff input
+  before blobs are read, and mark internal failures retryable. On 2026-11-22, focused transport
+  (12 tests), snapshot-store (28 tests), gate identity (1 new case), and Bukkit routing/runtime
+  assertions passed; the full build ran 328 tests with 0 failures, 0 errors, and 1 skipped symlink
+  test. All seven toolchains reported `PASS` through `verify-all.cjs`, i18n reported 0 errors and 0
+  warnings, and `git diff --check` was clean. No running-server smoke, full integration suite, E2E
+  run, in-game command, or UI check was performed.
 
 ## In flight
 
-- The WP-2.6 snapshot adapters are not implemented. Their routes will stay behind the bearer-token
-  gate with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
-- No WP-2.1-WP-2.5 branches remain, and all three merged WP-2.6 branches were deleted after evidence
-  was posted. Evidence is recorded in the status pages and pull-request comments.
+- The snapshot adapter PR is under review. Its routes stay behind the bearer-token gate with no
+  bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
+- No WP-2.1-WP-2.5 branches remain, and all four previously merged WP-2.6 branches were deleted after
+  evidence was posted. Evidence is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 76 (#55-#130). Milestones `0.1.0` through `0.10.0` exist.
 
@@ -246,7 +260,8 @@ Last updated: 2026-11-21. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## Exact next steps
 
-1. Implement the snapshot adapters against the merged contract and post the same evidence comments.
+1. Merge the snapshot adapter PR, post the post-merge evidence comment, close issue #55, record the
+   merge evidence in the status pages, and delete the local and remote feature branch.
 2. Continue with category 3 (#115-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
    order.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each

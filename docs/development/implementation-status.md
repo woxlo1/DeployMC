@@ -1,9 +1,10 @@
 # Implementation Status
 
-Last updated: 2026-11-21 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-and all merged WP-2.6 specification and file/validation adapter stages; issues #47-#54 closed. PR #168
-merged the file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, and PR #170
-merged the snapshot-route contract at `bf82e26`.)
+Last updated: 2026-11-22 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+all merged WP-2.6 specification and file/validation adapter stages, and the snapshot REST adapter
+implementation; issues #47-#54 closed. PR #168 merged the file/validation contract at `8970728`,
+PR #169 merged its adapters at `08fe424`, PR #170 merged the snapshot-route contract at `bf82e26`,
+and PR #171 merged its evidence at `88a6541`.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -24,23 +25,22 @@ startup banner, authenticated `/api/v1/server`, a conflicting-library fixture lo
 DeployMC, and a clean explicit disable with Netty threads released. This is smoke evidence, not a
 support tier or a full feature validation. The transport rejects every route except `/healthz`,
 `/readyz`, and authenticated handlers without a valid token. Implemented handlers are
-`GET /api/v1/server` and the WP-2.6 file/validation routes; snapshot, deployment, console, and audit
-resources still have no handlers. Six snapshot REST operations are specified as a merged contract but
-have no adapter.
+`GET /api/v1/server`, the WP-2.6 file/validation routes, and the six WP-2.6 snapshot routes;
+deployment, console, and audit resources still have no handlers.
 The WP-2.1 sandbox resolver, protected-path rules, and security
 corpus are implemented, and WP-2.2 `core.files` resolves every request path through that resolver.
-The WP-2.6 adapter consumes the resolver and file service behind the token gate, but has only
-server-free tests; no running server or UI consumes them. The merged WP-2.3 snapshot store contract
-has a Java 8 `core.snapshot` implementation with content-addressed blobs, atomic metadata,
+The WP-2.6 file/validation adapter consumes the resolver and file service behind the token gate, but
+has only server-free tests; no running server or UI consumes it. The merged WP-2.3 snapshot store
+contract has a Java 8 `core.snapshot` implementation with content-addressed blobs, atomic metadata,
 restore-first reversibility, retention, verify/repair, conservative GC, and a single-instance lock.
-No REST endpoint, transport handler, running server, UI, or in-game command consumes the store. The
-WP-2.4 contract now has a Java 8 `core.diff` implementation for bounded line, word, YAML/JSON
-semantic, and JAR metadata results. No REST endpoint, transport handler, running server, UI, or
-in-game command consumes the engine, and there is no application-level one-click restore. The WP-2.5
+The WP-2.6 snapshot adapter consumes that store behind the same token gate, with server-free tests
+only. The WP-2.4 contract has a Java 8 `core.diff` implementation for bounded line, word, YAML/JSON
+semantic, and JAR metadata results; the snapshot diff route consumes it. No running server, UI, or
+in-game command consumes these routes, and there is no application-level one-click restore. The WP-2.5
 contract now has a Java 8 `core.validation` implementation with bounded YAML, JSON, TOML, and
 properties validators, a deterministic registry, and a fail-closed save-time gate wired into
-`core.files`. The WP-2.6 adapter calls the registry for the validate endpoint and the save gate on
-writes, but no running server or UI consumes it. There is no deployment engine, authorization, audit
+`core.files`. The WP-2.6 file/validation adapter calls the registry for the validate endpoint and the
+save gate on writes, but no running server or UI consumes it. There is no deployment engine, authorization, audit
 log, or Web UI screen, and the packaged Web UI has not been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
@@ -53,13 +53,13 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 311 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, file operation, snapshot store, diff engine, validation, and file/validation REST adapter cases | Gradle `test` tasks; JUnit XML: 311 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 328 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz, file operation, snapshot store, diff engine, validation, file/validation REST adapter, and snapshot REST adapter cases | Gradle `test` tasks; JUnit XML: 328 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
-| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 51 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
+| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 63 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
 | Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, 230 relocated SnakeYAML classes, relocated Netty, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot, unrelocated Netty/YAML, or multi-release entries | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Plugin JAR verification | `:plugin:verifyPluginJar` fails on out-of-namespace classes, malformed or manifest-less multi-release entries, missing versioned bases, duplicate entries/classes, service entries outside the namespace, or common-path bytecode above major 52; CI reports the size | Production JAR plus 12 positive/negative fixture JARs |
-| Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, static asset delivery, and a fail-closed token gate with health exceptions | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; `AuthenticationGateTest`: 4 tests; 0 failures |
+| Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, static asset delivery, and a fail-closed token gate with health exceptions | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; `AuthenticationGateTest`: 5 tests; 0 failures |
 | Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
@@ -78,10 +78,11 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-2.5 validation specification | Normative validator result model, stable validation codes, format profiles, registry precedence, save-time gate, endpoint result shape, and byte-preserving YAML scalar edit contract | `npm run lint` and `npm test` in `tools/spec`; ADR-0016 and `specification/validation/content-validation.md` |
 | WP-2.5 validation engine | Java 8 `core.validation` with bounded YAML/JSON/TOML/properties validators, strict UTF-8 decoding, stable issue codes and pointers, deterministic registry precedence, fail-closed save-time gate in `core.files`, and byte-preserving YAML scalar edits | 27 focused validation tests, full Gradle build, Java 8 bytecode check, all-toolchain verification, spec lint, and i18n check |
 | WP-2.6 file/validation adapters | Eight authenticated file/validation routes with Problem Details `errors[]`, strict bounded request JSON, localized findings, ETag/`If-Match`, byte ranges, cursor pagination, and a host-wired `FileApiRuntime` that opens/closes the snapshot store | 14 focused transport tests, 8 focused Bukkit tests, full Gradle `build verifyJava8`, i18n, and `git diff --check`; no running-server smoke or UI integration |
-| WP-2.6 snapshot specification | Six authenticated snapshot routes for history listing, metadata, exact content, bounded diff, reversible restore, and host-retention prune, with opaque ids, ETags, ranges, path-scope notes, and stable error mapping | Merged in PR #170 at `bf82e26`; pre-merge `npm run lint` and `npm test` in `tools/spec` passed, as did post-merge CI, CodeQL, and Scorecard; the adapter is not implemented |
+| WP-2.6 snapshot adapters | Six authenticated snapshot routes for history listing, metadata, exact content with ranges, bounded diff, reversible restore, and host-retention prune; opaque ids, quoted ETags, authenticated restore actors, stable localized codes, and no host paths in errors | 12 focused transport tests, 3 core snapshot cases, 1 gate identity test, 2 Bukkit routing/runtime assertions, full Gradle `build verifyJava8`, all-toolchain verification, i18n, and `git diff --check`; no running-server smoke or UI integration |
+| WP-2.6 snapshot specification | Six authenticated snapshot routes for history listing, metadata, exact content, bounded diff, reversible restore, and host-retention prune, with opaque ids, ETags, ranges, path-scope notes, and stable error mapping | Merged in PR #170 at `bf82e26`; pre-merge `npm run lint` and `npm test` in `tools/spec` passed, as did post-merge CI, CodeQL, and Scorecard; adapters implemented afterward |
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
-| WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 4 route-enumeration and gate tests, 51 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
+| WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 5 route-enumeration and gate tests, 63 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
@@ -183,8 +184,9 @@ comments are at <https://github.com/woxlo1/DeployMC/pull/159#issuecomment-705567
 [44854531337](https://github.com/woxlo1/DeployMC/actions/runs/44854531337), CodeQL
 [44854531422](https://github.com/woxlo1/DeployMC/actions/runs/44854531422), and Scorecard
 [44854531350](https://github.com/woxlo1/DeployMC/actions/runs/44854531350). The local and remote
-`feature/wp-2.3-snapshot-store` branches were deleted after the merge. No REST endpoint, transport
-handler, running server, UI, or in-game command consumes the store.
+`feature/wp-2.3-snapshot-store` branches were deleted after the merge. At that stage no REST endpoint
+or transport handler consumed the store; WP-2.6 later added the snapshot REST adapters, still without
+a running server, UI, or in-game command.
 
 WP-2.4 implementation (issue #53) adds Java 8 `core.diff`: a pure byte-array engine with bounded
 Myers line and word diffs, hardened YAML/JSON key-path diffs with stable text fallback, metadata-only
@@ -202,8 +204,8 @@ lowered limits, CR/LF/CRLF and EOF endings, BOM handling, invalid UTF-8, determi
 output, YAML rename and pure reorder, pointer escaping, parse fallback, word segmentation, JAR
 version and dependency changes, ZIP edge cases, truncated or invalid central directories, ZIP64
 rejection, descriptor BOM and duplicate handling, invalid entry names, JSON escaping, and repeated-run
-stability. No REST endpoint, transport handler, running server, UI, or in-game command consumes the
-engine.
+stability. At that stage no REST endpoint or transport handler consumed the engine; the WP-2.6
+snapshot diff route now does, with no running server, UI, or in-game command.
 
 WP-2.4 implementation merged in [PR #163](https://github.com/woxlo1/DeployMC/pull/163) at
 `80a3f0b7eb50718d85ccca3d4d5a4f71b1a97633`; issue #53 closed as completed at
@@ -296,8 +298,8 @@ symlink test; JAR verification reported max common bytecode 52. `node tools/i18n
 0 errors and 0 warnings, and `git diff --check` produced no output. No running-server smoke test,
 end-to-end run, in-game `/deploymc` execution, or Web UI browser check was performed after this
 wiring, and the full integration suite has not run. Until 0.4.0 the token remains admin-equivalent;
-the snapshot-route contract is merged but its adapter is a separate WP-2.6 follow-up; exact-byte
-preservation for existing NFD filenames is still not implemented.
+the snapshot-route adapters were added by the following WP-2.6 stage, and exact-byte preservation
+for existing NFD filenames is still not implemented.
 
 The adapter stage merged in [PR #169](https://github.com/woxlo1/DeployMC/pull/169) at
 `08fe4245af2d2de474d644e71ca79339cc57dfd3`. The explicit verification comment is at
@@ -325,8 +327,31 @@ comment is at <https://github.com/woxlo1/DeployMC/pull/170#issuecomment-70625015
 [44903156530](https://github.com/woxlo1/DeployMC/actions/runs/44903156530), CodeQL
 [44903156565](https://github.com/woxlo1/DeployMC/actions/runs/44903156565), and Scorecard
 [44903156579](https://github.com/woxlo1/DeployMC/actions/runs/44903156579). The local and remote
-`spec/wp-2.6-snapshot-endpoints` branches were deleted after the evidence was posted. No snapshot
-adapter, contract test, or running-server check exists for these routes yet.
+`spec/wp-2.6-snapshot-endpoints` branches were deleted after the evidence was posted.
+
+The snapshot adapter stage adds `transport.SnapshotApiHandler` for all six routes and wires it
+through `FileApiRuntime`, `DeployMCPlugin`, and `DeployMCHttpHandler` behind the bearer-token gate.
+The handler resolves every path through `SandboxResolver`, accepts only opaque `snap_` ids, uses
+quoted `sha256:<hex>` ETags for records and content, treats ranges as start-inclusive and
+end-exclusive, and returns localized RFC 9457 codes. Restore takes its actor only from the
+authenticated `Identity`, uses the record's own path, requires `If-Match` when the target exists, and
+captures the current state first. Prune accepts exactly one path or id, preserves protected records,
+and never starts GC. The diff route projects the bounded result through the OpenAPI
+`SnapshotDiff` schema, excluding internal diagnostic fields. `SnapshotStore.readContent` verifies the
+blob hash before returning bytes; deletion and directory markers fail closed. No absolute host path,
+token, or content is placed in an error detail.
+
+On 2026-11-22, focused `SnapshotApiHandlerTest` (12 tests), `SnapshotStoreTest` (28 tests), the added
+`AuthenticationGateTest` identity case, and the Bukkit routing/runtime assertions passed. The full
+`.\\gradlew.bat build verifyJava8 --no-configuration-cache --console=plain` reported 328 JUnit tests,
+0 failures, 0 errors, and 1 skipped symlink test. Review fixes pin absence under the store lock during
+restore, protect records younger than `minAgeDays` from every prune path, clamp oversized `limit`
+values, honour `Accept-Language` q-values, bound diff input before blobs are read, and mark internal
+failures retryable. With `DEPLOYMC_JAVA_ROOT` set to the ASCII junction,
+`node tools/build/verify-all.cjs` reported `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`,
+and `compat`; `node tools/i18n/check` reported 0 errors and 0 warnings, and `git diff --check`
+produced no output. No running-server smoke, full integration suite, E2E run, in-game `/deploymc`
+execution, or Web UI browser check was performed for these routes.
 
 ## Repository configuration, not a product feature
 
@@ -609,7 +634,7 @@ The following are documented as intended behavior. They are **not** code.
 | Threading model | [Threading model](../architecture/threading-model.md) | Documents only |
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
 | Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
-| REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Auth gate, health endpoints, and auth error codes implemented; application resource handlers are not |
+| REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Auth gate, health, file/validation, and snapshot handlers implemented; deployment, console, and audit resource handlers are not |
 | WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Upgrade authentication and frame limits implemented; the AsyncAPI event protocol and application handlers are not |
 | RBAC and audit | [Threat model](../../specification/security/threat-model.md), [audit format](../../specification/audit/audit-log-format.md) | Drafts; every current token is admin-equivalent and no audit record is written |
 | Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, and `/deploymc` commands |
@@ -621,17 +646,17 @@ The following are documented as intended behavior. They are **not** code.
 ## Not started
 
 - Remaining authenticated REST and WebSocket application endpoints bound to the OpenAPI and
-  AsyncAPI skeletons. The gate and `GET /api/v1/server` are implemented; the file, snapshot,
-  deployment, console, and audit routes are not.
+  AsyncAPI skeletons. The gate, `GET /api/v1/server`, file/validation, and snapshot routes are
+  implemented; deployment, console, and audit routes are not.
 - Cloudflare Access and `local-onetime` authentication modes, RBAC, and the audit log. The minimal
   `token` mode is implemented and refuses startup for the other two modes.
-- REST/WebSocket file endpoints and running-server use of `FileOperationsService`. The core service
-  consumes `SandboxPath`, but no application handler or transport route calls it yet.
-- Snapshot diff, application-level one-click restore, and running-server use of `core.snapshot`. The
-  store, retention, verify/repair, GC, and reversible restore primitives are implemented, but no REST
-  route, UI, or command consumes them.
-- REST validation endpoint and transport wiring of the `ValidationGate`; the core registry and gate
-  exist, but no HTTP route or running server uses them.
+- Running-server use of `FileOperationsService`. The core service consumes `SandboxPath`, and the
+  REST adapter calls it, but no running server or UI uses those routes yet.
+- Application-level one-click restore and running-server use of `core.snapshot`. The store,
+  retention, verify/repair, GC, reversible restore, and the snapshot REST routes are implemented, but
+  no UI or command consumes them.
+- Running-server use of the REST validation endpoint and `ValidationGate`; the registry, gate, and
+  HTTP route exist, but no running server uses them.
 - Deployment validation, staging, state persistence, restart orchestration, verification, and
   rollback.
 - Console capture, ring buffer, filtering, and command dispatch through an adapter.
