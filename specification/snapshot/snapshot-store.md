@@ -138,7 +138,8 @@ Whichever limit triggers first applies, with these invariants:
 
 - The newest three versions of every path are never pruned automatically.
 - Records referenced by a non-terminal deployment are never pruned.
-- Records newer than the minimum age are never pruned by age.
+- Records newer than the minimum age are never pruned, whether by count, age, size, or an explicit
+  path or id target.
 - Per-path count pruning removes the oldest records beyond the configured count.
 - Total-size pruning removes eligible records oldest first until the store is under the limit.
 - Pruning removes metadata records and their per-path index entries. Blobs remain until GC, so a

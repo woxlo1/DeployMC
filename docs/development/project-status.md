@@ -1,8 +1,9 @@
 # Project Status
 
-Last updated: 2026-11-21 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-and all merged WP-2.6 specification and file/validation adapter stages). GitHub evidence below was
-verified against `main` through `bf82e26` after PR #170.
+Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+all merged WP-2.6 specification and file/validation adapter stages, and the snapshot REST adapter
+implementation). GitHub merge evidence below was verified against `main` through `88a6541` after
+PR #171; the snapshot adapter merge evidence is added after its PR merges.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -39,13 +40,15 @@ This is the session-level status page. For per-component facts use
   `2a4e7f8`; the Java 8 `core.diff` implementation merged in PR #163 at `80a3f0b`, and issue #53
   closed as completed. WP-2.5 first stage merged in PR #165 at `6cd6015`; the Java 8 `core.validation`
   implementation merged in PR #166 at `9363e0c`, and issue #54 closed as completed. WP-2.6 first stage
-  merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`; and
-  the snapshot-route specification merged in PR #170 at `bf82e26`. Verification and post-merge
-  evidence are recorded below.
+  merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`; the
+  snapshot-route specification merged in PR #170 at `bf82e26`; and its merge evidence merged in PR
+  #171 at `88a6541`. The snapshot REST adapters are implemented in this change. Verification and
+  post-merge evidence are recorded below.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
-  file/validation adapters; snapshot routes and category 3-5 work remain open.
+  file/validation adapters and implements all six snapshot routes; issue #55 closes after merge
+  evidence, and category 3-5 work remains open.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -248,8 +251,9 @@ creation and directory conflicts, precondition and stale-revision rejection, str
 limits, protected and rejected paths, confirmed recursive deletion, deletion caps, snapshot failure,
 destructive-operation fail-closed behavior, move conflicts, concurrency, and deterministic crash
 points before and after the atomic commit. The skipped test remains the WP-2.1 symlink test that
-needs privileges unavailable on this host. No REST endpoint, transport handler, running server, or UI
-consumes `FileOperationsService`.
+needs privileges unavailable on this host. At that stage no REST endpoint or transport handler
+consumed `FileOperationsService`; WP-2.6 later added the file/validation REST adapter, still without
+a running server or UI.
 
 ### WP-2.2 PR and post-merge evidence
 
@@ -544,7 +548,60 @@ CI [44903156530](https://github.com/woxlo1/DeployMC/actions/runs/44903156530), C
 [44903156579](https://github.com/woxlo1/DeployMC/actions/runs/44903156579). The local and remote
 `spec/wp-2.6-snapshot-endpoints` branches were deleted after the evidence was posted.
 
-No snapshot adapter, contract test, running server, or UI check is claimed for these routes.
+The contract stage claimed no adapter, contract test, running server, or UI check. The following
+stage implements the adapter.
+
+## WP-2.6 snapshot adapter verification (local, pre-merge)
+
+These commands were run on 2026-11-22 on `feature/wp-2.6-snapshot-adapters`. Gradle commands ran
+through the ASCII junction at `C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii`;
+`DEPLOYMC_JAVA_ROOT` was set to the same path for the one-command verification.
+
+```text
+.\gradlew.bat spotlessApply :core:test :transport:test :platform:bukkit:test
+--no-configuration-cache --console=plain
+BUILD SUCCESSFUL
+
+SnapshotApiHandlerTest: 12 tests, 0 failures, 0 errors, 0 skipped
+SnapshotStoreTest: 28 tests, 0 failures, 0 errors, 0 skipped (3 new cases: verified content,
+absent-revision restore conflict, and minimum-age manual-prune protection)
+AuthenticationGateTest: 5 tests, 0 failures, 0 errors, 0 skipped (1 new identity case)
+DeployMCHttpHandlerTest: 5 tests, 0 failures, 0 errors, 0 skipped (1 new snapshot routing case)
+FileApiRuntimeTest: 4 tests, 0 failures, 0 errors, 0 skipped
+FileApiHandlerTest: 12 tests, 0 failures, 0 errors, 0 skipped (1 new limit-clamp assertion)
+
+.\gradlew.bat build verifyJava8 --no-configuration-cache --console=plain
+BUILD SUCCESSFUL; JUnit XML totals: 328 tests, 0 failures, 0 errors, 1 skipped symlink test
+
+node tools/i18n/check
+i18n check passed: 0 error(s), 0 warning(s)
+
+git diff --check
+(no output)
+
+$env:DEPLOYMC_JAVA_ROOT = "C:\Users\satos\AppData\Local\Temp\opencode\dmc-ascii"
+node tools/build/verify-all.cjs
+PASS web
+PASS java
+PASS cli
+PASS python
+PASS spec
+PASS i18n
+PASS compat
+```
+
+Review-driven corrections were covered by the same run: absence is pinned under the store lock
+during restore, records younger than `minAgeDays` are protected from path/id prune as well as
+retention, `limit > 500` is clamped rather than rejected, `Accept-Language` q-values are honoured,
+diff inputs are bounded before blobs are read, and internal failures are retryable.
+
+The adapter keeps all six routes behind the bearer-token gate. The identity comes from the
+authenticated Netty channel rather than a client header. Snapshot ids stay opaque, ETags are quoted,
+ranges are start-inclusive and end-exclusive, restore uses the record's own path and the
+authenticated actor, prune accepts one target and never starts GC, and error details never expose
+host paths, tokens, or file content. No running-server smoke test, full integration suite, E2E run,
+in-game `/deploymc` execution, or Web UI browser check was performed. The single provisioned token
+remains admin-equivalent until Phase 3 RBAC.
 
 ## Earlier pull-request evidence
 
@@ -788,8 +845,8 @@ matrix remains empty and `softwareName` is still `Unknown`.
 - Japanese Web and plugin message strings are machine-translated drafts without native review. See
   [i18n status](i18n-status.md).
 - Many security-critical components are designed or only partially implemented. The WP-2.3 store,
-  restore primitives, retention, verify/repair, and GC now exist in `core.snapshot`, but no REST
-  route, transport handler, running server, UI, or command consumes them. See
+  restore primitives, retention, verify/repair, GC, and the WP-2.6 snapshot REST routes now exist,
+  but no running server, UI, or command consumes them. See
   [implementation status](implementation-status.md) and [risks](risks.md).
 
 ## Open architectural and owner questions

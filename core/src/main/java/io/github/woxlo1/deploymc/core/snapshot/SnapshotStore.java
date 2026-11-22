@@ -62,6 +62,12 @@ import java.util.regex.Pattern;
  */
 public final class SnapshotStore implements SnapshotHook, AutoCloseable {
 
+  /**
+   * Precondition value that pins a target as absent while a restore acquires the store lock. It is
+   * never a file revision.
+   */
+  public static final String ABSENT_REVISION = "absent";
+
   private static final String FORMAT_VERSION = "1\n";
   private static final String ID_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
   private static final String BLOB_STAGING_PREFIX = ".deploymc-object-";
@@ -180,6 +186,24 @@ public final class SnapshotStore implements SnapshotHook, AutoCloseable {
 
   public SnapshotRecord read(String snapshotId) throws SnapshotStoreException {
     return locked(() -> readRecord(snapshotId));
+  }
+
+  /**
+   * Reads the exact verified bytes addressed by one content-bearing record.
+   *
+   * <p>Deletion and directory markers have no blob and are reported as not found. The blob hash and
+   * size are rechecked against the immutable record after reading, so a damaged store fails closed
+   * with {@code snapshots.corrupt} instead of returning unverified content.
+   */
+  public byte[] readContent(String snapshotId) throws SnapshotStoreException {
+    return locked(
+        () -> {
+          SnapshotRecord record = readRecord(snapshotId);
+          if (!record.kind().hasContent()) {
+            throw notFound(snapshotId);
+          }
+          return readVerifiedBlob(record);
+        });
   }
 
   public List<SnapshotRecord> findByPath(String relativePath) throws SnapshotStoreException {
@@ -662,6 +686,7 @@ public final class SnapshotStore implements SnapshotHook, AutoCloseable {
       Collections.sort(pathRecords, CREATED_ORDER);
     }
 
+    Instant cutoff = Instant.now(clock).minus(Duration.ofDays(config.minAgeDays()));
     Set<String> protectedIds = new HashSet<String>();
     for (List<SnapshotRecord> pathRecords : byPath.values()) {
       int newestStart = Math.max(0, pathRecords.size() - 3);
@@ -670,6 +695,9 @@ public final class SnapshotStore implements SnapshotHook, AutoCloseable {
       }
     }
     for (SnapshotRecord record : records) {
+      if (!record.createdAt().isBefore(cutoff)) {
+        protectedIds.add(record.id());
+      }
       if (record.deploymentId() != null && activeDeployments.contains(record.deploymentId())) {
         protectedIds.add(record.id());
       }
@@ -683,12 +711,6 @@ public final class SnapshotStore implements SnapshotHook, AutoCloseable {
           if (!protectedIds.contains(pathRecords.get(i).id())) {
             candidates.add(pathRecords.get(i).id());
           }
-        }
-      }
-      Instant cutoff = Instant.now(clock).minus(Duration.ofDays(config.minAgeDays()));
-      for (SnapshotRecord record : records) {
-        if (record.createdAt().isBefore(cutoff) && !protectedIds.contains(record.id())) {
-          candidates.add(record.id());
         }
       }
       long bytes = storeBytes();
@@ -1289,7 +1311,7 @@ public final class SnapshotStore implements SnapshotHook, AutoCloseable {
     if (expected == null) {
       return true;
     }
-    return expected.equals(actual == null ? "absent" : actual);
+    return expected.equals(actual == null ? ABSENT_REVISION : actual);
   }
 
   private Instant nextCreatedAt() {

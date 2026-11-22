@@ -11,8 +11,8 @@ import io.github.woxlo1.deploymc.core.diff.DiffResult.WordDiff;
 import io.github.woxlo1.deploymc.core.diff.DiffResult.WordSegment;
 import java.util.List;
 
-/** Deterministic JSON projection used by contract tests and later transport adapters. */
-final class DiffJson {
+/** Deterministic JSON projections for contract tests and transport adapters. */
+public final class DiffJson {
 
   private DiffJson() {}
 
@@ -24,6 +24,27 @@ final class DiffJson {
     nullableField(json, "reason", result.reason(), true);
     nullableField(json, "limit", result.limit(), true);
     nullableNumber(json, "observed", result.observed(), true);
+    appendResult(json, result);
+    return json.append('}').toString();
+  }
+
+  /**
+   * Projects one bounded result into the normative {@code SnapshotDiff} envelope. Diagnostic fields
+   * such as {@code reason} and {@code limit} are deliberately excluded because the REST schema
+   * forbids additional properties; those conditions are reported as Problem Details.
+   */
+  public static String toSnapshotDiffJson(String a, String b, DiffResult result) {
+    StringBuilder json = new StringBuilder();
+    json.append('{');
+    field(json, "a", a, true);
+    field(json, "b", b, true);
+    field(json, "status", result.status().value(), true);
+    field(json, "strategy", result.strategy().value(), true);
+    appendResult(json, result);
+    return json.append('}').toString();
+  }
+
+  private static void appendResult(StringBuilder json, DiffResult result) {
     key(json, "before");
     contentInfo(json, result.before());
     json.append(',');
@@ -48,7 +69,6 @@ final class DiffJson {
     } else {
       jarMetadata(json, result.jarMetadata());
     }
-    return json.append('}').toString();
   }
 
   private static void contentInfo(StringBuilder json, ContentInfo info) {

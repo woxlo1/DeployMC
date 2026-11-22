@@ -232,6 +232,11 @@ class FileApiHandlerTest {
             request(
                 "GET", "/api/v1/files", "path=&depth=1&limit=1&cursor=" + tampered, new byte[0]));
     assertProblem(badCursor, 400, "request.invalid-cursor");
+
+    HttpResponse clamped =
+        handler.handle(request("GET", "/api/v1/files", "path=&depth=1&limit=501", new byte[0]));
+    assertEquals(200, clamped.status());
+    assertEquals(3, parse(clamped).get("items").items().size());
   }
 
   @Test

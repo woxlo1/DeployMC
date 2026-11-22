@@ -102,6 +102,31 @@ class SnapshotStoreTest {
   }
 
   @Test
+  void readContentReturnsVerifiedBytesAndFailsClosedForMarkersAndDamage() throws Exception {
+    byte[] content = "exact bytes\n".getBytes(StandardCharsets.UTF_8);
+    try (SnapshotStore store = openStore()) {
+      store.capture(request("a.txt", content, "before-overwrite"));
+      SnapshotRecord record = store.findByPath("a.txt").get(0);
+      assertArrayEquals(content, store.readContent(record.id()));
+
+      store.capture(
+          new SnapshotRequest(
+              resolver.root().toString(),
+              "before-delete",
+              Collections.singletonList(SnapshotEntry.deleted("gone.txt"))));
+      SnapshotRecord marker = store.findByPath("gone.txt").get(0);
+      assertEquals(
+          "snapshots.not-found",
+          assertThrows(SnapshotStoreException.class, () -> store.readContent(marker.id())).code());
+
+      Files.write(blobPath(record.hashHex()), "tampered".getBytes(StandardCharsets.UTF_8));
+      assertEquals(
+          "snapshots.corrupt",
+          assertThrows(SnapshotStoreException.class, () -> store.readContent(record.id())).code());
+    }
+  }
+
+  @Test
   void captureRejectsRevisionMismatchBeforeAnyMetadataWrite() throws Exception {
     try (SnapshotStore store = openStore()) {
       byte[] content = "content".getBytes(StandardCharsets.UTF_8);
@@ -276,6 +301,35 @@ class SnapshotStoreTest {
   }
 
   @Test
+  void restoreWithAbsentRevisionFailsWhenTheTargetAlreadyExists() throws Exception {
+    Path target = sandboxRoot.resolve("absent.yml");
+    byte[] original = "old: true\n".getBytes(StandardCharsets.UTF_8);
+    byte[] appeared = "created: true\n".getBytes(StandardCharsets.UTF_8);
+    try (SnapshotStore store = openStore()) {
+      String capture = store.capture(request("absent.yml", original, "before-overwrite"));
+      String id = store.findByCapture(capture).get(0).id();
+      assertFalse(Files.exists(target));
+
+      RestoreResult result =
+          store.restore(id, "absent.yml", SnapshotStore.ABSENT_REVISION, "operator");
+
+      assertArrayEquals(original, Files.readAllBytes(target));
+      SnapshotRecord pre = store.read(result.preRestoreSnapshotId());
+      assertEquals("deleted", pre.kind().value());
+      assertEquals("operator", pre.actor());
+      assertFalse(store.verify().hasIssues());
+
+      Files.write(target, appeared);
+      SnapshotStoreException failure =
+          assertThrows(
+              SnapshotStoreException.class,
+              () -> store.restore(id, "absent.yml", SnapshotStore.ABSENT_REVISION, "operator"));
+      assertEquals("snapshots.restore-conflict", failure.code());
+      assertArrayEquals(appeared, Files.readAllBytes(target));
+    }
+  }
+
+  @Test
   void restoreRejectsProtectedTargetPaths() throws Exception {
     try (SnapshotStore store = openStore()) {
       String capture =
@@ -413,7 +467,8 @@ class SnapshotStoreTest {
   @Test
   void retentionRemovesOldestVersionsBeyondTheConfiguredCount() throws Exception {
     SnapshotStoreConfig config = SnapshotStoreConfig.builder().maxVersionsPerPath(3).build();
-    try (SnapshotStore store = openStore(config, Clock.systemUTC())) {
+    MutableClock clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
+    try (SnapshotStore store = openStore(config, clock)) {
       List<String> ids = new ArrayList<String>();
       for (int i = 0; i < 5; i++) {
         String capture =
@@ -424,6 +479,7 @@ class SnapshotStoreTest {
                     "before-edit"));
         ids.add(store.findByCapture(capture).get(0).id());
       }
+      clock.advance(Duration.ofDays(91L));
 
       RetentionReport report = store.retain();
 
@@ -454,7 +510,8 @@ class SnapshotStoreTest {
   @Test
   void retentionProtectsRecordsReferencedByAnActiveDeployment() throws Exception {
     SnapshotStoreConfig config = SnapshotStoreConfig.builder().maxVersionsPerPath(3).build();
-    try (SnapshotStore store = openStore(config, Clock.systemUTC())) {
+    MutableClock clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
+    try (SnapshotStore store = openStore(config, clock)) {
       String deployment = "dep_active";
       store.registerDeployment(deployment);
       List<SnapshotEntry> entries =
@@ -474,6 +531,7 @@ class SnapshotStoreTest {
         store.capture(
             request("deployed.txt", ("new-" + i).getBytes(StandardCharsets.UTF_8), "before-edit"));
       }
+      clock.advance(Duration.ofDays(91L));
 
       RetentionReport report = store.retain();
 
@@ -481,6 +539,56 @@ class SnapshotStoreTest {
       assertNotNull(store.read(protectedId));
       store.completeDeployment(deployment);
       assertEquals(1, store.retain().pruned());
+    }
+  }
+
+  @Test
+  void manualPruneProtectsRecordsYoungerThanTheMinimumAge() throws Exception {
+    SnapshotStoreConfig config = SnapshotStoreConfig.builder().maxVersionsPerPath(3).build();
+    MutableClock clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
+    try (SnapshotStore store = openStore(config, clock)) {
+      String byPathId = null;
+      String byIdId = null;
+      for (int version = 0; version < 4; version++) {
+        String pathId =
+            store
+                .findByCapture(
+                    store.capture(
+                        request(
+                            "young-path.txt",
+                            ("p" + version).getBytes(StandardCharsets.UTF_8),
+                            "before-edit")))
+                .get(0)
+                .id();
+        String id =
+            store
+                .findByCapture(
+                    store.capture(
+                        request(
+                            "young-id.txt",
+                            ("i" + version).getBytes(StandardCharsets.UTF_8),
+                            "before-edit")))
+                .get(0)
+                .id();
+        if (version == 0) {
+          byPathId = pathId;
+          byIdId = id;
+        }
+      }
+
+      final String oldestByPath = byPathId;
+      final String oldestById = byIdId;
+
+      assertEquals(0, store.prunePath("young-path.txt").pruned());
+      assertEquals(0, store.pruneSnapshot(oldestById).pruned());
+      assertNotNull(store.read(oldestByPath));
+      assertNotNull(store.read(oldestById));
+
+      clock.advance(Duration.ofDays(91L));
+      assertEquals(1, store.prunePath("young-path.txt").pruned());
+      assertEquals(1, store.pruneSnapshot(oldestById).pruned());
+      assertThrows(SnapshotStoreException.class, () -> store.read(oldestByPath));
+      assertThrows(SnapshotStoreException.class, () -> store.read(oldestById));
     }
   }
 
@@ -496,6 +604,7 @@ class SnapshotStoreTest {
                 request("gc.txt", ("blob-" + i).getBytes(StandardCharsets.UTF_8), "before-edit"));
         hashes.add(store.findByCapture(capture).get(0).hashHex());
       }
+      clock.advance(Duration.ofDays(91L));
       assertEquals(1, store.retain().pruned());
       Path unreachable = blobPath(hashes.get(0));
       assertTrue(Files.exists(unreachable));

@@ -939,9 +939,11 @@ paths:
         Restore is reversible: the current target state is captured with reason `restore`
         before mutation, including a deletion marker when the target is missing. When the
         target exists, `If-Match` must contain its current revision; a missing precondition
-        is `428` and a stale revision is `412` with `snapshots.restore-conflict`. Restore of
-        a deletion marker removes only the recorded target after that capture. An id that
-        names a directory marker is rejected as `snapshots.corrupt`.
+        is `428` and a stale revision is `412` with `snapshots.restore-conflict`. When the
+        target is absent, the server pins absence under its store lock so a concurrent
+        creation also produces `412`. Restore of a deletion marker removes only the
+        recorded target after that capture. An id that names a directory marker is rejected
+        as `snapshots.corrupt`.
       security:
         - cloudflareAccess: []
         - bearerAuth: []
@@ -1147,8 +1149,7 @@ components:
       required: false
       description: |
         Maximum number of items to return. The server clamps values above its
-        documented maximum instead of rejecting them; the effective maximum is
-        reported in the response.
+        documented maximum instead of rejecting them.
       schema:
         type: integer
         minimum: 1

@@ -35,6 +35,9 @@ class FileApiRuntimeTest {
       HttpResponse response = first.handler().handle(listRequest(""));
       assertEquals(200, response.status());
       assertTrue(containsPath(parse(response), "runtime.txt"));
+      HttpResponse snapshots = first.snapshotHandler().handle(snapshotListRequest("runtime.txt"));
+      assertEquals(200, snapshots.status());
+      assertEquals(0L, parse(snapshots).get("total").raw());
       assertTrue(Files.isDirectory(pluginsDirectory.resolve(".deploymc/history")));
     }
 
@@ -43,6 +46,8 @@ class FileApiRuntimeTest {
       HttpResponse response = second.handler().handle(listRequest(""));
       assertEquals(200, response.status());
       assertTrue(containsPath(parse(response), "runtime.txt"));
+      assertEquals(
+          200, second.snapshotHandler().handle(snapshotListRequest("runtime.txt")).status());
     }
   }
 
@@ -107,6 +112,16 @@ class FileApiRuntimeTest {
         "req-runtime",
         "GET",
         "/api/v1/files",
+        "path=" + path,
+        Collections.<String, java.util.List<String>>emptyMap(),
+        new byte[0]);
+  }
+
+  private static HttpRequest snapshotListRequest(String path) {
+    return new HttpRequest(
+        "req-runtime",
+        "GET",
+        "/api/v1/snapshots",
         "path=" + path,
         Collections.<String, java.util.List<String>>emptyMap(),
         new byte[0]);

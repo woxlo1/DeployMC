@@ -8,13 +8,13 @@ be measured, not achievements to be claimed. Adjust them only with recorded evid
 
 | Area | Gate | Current status |
 |---|---|---|
-| Core logic (sandbox, RBAC, auth, deploy state machine, snapshot) | Line coverage >= 90% and branch coverage >= 85% for security-critical packages; mutation testing on sandbox and RBAC where feasible | Not measured; modules not implemented |
+| Core logic (sandbox, RBAC, auth, deploy state machine, snapshot) | Line coverage >= 90% and branch coverage >= 85% for security-critical packages; mutation testing on sandbox and RBAC where feasible | Not measured; implemented core modules have unit tests but no coverage report |
 | Other Java modules | Line coverage >= 80% | Not measured |
 | Web UI | Unit coverage >= 70%; all core workflows covered by E2E | Not measured; no product screens |
 | CLI / SDKs | Line coverage >= 80% plus conformance suite | Not measured; skeletons only |
 | Static analysis | Zero new high-severity findings; warnings treated as errors where practical | Linters and CodeQL pass on skeletons; targets not yet applied to product code |
 | Bundle sizes | Web UI gzip budget set after the size spike and enforced; plugin JAR size reported per PR with a regression threshold | Not set; spike tracked in #118 |
-| Startup overhead | Plugin enable time under 1 second excluding optional network checks (initial target) | Not measured; no adapter |
+| Startup overhead | Plugin enable time under 1 second excluding optional network checks (initial target) | Not measured; no running-server timing after adapter wiring |
 | Idle overhead | CPU and memory budget measured on a reference server profile and documented | Not measured; no reference profile |
 
 ## Reporting rules
