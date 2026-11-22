@@ -14,7 +14,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-slow-enable` | `plugins/deploymc-test-slow-enable/` | Available (source-built JAR; injectable 30s default delay) |
 | `deploymc-test-dependency` | `plugins/deploymc-test-dependency/` | Available (source-built JAR; missing hard dependency) |
 | `deploymc-test-conflicting-libs` | `conflicting-plugin/` (`DeployMCTestConflictingLibs`) | Available (source-built shadow JAR; canonical name and harness registry) |
-| `deploymc-test-log-noise` | `plugins/` | Planned |
+| `deploymc-test-log-noise` | `plugins/deploymc-test-log-noise/` | Available (source-built JAR; configurable all-level rates) |
 | `deploymc-test-wrong-platform` | `plugins/` | Planned |
 | Traversal corpus with per-OS expectations | `../security/sandbox/` | Base corpus exists; per-OS metadata remains |
 | JWT vectors, throwaway keys, mock JWKS | Planned under `../security/` | Not started |
@@ -33,6 +33,7 @@ From the repository root:
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-broken-descriptor:build
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-slow-enable:build
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-dependency:build
+.\gradlew.bat :tests:fixtures:plugins:deploymc-test-log-noise:build
 .\gradlew.bat :tests:fixtures:conflicting-plugin:shadowJar
 ```
 
@@ -48,7 +49,10 @@ The dependency plugin produces `deploymc-test-dependency-1.0.0.jar`; its generat
 declares the absent hard dependency `DeployMCTestMissingDependency` to exercise dependency warnings.
 The conflicting-library plugin produces `deploymc-test-conflicting-libs-1.0.0.jar`; it bundles
 unrelocated Netty 4.1.100.Final under the canonical `DeployMCTestConflictingLibs` identity used by the
-compatibility harness registry.
+compatibility harness registry. The log-noise plugin produces `deploymc-test-log-noise-1.0.0.jar`;
+`config.yml` sets server-tick rates for `finest`, `finer`, `fine`, `config`, `info`, `warning`, and
+`severe`. Each rate can be overridden with `deploymc.fixture.log-noise.<level>.ticks`, and a
+non-positive value disables that level.
 
 ## Test environment hygiene
 
