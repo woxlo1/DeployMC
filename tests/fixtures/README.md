@@ -18,7 +18,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-wrong-platform` | `plugins/deploymc-test-wrong-platform/` | Available (source-built JAR; Velocity descriptor, no `plugin.yml`) |
 | Traversal corpus with per-OS expectations | `../security/sandbox/` | Available (versioned manifest, categories, digests, and per-OS override mechanism) |
 | JWT vectors, throwaway keys, mock JWKS | `../security/jwt/` | Available (deterministic vectors, in-memory keys, localhost mock JWKS) |
-| Malformed archive and YAML-bomb generators | Planned under `../security/` | Not started |
+| Malformed archive and YAML-bomb generators | `../security/hostile-inputs/` | Available (generated at test time, manifest-pinned, no committed binaries) |
 | Log, config, large-tree, and filter vectors | Planned under `../fixtures/` | Not started |
 
 "Planned" is not evidence of support. This table is updated as each reviewable stage lands.
@@ -89,6 +89,21 @@ python -m unittest discover -s tests/security/jwt -p 'test_*.py'
 ```
 
 No product JWT verifier, running server, or external JWKS endpoint consumes these fixtures yet.
+
+`../security/hostile-inputs/generate_hostile_inputs.py` regenerates six archive fixtures and four
+YAML fixtures from fixed deterministic writers. Dangerous and large outputs stay in an ignored
+`generated/` directory or a test `TemporaryDirectory`; only the manifest, generator, tests, and
+README are committed. The archives cover zip-slip, an 8 MiB fixed-Huffman zip bomb, duplicate
+entries, duplicate descriptors, a real ZipCrypto entry, and a symlink entry. The YAML corpus covers
+deep nesting, alias expansion, a large scalar, and many nodes. ZIP `current.reader` values are from
+static source review; YAML product checks have not been executed.
+
+```powershell
+python tests/security/hostile-inputs/generate_hostile_inputs.py
+python -m unittest discover -s tests/security/hostile-inputs -p 'test_*.py'
+```
+
+No product validator, running server, or integration consumer uses these fixtures yet.
 
 ## Test environment hygiene
 

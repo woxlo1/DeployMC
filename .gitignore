@@ -71,3 +71,4 @@ tmp/
 temp/
 *.tmp
 *.log
+tests/security/hostile-inputs/generated/
