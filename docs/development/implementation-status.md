@@ -8,8 +8,8 @@ the authenticated snapshot adapters at `136ce00`. PART 35 stage 1 merged in PR #
 the broken-enable fixture in PR #176 at `7c2100e`, the broken-descriptor fixture in PR #177 at
 `2508043`, the slow-enable fixture in PR #178 at `a03435`, the dependency fixture in PR #180 at
 `4bcf20f`, the conflicting-library alignment in PR #181 at `fd92cd0`, and the log-noise fixture in
-PR #182 at `9b20b36`, all with passing post-merge `main` workflows. Issue #115 stays open for the
-remaining stages.)
+PR #182 at `9b20b36`, all with passing post-merge `main` workflows. A source-built wrong-platform
+fixture is staged with local build evidence only; issue #115 stays open for the remaining stages.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -105,6 +105,7 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 35 dependency fixture | Test-only `DeployMCTestDependency` plugin whose descriptor declares the absent hard dependency `DeployMCTestMissingDependency` | Targeted clean build produced the JAR; descriptor dependency entry and class major 52 inspected; PR #180 merged at `4bcf20f` with post-merge CI/CodeQL/Scorecard pass; no dependency warning test, server, or harness execution |
 | PART 35 conflicting-library alignment | `DeployMCTestConflictingLibs` shadow JAR with unrelocated Netty 4.1.100.Final and canonical harness registry constants | Targeted clean shadow build produced the canonical JAR; ZIP descriptor, canonical class, 2,988 unrelocated Netty classes, and class major 52 inspected; offline harness suite grew to 15 passing tests; PR #181 merged at `fd92cd0` with post-merge CI/CodeQL/Scorecard pass; no running server or full harness execution |
 | PART 35 log-noise fixture | Test-only `DeployMCTestLogNoise` plugin that emits all Java logging levels at config/system-property tick rates and cancels its tasks on disable | Targeted clean build produced the JAR; ZIP descriptor, seven config rates, and class major 52 inspected; PR #182 merged at `9b20b36` with post-merge CI/CodeQL/Scorecard pass; no backpressure test, server, or harness execution |
+| PART 35 wrong-platform fixture | Test-only JAR with a Velocity `velocity-plugin.json` descriptor and no Bukkit `plugin.yml` | Targeted clean build produced the JAR; Velocity descriptor, absence of `plugin.yml`, and class major 52 inspected; no validator run, server, or harness execution |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
