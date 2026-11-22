@@ -312,8 +312,22 @@ Four more follow-up PRs were squash-merged with explicit verification and eviden
   [evidence](https://github.com/woxlo1/DeployMC/pull/185#issuecomment-7074871792). The PR CI
   corpus tests passed on Ubuntu and Windows; no scheduled fuzz run, server, or harness execution
   was performed locally.
+- PR #186 recorded merged-stage evidence for PRs #183-#185 at
+  `cfd47b6e365dcd74518d5c51093538fac7a17662` on `2026-11-22T05:55:58Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/186#issuecomment-7074948038),
+  [commit-message fix](https://github.com/woxlo1/DeployMC/pull/186#issuecomment-7075001061), and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/186#issuecomment-7075066136). The initial
+  `Commit messages` failure was caused by hash-prefixed body lines parsed as footers; removing the
+  prefixes fixed it without changing the tree.
+- PR #187 added deterministic JWT vectors and a localhost mock JWKS server at
+  `ce4fdc7db3742c17f294813e53961eea98f02583` on `2026-11-22T06:13:36Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/187#issuecomment-7075173934) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/187#issuecomment-7075269244). Five Python tests
+  passed locally and in PR CI on Ubuntu and Windows. A post-merge CodeQL autobuild hit a transient
+  Maven Central 429; rerunning only the failed job produced a full pass. No product JWT verifier,
+  server, or external JWKS endpoint was exercised.
 
-All eleven follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
+All thirteen follow-ups had passing pre-merge checks and passing post-merge CI, CodeQL, and Scorecard
 runs; the local and remote branches were deleted after evidence was posted. Issue #115 remains open
 until the remaining data-corpora stages land.
 
@@ -321,9 +335,10 @@ until the remaining data-corpora stages land.
 
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
   with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
-- No WP-2.1-WP-2.5 branches remain, and WP-2.6 and all merged PART 35 feature/evidence branches were
-  deleted after evidence was posted. Evidence is recorded in the status pages and pull-request
-  comments.
+- No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches, and
+  `test/jwt-vectors-mock-jwks` were deleted after evidence was posted. The
+  `docs/issue-115-evidence-catchup-187` branch is temporary for this evidence update. Evidence is
+  recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
 - Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
 
