@@ -2,9 +2,9 @@
 
 Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `ce4fdc7` after
-PR #187. PART 35 fixtures through the JWT vectors and mock JWKS stage are merged with local and
-post-merge evidence; issue #115 stays open for the remaining stages.)
+implementation). GitHub merge evidence below was verified against `main` through `49f300a` after
+PR #189. PART 35 fixtures through the hostile archive and YAML generator stage are merged with local
+and post-merge evidence; issue #115 stays open for the remaining stages.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -56,9 +56,9 @@ This is the session-level status page. For per-component facts use
   aligned the conflicting-library fixture identity, and PR #182 added the log-noise fixture through
   `9b20b36`. PR #183 recorded catch-up evidence at `9fac5f1`, PR #184 added the source-built
   wrong-platform fixture at `4819195`, PR #185 added the versioned traversal-corpus manifest at
-  `3b85de8`, PR #186 recorded catch-up evidence at `cfd47b6`, and PR #187 added deterministic JWT
-  vectors with a localhost mock JWKS server at `ce4fdc7`. The issue remains open until the remaining
-  data-corpora stages land.
+  `3b85de8`, PR #186 recorded catch-up evidence at `cfd47b6`, PR #187 added deterministic JWT vectors
+  with a localhost mock JWKS server at `ce4fdc7`, and PR #189 added hostile archive and YAML generators
+  at `49f300a`. The issue remains open until the remaining data-corpora stages land.
 
 Verified GitHub state on 2026-11-20 after PR #151 was merged and issue #48 was closed:
 
@@ -767,13 +767,22 @@ in-game command execution was performed for these fixtures. PR #179 was document
   [44992769504](https://github.com/woxlo1/DeployMC/actions/runs/44992769504) passed; CodeQL
   [44992769372](https://github.com/woxlo1/DeployMC/actions/runs/44992769372) first failed during
   autobuild because Maven Central returned HTTP 429, and a failed-job rerun passed.
+- PR #189 added manifest-pinned hostile archive and YAML generators at
+  `49f300af83b4ddee565bad4e57117963f5ac6aaa` on `2026-11-22T06:44:51Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/189#issuecomment-7075468913) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/189#issuecomment-7075543887). Post-merge
+  workflows passed: CI [44995117396](https://github.com/woxlo1/DeployMC/actions/runs/44995117396),
+  CodeQL [44995117319](https://github.com/woxlo1/DeployMC/actions/runs/44995117319), Scorecard
+  [44995117358](https://github.com/woxlo1/DeployMC/actions/runs/44995117358). ZIP reader expectations
+  are static source review; no product archive or YAML validator was exercised.
 
 The local and remote branches `docs/issue-115-evidence-catchup`,
 `feature/issue-115-dependency-fixture`, `feature/issue-115-conflicting-libs-alignment`,
 `feature/issue-115-log-noise-fixture`, `docs/issue-115-fixture-evidence-catchup`,
 `feature/issue-115-wrong-platform-fixture`, `feature/issue-115-traversal-os-expectations`,
-`docs/issue-115-evidence-catchup-185`, and `test/jwt-vectors-mock-jwks` were deleted after evidence
-was posted. The `docs/issue-115-evidence-catchup-187` branch is temporary for this evidence update.
+`docs/issue-115-evidence-catchup-185`, `docs/issue-115-evidence-catchup-187`,
+`test/jwt-vectors-mock-jwks`, and `test/hostile-input-fixtures` were deleted after evidence was
+posted. The `docs/issue-115-evidence-catchup-189` branch is temporary for this evidence update.
 Issue #115 remains open for the remaining data-corpora stages.
 
 ## Earlier pull-request evidence
