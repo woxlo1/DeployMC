@@ -16,7 +16,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-conflicting-libs` | `conflicting-plugin/` (`DeployMCTestConflictingLibs`) | Available (source-built shadow JAR; canonical name and harness registry) |
 | `deploymc-test-log-noise` | `plugins/deploymc-test-log-noise/` | Available (source-built JAR; configurable all-level rates) |
 | `deploymc-test-wrong-platform` | `plugins/deploymc-test-wrong-platform/` | Available (source-built JAR; Velocity descriptor, no `plugin.yml`) |
-| Traversal corpus with per-OS expectations | `../security/sandbox/` | Base corpus exists; per-OS metadata remains |
+| Traversal corpus with per-OS expectations | `../security/sandbox/` | Available (versioned manifest, categories, digests, and per-OS override mechanism) |
 | JWT vectors, throwaway keys, mock JWKS | Planned under `../security/` | Not started |
 | Malformed archive and YAML-bomb generators | Planned under `../security/` | Not started |
 | Log, config, large-tree, and filter vectors | Planned under `../fixtures/` | Not started |
@@ -57,6 +57,24 @@ non-positive value disables that level. The wrong-platform plugin produces
 `deploymc-test-wrong-platform-1.0.0.jar`; it contains a Velocity `velocity-plugin.json` descriptor
 and no Bukkit `plugin.yml`, so a Bukkit descriptor validator should reject it. No validator test
 consumes it yet.
+
+## Security corpora
+
+`../security/sandbox/generate_corpus.py` regenerates `traversal-corpus.txt`, `allowed-paths.txt`,
+and `corpus-manifest.properties` deterministically with LF endings. The manifest records schema
+version 1, corpus version `2026-11-22.1`, source digests and counts, nine payload categories, and a
+`category.<id>.os.<osId>` override mechanism. Schema 1 declares no overrides: `SandboxResolver`
+applies Windows name rules on every host, so every category expectation is `os=all`. Protected-path
+seeds are benign strings and are not part of the bulk reject corpus; `SandboxResolverTest` covers
+that behavior directly.
+
+```powershell
+python tests/security/sandbox/generate_corpus.py
+python -m unittest discover -s tests/security/sandbox -p 'test_*.py'
+```
+
+The corpus currently contains 2,736 reject and 29 allow payloads. No scheduled fuzz run or
+cross-OS corpus execution has been performed from these fixtures.
 
 ## Test environment hygiene
 
