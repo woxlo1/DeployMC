@@ -624,8 +624,11 @@ The coverage map is in `tests/fixtures/README.md`. The targeted Gradle clean bui
 through the ASCII junction with `--no-configuration-cache` and produced `deploymc-test-a-1.0.0.jar`
 and `deploymc-test-a-1.1.0.jar`. ZIP inspection showed matching `plugin.yml` versions and
 `fixture-message` config values, and class-byte inspection showed major 52 for both `main` and
-`version110` outputs. No running-server, full-integration, E2E, Web UI, or in-game command execution
-was performed. CI remains the merge authority.
+`version110` outputs. After CI reported configuration-cache serialization failures, the descriptor
+tasks were changed to use task-local values and `.\gradlew.bat build verifyJava8 --console=plain` was
+rerun through the same junction with configuration cache enabled: `BUILD SUCCESSFUL` and the cache
+entry was stored. No running-server, full-integration, E2E, Web UI, or in-game command execution was
+performed. CI remains the merge authority.
 
 ## Earlier pull-request evidence
 
