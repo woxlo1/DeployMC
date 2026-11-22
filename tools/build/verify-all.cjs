@@ -154,6 +154,10 @@ function buildSteps() {
           command: `${q(basePython)} -m unittest discover -s tests/fixtures/config-corpora -p ${q("test_*.py")}`,
           cwd: root,
         },
+        {
+          command: `${q(basePython)} -m unittest discover -s tests/fixtures/large-trees -p ${q("test_*.py")}`,
+          cwd: root,
+        },
       ],
     },
   ];
