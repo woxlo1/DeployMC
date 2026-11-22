@@ -60,7 +60,7 @@ Individual commands, useful for investigating one failure:
 | Java | `.\gradlew.bat build verifyJava8` (includes `:plugin:verifyPluginJar` through `check`) |
 | Plugin JAR verification | `.\gradlew.bat :plugin:verifyPluginJar`; fixtures: `.\gradlew.bat :plugin:generatePluginJarFixtures` then `.\gradlew.bat --project-prop=deploymc.verifyJarFile=build/fixtures/<name>.jar :plugin:verifyPluginJarFixture` |
 | Plugin JAR size | `.\gradlew.bat :plugin:reportPluginJarSize` |
-| Compatibility harness | `python -m unittest discover -s tests/compat-matrix -p 'test_*.py'`; full entry: `python tests/compat-matrix/harness.py run --entry paper-26.3 --plugin-jar plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/legacy-netty-fixture-1.0.0.jar --java <path-to-Java-25>` |
+| Compatibility harness | `python -m unittest discover -s tests/compat-matrix -p 'test_*.py'`; full entry: `python tests/compat-matrix/harness.py run --entry paper-26.3 --plugin-jar plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/deploymc-test-conflicting-libs-1.0.0.jar --java <path-to-Java-25>` |
 | Web | `pnpm lint && pnpm format:check && pnpm test && pnpm build` in `web/` |
 | CLI | `cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace` in `cli/` |
 | Python | `python -m ruff check . && python -m ruff format --check . && python -m mypy && python -m pytest` in `sdk/python/` |

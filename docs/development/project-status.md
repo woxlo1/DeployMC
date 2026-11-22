@@ -885,7 +885,7 @@ git diff --check
   no output
 python tests/compat-matrix/harness.py run --entry paper-26.3 \
   --plugin-jar plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar \
-  --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/legacy-netty-fixture-1.0.0.jar \
+  --conflict-plugin-jar tests/fixtures/conflicting-plugin/build/libs/deploymc-test-conflicting-libs-1.0.0.jar \
   --result tests/compat-matrix/results/compat-v1-local.json \
   --java 'C:\Users\satos\AppData\Local\Temp\opencode\jdk25\extracted\jdk-25.0.5+8\bin\java.exe'
   compat entry paper-26.3: pass

@@ -13,7 +13,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-broken-descriptor` | `plugins/deploymc-test-broken-descriptor/` | Available (source-built JAR; descriptor omits required `main`) |
 | `deploymc-test-slow-enable` | `plugins/deploymc-test-slow-enable/` | Available (source-built JAR; injectable 30s default delay) |
 | `deploymc-test-dependency` | `plugins/deploymc-test-dependency/` | Available (source-built JAR; missing hard dependency) |
-| `deploymc-test-conflicting-libs` | `conflicting-plugin/` (`LegacyNettyFixture`) | Partial; name and registry alignment remain |
+| `deploymc-test-conflicting-libs` | `conflicting-plugin/` (`DeployMCTestConflictingLibs`) | Available (source-built shadow JAR; canonical name and harness registry) |
 | `deploymc-test-log-noise` | `plugins/` | Planned |
 | `deploymc-test-wrong-platform` | `plugins/` | Planned |
 | Traversal corpus with per-OS expectations | `../security/sandbox/` | Base corpus exists; per-OS metadata remains |
@@ -46,6 +46,9 @@ produces `deploymc-test-slow-enable-1.0.0.jar`; it sleeps for `slow-enable-milli
 the `deploymc.fixture.slow-enable.millis` system property to exercise verification timeout behavior.
 The dependency plugin produces `deploymc-test-dependency-1.0.0.jar`; its generated `plugin.yml`
 declares the absent hard dependency `DeployMCTestMissingDependency` to exercise dependency warnings.
+The conflicting-library plugin produces `deploymc-test-conflicting-libs-1.0.0.jar`; it bundles
+unrelocated Netty 4.1.100.Final under the canonical `DeployMCTestConflictingLibs` identity used by the
+compatibility harness registry.
 
 ## Test environment hygiene
 
