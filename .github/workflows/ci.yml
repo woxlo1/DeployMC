@@ -115,6 +115,9 @@ jobs:
       - name: Harness unit tests
         shell: bash
         run: python -m unittest discover -s tests/compat-matrix -p 'test_*.py'
+      - name: JWT fixture unit tests
+        shell: bash
+        run: python -m unittest discover -s tests/security/jwt -p 'test_*.py'
       - name: Run Paper smoke entry
         shell: bash
         run: |

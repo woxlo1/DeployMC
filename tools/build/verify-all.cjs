@@ -130,12 +130,16 @@ function buildSteps() {
       ],
     },
     {
-      // Offline harness checks only; the real Paper smoke entry runs in CI.
+      // Offline harness and security fixture checks only; the real Paper smoke entry runs in CI.
       key: "compat",
-      name: "Compatibility harness (offline unit tests)",
+      name: "Compatibility harness and security fixtures (offline unit tests)",
       commands: [
         {
           command: `${q(basePython)} -m unittest discover -s tests/compat-matrix -p ${q("test_*.py")}`,
+          cwd: root,
+        },
+        {
+          command: `${q(basePython)} -m unittest discover -s tests/security/jwt -p ${q("test_*.py")}`,
           cwd: root,
         },
       ],
