@@ -15,7 +15,7 @@ artifact. Generated JARs stay under each project's ignored `build/` directory.
 | `deploymc-test-dependency` | `plugins/deploymc-test-dependency/` | Available (source-built JAR; missing hard dependency) |
 | `deploymc-test-conflicting-libs` | `conflicting-plugin/` (`DeployMCTestConflictingLibs`) | Available (source-built shadow JAR; canonical name and harness registry) |
 | `deploymc-test-log-noise` | `plugins/deploymc-test-log-noise/` | Available (source-built JAR; configurable all-level rates) |
-| `deploymc-test-wrong-platform` | `plugins/` | Planned |
+| `deploymc-test-wrong-platform` | `plugins/deploymc-test-wrong-platform/` | Available (source-built JAR; Velocity descriptor, no `plugin.yml`) |
 | Traversal corpus with per-OS expectations | `../security/sandbox/` | Base corpus exists; per-OS metadata remains |
 | JWT vectors, throwaway keys, mock JWKS | Planned under `../security/` | Not started |
 | Malformed archive and YAML-bomb generators | Planned under `../security/` | Not started |
@@ -34,6 +34,7 @@ From the repository root:
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-slow-enable:build
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-dependency:build
 .\gradlew.bat :tests:fixtures:plugins:deploymc-test-log-noise:build
+.\gradlew.bat :tests:fixtures:plugins:deploymc-test-wrong-platform:build
 .\gradlew.bat :tests:fixtures:conflicting-plugin:shadowJar
 ```
 
@@ -52,7 +53,10 @@ unrelocated Netty 4.1.100.Final under the canonical `DeployMCTestConflictingLibs
 compatibility harness registry. The log-noise plugin produces `deploymc-test-log-noise-1.0.0.jar`;
 `config.yml` sets server-tick rates for `finest`, `finer`, `fine`, `config`, `info`, `warning`, and
 `severe`. Each rate can be overridden with `deploymc.fixture.log-noise.<level>.ticks`, and a
-non-positive value disables that level.
+non-positive value disables that level. The wrong-platform plugin produces
+`deploymc-test-wrong-platform-1.0.0.jar`; it contains a Velocity `velocity-plugin.json` descriptor
+and no Bukkit `plugin.yml`, so a Bukkit descriptor validator should reject it. No validator test
+consumes it yet.
 
 ## Test environment hygiene
 

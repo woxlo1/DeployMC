@@ -14,4 +14,5 @@ include(
     ":tests:fixtures:plugins:deploymc-test-slow-enable",
     ":tests:fixtures:plugins:deploymc-test-dependency",
     ":tests:fixtures:plugins:deploymc-test-log-noise",
+    ":tests:fixtures:plugins:deploymc-test-wrong-platform",
 )
