@@ -1,0 +1,3 @@
+language: en
+auth:
+  mode: token
