@@ -1,10 +1,10 @@
 # Implementation Status
 
 Last updated: 2026-11-22 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
-all merged WP-2.6 specification and file/validation adapter stages, and the snapshot REST adapter
-implementation; issues #47-#54 closed. PR #168 merged the file/validation contract at `8970728`,
-PR #169 merged its adapters at `08fe424`, PR #170 merged the snapshot-route contract at `bf82e26`,
-and PR #171 merged its evidence at `88a6541`.)
+all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #168 merged the
+file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
+snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
+the authenticated snapshot adapters at `136ce00`.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -352,6 +352,16 @@ failures retryable. With `DEPLOYMC_JAVA_ROOT` set to the ASCII junction,
 and `compat`; `node tools/i18n/check` reported 0 errors and 0 warnings, and `git diff --check`
 produced no output. No running-server smoke, full integration suite, E2E run, in-game `/deploymc`
 execution, or Web UI browser check was performed for these routes.
+
+The explicit verification comment for head commit `8763082` is at
+<https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072665699>. PR #172 squash-merged to
+`main` at `136ce00ffc67b472872d8966306e29e1e5f36b39` on `2026-11-22T02:08:39Z`, and issue #55 closed
+as completed at `2026-11-22T02:08:41Z`. The post-merge evidence comment is at
+<https://github.com/woxlo1/DeployMC/pull/172#issuecomment-7072756119>. Post-merge `main` runs passed:
+CI [44974693821](https://github.com/woxlo1/DeployMC/actions/runs/44974693821), CodeQL
+[44974693864](https://github.com/woxlo1/DeployMC/actions/runs/44974693864), and Scorecard
+[44974693855](https://github.com/woxlo1/DeployMC/actions/runs/44974693855). The local and remote
+`feature/wp-2.6-snapshot-adapters` branches were deleted after the evidence was posted.
 
 ## Repository configuration, not a product feature
 

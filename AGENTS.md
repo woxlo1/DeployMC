@@ -72,11 +72,12 @@ both WP-2.5 stages, and all merged WP-2.6 stages; implementation evidence is rec
 `docs/development`. WP-2.6 merged the file/validation REST specification in
 [PR #168](https://github.com/woxlo1/DeployMC/pull/168) at `8970728`, its authenticated adapters in
 [PR #169](https://github.com/woxlo1/DeployMC/pull/169) at `08fe424`, the snapshot-route contract in
-[PR #170](https://github.com/woxlo1/DeployMC/pull/170) at `bf82e26`, and its merge evidence in
-[PR #171](https://github.com/woxlo1/DeployMC/pull/171) at `88a6541`. The file/validation adapters
-consume the sandbox resolver, `core.files`, and `core.validation` behind the bearer-token gate, with
-Problem Details, ETags, ranges, and cursor pagination. Six snapshot REST routes in
-`specification/api/openapi.yaml` are implemented by `transport.SnapshotApiHandler` over
+[PR #170](https://github.com/woxlo1/DeployMC/pull/170) at `bf82e26`, its merge evidence in
+[PR #171](https://github.com/woxlo1/DeployMC/pull/171) at `88a6541`, and the authenticated snapshot
+REST adapters in [PR #172](https://github.com/woxlo1/DeployMC/pull/172) at `136ce00` with issue #55
+closed. The file/validation adapters consume the sandbox resolver, `core.files`, and `core.validation`
+behind the bearer-token gate, with Problem Details, ETags, ranges, and cursor pagination. Six snapshot
+REST routes in `specification/api/openapi.yaml` are implemented by `transport.SnapshotApiHandler` over
 `core.snapshot` and `core.diff`, also behind the bearer-token gate.
 No running server, UI, or in-game command consumes those REST adapters yet, and exact-byte
 preservation for existing NFD filenames is not implemented. All REST adapters have server-free tests
