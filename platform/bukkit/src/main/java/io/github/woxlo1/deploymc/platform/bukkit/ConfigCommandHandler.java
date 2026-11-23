@@ -7,7 +7,7 @@ import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.ReloadReport;
-import java.lang.reflect.Field;
+import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,7 +29,7 @@ public final class ConfigCommandHandler {
   private final DoctorRuntime doctor;
 
   public ConfigCommandHandler(ConfigManager manager, StartupPlan plan) {
-    this(manager, plan, null);
+    this(manager, plan, null, null);
   }
 
   public ConfigCommandHandler(
@@ -171,78 +171,14 @@ public final class ConfigCommandHandler {
 
   private void doctor(CommandOutput output, LocalizedMessages messages) {
     output.send(messages.format(MessageKeys.COMMAND_DOCTOR_TITLE));
-    Optional<ConfigValidationResult> validation = manager.lastValidation();
-    if (validation.isPresent()) {
-      String detail =
-          messages.format(
-              MessageKeys.COMMAND_DOCTOR_CONFIG_VALID,
-              values("count", Integer.toString(validation.get().warnings().size())));
-      output.send(
-          messages.format(
-              MessageKeys.COMMAND_DOCTOR_PASS,
-              values(
-                  "check",
-                  messages.format(MessageKeys.COMMAND_DOCTOR_CHECK_CONFIG),
-                  "detail",
-                  detail)));
-    } else {
-      output.send(
-          messages.format(
-              MessageKeys.COMMAND_DOCTOR_FAIL,
-              values(
-                  "check",
-                  messages.format(MessageKeys.COMMAND_DOCTOR_CHECK_CONFIG),
-                  "detail",
-                  messages.format(MessageKeys.COMMAND_DOCTOR_CONFIG_UNAVAILABLE))));
+    if (doctor == null) {
+      output.send(messages.format(MessageKeys.COMMAND_UNAVAILABLE));
+      return;
     }
-
-    boolean loopback = plan.bind().isLoopbackOnly();
-    output.send(
-        messages.format(
-            loopback ? MessageKeys.COMMAND_DOCTOR_PASS : MessageKeys.COMMAND_DOCTOR_WARN,
-            values(
-                "check",
-                messages.format(MessageKeys.COMMAND_DOCTOR_CHECK_BIND),
-                "detail",
-                messages.format(
-                    loopback
-                        ? MessageKeys.COMMAND_DOCTOR_BIND_LOOPBACK
-                        : MessageKeys.COMMAND_DOCTOR_BIND_NON_LOOPBACK))));
-
-    output.send(
-        messages.format(
-            MessageKeys.COMMAND_DOCTOR_PASS,
-            values(
-                "check",
-                messages.format(MessageKeys.COMMAND_DOCTOR_CHECK_AUTH),
-                "detail",
-                messages.format(
-                    MessageKeys.COMMAND_DOCTOR_AUTH_MODE, values("mode", plan.authMode())))));
-
-    int missing = missingMessageCount(messages);
-    output.send(
-        messages.format(
-            missing == 0 ? MessageKeys.COMMAND_DOCTOR_PASS : MessageKeys.COMMAND_DOCTOR_WARN,
-            values(
-                "check",
-                messages.format(MessageKeys.COMMAND_DOCTOR_CHECK_LOCALIZATION),
-                "detail",
-                messages.format(
-                    MessageKeys.COMMAND_DOCTOR_LOCALIZATION,
-                    values(
-                        "language",
-                        messages.locale().toLanguageTag(),
-                        "missing",
-                        Integer.toString(missing))))));
-
-    output.send(
-        messages.format(
-            MessageKeys.COMMAND_DOCTOR_WARN,
-            values(
-                "check",
-                messages.format(MessageKeys.COMMAND_DOCTOR_CHECK_SCOPE),
-                "detail",
-                messages.format(MessageKeys.COMMAND_DOCTOR_SCOPE_LIMITED))));
+    DoctorReport report = doctor.run();
+    for (String line : report.renderHuman(messages.locale())) {
+      output.send(line);
+    }
   }
 
   private void token(CommandOutput output, LocalizedMessages messages, String[] args) {
@@ -295,22 +231,6 @@ public final class ConfigCommandHandler {
   private int warningCount() {
     Optional<ConfigValidationResult> validation = manager.lastValidation();
     return validation.isPresent() ? validation.get().warnings().size() : 0;
-  }
-
-  private static int missingMessageCount(LocalizedMessages messages) {
-    int missing = 0;
-    for (Field field : MessageKeys.class.getFields()) {
-      if (String.class.equals(field.getType())) {
-        try {
-          if (!messages.contains((String) field.get(null))) {
-            missing++;
-          }
-        } catch (IllegalAccessException exception) {
-          throw new IllegalStateException("message key constant is inaccessible", exception);
-        }
-      }
-    }
-    return missing;
   }
 
   private static String join(List<String> paths) {

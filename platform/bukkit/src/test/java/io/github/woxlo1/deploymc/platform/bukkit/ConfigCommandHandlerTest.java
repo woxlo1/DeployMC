@@ -4,10 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.woxlo1.deploymc.api.PlatformInfo;
+import io.github.woxlo1.deploymc.core.PlatformCapabilities;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
+import io.github.woxlo1.deploymc.core.doctor.DoctorMessages;
+import io.github.woxlo1.deploymc.core.doctor.DoctorService;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,7 +47,8 @@ class ConfigCommandHandlerTest {
     DefaultConfigWriter.writeIfMissing(configFile);
     manager = new ConfigManager(configFile);
     ConfigView view = manager.load();
-    handler = new ConfigCommandHandler(manager, StartupPlan.fromConfig(view, "0.1.0-test"));
+    StartupPlan plan = StartupPlan.fromConfig(view, "0.1.0-test");
+    handler = new ConfigCommandHandler(manager, plan, null, doctorRuntime(plan));
   }
 
   @Test
@@ -156,17 +161,18 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
-  void doctorReportsImplementedChecksAndLimitedCoverage() {
+  void doctorReportsAllThirteenChecksAndNoSupportTierVerdict() {
     RecordingOutput output = operatorOutput(false);
 
     handler.handle(output, new String[] {"doctor"});
 
     assertEquals(english(MessageKeys.COMMAND_DOCTOR_TITLE), output.messages.get(0));
-    assertTrue(containsMessage(output, "PASS configuration"));
-    assertTrue(containsMessage(output, "PASS bind address"));
-    assertTrue(containsMessage(output, "PASS authentication mode"));
-    assertTrue(containsMessage(output, "PASS localization"));
-    assertTrue(containsMessage(output, "WARN check coverage"));
+    for (String id : DoctorService.checkIds()) {
+      assertTrue(containsMessage(output, "] " + id + ":"), id);
+    }
+    assertEquals(
+        DoctorMessages.format(Locale.ENGLISH, DoctorMessages.FOOTER_NOT_SUPPORT_TIER),
+        output.messages.get(output.messages.size() - 1));
   }
 
   @Test
@@ -226,6 +232,19 @@ class ConfigCommandHandlerTest {
     assertEquals(
         Collections.singletonList("status"), handler.complete(limited, new String[] {"st"}));
     assertTrue(handler.complete(denied, new String[] {"st"}).isEmpty());
+  }
+
+  private DoctorRuntime doctorRuntime(StartupPlan plan) {
+    return new DoctorRuntime(
+        manager,
+        plan,
+        new PlatformInfo("Paper", "1.21.1", "1.21.1", "21", "test-os"),
+        PlatformCapabilities.empty(),
+        Locale.ENGLISH,
+        "en",
+        null,
+        LocalizedMessages.of(Locale.ENGLISH),
+        Clock.systemUTC());
   }
 
   private RecordingOutput operatorOutput(boolean console) {
