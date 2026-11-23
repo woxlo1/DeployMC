@@ -24,8 +24,9 @@ in PR #203 at `072feda`, PR #204 at `2f3abfc`, PR #205 at `7555c3d`, PR #206 at 
 #207 at `b882f95`, all with passing post-merge `main` workflows. Consolidated evidence is recorded
 here; issue #117 closed at `83b9107`. PART 40.3 early risk-reduction spikes merged in PR #210 at
 `a998f7e` with a reproducible Windows replacement probe; issue #118 closed at
-`2026-11-23T11:04:06Z`. Issue #119 adds a fail-closed quality report with two local artifact budgets;
-its final evidence is recorded here and issue #119 closes after this PR merges.
+`2026-11-23T11:04:06Z`. PART 41 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed
+at `2026-11-23T11:25:53Z`. PART 39 adds specification change control and a mandatory milestone
+consistency audit; its final evidence is recorded here and issue #120 closes after this PR merges.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -80,6 +81,25 @@ Only the two budgets derived from the #118 local measurements are enforced. No c
 result, static-analysis baseline, startup or idle profile, API breaking-change check, docs link/key
 checker, i18n gate result, flakiness history, CI regression gate, product code, user-facing string,
 or required-check change was added by this issue.
+
+## PART 39 specification change control (issue #120)
+
+Issue #120 adds [`docs/development/spec-errata.md`](spec-errata.md). It seeds `E-001` for the
+WP-1.9 authentication correction, defines the reviewed `spec/<description>` branch workflow, and
+requires recorded owner approval for changes that weaken security, remove deliverables, or alter
+legal or licensing terms. `project-status.md` now makes the eight-check milestone consistency audit
+mandatory and requires `NOT RUN`, `NOT IMPLEMENTED`, issue links, or a `spec/` PR for every gap.
+No requirement may be silently ignored or waived by assumption.
+
+| Command | Result |
+|---|---|
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | exit 0 |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| `git diff --check` | exit 0 |
+
+This is a documentation-only change. No product code, CI behavior, user-facing string, or required
+check changed, and no specification requirement was weakened or removed.
 
 ## Summary
 
@@ -192,7 +212,8 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 36 Web doctor panel | Localized doctor status, check detail, redaction notice, and bearer-token request in the packaged Web UI | PR #204 merged at `2f3abfc` with post-merge CI/CodeQL/Scorecard pass; `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), and `pnpm build` passed; no browser rendering |
 | PART 36 Bukkit host wiring | Fail-closed host observability config, `bindPortOwnedByHost(true)`, authenticated doctor JSON, redacted 13-check `/deploymc doctor`, JSON/plain logger selection, and opt-in metrics handoff | PR #207 rebase-merged at `b882f95` as five separate Conventional Commits with post-merge CI/CodeQL/Scorecard pass; 73 Bukkit tests, `spotlessCheck`, `verifyJava8`, and `node tools/i18n/check` passed; no running server, mock Bukkit, browser, E2E, or in-game command |
 | PART 40.3 early spikes | Seven records under `docs/research/spikes/` and a reproducible Windows file-replacement probe | PR #210 records the observed, source-verified, and `NOT RUN` results; Windows probe share-mode failure `0x80070020` observed; 6 log corpus tests, transport suite, Web/Java size subsets, and full `verify-all.cjs` passed locally; no real server, supervisor, Folia, browser, or editor benchmark |
-| PART 41 quality reporting | Deterministic report over existing Web gzip and plugin JAR artifacts, with fail-closed handling and explicit `NOT MEASURED` for the other areas | Final evidence PR for #119; 5 quality tests passed, check exit 0 with both budgets PASS, and full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no other PART 41 gate was implemented |
+| PART 41 quality reporting | Deterministic report over existing Web gzip and plugin JAR artifacts, with fail-closed handling and explicit `NOT MEASURED` for the other areas | PR #211 merged at `e0f6ddb`; 5 quality tests passed, check exit 0 with both budgets PASS, and full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no other PART 41 gate was implemented |
+| PART 39 spec change control | `spec-errata.md` with seed `E-001`, reviewed `spec/` PR workflow, owner approval rules, and mandatory milestone consistency audit | Final evidence PR for #120; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no requirement weakened or removed |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
