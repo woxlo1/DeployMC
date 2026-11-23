@@ -35,13 +35,21 @@ public final class FileApiRuntime implements AutoCloseable {
       Collections.unmodifiableList(
           Arrays.asList(SandboxPolicy.DEFAULT_PROTECTED_PATTERNS.toArray(new String[0])));
 
+  private final SandboxResolver resolver;
   private final SnapshotStore snapshots;
+  private final SnapshotStoreConfig snapshotConfig;
   private final HttpHandler handler;
   private final HttpHandler snapshotHandler;
 
   private FileApiRuntime(
-      SnapshotStore snapshots, HttpHandler handler, HttpHandler snapshotHandler) {
+      SandboxResolver resolver,
+      SnapshotStore snapshots,
+      SnapshotStoreConfig snapshotConfig,
+      HttpHandler handler,
+      HttpHandler snapshotHandler) {
+    this.resolver = resolver;
     this.snapshots = snapshots;
+    this.snapshotConfig = snapshotConfig;
     this.handler = handler;
     this.snapshotHandler = snapshotHandler;
   }
@@ -108,7 +116,7 @@ public final class FileApiRuntime implements AutoCloseable {
           new FileApiHandler(resolver, files, validators, locale, maximumBodyBytes);
       SnapshotApiHandler snapshotsHandler =
           new SnapshotApiHandler(resolver, opened, locale, maximumBodyBytes);
-      return new FileApiRuntime(opened, handler, snapshotsHandler);
+      return new FileApiRuntime(resolver, opened, snapshotConfig, handler, snapshotsHandler);
     } catch (RuntimeException failure) {
       try {
         opened.close();
@@ -117,6 +125,18 @@ public final class FileApiRuntime implements AutoCloseable {
       }
       throw failure;
     }
+  }
+
+  public SandboxResolver sandboxResolver() {
+    return resolver;
+  }
+
+  public SnapshotStore snapshotStore() {
+    return snapshots;
+  }
+
+  public SnapshotStoreConfig snapshotConfig() {
+    return snapshotConfig;
   }
 
   public HttpHandler handler() {
