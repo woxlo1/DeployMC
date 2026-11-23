@@ -1353,3 +1353,27 @@ Japanese Bukkit command catalog is a machine-translated draft.
 
 Re-run the local toolchain checks with `node tools/build/verify-all.cjs`; CI remains the merge
 authority. See [CI documentation](ci.md).
+
+## Issue #120 local verification (pre-merge)
+
+These commands were run from the `docs/120-spec-errata` worktree on 2026-11-23 before the pull
+request was opened. This is local evidence only; CI was not run locally and remains the merge
+authority.
+
+```text
+npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD
+  no output; exit 0
+
+node tools/build/verify-all.cjs
+  PASS web, java, cli, python, spec, i18n, compat
+
+.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache
+  BUILD SUCCESSFUL; 75 actionable tasks up-to-date
+
+git diff --check
+  no output; exit 0
+```
+
+The change is documentation-only: no product code, CI, build configuration, or user-facing strings
+changed. No running server, browser, E2E run, full integration suite, or in-game command was used.
+No milestone audit result is asserted here; the Phase 0 audit above remains the recorded result.
