@@ -2,13 +2,14 @@
 
 Last updated: 2026-11-23 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `a998f7e` after
-PR #210. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+implementation). GitHub merge evidence below was verified against `main` through `e0f6ddb` after
+PR #211. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
 All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
 baseline stages are merged with local and post-merge evidence; issue #117 closed at `83b9107`.
 PART 40.3 early risk-reduction spikes merged in PR #210 at `a998f7e`; issue #118 closed at
-`2026-11-23T11:04:06Z`. Issue #119 adds PART 41 quality reporting; its final evidence is recorded
-here and issue #119 closes after this PR merges.
+`2026-11-23T11:04:06Z`. PART 41 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed
+at `2026-11-23T11:25:53Z`. PART 39 adds the specification errata log and mandatory milestone
+consistency audit; its final evidence is recorded here and issue #120 closes after this PR merges.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1277,11 +1278,11 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, #117, and #118 are
-complete, and their final consolidated evidence is recorded. Issue #119 closes after this PR merges.
-Continue with #120, then #123 in the owner-approved ascending order among the remaining open issues.
-Work on later items may be prepared in parallel but must not be merged ahead of an earlier open issue
-unless the owner explicitly approves.
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, #117, #118, and
+#119 are complete, and their final consolidated evidence is recorded. Issue #120 closes after this
+PR merges. Continue with #123 next in the owner-approved ascending order among the remaining open
+issues. Work on later items may be prepared in parallel but must not be merged ahead of an earlier
+open issue unless the owner explicitly approves.
 
 ## Release checklist
 
@@ -1356,11 +1357,14 @@ authority. See [CI documentation](ci.md).
 
 ## Issue #120 local verification (pre-merge)
 
-These commands were run from the `docs/120-spec-errata` worktree on 2026-11-23 before the pull
-request was opened. This is local evidence only; CI was not run locally and remains the merge
-authority.
+These commands were run from the `docs/120-spec-errata` worktree on 2026-11-23 after rebasing onto
+`origin/main` at `e0f6ddbdb81f68d64fe5b8fa6ea7a66a9cef1154` and before the pull request was opened.
+This is local evidence only; CI was not run locally and remains the merge authority.
 
 ```text
+git fetch origin main
+  exit 0; origin/main at e0f6ddbdb81f68d64fe5b8fa6ea7a66a9cef1154
+
 npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD
   no output; exit 0
 
@@ -1368,7 +1372,7 @@ node tools/build/verify-all.cjs
   PASS web, java, cli, python, spec, i18n, compat
 
 .\gradlew.bat spotlessCheck --console=plain --no-configuration-cache
-  BUILD SUCCESSFUL; 75 actionable tasks up-to-date
+  BUILD SUCCESSFUL; 75 actionable tasks: 75 up-to-date
 
 git diff --check
   no output; exit 0
