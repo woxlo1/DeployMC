@@ -18,9 +18,14 @@ Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   5 tests, quality check, full `verify-all.cjs`, Spotless, commitlint, and `git diff --check` passed
   locally; post-merge CI, CodeQL, and Scorecard also passed. Issue #119 closed at
   `2026-11-23T11:25:53Z`.
-- Issue #120 PART 39 specification change control adds `spec-errata.md` with seed `E-001`, the
-  reviewed `spec/` branch workflow, explicit owner approval rules, and a mandatory milestone
-  consistency audit. The final evidence PR is in flight; issue #120 closes after it merges.
+- Issue #120 PART 39 specification change control merged in PR #212 at `d068990`. It adds
+  `spec-errata.md` with seed `E-001`, the reviewed `spec/` branch workflow, explicit owner approval
+  rules, and a mandatory milestone consistency audit. The 20 required checks and post-merge CI,
+  CodeQL, and Scorecard passed; issue #120 closed at `2026-11-23T11:43:16Z`.
+- Issue #123 PART 40.4 dependency policy adds `dependency-policy.md` and links it from the CI guide.
+  It documents selection, pinning, review, updates, exemptions, advisory verification, severity
+  response, and release-branch security fixes with recorded gaps. The final evidence PR is in flight;
+  issue #123 closes after it merges.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
@@ -427,9 +432,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- The final consolidated evidence PR for issue #120 is in flight on `docs/120-spec-errata`. It
-  includes the errata log, mandatory audit rules, local evidence, and status updates; issue #120
-  closes after it merges. A Japanese verification comment will be posted after required checks, and
+- The final consolidated evidence PR for issue #123 is in flight on `docs/123-dependency-policy`. It
+  includes the dependency policy, CI guide link, local evidence, and status updates; issue #123 closes
+  after it merges. A Japanese verification comment will be posted after required checks, and
   post-merge evidence and workflow results will be recorded after merge.
 - No PART 36 implementation PRs remain in flight. PRs #203-#207 are merged with Japanese verification
   and post-merge evidence comments; all required checks and post-merge CI/CodeQL/Scorecard passed.
@@ -461,10 +466,11 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. After this PR merges, continue with #123 in the owner-approved ascending order. Issues #115,
-   #116, #117, #118, and #119 are complete; their final consolidated evidence is recorded in the
-   status pages and on the issues. Issue #120 closes after this PR merges. Later work may be prepared
-   in parallel but must not merge ahead of an earlier open issue without owner approval.
+1. After this PR merges, continue with #121 (Dependabot triage) and #122 (advisory remediation), then
+   category 5 (#124-#130). Issues #115 through #120 are complete; their final consolidated evidence
+   is recorded in the status pages and on the issues. Issue #123 closes after this PR merges. Later
+   work may be prepared in parallel but must not merge ahead of an earlier open issue without owner
+   approval.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

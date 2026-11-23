@@ -143,8 +143,10 @@ PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under 
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed at `2026-11-23T11:25:53Z`. PART 39
-adds `docs/development/spec-errata.md` and a mandatory milestone consistency audit; issue #120 closes
-with its final evidence PR. D-001 still blocks restart, update-folder, and oldest/newest-version evidence.
+specification change control merged in PR #212 at `d068990`; issue #120 closed at
+`2026-11-23T11:43:16Z`. PART 40.4 adds `docs/development/dependency-policy.md` with recorded gaps;
+issue #123 closes with its final evidence PR. D-001 still blocks restart, update-folder, and
+oldest/newest-version evidence.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The

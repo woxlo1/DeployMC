@@ -25,8 +25,9 @@ in PR #203 at `072feda`, PR #204 at `2f3abfc`, PR #205 at `7555c3d`, PR #206 at 
 here; issue #117 closed at `83b9107`. PART 40.3 early risk-reduction spikes merged in PR #210 at
 `a998f7e` with a reproducible Windows replacement probe; issue #118 closed at
 `2026-11-23T11:04:06Z`. PART 41 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed
-at `2026-11-23T11:25:53Z`. PART 39 adds specification change control and a mandatory milestone
-consistency audit; its final evidence is recorded here and issue #120 closes after this PR merges.
+at `2026-11-23T11:25:53Z`. PART 39 specification change control merged in PR #212 at `d068990`;
+issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 adds a dependency selection and advisory
+response policy; its final evidence is recorded here and issue #123 closes after this PR merges.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -100,6 +101,30 @@ No requirement may be silently ignored or waived by assumption.
 
 This is a documentation-only change. No product code, CI behavior, user-facing string, or required
 check changed, and no specification requirement was weakened or removed.
+
+## PART 40.4 dependency policy (issue #123)
+
+Issue #123 adds [`docs/development/dependency-policy.md`](dependency-policy.md) and links it from
+[`docs/development/ci.md`](ci.md). The policy defines dependency selection criteria, pinning sources
+of truth, review gates, routine updates with guarded auto-merge, time-limited exemptions, advisory
+verification against official sources, severity-based response expectations, containment through
+disclosure, and security fixes on release branches. It stays consistent with `SECURITY.md`,
+`GOVERNANCE.md`, the fail-closed CI dependency review, and the authentication model. Official GitHub
+sources were checked with a 2026-11-23 access date and are listed in the document.
+
+The policy explicitly records current gaps instead of claiming controls that do not exist: no Gradle
+dependency verification metadata, no Python development lockfile, no SBOM/signing/provenance
+pipeline, no exercised release branch, and no custom auto-merge enforcement workflow. No Dependabot
+pull request, advisory, or repository setting was changed by this issue; #121 and #122 remain the
+issues for individual Dependabot triage and advisory remediation.
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | exit 0; `origin/main` at `d0689901fdde1b7045dceba8348683398c5ece30` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | exit 0 |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`, `75 actionable tasks: 75 up-to-date` |
+| `git diff --check` | exit 0 |
 
 ## Summary
 
@@ -213,7 +238,8 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 36 Bukkit host wiring | Fail-closed host observability config, `bindPortOwnedByHost(true)`, authenticated doctor JSON, redacted 13-check `/deploymc doctor`, JSON/plain logger selection, and opt-in metrics handoff | PR #207 rebase-merged at `b882f95` as five separate Conventional Commits with post-merge CI/CodeQL/Scorecard pass; 73 Bukkit tests, `spotlessCheck`, `verifyJava8`, and `node tools/i18n/check` passed; no running server, mock Bukkit, browser, E2E, or in-game command |
 | PART 40.3 early spikes | Seven records under `docs/research/spikes/` and a reproducible Windows file-replacement probe | PR #210 records the observed, source-verified, and `NOT RUN` results; Windows probe share-mode failure `0x80070020` observed; 6 log corpus tests, transport suite, Web/Java size subsets, and full `verify-all.cjs` passed locally; no real server, supervisor, Folia, browser, or editor benchmark |
 | PART 41 quality reporting | Deterministic report over existing Web gzip and plugin JAR artifacts, with fail-closed handling and explicit `NOT MEASURED` for the other areas | PR #211 merged at `e0f6ddb`; 5 quality tests passed, check exit 0 with both budgets PASS, and full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no other PART 41 gate was implemented |
-| PART 39 spec change control | `spec-errata.md` with seed `E-001`, reviewed `spec/` PR workflow, owner approval rules, and mandatory milestone consistency audit | Final evidence PR for #120; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no requirement weakened or removed |
+| PART 39 spec change control | `spec-errata.md` with seed `E-001`, reviewed `spec/` PR workflow, owner approval rules, and mandatory milestone consistency audit | PR #212 merged at `d068990`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no requirement weakened or removed |
+| PART 40.4 dependency policy | Selection, pinning, review, update, exemption, advisory verification, severity response, and release-branch security policy with recorded gaps | Final evidence PR for #123; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no Dependabot PR, advisory, or setting changed |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
