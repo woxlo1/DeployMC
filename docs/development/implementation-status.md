@@ -22,8 +22,10 @@ merged in PR #199 at `0b83150`, PR #200 at `98b6b79`, and PR #201 at `5d279c6`, 
 dedicated tests; issue #116 records the final evidence. PART 36 observability baseline stages merged
 in PR #203 at `072feda`, PR #204 at `2f3abfc`, PR #205 at `7555c3d`, PR #206 at `d42f5d2`, and PR
 #207 at `b882f95`, all with passing post-merge `main` workflows. Consolidated evidence is recorded
-here; issue #117 closes after this merge. PART 40.3 early risk-reduction spikes are recorded in PR
-#210 with a reproducible Windows replacement probe; issue #118 closes after this merge.)
+here; issue #117 closed at `83b9107`. PART 40.3 early risk-reduction spikes merged in PR #210 at
+`a998f7e` with a reproducible Windows replacement probe; issue #118 closed at
+`2026-11-23T11:04:06Z`. Issue #119 adds a fail-closed quality report with two local artifact budgets;
+its final evidence is recorded here and issue #119 closes after this PR merges.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -55,6 +57,29 @@ Untested claims remain explicit: no real server opened a JAR, no update-folder s
 was run, no Folia scheduler call was compiled or executed, no browser loaded the Web assets, no
 Monaco/CodeMirror benchmark ran, and D-001 blocks the supervisor restart test. Official Paper,
 Microsoft, and Velocity sources were read with a 2026-11-23 access date in the spike records.
+
+## PART 41 quality reporting (issue #119)
+
+Issue #119 adds [`tools/quality/check.cjs`](../../tools/quality/check.cjs) and
+[`docs/development/quality.md`](quality.md). The tool reads existing `web/dist/assets/*.js.gz` and
+`plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` artifacts only. It does not build, test, call the
+network, or read CI results. All twelve PART 41 areas appear in the deterministic Markdown report;
+unmeasured areas are always `NOT MEASURED`. Missing, ambiguous, unreadable, invalid, or over-budget
+artifacts fail closed, and `--report <path>` only writes the generated report.
+
+| Command | Result |
+|---|---|
+| `node --test tools/quality/test/report.test.cjs` | `tests 5`, `pass 5`, `fail 0` |
+| `node tools/quality/check.cjs` | exit 0; Web main JS gzip `50632 bytes <= 60000 bytes` PASS; plugin JAR `4721584 bytes <= 5500000 bytes` PASS; `Unmeasured PART 41 areas: 11` |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | exit 0 |
+| `git diff --check` | exit 0 |
+
+Only the two budgets derived from the #118 local measurements are enforced. No coverage report, E2E
+result, static-analysis baseline, startup or idle profile, API breaking-change check, docs link/key
+checker, i18n gate result, flakiness history, CI regression gate, product code, user-facing string,
+or required-check change was added by this issue.
 
 ## Summary
 
@@ -167,6 +192,7 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 36 Web doctor panel | Localized doctor status, check detail, redaction notice, and bearer-token request in the packaged Web UI | PR #204 merged at `2f3abfc` with post-merge CI/CodeQL/Scorecard pass; `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), and `pnpm build` passed; no browser rendering |
 | PART 36 Bukkit host wiring | Fail-closed host observability config, `bindPortOwnedByHost(true)`, authenticated doctor JSON, redacted 13-check `/deploymc doctor`, JSON/plain logger selection, and opt-in metrics handoff | PR #207 rebase-merged at `b882f95` as five separate Conventional Commits with post-merge CI/CodeQL/Scorecard pass; 73 Bukkit tests, `spotlessCheck`, `verifyJava8`, and `node tools/i18n/check` passed; no running server, mock Bukkit, browser, E2E, or in-game command |
 | PART 40.3 early spikes | Seven records under `docs/research/spikes/` and a reproducible Windows file-replacement probe | PR #210 records the observed, source-verified, and `NOT RUN` results; Windows probe share-mode failure `0x80070020` observed; 6 log corpus tests, transport suite, Web/Java size subsets, and full `verify-all.cjs` passed locally; no real server, supervisor, Folia, browser, or editor benchmark |
+| PART 41 quality reporting | Deterministic report over existing Web gzip and plugin JAR artifacts, with fail-closed handling and explicit `NOT MEASURED` for the other areas | Final evidence PR for #119; 5 quality tests passed, check exit 0 with both budgets PASS, and full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no other PART 41 gate was implemented |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for

@@ -139,10 +139,12 @@ PR #207 was rebase-merged so its five Conventional Commits remain on `main`, fol
 large-work commit-split rule. Issue #117 closed at `83b9107`. Only server-free tests and builds
 verified these paths; no running server, Bukkit mock, browser, E2E run, full integration suite, or
 in-game command exercised them.
-PART 40.3 early risk-reduction spikes are recorded in PR #210 under `docs/research/spikes/`, with a
-reproducible Windows replacement probe. The records distinguish observed output, source verification,
-and `NOT RUN` work; no support tier is claimed. Issue #118 closes after PR #210 merges. D-001 still
-blocks restart, update-folder, and oldest/newest-version evidence.
+PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
+with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
+and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
+adds a deterministic quality report with two measured artifact budgets and `NOT MEASURED` for the other
+11 areas; issue #119 closes with its final evidence PR. D-001 still blocks restart, update-folder, and
+oldest/newest-version evidence.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
