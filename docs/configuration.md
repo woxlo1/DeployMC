@@ -1,7 +1,7 @@
 # Configuration
 
-Last updated: 2026-11-19. This page describes the WP-1.5 configuration loader in `core` and its
-Bukkit startup and `/deploymc` command integration.
+Last updated: 2026-11-23. This page describes the configuration loader in `core` and its Bukkit
+startup and `/deploymc` command integration.
 
 ## Location and ownership
 
@@ -61,11 +61,11 @@ the catalog selected for a command follows the active configuration's `language`
   authentication mode, warning count, and config file path. It never prints secrets or token values.
 - `reload` revalidates the file and reports changed and restart-required paths. A failed reload keeps
   the last known-good configuration active and reports the localized error.
-- `doctor` reports only checks that are actually implemented: active validated configuration, loopback
-  bind, selected authentication mode, and catalog completeness. It always adds a warning that the
-  check coverage is limited and that the output is **not** a support-tier verdict.
-- `token` is console-only and deliberately reports that token management is not implemented in this
-  phase. It creates no token and writes no file. Token provisioning belongs to WP-1.9.
+- `doctor` reports checks that are actually implemented and marks areas without a product
+  implementation as `NOT IMPLEMENTED`. It always adds a warning that the output is **not** a
+  support-tier verdict.
+- `token` is console-only. `token create [label]` provisions a host-stored token and prints the secret
+  once. It never prints a stored hash or accepts a token supplied by an API request.
 
 Tab completion offers only subcommands for which the sender holds the matching permission.
 
@@ -83,7 +83,9 @@ retention, the API rate limit, roles, users, `default-role`, webhook policy, and
 Restart-only settings include `config-version`, all `bind` values, `auth.mode`, Cloudflare
 team domain, audience and shared-secret header name, `sandbox.root`, `sandbox.follow-symlinks`,
 snapshot and staging directories, `deploy.restart.mode`, `console.enabled`, `audit.directory`,
-and `limits.max-websocket-connections`.
+`limits.max-websocket-connections`, and every `observability` setting. The metrics endpoint is
+disabled by default; enabling it exposes only aggregate, low-cardinality metrics behind the normal
+authentication gate.
 
 ## Diagnostics
 
