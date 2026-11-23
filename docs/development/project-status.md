@@ -2,14 +2,15 @@
 
 Last updated: 2026-11-23 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `e0f6ddb` after
-PR #211. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+implementation). GitHub merge evidence below was verified against `main` through `d068990` after
+PR #212. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
 All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
 baseline stages are merged with local and post-merge evidence; issue #117 closed at `83b9107`.
 PART 40.3 early risk-reduction spikes merged in PR #210 at `a998f7e`; issue #118 closed at
 `2026-11-23T11:04:06Z`. PART 41 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed
-at `2026-11-23T11:25:53Z`. PART 39 adds the specification errata log and mandatory milestone
-consistency audit; its final evidence is recorded here and issue #120 closes after this PR merges.
+at `2026-11-23T11:25:53Z`. PART 39 specification change control merged in PR #212 at `d068990`;
+issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 adds the dependency and advisory response
+policy; its final evidence is recorded here and issue #123 closes after this PR merges.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1278,11 +1279,12 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, #117, #118, and
-#119 are complete, and their final consolidated evidence is recorded. Issue #120 closes after this
-PR merges. Continue with #123 next in the owner-approved ascending order among the remaining open
-issues. Work on later items may be prepared in parallel but must not be merged ahead of an earlier
-open issue unless the owner explicitly approves.
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120 are
+complete, and their final consolidated evidence is recorded. Issue #123 was prepared in parallel and
+approved for merge immediately after #120; it closes after this PR merges. Continue with the open
+category 4 issues #121 (Dependabot triage) and #122 (advisory remediation), then category 5
+(#124-#130). Work on later items may be prepared in parallel but must not be merged ahead of an
+earlier open issue unless the owner explicitly approves.
 
 ## Release checklist
 
@@ -1381,3 +1383,31 @@ git diff --check
 The change is documentation-only: no product code, CI, build configuration, or user-facing strings
 changed. No running server, browser, E2E run, full integration suite, or in-game command was used.
 No milestone audit result is asserted here; the Phase 0 audit above remains the recorded result.
+
+## Issue #123 local verification (pre-merge)
+
+These commands were run from the `docs/123-dependency-policy` worktree on 2026-11-23 after rebasing
+onto `origin/main` at `d0689901fdde1b7045dceba8348683398c5ece30` and before the pull request was
+opened. This is local evidence only; CI was not run locally and remains the merge authority.
+
+```text
+git fetch origin main
+  exit 0; origin/main at d0689901fdde1b7045dceba8348683398c5ece30
+
+npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD
+  no output; exit 0
+
+node tools/build/verify-all.cjs
+  PASS web, java, cli, python, spec, i18n, compat
+
+.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache
+  BUILD SUCCESSFUL; 75 actionable tasks: 75 up-to-date
+
+git diff --check
+  no output; exit 0
+```
+
+This is a documentation-only change: no product code, CI workflow, branch protection, required check,
+user-facing string, Dependabot pull request, advisory, or repository setting changed. The policy
+records existing gaps instead of asserting unimplemented supply-chain controls. No running server,
+full integration suite, browser, or in-game command exercised the policy.
