@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DoctorPanel } from './components/DoctorPanel';
 import { createTranslator, detectLocale, isLocale, SUPPORTED_LOCALES, type Locale } from './i18n';
 
 const STORAGE_KEY = 'deploymc.locale';
@@ -64,6 +65,8 @@ export function App() {
         </select>
         <p>{t('app.plugins.count', { count: 3 })}</p>
       </section>
+
+      <DoctorPanel locale={locale} t={t} />
     </main>
   );
 }
