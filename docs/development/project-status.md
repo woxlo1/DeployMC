@@ -2,9 +2,11 @@
 
 Last updated: 2026-11-23 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `5d279c6` after
-PR #201. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
-All PART 33 algorithm regression suites are merged; issue #116 tracks final consolidated evidence.)
+implementation). GitHub merge evidence below was verified against `main` through `b882f95` after
+PR #207. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
+baseline stages are merged with local and post-merge evidence; consolidated evidence is recorded here
+and issue #117 closes after this merge.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -44,7 +46,11 @@ This is the session-level status page. For per-component facts use
   merged in PR #168 at `8970728`; the file/validation adapters merged in PR #169 at `08fe424`; the
   snapshot-route specification merged in PR #170 at `bf82e26`; its merge evidence merged in PR #171 at
   `88a6541`; and the authenticated snapshot REST adapters merged in PR #172 at `136ce00` with issue
-  #55 closed as completed. Verification and post-merge evidence are recorded below.
+  #55 closed as completed. PART 36 (issue #117) merged in five stages: the observability contract in
+  PR #203 at `072feda`, the Web doctor panel in PR #204 at `2f3abfc`, the `core.doctor` service in
+  PR #205 at `7555c3d`, the transport baseline in PR #206 at `d42f5d2`, and the Bukkit host wiring
+  in PR #207 at `b882f95`. PR #207 was rebase-merged so all five Conventional Commits remain
+  individually on `main`, and the issue stayed open through every implementation stage.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
@@ -913,6 +919,74 @@ The local and remote branches `test/issue-116-file-safety`, `test/issue-116-runt
 `test/issue-116-auth-rbac` were deleted after evidence was posted. The
 `docs/issue-116-evidence-catchup` branch is temporary for this final evidence update.
 
+## PART 36 observability baseline (issue #117)
+
+Five stages delivered the doctor, structured logging, opt-in metrics, self-protection, Web panel, and
+Bukkit host wiring. Issue #117 was closed prematurely at `2026-11-23T05:37:26Z` after PR #205; it was
+reopened at `2026-11-23T05:48:28Z` with
+[comment 7092748466](https://github.com/woxlo1/DeployMC/issues/117#issuecomment-7092748466) and kept
+open through PR #207. Each implementation PR has a Japanese verification comment and a Japanese
+post-merge evidence comment. All required PR checks passed before merge, and post-merge CI, CodeQL,
+and Scorecard passed on every final merge commit.
+
+- PR #203, normative contract, merged at `072feda50851e0fd83f3e4fe3fd3f814dcf54f2a` on
+  `2026-11-23T05:03:48Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/203#issuecomment-7092311548). Locally,
+  `npm run lint` and `npm test` in `tools/spec` passed. Post-merge: CI
+  [45115451116](https://github.com/woxlo1/DeployMC/actions/runs/45115451116), CodeQL
+  [45115451110](https://github.com/woxlo1/DeployMC/actions/runs/45115451110), Scorecard
+  [45115451108](https://github.com/woxlo1/DeployMC/actions/runs/45115451108).
+- PR #204, Web doctor panel, merged at `2f3abfc29fa30fbef167eb6789298482377d4ee5` on
+  `2026-11-23T05:24:38Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/204#issuecomment-7092483762). Locally,
+  `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), and `pnpm build` passed. Post-merge: CI
+  [45117597970](https://github.com/woxlo1/DeployMC/actions/runs/45117597970), CodeQL
+  [45117598002](https://github.com/woxlo1/DeployMC/actions/runs/45117598002), Scorecard
+  [45117597912](https://github.com/woxlo1/DeployMC/actions/runs/45117597912).
+- PR #205, `core.doctor`, merged at `7555c3d3a3de58ca296e7cea207789dd7bb222cf` on
+  `2026-11-23T05:37:23Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/205#issuecomment-7092622290). Focused core
+  tests passed locally. Post-merge: CI
+  [45118937861](https://github.com/woxlo1/DeployMC/actions/runs/45118937861), CodeQL
+  [45118937712](https://github.com/woxlo1/DeployMC/actions/runs/45118937712), Scorecard
+  [45118937628](https://github.com/woxlo1/DeployMC/actions/runs/45118937628).
+- PR #206, transport observability and self-protection, merged at
+  `d42f5d2aa357d47bb31fad103c83e8f3bb871718` on `2026-11-23T05:43:15Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/206#issuecomment-7092731636). The full
+  `:transport:test` task passed 102 tests, and `ExecutorWatchdogTest.acknowledgementPreventsAStallRecord()`
+  passed 10/10 repetitions after a timeout fix. Post-merge: CI
+  [45119539417](https://github.com/woxlo1/DeployMC/actions/runs/45119539417), CodeQL
+  [45119539475](https://github.com/woxlo1/DeployMC/actions/runs/45119539475), Scorecard
+  [45119539516](https://github.com/woxlo1/DeployMC/actions/runs/45119539516).
+- PR #207, Bukkit host wiring, rebase-merged at `b882f95fcdb324b7de7d0f69201b0bf3e88283a0` on
+  `2026-11-23T10:00:33Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/207#issuecomment-7097261754),
+  [commit split](https://github.com/woxlo1/DeployMC/pull/207#issuecomment-7097297218), and
+  [post-merge evidence](https://github.com/woxlo1/DeployMC/pull/207#issuecomment-7097457796). The
+  owner requested reviewable commits, so the single implementation commit was split into five logical
+  Conventional Commits with an identical final tree; a later message-only rewrite fixed the
+  `footer-leading-blank` commitlint failure. The five commits remain individually on `main`:
+  `480da8c`, `b7c6d91`, `85059ba`, `7f6f3c2`, and `b882f95`. Locally, `.\gradlew.bat
+  :platform:bukkit:test --console=plain --no-configuration-cache`, `.\gradlew.bat spotlessApply`,
+  `.\gradlew.bat spotlessCheck :platform:bukkit:test verifyJava8 --console=plain
+  --no-configuration-cache`, `node tools/i18n/check`, and `git diff --check` all passed. Post-merge:
+  CI [45152141284](https://github.com/woxlo1/DeployMC/actions/runs/45152141284), CodeQL
+  [45152141084](https://github.com/woxlo1/DeployMC/actions/runs/45152141084), Scorecard
+  [45152141128](https://github.com/woxlo1/DeployMC/actions/runs/45152141128).
+
+Final consolidated local verification on the merged tree ran `node tools/build/verify-all.cjs` and
+reported `PASS` for all seven toolchains: `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`.
+The current Gradle JUnit XML reports 473 Java tests with 0 failures, 0 errors, and 1 skipped symlink
+test. `git diff --check` produced no output and exited 0.
+
+Verified boundaries include the authenticated redacted doctor route, `DoctorService` inputs and
+redaction, fail-closed host observability config, `bindPortOwnedByHost(true)`, JSON/plain request
+logger selection, opt-in authenticated metrics dispatch, the executor watchdog, the Web doctor
+panel build, and the 13-check localized `/deploymc doctor` report. Not verified: a running server,
+a Bukkit mock, browser rendering, E2E, the full integration suite, or an in-game command execution.
+The unbundled PART 36 algorithms remain specification or fixture contracts; no support tier, parity,
+or running-product claim is made.
+
 ## Earlier pull-request evidence
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
@@ -1168,10 +1242,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). WP-2.3 merged in PR #158 at
-`879bdc5` and PR #159 at `0425c8`; issue #52 is closed, post-merge evidence is recorded, and both
-feature branches are deleted. The next work package is WP-2.4 (issue #53, diff engine). Start later
-items only when earlier items are complete or the owner explicitly approves.
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, and #117 are
+complete, and their final consolidated evidence is recorded. Continue with category 3 (#118-#120),
+then category 4 (#121-#123) and category 5 (#124-#130). Start later items only when earlier items
+are complete or the owner explicitly approves.
 
 ## Release checklist
 
