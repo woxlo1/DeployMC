@@ -22,12 +22,39 @@ merged in PR #199 at `0b83150`, PR #200 at `98b6b79`, and PR #201 at `5d279c6`, 
 dedicated tests; issue #116 records the final evidence. PART 36 observability baseline stages merged
 in PR #203 at `072feda`, PR #204 at `2f3abfc`, PR #205 at `7555c3d`, PR #206 at `d42f5d2`, and PR
 #207 at `b882f95`, all with passing post-merge `main` workflows. Consolidated evidence is recorded
-here; issue #117 closes after this merge.)
+here; issue #117 closes after this merge. PART 40.3 early risk-reduction spikes are recorded in PR
+#210 with a reproducible Windows replacement probe; issue #118 closes after this merge.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
 describes intended phase order; the [master specification](DeployMC_Complete_Master_Development_Specification.md)
 is the normative design.
+
+## PART 40.3 early risk-reduction spikes (issue #118)
+
+The seven spikes required by PART 40.3 are recorded in
+[`docs/research/spikes/`](../../docs/research/spikes/README.md). Each record separates observed local
+output, source-verified external facts, and work that was not run. Existing ADRs link to the relevant
+records without changing their decisions. No spike promotes a platform to a support tier.
+
+Observed local evidence on 2026-11-23:
+
+| Command | Result |
+|---|---|
+| `powershell -NoProfile -ExecutionPolicy Bypass -File tests/spikes/windows-jar-replacement.ps1` | `replace-open-without-share-delete=fail: MethodInvocationException inner=IOException hresult=0x80070020`; `replace-open-with-share-delete=pass`; target and backup content confirmed; `dotnet=4.0.30319.42000` |
+| `python -m unittest discover -s tests/fixtures/log-corpora -p "test_*.py"` | `Ran 6 tests`, `OK` |
+| `.\gradlew.bat :transport:test --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL in 4s`; the `FROM-CACHE` marker is recorded as a cached pass, not a newly executed test run |
+| `node tools/build/verify-all.cjs --only=web` | `PASS web`; main JS 155,810 bytes, gzip 50,632 bytes, Brotli 44,342 bytes, source map 380,370 bytes |
+| `node tools/build/verify-all.cjs --only=java` | `PASS java`; final JAR 4,721,584 bytes, 2,706 classes, max common bytecode 52 |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | exit 0 |
+| `git diff --check` | exit 0 |
+
+Untested claims remain explicit: no real server opened a JAR, no update-folder swap or proxy install
+was run, no Folia scheduler call was compiled or executed, no browser loaded the Web assets, no
+Monaco/CodeMirror benchmark ran, and D-001 blocks the supervisor restart test. Official Paper,
+Microsoft, and Velocity sources were read with a 2026-11-23 access date in the spike records.
 
 ## Summary
 
@@ -139,6 +166,7 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 36 transport observability | Configurable plain/JSON request logging, bounded metrics registry, opt-in authenticated metrics dispatch, authenticated doctor dispatch hook, and executor watchdog with server-free regression tests | PR #206 merged at `d42f5d2` with post-merge CI/CodeQL/Scorecard pass; 102 `:transport:test` tests passed, including a 10/10 watchdog flake recheck; no running server or browser |
 | PART 36 Web doctor panel | Localized doctor status, check detail, redaction notice, and bearer-token request in the packaged Web UI | PR #204 merged at `2f3abfc` with post-merge CI/CodeQL/Scorecard pass; `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), and `pnpm build` passed; no browser rendering |
 | PART 36 Bukkit host wiring | Fail-closed host observability config, `bindPortOwnedByHost(true)`, authenticated doctor JSON, redacted 13-check `/deploymc doctor`, JSON/plain logger selection, and opt-in metrics handoff | PR #207 rebase-merged at `b882f95` as five separate Conventional Commits with post-merge CI/CodeQL/Scorecard pass; 73 Bukkit tests, `spotlessCheck`, `verifyJava8`, and `node tools/i18n/check` passed; no running server, mock Bukkit, browser, E2E, or in-game command |
+| PART 40.3 early spikes | Seven records under `docs/research/spikes/` and a reproducible Windows file-replacement probe | PR #210 records the observed, source-verified, and `NOT RUN` results; Windows probe share-mode failure `0x80070020` observed; 6 log corpus tests, transport suite, Web/Java size subsets, and full `verify-all.cjs` passed locally; no real server, supervisor, Folia, browser, or editor benchmark |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for

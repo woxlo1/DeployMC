@@ -5,6 +5,13 @@ Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## What was just done
 
+- Issue #118 PART 40.3 early spikes are recorded in PR #210. Seven documents under
+  `docs/research/spikes/` separate `OBSERVED`, `SOURCE-VERIFIED`, `LOCAL-ONLY`, and `NOT RUN`; ADRs
+  link to the evidence without changing decisions. The Windows replacement probe observed
+  HResult `0x80070020` without `FILE_SHARE_DELETE` and success with it. The 6 log-corpus tests, Web
+  and Java size subsets, full `verify-all.cjs`, Spotless check, commitlint, and `git diff --check`
+  passed locally. No real server, supervisor, Folia, browser, editor benchmark, E2E, or in-game
+  command was run; D-001 still blocks restart evidence.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
@@ -411,6 +418,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
+- PR #210 is the final consolidated evidence PR for issue #118. It has a Japanese verification
+  comment; the post-merge evidence comment and required workflow results are recorded after merge.
+  The `spikes/118-part40-3` branch is temporary for this update. Issue #118 closes after this merge.
 - No PART 36 implementation PRs remain in flight. PRs #203-#207 are merged with Japanese verification
   and post-merge evidence comments; all required checks and post-merge CI/CodeQL/Scorecard passed.
   PR #207 used a rebase merge because the owner requires multiple reviewable commits for large work.
@@ -441,9 +451,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. Continue with category 3 (#118-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
-   order. Issues #115, #116, and #117 are complete; their final consolidated evidence is recorded in
-   the status pages and on the issues.
+1. Continue with #119, then #120, then category 4 (#121-#123) and category 5 (#124-#130) in issue
+   order. Issues #115, #116, #117, and #118 are complete; their final consolidated evidence is
+   recorded in the status pages and on the issues. Later work may be prepared in parallel but must not
+   merge ahead of an earlier open issue without owner approval.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

@@ -136,9 +136,13 @@ metrics, and self-protection contract; a Web doctor panel; Java 8 `core.doctor`;
 observability with a watchdog fix; and Bukkit host wiring. The doctor route is authenticated and
 redacted, metrics are opt-in, and `/healthz` and `/readyz` remain the only unauthenticated endpoints.
 PR #207 was rebase-merged so its five Conventional Commits remain on `main`, following the owner's
-large-work commit-split rule. Issue #117 stays open until the final evidence PR merges. Only
-server-free tests and builds verified these paths; no running server, Bukkit mock, browser, E2E run,
-full integration suite, or in-game command exercised them.
+large-work commit-split rule. Issue #117 closed at `83b9107`. Only server-free tests and builds
+verified these paths; no running server, Bukkit mock, browser, E2E run, full integration suite, or
+in-game command exercised them.
+PART 40.3 early risk-reduction spikes are recorded in PR #210 under `docs/research/spikes/`, with a
+reproducible Windows replacement probe. The records distinguish observed output, source verification,
+and `NOT RUN` work; no support tier is claimed. Issue #118 closes after PR #210 merges. D-001 still
+blocks restart, update-folder, and oldest/newest-version evidence.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
