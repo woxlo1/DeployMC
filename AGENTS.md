@@ -99,6 +99,14 @@ new fixtures yet, no product JWT verifier exists, no product archive or YAML val
 hostile-input corpus, no product console consumer reads the log corpora, no listing API consumes the
 large trees, and no product filter parser consumes the vectors or establishes parity. Config corpora
 are the exception: Java tests feed them through the real `ConfigValidator` and `ConfigManager`.
+PART 33 algorithm regression suites merged in PR #199 at `0b83150`, PR #200 at `98b6b79`, and PR
+#201 at `5d279c6`. They add 60 dedicated tests (24 file safety, 16 runtime limits, 20 auth/RBAC)
+for sandbox resolution, atomic writes, YAML/archive limits, snapshot GC, log attribution, rate
+limiting/backpressure, JWT vectors, RBAC, and deployment recovery. Implemented boundaries are
+tested against real code; algorithms without a product implementation are validated only as
+specification and fixture contracts, with gaps recorded as `NOT IMPLEMENTED` and no parity claims.
+No product code, CI, or user-facing strings changed. No running server, full integration suite,
+E2E run, Web UI, or in-game command consumed the suites.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
