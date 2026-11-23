@@ -12,7 +12,9 @@ here and issue #119 closes after this PR merges.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
-[master specification](DeployMC_Complete_Master_Development_Specification.md).
+[master specification](DeployMC_Complete_Master_Development_Specification.md). For corrections use
+the [specification errata log](spec-errata.md); the milestone consistency audit below is mandatory
+under Part 39.3.
 
 ## Current version and milestone
 
@@ -1303,18 +1305,29 @@ thirteen gates into the release PR and attach evidence to every item:
 No release has been prepared. Policy, automation, and signing are tracked in #127, #128, and #129;
 the v1 evidence bundle is #130. This page records the gates, not their completion.
 
-## Consistency audit procedure
+## Mandatory milestone consistency audit (PART 39.3)
 
-Run at every milestone and record results here (master specification Part 39.3):
+This audit is required at every milestone, including release candidates and `1.0.0`. A milestone is
+not complete until its result is recorded here. Run all eight checks and record each outcome with
+the exact command and result, a generated report, or an issue link for an open gap. A check that was
+not run is `NOT RUN`; a requirement with no implementation is `NOT IMPLEMENTED` and must have an
+issue. No specification requirement may be silently ignored or marked complete by assumption. If a
+requirement is believed wrong, open a `spec/` branch PR under the
+[errata process](spec-errata.md) instead of dropping the check.
 
-1. Every `MUST`/`MUST NOT` is implemented and tested, or listed as an open gap with an issue.
-2. Every endpoint in code appears in `openapi.yaml` and vice versa.
-3. Every config key in code appears in `config.schema.json` and the docs.
-4. Every permission and error code in code appears in the catalogs.
+1. Every `MUST`/`MUST NOT` in the master specification is implemented and tested, or listed as an
+   open gap with an issue.
+2. Every endpoint in code appears in `openapi.yaml` and vice versa (automated).
+3. Every config key in code appears in `config.schema.json` and the docs (automated).
+4. Every permission and error code used in code appears in the catalogs (automated).
 5. README claims map to rows in the implementation-status table.
 6. Support-matrix claims map to the latest CI results.
 7. Translation catalogs structurally match English.
 8. ADR statuses match reality.
+
+Append a `### Audit result: <date> (<milestone>)` subsection with the eight-row table used below.
+Do not replace earlier results. A failed check must be linked to an issue in the same row; a missing
+automation must be run manually and identified as such.
 
 ### Audit result: 2026-11-18 (Phase 0)
 
