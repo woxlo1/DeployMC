@@ -8,7 +8,11 @@ import io.github.woxlo1.deploymc.core.config.ConfigMigration;
 import io.github.woxlo1.deploymc.core.config.ConfigSchema;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.transport.DefaultTransportPolicy;
+import io.github.woxlo1.deploymc.transport.JsonRequestLogger;
+import io.github.woxlo1.deploymc.transport.LoggingFormat;
+import io.github.woxlo1.deploymc.transport.MetricsRegistry;
 import io.github.woxlo1.deploymc.transport.NettyTransportServer;
+import io.github.woxlo1.deploymc.transport.RequestLogger;
 import io.github.woxlo1.deploymc.transport.TransportConfig;
 import io.github.woxlo1.deploymc.transport.TransportException;
 import io.github.woxlo1.deploymc.transport.TransportMessages;
@@ -52,6 +56,7 @@ public final class DeployMCPlugin extends JavaPlugin {
     BukkitPlatformAdapter created = null;
     NettyTransportServer createdTransport = null;
     FileApiRuntime createdFileApi = null;
+    DoctorRuntime createdDoctor = null;
     try {
       ConfigManager createdConfigManager =
           new ConfigManager(
@@ -75,7 +80,9 @@ public final class DeployMCPlugin extends JavaPlugin {
 
       Locale locale = ConfigLanguage.toLocale(view.language());
       TransportMessages transportMessages = TransportMessages.of(locale);
-      TransportConfig transportConfig = TransportConfig.builder(plan.bind()).build();
+      HostObservabilityConfig observability = HostObservabilityConfig.from(view);
+      RequestLogger requestLogger = requestLogger(observability, transportMessages);
+      TransportConfig transportConfig = observability.transportConfig(plan.bind());
       File pluginsDirectory = getDataFolder().getParentFile();
       if (pluginsDirectory == null) {
         throw new StartupConfigurationException(
@@ -85,6 +92,16 @@ public final class DeployMCPlugin extends JavaPlugin {
       createdFileApi =
           FileApiRuntime.create(
               view, pluginsDirectory.toPath(), locale, transportConfig.maxBodyBytes());
+      createdDoctor =
+          DoctorRuntime.create(
+              createdConfigManager,
+              plan,
+              created,
+              locale,
+              view.language(),
+              createdFileApi,
+              messages);
+      MetricsRegistry metrics = new MetricsRegistry();
       createdTransport =
           new NettyTransportServer(
               transportConfig,
@@ -92,13 +109,16 @@ public final class DeployMCPlugin extends JavaPlugin {
                   new ServerInfoHandler(
                       plan.pluginVersion(), created.info(), created.capabilities()),
                   createdFileApi.handler(),
-                  createdFileApi.snapshotHandler()),
+                  createdFileApi.snapshotHandler(),
+                  new DoctorHandler(createdDoctor, messages)),
               new NoopWebSocketListener(),
               new DefaultTransportPolicy(transportConfig),
-              new PluginRequestLogger(getLogger(), transportMessages),
+              requestLogger,
               authentication.authenticator(),
-              transportMessages);
+              transportMessages,
+              metrics);
       createdTransport.start();
+      publishSnapshotStoreGauge(metrics, createdFileApi, messages);
 
       StartupBanner banner = new StartupBanner(messages);
       for (String line : banner.render(created.info(), plan)) {
@@ -113,7 +133,7 @@ public final class DeployMCPlugin extends JavaPlugin {
       }
       DeployMCCommandExecutor executor =
           new DeployMCCommandExecutor(
-              new ConfigCommandHandler(createdConfigManager, plan, authentication));
+              new ConfigCommandHandler(createdConfigManager, plan, authentication, createdDoctor));
       command.setExecutor(executor);
       command.setTabCompleter(executor);
 
@@ -165,6 +185,23 @@ public final class DeployMCPlugin extends JavaPlugin {
       adapter = null;
     }
     configManager = null;
+  }
+
+  private RequestLogger requestLogger(
+      HostObservabilityConfig observability, TransportMessages transportMessages) {
+    if (observability.observability().loggingFormat() == LoggingFormat.JSON) {
+      return new JsonRequestLogger(Logger.getLogger("io.github.woxlo1.deploymc"));
+    }
+    return new PluginRequestLogger(getLogger(), transportMessages);
+  }
+
+  private void publishSnapshotStoreGauge(
+      MetricsRegistry metrics, FileApiRuntime fileApi, LocalizedMessages messages) {
+    try {
+      metrics.setSnapshotStoreBytes(fileApi.snapshotStore().storeSizeBytes());
+    } catch (Exception failure) {
+      getLogger().warning(messages.format(MessageKeys.WARNING_OBSERVABILITY_SNAPSHOT_GAUGE));
+    }
   }
 
   private void disableAfterFailure(
