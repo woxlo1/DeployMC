@@ -11,6 +11,7 @@ records access dates and distinguishes observed facts from this project's assess
 | [Bukkit descriptor baseline](bukkit-descriptor-baseline.md) | `plugin.yml`, `api-version`, Folia flag, and compile-only API choice |
 | [Transport spike](transport-spike.md) | HTTP/WebSocket candidate sizes, relocation, Java 8 check, and echo benchmark |
 | [Configuration YAML library check](config-yaml-library.md) | SnakeYAML 2.7 version, license, Java 8 bytecode evidence, and relocation evidence |
+| [PART 40.3 spike index](spikes/README.md) | Seven early risk-reduction spikes with observed, source-verified, and not-run status |
 
 Research documents are not implementation evidence. They do not make a product feature working,
 and they are not legal advice.
