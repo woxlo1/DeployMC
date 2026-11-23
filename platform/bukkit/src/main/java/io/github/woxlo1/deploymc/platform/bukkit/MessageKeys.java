@@ -55,22 +55,6 @@ public final class MessageKeys {
   public static final String COMMAND_RELOAD_WARNINGS = "command.reload.warnings";
   public static final String COMMAND_RELOAD_FAILED = "command.reload.failed";
   public static final String COMMAND_DOCTOR_TITLE = "command.doctor.title";
-  public static final String COMMAND_DOCTOR_PASS = "command.doctor.pass";
-  public static final String COMMAND_DOCTOR_WARN = "command.doctor.warn";
-  public static final String COMMAND_DOCTOR_FAIL = "command.doctor.fail";
-  public static final String COMMAND_DOCTOR_CHECK_CONFIG = "command.doctor.check.config";
-  public static final String COMMAND_DOCTOR_CHECK_BIND = "command.doctor.check.bind";
-  public static final String COMMAND_DOCTOR_CHECK_AUTH = "command.doctor.check.auth";
-  public static final String COMMAND_DOCTOR_CHECK_LOCALIZATION =
-      "command.doctor.check.localization";
-  public static final String COMMAND_DOCTOR_CHECK_SCOPE = "command.doctor.check.scope";
-  public static final String COMMAND_DOCTOR_CONFIG_VALID = "command.doctor.configValid";
-  public static final String COMMAND_DOCTOR_CONFIG_UNAVAILABLE = "command.doctor.configUnavailable";
-  public static final String COMMAND_DOCTOR_BIND_LOOPBACK = "command.doctor.bindLoopback";
-  public static final String COMMAND_DOCTOR_BIND_NON_LOOPBACK = "command.doctor.bindNonLoopback";
-  public static final String COMMAND_DOCTOR_AUTH_MODE = "command.doctor.authMode";
-  public static final String COMMAND_DOCTOR_LOCALIZATION = "command.doctor.localization";
-  public static final String COMMAND_DOCTOR_SCOPE_LIMITED = "command.doctor.scopeLimited";
   public static final String COMMAND_TOKEN_UNAVAILABLE = "command.token.unavailable";
   public static final String COMMAND_TOKEN_USAGE = "command.token.usage";
   public static final String COMMAND_TOKEN_CREATED = "command.token.created";
