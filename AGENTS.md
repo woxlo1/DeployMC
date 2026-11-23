@@ -34,6 +34,8 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 14. Update `docs/development/implementation-status.md` when what works changes, and record
     open decisions in `docs/development/decisions-pending.md`.
 15. Talk to the project owner in Japanese. Repository content is English except localized content.
+16. Split large work into several reviewable Conventional Commits instead of one large commit. Use
+    rebase merge so those commits remain on `main`; do not squash them away.
 
 ## Repository state
 
@@ -107,6 +109,15 @@ tested against real code; algorithms without a product implementation are valida
 specification and fixture contracts, with gaps recorded as `NOT IMPLEMENTED` and no parity claims.
 No product code, CI, or user-facing strings changed. No running server, full integration suite,
 E2E run, Web UI, or in-game command consumed the suites.
+PART 36 observability baseline merged in PR #203 at `072feda`, PR #204 at `2f3abfc`, PR #205 at
+`7555c3d`, PR #206 at `d42f5d2`, and PR #207 at `b882f95`. It adds the normative doctor, logging,
+metrics, and self-protection contract; a Web doctor panel; Java 8 `core.doctor`; transport
+observability with a watchdog fix; and Bukkit host wiring. The doctor route is authenticated and
+redacted, metrics are opt-in, and `/healthz` and `/readyz` remain the only unauthenticated endpoints.
+PR #207 was rebase-merged so its five Conventional Commits remain on `main`, following the owner's
+large-work commit-split rule. Issue #117 stays open until the final evidence PR merges. Only
+server-free tests and builds verified these paths; no running server, Bukkit mock, browser, E2E run,
+full integration suite, or in-game command exercised them.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
