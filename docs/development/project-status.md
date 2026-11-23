@@ -6,7 +6,8 @@ implementation). GitHub merge evidence below was verified against `main` through
 PR #207. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
 All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
 baseline stages are merged with local and post-merge evidence; consolidated evidence is recorded here
-and issue #117 closes after this merge.)
+and issue #117 closes after this merge. PART 40.3 early risk-reduction spikes are recorded in PR
+#210; issue #118 closes after this merge.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -987,6 +988,22 @@ a Bukkit mock, browser rendering, E2E, the full integration suite, or an in-game
 The unbundled PART 36 algorithms remain specification or fixture contracts; no support tier, parity,
 or running-product claim is made.
 
+## PART 40.3 early risk-reduction spikes (issue #118)
+
+PR #210 records the seven spiked areas from PART 40.3: transport, Windows JAR replacement,
+update-folder semantics, log capture, Folia scheduling, embedded UI size, and restart behavior.
+The findings are stored in [`docs/research/spikes/`](../../docs/research/spikes/README.md) and linked
+from ADR-0003, ADR-0004, ADR-0008, ADR-0011, and ADR-0014. D-001 is linked to the restart,
+update-folder, and log-capture gaps in [decisions pending](decisions-pending.md).
+
+The Windows probe `tests/spikes/windows-jar-replacement.ps1` observed HResult `0x80070020` when the
+destination was opened without `FILE_SHARE_DELETE`, and succeeded when that share mode was present.
+This supports update-folder or restart-time installation as the safer default; it does not show how a
+real Minecraft server opens a JAR. The log-corpus suite ran 6 tests with `OK`. The Web and Java size
+subsets, the full `node tools/build/verify-all.cjs`, `spotlessCheck`, commitlint, and `git diff --check`
+all passed locally on 2026-11-23. No real server, supervisor, Folia, browser, E2E, in-game command, or
+Monaco/CodeMirror benchmark was run, and no support tier was earned.
+
 ## Earlier pull-request evidence
 
 All 16 currently required pull-request checks passed before PR #139 was merged; the first attempt
@@ -1242,10 +1259,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, and #117 are
-complete, and their final consolidated evidence is recorded. Continue with category 3 (#118-#120),
-then category 4 (#121-#123) and category 5 (#124-#130). Start later items only when earlier items
-are complete or the owner explicitly approves.
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, #117, and #118 are
+complete, and their final consolidated evidence is recorded. Continue with #119, then #120, then
+category 4 (#121-#123) and category 5 (#124-#130). Work on later items may be prepared in parallel but
+must not be merged ahead of an earlier open issue unless the owner explicitly approves.
 
 ## Release checklist
 
