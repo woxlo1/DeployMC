@@ -25,6 +25,9 @@ public final class TransportConfig {
   private final int maxWebSocketFrameBytes;
   private final int maxWebSocketQueuedMessages;
   private final int maxWebSocketQueuedBytes;
+  private final int maxWebSocketConnections;
+  private final int slowConsumerMillis;
+  private final ObservabilityConfig observability;
   private final Set<String> allowedHosts;
   private final Set<String> allowedOrigins;
   private final String webSocketPath;
@@ -40,6 +43,9 @@ public final class TransportConfig {
     this.maxWebSocketFrameBytes = builder.maxWebSocketFrameBytes;
     this.maxWebSocketQueuedMessages = builder.maxWebSocketQueuedMessages;
     this.maxWebSocketQueuedBytes = builder.maxWebSocketQueuedBytes;
+    this.maxWebSocketConnections = builder.maxWebSocketConnections;
+    this.slowConsumerMillis = builder.slowConsumerMillis;
+    this.observability = builder.observability;
     this.webSocketPath = builder.webSocketPath;
     Set<String> hosts = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     hosts.addAll(LOOPBACK_HOSTS);
@@ -92,6 +98,18 @@ public final class TransportConfig {
     return maxWebSocketQueuedBytes;
   }
 
+  public int maxWebSocketConnections() {
+    return maxWebSocketConnections;
+  }
+
+  public int slowConsumerMillis() {
+    return slowConsumerMillis;
+  }
+
+  public ObservabilityConfig observability() {
+    return observability;
+  }
+
   public Set<String> allowedHosts() {
     return allowedHosts;
   }
@@ -117,6 +135,9 @@ public final class TransportConfig {
     private int maxWebSocketFrameBytes = 64 * 1024;
     private int maxWebSocketQueuedMessages = 1_000;
     private int maxWebSocketQueuedBytes = 2 * 1024 * 1024;
+    private int maxWebSocketConnections = 50;
+    private int slowConsumerMillis = 5_000;
+    private ObservabilityConfig observability = ObservabilityConfig.defaults();
     private String webSocketPath = "/api/v1/ws";
     private Collection<String> allowedHosts = Collections.emptySet();
     private Collection<String> allowedOrigins = Collections.emptySet();
@@ -170,6 +191,21 @@ public final class TransportConfig {
       return this;
     }
 
+    public Builder maxWebSocketConnections(int value) {
+      this.maxWebSocketConnections = value;
+      return this;
+    }
+
+    public Builder slowConsumerMillis(int value) {
+      this.slowConsumerMillis = value;
+      return this;
+    }
+
+    public Builder observability(ObservabilityConfig value) {
+      this.observability = Objects.requireNonNull(value, "observability");
+      return this;
+    }
+
     public Builder webSocketPath(String value) {
       this.webSocketPath = value;
       return this;
@@ -195,6 +231,8 @@ public final class TransportConfig {
       requireRange(maxWebSocketFrameBytes, 1024, 16 * 1024 * 1024, "maxWebSocketFrameBytes");
       requireRange(maxWebSocketQueuedMessages, 1, 1_000_000, "maxWebSocketQueuedMessages");
       requireRange(maxWebSocketQueuedBytes, 1024, 64 * 1024 * 1024, "maxWebSocketQueuedBytes");
+      requireRange(maxWebSocketConnections, 1, 10_000, "maxWebSocketConnections");
+      requireRange(slowConsumerMillis, 100, 60_000, "slowConsumerMillis");
       if (webSocketPath == null || !webSocketPath.startsWith("/") || webSocketPath.endsWith("/")) {
         throw new IllegalArgumentException(
             "webSocketPath must be an absolute path without a trailing slash");
