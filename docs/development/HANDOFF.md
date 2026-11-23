@@ -5,6 +5,17 @@ Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## What was just done
 
+- Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
+  normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
+  Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
+  observability and the watchdog fix; and PR #207 (`b882f95`) wired the Bukkit host. PR #207 was
+  rebase-merged so its five Conventional Commits remain individually on `main`, following the
+  owner's rule that large work be split into reviewable commits. Issue #117 was reopened after PR
+  #205 and kept open through all implementation stages; this final evidence PR closes it after
+  merge. All five PRs have Japanese verification and post-merge evidence comments, with passing
+  post-merge CI, CodeQL, and Scorecard. Local `node tools/build/verify-all.cjs` reported `PASS` for
+  all seven toolchains with 473 Java tests (0 failures, 0 errors, 1 skipped). No running server,
+  Bukkit mock, browser, E2E, full integration suite, or in-game command exercised the PART 36 paths.
 - Issue #116 PART 33 algorithm regression suites merged in PR #199 (`0b83150`), PR #200
   (`98b6b79`), and PR #201 (`5d279c6`): 60 dedicated tests covering file safety, runtime limits,
   and auth/RBAC. Implemented boundaries are tested against real code; algorithms without a product
@@ -400,6 +411,11 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
+- No PART 36 implementation PRs remain in flight. PRs #203-#207 are merged with Japanese verification
+  and post-merge evidence comments; all required checks and post-merge CI/CodeQL/Scorecard passed.
+  PR #207 used a rebase merge because the owner requires multiple reviewable commits for large work.
+  The `docs/issue-117-final-evidence` branch is temporary for this final evidence update. Issue #117
+  closes after this PR merges.
 - No PART 33 test PRs remain in flight. PRs #199-#201 merged at `0b83150`, `98b6b79`, and `5d279c6`
   with Japanese verification and post-merge evidence comments; all required checks and post-merge
   CI/CodeQL/Scorecard passed. Their temporary branches were deleted after evidence was posted. The
@@ -425,9 +441,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. Continue with category 3 (#117-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
-   order. Issues #115 and #116 are complete; their final consolidated evidence is recorded on the
-   issues.
+1. Continue with category 3 (#118-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+   order. Issues #115, #116, and #117 are complete; their final consolidated evidence is recorded in
+   the status pages and on the issues.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
@@ -439,6 +455,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   is outside the project dir, stop Gradle and delete the generated `core/build/spotless/spotlessJava`
   and `spotlessMisc` caches created under the previous junction.
 - `gh milestone list` is not supported; query `gh api repos/woxlo1/DeployMC/milestones`.
+- Split large work into several reviewable Conventional Commits instead of one large commit, and use
+  rebase merge so those commits remain on `main`. PR #207 needed a message-only rewrite because
+  `Refs #117` and `Co-authored-by` lacked a blank line between footers.
 - Conventional Commit body and footer lines must be at most 120 characters; PR #139 needed an amend
   because `Refs #45` was parsed as a footer on an over-long line.
 - `gh` commands with `--jq` need careful quoting in PowerShell; prefer `--json` plus
