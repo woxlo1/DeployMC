@@ -23,7 +23,8 @@ These are configured in GitHub, not in a workflow file:
   Dependency review fails closed when the graph is unavailable.
 - Secret scanning and push protection are enabled.
 - Dependabot update pull requests are configured for Gradle, npm in `web/` and `tools/spec/`, Cargo,
-  pip, and GitHub Actions. See [community configuration](community.md).
+  pip, and GitHub Actions. See [community configuration](community.md) and
+  [dependency policy](dependency-policy.md).
 - `main` requires linear history, forbids force-pushes and deletion, requires conversation resolution,
   and applies every rule to administrators.
 - Required status checks are enforced with `strict` (the branch must be up to date):
