@@ -134,6 +134,14 @@ internal implementation details are relocated.
 - Java 8 compatibility of the build itself is verified by
   [ADR-0002](ADR-0002-java-8-bytecode-baseline.md) and by the verifier's major-52 common-path check.
 
+## Spike evidence (2026-11-23)
+
+The Windows file-replacement probe in [spike 2](../research/spikes/02-windows-jar-replacement.md)
+showed that `File.Replace` fails with HResult `0x80070020` when the destination is opened without
+`FILE_SHARE_DELETE` and succeeds when that share mode is present. This supports capability-gated
+replacement rather than an unconditional overwrite design. No real server opened a JAR during the
+probe, so no deployment capability or support tier is claimed.
+
 ## References
 
 - Master specification, section 4.1 and Part 3.3.

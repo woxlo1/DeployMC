@@ -30,6 +30,12 @@ the related decisions are finalized.
 | D-006 | Should a Discord server be created now, or should Discussions be the only community channel initially? | Phase 0 community setup | Community links in the README remain Discussions-only |
 | D-007 | What weekly time budget should the public roadmap assume? | Roadmap publication | Roadmap communication may be unrealistic |
 
+The PART 40.3 [restart-behavior spike](../research/spikes/07-restart-behavior.md) is blocked by D-001:
+without the real hosting setup and versions, no systemd, Docker, loop-script, or Pterodactyl result
+can be recorded. The [update-folder](../research/spikes/03-update-folder-semantics.md) and
+[log-capture](../research/spikes/04-log-capture.md) spikes likewise leave oldest/newest target
+versions untested. Those capability values remain `UNKNOWN`.
+
 ## How to resolve a decision
 
 1. Ask the owner in Japanese with the trade-offs and a recommendation.

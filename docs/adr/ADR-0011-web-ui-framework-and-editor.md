@@ -133,6 +133,13 @@ Until the benchmark is recorded, no editor dependency is added to the production
   real UI screen exists. The framework decision is verified as buildable; the editor
   decision is open.
 
+## Spike evidence (2026-11-23)
+
+[Embedded UI size spike 6](../research/spikes/06-embedded-ui-size.md) records the current no-editor
+baseline: 155,810 raw bytes and 50,632 gzip bytes for the main JavaScript asset, plus a 380,370-byte
+source map. The final JAR was reported at 4,721,584 bytes. These figures are a baseline for a future
+budget; they are not a Monaco/CodeMirror benchmark, so the editor part of this ADR remains Proposed.
+
 ## References
 
 - Master specification, sections 4.2 and 32.2.
