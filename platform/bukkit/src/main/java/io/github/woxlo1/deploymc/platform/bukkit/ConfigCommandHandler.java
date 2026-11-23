@@ -26,6 +26,7 @@ public final class ConfigCommandHandler {
   private final ConfigManager manager;
   private final StartupPlan plan;
   private final AuthenticationRuntime authentication;
+  private final DoctorRuntime doctor;
 
   public ConfigCommandHandler(ConfigManager manager, StartupPlan plan) {
     this(manager, plan, null);
@@ -33,6 +34,14 @@ public final class ConfigCommandHandler {
 
   public ConfigCommandHandler(
       ConfigManager manager, StartupPlan plan, AuthenticationRuntime authentication) {
+    this(manager, plan, authentication, null);
+  }
+
+  public ConfigCommandHandler(
+      ConfigManager manager,
+      StartupPlan plan,
+      AuthenticationRuntime authentication,
+      DoctorRuntime doctor) {
     if (manager == null) {
       throw new IllegalArgumentException("manager");
     }
@@ -42,6 +51,7 @@ public final class ConfigCommandHandler {
     this.manager = manager;
     this.plan = plan;
     this.authentication = authentication;
+    this.doctor = doctor;
   }
 
   /** Handles one invocation. Always returns {@code true} so Bukkit does not show generic usage. */
