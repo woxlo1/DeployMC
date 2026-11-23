@@ -1,9 +1,10 @@
 # Project Status
 
-Last updated: 2026-11-22 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-23 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `9b7b5ee` after
-PR #197. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.)
+implementation). GitHub merge evidence below was verified against `main` through `5d279c6` after
+PR #201. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+All PART 33 algorithm regression suites are merged; issue #116 tracks final consolidated evidence.)
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -863,6 +864,54 @@ The local and remote branches `docs/issue-115-evidence-catchup`,
 `test/filter-vector-fixtures` were deleted after evidence was posted. The
 `docs/issue-115-evidence-catchup-197` branch is temporary for this final evidence update.
 Issue #115 is complete; final closure evidence is recorded in the issue.
+
+## PART 33 algorithm regression suites (issue #116)
+
+Three reviewed PRs added 60 dedicated PART 33 tests. Each PR has a Japanese verification comment,
+and all 18 required checks passed before merge. Branches that fell behind `main` were rebased,
+re-verified, and force-pushed with lease before merging. No product code, CI, build files,
+documentation, or user-facing strings changed in those PRs.
+
+- PR #199 added 24 file-safety tests (sandbox 8, atomic write 9, YAML/archive 7), merged at
+  `0b831507233d007ecb1e65ccf3645d99e3e0445a` on `2026-11-23T03:55:49Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/199#issuecomment-7091088026) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/199#issuecomment-7091187865). All 18 required
+  checks passed. Post-merge workflows: CI
+  [45108813174](https://github.com/woxlo1/DeployMC/actions/runs/45108813174), CodeQL
+  [45108813105](https://github.com/woxlo1/DeployMC/actions/runs/45108813105), Scorecard
+  [45108813125](https://github.com/woxlo1/DeployMC/actions/runs/45108813125).
+- PR #200 added 16 runtime-limit tests (snapshot GC 7, log attribution 4, rate limit 5), merged at
+  `98b6b79c900502bcdb659c59565a1788d8f7a157` on `2026-11-23T04:20:24Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/200#issuecomment-7091107868) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/200#issuecomment-7091552631). The first merge
+  attempt was rejected because #199 had advanced `main`; the branch was rebased and re-verified
+  (35 core and 5 transport Part33 tests PASSED). Post-merge workflows: CI
+  [45111254553](https://github.com/woxlo1/DeployMC/actions/runs/45111254553), CodeQL
+  [45111254527](https://github.com/woxlo1/DeployMC/actions/runs/45111254527), Scorecard
+  [45111254520](https://github.com/woxlo1/DeployMC/actions/runs/45111254520).
+- PR #201 added 20 auth/RBAC contract tests (JWT 8, RBAC 7, deployment recovery 5), merged at
+  `5d279c6bd2ed1a681ebed7ef0657e85039b72633` on `2026-11-23T04:25:47Z`;
+  [verification](https://github.com/woxlo1/DeployMC/pull/201#issuecomment-7091132575) and
+  [evidence](https://github.com/woxlo1/DeployMC/pull/201#issuecomment-7091634008). It was rebased
+  onto the #199 and #200 merges and re-verified (55 core and 5 transport Part33 tests PASSED).
+  Post-merge workflows: CI [45111799148](https://github.com/woxlo1/DeployMC/actions/runs/45111799148),
+  CodeQL [45111799132](https://github.com/woxlo1/DeployMC/actions/runs/45111799132), Scorecard
+  [45111799194](https://github.com/woxlo1/DeployMC/actions/runs/45111799194).
+
+Implemented boundaries were exercised against real code: `SandboxResolver`, `FileOperationsService`,
+`YamlValidator`/`ValidatorRegistry`, `DiffEngine`/`DiffLimits`, `SnapshotStore`, the bounded
+WebSocket queue, and the committed JWT, RBAC, and state-machine artifacts. Algorithms without a
+product implementation were validated only as specification/fixture contracts and are recorded as
+`NOT IMPLEMENTED`: existing non-NFC filename byte preservation, fstat on opened descriptors, OS
+file locks, audit write events, `file.changed`, startup temp cleanup, archive path/symlink/collision
+and total-size/ratio checks, product JWT verification, RBAC evaluation, deployment engine execution,
+log attribution consumers, HTTP token buckets, `console.gap`, and slow-consumer close. No parity or
+support claim is made. No server, harness full run, full integration suite, E2E, Web UI, or in-game
+command consumed the suites. Localization was not changed because no user-facing strings were added.
+
+The local and remote branches `test/issue-116-file-safety`, `test/issue-116-runtime-limits`, and
+`test/issue-116-auth-rbac` were deleted after evidence was posted. The
+`docs/issue-116-evidence-catchup` branch is temporary for this final evidence update.
 
 ## Earlier pull-request evidence
 

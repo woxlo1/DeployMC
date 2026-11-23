@@ -1,9 +1,15 @@
 # Handoff
 
-Last updated: 2026-11-22. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
+
+- Issue #116 PART 33 algorithm regression suites merged in PR #199 (`0b83150`), PR #200
+  (`98b6b79`), and PR #201 (`5d279c6`): 60 dedicated tests covering file safety, runtime limits,
+  and auth/RBAC. Implemented boundaries are tested against real code; algorithms without a product
+  implementation remain specification and fixture contracts with gaps recorded as `NOT IMPLEMENTED`.
+  No product code, CI, build files, documentation, or user-facing strings changed in those PRs.
 
 - WP-0.2 (issue #2) was completed in PR #131: `docs/research/` now contains the naming check,
   competitive analysis, and license comparison. All 15 required checks passed before merge.
@@ -394,6 +400,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
+- No PART 33 test PRs remain in flight. PRs #199-#201 merged at `0b83150`, `98b6b79`, and `5d279c6`
+  with Japanese verification and post-merge evidence comments; all required checks and post-merge
+  CI/CodeQL/Scorecard passed. Their temporary branches were deleted after evidence was posted. The
+  `docs/issue-116-evidence-catchup` branch is temporary for this final evidence update.
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
   with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
 - No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches,
@@ -415,8 +425,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. Continue with category 3 (#116-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
-   order. Issue #115 is complete; its final consolidated evidence is recorded on the issue.
+1. Continue with category 3 (#117-#120), category 4 (#121-#123), and category 5 (#124-#130) in issue
+   order. Issues #115 and #116 are complete; their final consolidated evidence is recorded on the
+   issues.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
