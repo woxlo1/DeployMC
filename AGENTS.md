@@ -36,6 +36,27 @@ is `docs/development/DeployMC_Complete_Master_Development_Specification.md`.
 15. Talk to the project owner in Japanese. Repository content is English except localized content.
 16. Split large work into several reviewable Conventional Commits instead of one large commit. Use
     rebase merge so those commits remain on `main`; do not squash them away.
+17. Work may proceed in parallel in separate worktrees and branches, but merge implementation PRs in
+    ascending issue order. A later issue may be prepared, reviewed, and kept ready, but do not merge
+    it ahead of an earlier open issue unless the owner explicitly approves that order.
+18. Keep an issue open until a final consolidated evidence PR records verification, CI, and post-merge
+    results and updates status pages. Intermediate implementation PRs use `Refs #NNN` and must not edit
+    `docs/development/implementation-status.md`, `docs/development/project-status.md`, or
+    `docs/development/HANDOFF.md`; the final evidence PR owns those updates and closes the issue.
+19. Fetch and rebase onto the latest `origin/main` before merging. If `main` advances while a PR is
+    open, rebase again and rerun all local pre-push checks and CI before merge. Never merge a stale PR.
+20. Dependabot PRs may use GitHub auto-merge only when branch protection and every required check are
+    enforced. Never bypass checks or bulk-merge unchecked PRs. A failing dependency PR stays open for
+    a later fix; record the failure and do not disable the gate to make it merge.
+21. Before every push, run all four checks from the repository root: `git fetch origin main`, then
+    `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD`,
+    `node tools/build/verify-all.cjs`,
+    `.\\gradlew.bat spotlessCheck --console=plain --no-configuration-cache`, and `git diff --check`.
+    A local pass does not replace required CI checks; see
+    [`docs/development/parallel-workflow.md`](docs/development/parallel-workflow.md).
+22. Add a Japanese verification comment to every PR before merge and a Japanese post-merge evidence
+    comment after required post-merge workflows finish. Use the templates in `tools/pr-evidence/`,
+    record exact commands and results, and never claim an unrun check passed.
 
 ## Repository state
 
