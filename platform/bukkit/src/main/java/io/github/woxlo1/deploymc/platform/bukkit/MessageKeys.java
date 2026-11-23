@@ -27,7 +27,17 @@ public final class MessageKeys {
   public static final String STARTUP_FILE_API_SNAPSHOT_DIRECTORY =
       "startup.fileApi.snapshotDirectory";
   public static final String LIFECYCLE_FILE_API_STOP_FAILED = "lifecycle.fileApiStopFailed";
+  public static final String STARTUP_OBSERVABILITY_INVALID_CONFIG =
+      "startup.observability.invalidConfig";
   public static final String WARNING_DATA_FOLDER = "warning.dataFolder";
+  public static final String WARNING_OBSERVABILITY_SNAPSHOT_GAUGE =
+      "warning.observability.snapshotGauge";
+  public static final String PROBLEM_DOCTOR_UNAUTHORIZED_TITLE =
+      "problem.doctor.unauthorized.title";
+  public static final String PROBLEM_DOCTOR_UNAUTHORIZED_DETAIL =
+      "problem.doctor.unauthorized.detail";
+  public static final String PROBLEM_DOCTOR_FORBIDDEN_TITLE = "problem.doctor.forbidden.title";
+  public static final String PROBLEM_DOCTOR_FORBIDDEN_DETAIL = "problem.doctor.forbidden.detail";
   public static final String COMMAND_USAGE = "command.usage";
   public static final String COMMAND_PERMISSION_DENIED = "command.permissionDenied";
   public static final String COMMAND_CONSOLE_ONLY = "command.consoleOnly";
