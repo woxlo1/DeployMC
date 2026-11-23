@@ -5,8 +5,8 @@ Source catalog: `web/src/locales/en.json`
 
 | Locale | Keys | Missing | Structural errors | Review status | Reviewed by | Reviewed at |
 | --- | ---: | ---: | ---: | --- | --- | --- |
-| en | 7 | 0 | 0 | source | woxlo1 | 2026-11-16 |
-| ja | 7 | 0 | 0 | machine-translated-draft | - | - |
+| en | 32 | 0 | 0 | source | woxlo1 | 2026-11-16 |
+| ja | 32 | 0 | 0 | machine-translated-draft | - | - |
 
 Missing or stale translations produce warnings and fall back to English at runtime. Placeholder
 mismatches, invalid ICU syntax, and plural messages without an `other` branch are structural
