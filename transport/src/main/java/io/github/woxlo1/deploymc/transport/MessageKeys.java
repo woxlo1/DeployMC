@@ -12,6 +12,16 @@ public final class MessageKeys {
   public static final String WEBSOCKET_CLOSED = "transport.websocket.closed";
   public static final String WEBSOCKET_REJECTED = "transport.websocket.rejected";
   public static final String WEBSOCKET_QUEUE_FULL = "transport.websocket.queueFull";
+  public static final String WEBSOCKET_SLOW_CONSUMER = "transport.websocket.slowConsumer";
+  public static final String WATCHDOG_STALL = "transport.watchdog.stall";
+  public static final String AUTH_RATE_LIMITED_TITLE = "problem.auth.rate-limited.title";
+  public static final String AUTH_RATE_LIMITED_DETAIL = "problem.auth.rate-limited.detail";
+  public static final String SERVER_BUSY_TITLE = "problem.server.busy.title";
+  public static final String SERVER_BUSY_DETAIL = "problem.server.busy.detail";
+  public static final String METRICS_FORBIDDEN_TITLE = "problem.metrics.forbidden.title";
+  public static final String METRICS_FORBIDDEN_DETAIL = "problem.metrics.forbidden.detail";
+  public static final String METRICS_NOT_FOUND_TITLE = "problem.metrics.not-found.title";
+  public static final String METRICS_NOT_FOUND_DETAIL = "problem.metrics.not-found.detail";
   public static final String AUTH_REQUIRED_TITLE = "problem.auth.required.title";
   public static final String AUTH_REQUIRED_DETAIL = "problem.auth.required.detail";
   public static final String AUTH_INVALID_TITLE = "problem.auth.invalid.title";

@@ -39,11 +39,9 @@ import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -52,10 +50,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 /** Netty-backed HTTP and WebSocket transport. No Netty type crosses the internal interfaces. */
 public final class NettyTransportServer implements HttpTransport, WebSocketTransport {
@@ -73,6 +73,9 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private static final String TRANSPORT_ERROR = "transport_error";
   private static final String HEALTHZ = "/healthz";
   private static final String READYZ = "/readyz";
+  private static final String REDACTED = "<redacted>";
+  private static final Logger WATCHDOG_LOGGER =
+      Logger.getLogger("io.github.woxlo1.deploymc.transport.watchdog");
 
   private final TransportConfig config;
   private final HttpHandler httpHandler;
@@ -81,9 +84,16 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final RequestLogger logger;
   private final Authenticator authenticator;
   private final TransportMessages messages;
+  private final ObservabilityConfig observability;
+  private final MetricsRegistry metrics;
+  private final RateLimiter rateLimiter;
+  private final MetricsHandler metricsHandler;
+  private final AtomicInteger webSocketConnections = new AtomicInteger();
   private final Set<Channel> channels =
       Collections.newSetFromMap(new ConcurrentHashMap<Channel, Boolean>());
 
+  private volatile ExecutorWatchdog watchdog;
+  private volatile ScheduledExecutorService watchdogScheduler;
   private EventLoopGroup bossGroup;
   private EventLoopGroup workerGroup;
   private Channel serverChannel;
@@ -114,6 +124,26 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       RequestLogger logger,
       Authenticator authenticator,
       TransportMessages messages) {
+    this(
+        config,
+        httpHandler,
+        webSocketListener,
+        policy,
+        logger,
+        authenticator,
+        messages,
+        new MetricsRegistry());
+  }
+
+  public NettyTransportServer(
+      TransportConfig config,
+      HttpHandler httpHandler,
+      WebSocketListener webSocketListener,
+      TransportPolicy policy,
+      RequestLogger logger,
+      Authenticator authenticator,
+      TransportMessages messages,
+      MetricsRegistry metrics) {
     this.config = Objects.requireNonNull(config, "config");
     this.httpHandler = Objects.requireNonNull(httpHandler, "httpHandler");
     this.webSocketListener = Objects.requireNonNull(webSocketListener, "webSocketListener");
@@ -121,6 +151,20 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     this.logger = Objects.requireNonNull(logger, "logger");
     this.authenticator = authenticator;
     this.messages = Objects.requireNonNull(messages, "messages");
+    this.observability = config.observability();
+    this.metrics = Objects.requireNonNull(metrics, "metrics");
+    this.rateLimiter =
+        new RateLimiter(
+            observability.identityRateLimitPerMinute(),
+            observability.authFailureRateLimitPerMinute(),
+            observability.maxRateLimitKeys(),
+            Clock.systemUTC());
+    this.metricsHandler = new MetricsHandler(metrics, observability.metricsPermission(), messages);
+  }
+
+  /** Registry used by this transport instance, for host-supplied gauges. */
+  public MetricsRegistry metrics() {
+    return metrics;
   }
 
   public HttpTransport http() {
@@ -180,12 +224,14 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       serverChannel = future.channel();
       InetSocketAddress local = (InetSocketAddress) serverChannel.localAddress();
       port = local.getPort();
+      startWatchdog(worker);
       running = true;
       logger.started(config.bind().address() + ":" + port);
       if (!config.bind().isLoopbackOnly()) {
         logger.nonLoopbackWarning(config.bind().address());
       }
     } catch (Exception exception) {
+      stopWatchdog();
       shutdownGroups(boss, worker);
       bossGroup = null;
       workerGroup = null;
@@ -196,11 +242,53 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     }
   }
 
+  private void startWatchdog(EventLoopGroup worker) {
+    watchdogScheduler =
+        Executors.newSingleThreadScheduledExecutor(
+            runnable -> {
+              Thread thread = new Thread(runnable, "DeployMC-watchdog-transport");
+              thread.setDaemon(false);
+              return thread;
+            });
+    final ExecutorWatchdog[] holder = new ExecutorWatchdog[1];
+    holder[0] =
+        new ExecutorWatchdog(
+            "transport",
+            watchdogScheduler,
+            token -> worker.execute(() -> holder[0].acknowledge(token)),
+            metrics,
+            WATCHDOG_LOGGER,
+            messages,
+            observability.watchdogIntervalMillis(),
+            observability.watchdogTimeoutMillis());
+    watchdog = holder[0];
+    holder[0].start();
+  }
+
+  private void stopWatchdog() {
+    ExecutorWatchdog current = watchdog;
+    if (current != null) {
+      current.stop();
+      watchdog = null;
+    }
+    ScheduledExecutorService scheduler = watchdogScheduler;
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+      try {
+        scheduler.awaitTermination(1L, TimeUnit.SECONDS);
+      } catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+      }
+      watchdogScheduler = null;
+    }
+  }
+
   @Override
   public synchronized void stop() {
     if (!running && bossGroup == null && workerGroup == null) {
       return;
     }
+    stopWatchdog();
     if (serverChannel != null) {
       serverChannel.close().syncUninterruptibly();
       serverChannel = null;
@@ -280,7 +368,11 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     }
   }
 
-  private void writeResponse(ChannelHandlerContext context, HttpResponse response) {
+  private void writeResponse(ChannelHandlerContext context, HttpResponse original) {
+    HttpResponse response = original;
+    if (!hasHeader(response, TransportProblems.REQUEST_ID)) {
+      response = response.withHeader(TransportProblems.REQUEST_ID, requestId(context));
+    }
     int status = response.status();
     if (status < 100 || status > 599) {
       status = HttpResponseStatus.INTERNAL_SERVER_ERROR.code();
@@ -298,6 +390,15 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     applySecurityHeaders(outbound.headers());
     HttpUtil.setContentLength(outbound, outbound.content().readableBytes());
     context.writeAndFlush(outbound).addListener(ChannelFutureListener.CLOSE);
+  }
+
+  private static boolean hasHeader(HttpResponse response, String name) {
+    for (String key : response.headers().keySet()) {
+      if (name.equalsIgnoreCase(key)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void applySecurityHeaders(HttpHeaders headers) {
@@ -343,6 +444,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     return queryIndex < 0 ? uri : uri.substring(0, queryIndex);
   }
 
+  private EndpointClass classify(String requestPath) {
+    return EndpointClass.fromPath(requestPath, config.webSocketPath());
+  }
+
   private HttpResponse unauthorized(String requestId, AuthenticationFailure failure) {
     String titleKey;
     String detailKey;
@@ -380,8 +485,9 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
 
     @Override
     public void channelActive(ChannelHandlerContext context) {
-      if (!channels.add(context.channel())) {
-        context.close();
+      if (channels.size() >= config.maxConnections() || !channels.add(context.channel())) {
+        logger.rejected(requestId(context), TransportProblems.SERVER_BUSY_CODE);
+        writeResponse(context, TransportProblems.serverBusy(requestId(context), messages));
         return;
       }
       context.fireChannelActive();
@@ -394,6 +500,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       if (session != null) {
         context.channel().attr(SESSION).set(null);
         session.markClosed();
+        webSocketConnections.decrementAndGet();
+        metrics.setWebSocketConnections(Math.max(0, webSocketConnections.get()));
         logger.websocketClosed(session.id());
       }
       context.fireChannelInactive();
@@ -460,7 +568,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         int status,
         String code) {
       if (isWebSocketUpgrade(request)) {
-        logger.websocketRejected(String.valueOf(context.channel().remoteAddress()), code);
+        logger.websocketRejected(REDACTED, code);
       } else {
         logger.rejected(id, code);
       }
@@ -478,37 +586,79 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         return;
       }
       FullHttpRequest request = (FullHttpRequest) message;
-      String path = path(request.uri());
-      if (HEALTHZ.equals(path) || READYZ.equals(path)) {
+      String requestPath = path(request.uri());
+      if (HEALTHZ.equals(requestPath) || READYZ.equals(requestPath)) {
         context.channel().attr(AUTHENTICATED_IDENTITY).set(null);
         context.fireChannelRead(message);
         return;
       }
+      EndpointClass endpoint = classify(requestPath);
       if (authenticator == null) {
-        reject(context, request, AuthenticationFailure.REQUIRED);
+        rejectAuthentication(context, request, AuthenticationFailure.REQUIRED);
         return;
       }
       AuthenticationResult result =
           authenticator.authenticate(request.headers().get(HttpHeaderNames.AUTHORIZATION));
       if (result.authenticated()) {
-        context.channel().attr(AUTHENTICATED_IDENTITY).set(result.identity());
+        Identity identity = result.identity();
+        RateLimitDecision decision = rateLimiter.tryIdentity(identity.id(), endpoint);
+        if (!decision.allowed()) {
+          shed(context, request, decision, ShedScope.IDENTITY);
+          return;
+        }
+        if (endpoint == EndpointClass.WEBSOCKET
+            && webSocketConnections.get() >= config.maxWebSocketConnections()) {
+          rejectBusy(context, request);
+          return;
+        }
+        context.channel().attr(AUTHENTICATED_IDENTITY).set(identity);
         context.fireChannelRead(message);
         return;
       }
-      reject(context, request, result.failure());
+      rejectAuthentication(context, request, result.failure());
     }
 
-    private void reject(
+    private void rejectAuthentication(
         ChannelHandlerContext context, FullHttpRequest request, AuthenticationFailure failure) {
       AuthenticationFailure reason = failure == null ? AuthenticationFailure.REQUIRED : failure;
+      metrics.recordAuthFailure(AuthFailureReason.from(reason));
+      String remoteKey = String.valueOf(context.channel().remoteAddress());
+      RateLimitDecision decision = rateLimiter.tryAuthFailure(remoteKey);
+      if (!decision.allowed()) {
+        shed(context, request, decision, ShedScope.AUTH_FAILURE);
+        return;
+      }
       String id = requestId(context);
       if (isWebSocketUpgrade(request)) {
-        logger.websocketRejected(String.valueOf(context.channel().remoteAddress()), reason.code());
+        logger.websocketRejected(REDACTED, reason.code());
       } else {
         logger.rejected(id, reason.code());
       }
       ReferenceCountUtil.release(request);
       writeResponse(context, unauthorized(id, reason));
+    }
+
+    private void shed(
+        ChannelHandlerContext context,
+        FullHttpRequest request,
+        RateLimitDecision decision,
+        ShedScope scope) {
+      metrics.recordShed(scope);
+      String id = requestId(context);
+      if (isWebSocketUpgrade(request)) {
+        logger.websocketRejected(REDACTED, TransportProblems.RATE_LIMITED_CODE);
+      } else {
+        logger.rejected(id, TransportProblems.RATE_LIMITED_CODE);
+      }
+      ReferenceCountUtil.release(request);
+      writeResponse(context, TransportProblems.rateLimited(decision, id, messages));
+    }
+
+    private void rejectBusy(ChannelHandlerContext context, FullHttpRequest request) {
+      String id = requestId(context);
+      logger.websocketRejected(REDACTED, TransportProblems.SERVER_BUSY_CODE);
+      ReferenceCountUtil.release(request);
+      writeResponse(context, TransportProblems.serverBusy(id, messages));
     }
   }
 
@@ -526,9 +676,14 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       } finally {
         ReferenceCountUtil.release(request);
       }
+      EndpointClass endpoint = classify(internal.path());
       HttpResponse response;
       try {
-        response = httpHandler.handle(internal);
+        if (endpoint == EndpointClass.METRICS && observability.metricsEnabled()) {
+          response = metricsHandler.handle(internal);
+        } else {
+          response = httpHandler.handle(internal);
+        }
       } catch (Exception exception) {
         response =
             HttpResponse.error(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), INTERNAL_ERROR);
@@ -537,15 +692,16 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         response =
             HttpResponse.error(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), INTERNAL_ERROR);
       }
+      long durationNanos = System.nanoTime() - started;
+      metrics.recordRequest(endpoint, durationNanos, response.status());
       writeResponse(context, response);
-      long durationMillis = (System.nanoTime() - started) / 1_000_000L;
       logger.log(
           new RequestLogEntry(
               id,
               internal.method(),
-              internal.path(),
+              endpoint.wireLabel(),
               response.status(),
-              durationMillis,
+              durationNanos / 1_000_000L,
               "completed"));
     }
   }
@@ -558,10 +714,11 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     public void userEventTriggered(ChannelHandlerContext context, Object event) {
       if (event == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE) {
         String id = "ws-" + UUID.randomUUID();
-        String remote = String.valueOf(context.channel().remoteAddress());
-        NettyWebSocketSession session = new NettyWebSocketSession(context, id, remote);
+        NettyWebSocketSession session = new NettyWebSocketSession(context, id);
         context.channel().attr(SESSION).set(session);
-        logger.websocketOpened(id, remote);
+        webSocketConnections.incrementAndGet();
+        metrics.setWebSocketConnections(webSocketConnections.get());
+        logger.websocketOpened(id, REDACTED);
         webSocketListener.onOpen(session);
         return;
       }
@@ -601,16 +758,24 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
 
     private final ChannelHandlerContext context;
     private final String id;
-    private final String remoteAddress;
-    private final Deque<PendingMessage> outbound = new ArrayDeque<>();
-    private final AtomicInteger queuedBytes = new AtomicInteger();
-    private final AtomicBoolean draining = new AtomicBoolean();
-    private final AtomicBoolean closed = new AtomicBoolean();
+    private final WebSocketOutboundQueue outbound;
 
-    private NettyWebSocketSession(ChannelHandlerContext context, String id, String remoteAddress) {
+    private NettyWebSocketSession(ChannelHandlerContext context, String id) {
       this.context = context;
       this.id = id;
-      this.remoteAddress = remoteAddress;
+      this.outbound =
+          new WebSocketOutboundQueue(
+              config,
+              metrics,
+              context.channel().eventLoop(),
+              frame ->
+                  context
+                      .writeAndFlush(new TextWebSocketFrame(frame))
+                      .addListener(ChannelFutureListener.CLOSE_ON_FAILURE),
+              context.channel()::close,
+              () -> logger.websocketQueueFull(id),
+              () -> logger.rejected(id, MessageKeys.WEBSOCKET_SLOW_CONSUMER),
+              System::nanoTime);
     }
 
     @Override
@@ -618,77 +783,24 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       return id;
     }
 
+    /** Redacted: remote addresses are internal rate-limit keys and never leave the transport. */
     @Override
     public String remoteAddress() {
-      return remoteAddress;
+      return REDACTED;
     }
 
     @Override
     public boolean sendText(String text) {
-      Objects.requireNonNull(text, "text");
-      if (closed.get()) {
-        return false;
-      }
-      int bytes = text.getBytes(StandardCharsets.UTF_8).length;
-      synchronized (outbound) {
-        if (outbound.size() >= config.maxWebSocketQueuedMessages()
-            || queuedBytes.get() + bytes > config.maxWebSocketQueuedBytes()) {
-          logger.websocketQueueFull(id);
-          return false;
-        }
-        outbound.addLast(new PendingMessage(text, bytes));
-        queuedBytes.addAndGet(bytes);
-      }
-      drain();
-      return true;
+      return outbound.sendText(text);
     }
 
     @Override
     public void close() {
-      closed.set(true);
-      context.close();
+      outbound.close();
     }
 
     private void markClosed() {
-      closed.set(true);
-      synchronized (outbound) {
-        outbound.clear();
-        queuedBytes.set(0);
-      }
-    }
-
-    private void drain() {
-      if (draining.compareAndSet(false, true)) {
-        context.channel().eventLoop().execute(this::drainOnEventLoop);
-      }
-    }
-
-    private void drainOnEventLoop() {
-      while (true) {
-        PendingMessage pending;
-        synchronized (outbound) {
-          pending = outbound.pollFirst();
-          if (pending == null) {
-            draining.set(false);
-            return;
-          }
-          queuedBytes.addAndGet(-pending.bytes);
-        }
-        context
-            .writeAndFlush(new TextWebSocketFrame(pending.text))
-            .addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-      }
-    }
-  }
-
-  private static final class PendingMessage {
-
-    private final String text;
-    private final int bytes;
-
-    private PendingMessage(String text, int bytes) {
-      this.text = text;
-      this.bytes = bytes;
+      outbound.markClosed();
     }
   }
 }

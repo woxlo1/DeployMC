@@ -1,15 +1,19 @@
 package io.github.woxlo1.deploymc.transport.part33;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
 import io.github.woxlo1.deploymc.core.auth.Identity;
+import io.github.woxlo1.deploymc.transport.EndpointClass;
 import io.github.woxlo1.deploymc.transport.HttpBindConfig;
 import io.github.woxlo1.deploymc.transport.HttpResponse;
+import io.github.woxlo1.deploymc.transport.MetricsRegistry;
 import io.github.woxlo1.deploymc.transport.NettyTransportServer;
+import io.github.woxlo1.deploymc.transport.RateLimiter;
 import io.github.woxlo1.deploymc.transport.RequestLogEntry;
 import io.github.woxlo1.deploymc.transport.RequestLogger;
 import io.github.woxlo1.deploymc.transport.TransportConfig;
@@ -40,13 +44,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /** PART 33.8 contract: declared limits, real bounded WebSocket queue, absent HTTP rate limiter. */
@@ -119,7 +123,8 @@ class Part33RateLimitBackpressureContractTest {
           @Override
           public void onClose(WebSocketSession session) {}
         };
-    NettyTransportServer server = newServer(config, listener);
+    MetricsRegistry metrics = new MetricsRegistry();
+    NettyTransportServer server = newServer(config, listener, metrics);
     EventLoopGroup clientGroup = new NioEventLoopGroup(1);
     try {
       server.start();
@@ -128,6 +133,7 @@ class Part33RateLimitBackpressureContractTest {
           attempted.await(10L, TimeUnit.SECONDS), "sendText must not block producer threads");
       assertEquals(1, accepted.get());
       assertEquals(4, rejected.get());
+      assertTrue(metrics.renderPrometheus().contains("deploymc_websocket_queue_full_total 4\n"));
     } finally {
       clientGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS).syncUninterruptibly();
       server.stop();
@@ -135,7 +141,7 @@ class Part33RateLimitBackpressureContractTest {
   }
 
   @Test
-  void specRequiresRateLimitingButNoProductImplementationExists() throws Exception {
+  void specRequirementsAreBackedByProductTransportCode() throws Exception {
     String section = part38();
     String[] required = {
       "token bucket per (identity, endpoint-class) and per (ip, auth-failure)",
@@ -152,12 +158,26 @@ class Part33RateLimitBackpressureContractTest {
       assertTrue(section.contains(fragment), "PART 33.8 must require: " + fragment);
     }
 
-    List<String> markers = productionImplementationMarkers();
-    assertTrue(markers.isEmpty(), "no product rate limiter is implemented: " + markers);
+    RateLimiter limiter =
+        new RateLimiter(1, 1, 16, Clock.fixed(Instant.ofEpochMilli(1_000L), ZoneOffset.UTC));
+    assertTrue(limiter.tryIdentity("test-identity", EndpointClass.SERVER).allowed());
+    assertFalse(limiter.tryIdentity("test-identity", EndpointClass.SERVER).allowed());
+    assertTrue(limiter.tryAuthFailure("192.0.2.10").allowed());
+    assertFalse(limiter.tryAuthFailure("192.0.2.10").allowed());
+
+    String rendered = new MetricsRegistry().renderPrometheus();
+    assertTrue(rendered.contains("deploymc_websocket_queue_full_total"));
+    assertTrue(rendered.contains("deploymc_requests_shed_total{scope=\"auth-failure\"}"));
+    assertTrue(rendered.contains("deploymc_executor_stalls_total"));
   }
 
   private static NettyTransportServer newServer(
       TransportConfig config, WebSocketListener listener) {
+    return newServer(config, listener, new MetricsRegistry());
+  }
+
+  private static NettyTransportServer newServer(
+      TransportConfig config, WebSocketListener listener, MetricsRegistry metrics) {
     Authenticator authenticator =
         header ->
             ("Bearer " + TOKEN).equals(header)
@@ -171,7 +191,8 @@ class Part33RateLimitBackpressureContractTest {
         permissivePolicy(),
         new NoopLogger(),
         authenticator,
-        TransportMessages.of(Locale.ENGLISH));
+        TransportMessages.of(Locale.ENGLISH),
+        metrics);
   }
 
   private static TransportPolicy permissivePolicy() {
@@ -242,29 +263,6 @@ class Part33RateLimitBackpressureContractTest {
     int end = spec.indexOf("## 33.9 YAML and Archive Safety Limits", start);
     assertTrue(end > start, "missing PART 33.9 section boundary");
     return spec.substring(start, end);
-  }
-
-  private static List<String> productionImplementationMarkers() throws IOException {
-    String[] markers = {
-      "TokenBucket", "RateLimiter", "console.gap", "slow-consumer", "Retry-After"
-    };
-    List<String> matches = new ArrayList<String>();
-    for (String module : new String[] {"core", "transport"}) {
-      Path root = repoRoot().resolve(module).resolve("src").resolve("main").resolve("java");
-      try (Stream<Path> paths = Files.walk(root)) {
-        List<Path> files = new ArrayList<Path>();
-        paths.filter(path -> path.toString().endsWith(".java")).forEach(files::add);
-        for (Path file : files) {
-          String text = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-          for (String marker : markers) {
-            if (text.contains(marker)) {
-              matches.add(module + ":" + root.relativize(file) + " (" + marker + ")");
-            }
-          }
-        }
-      }
-    }
-    return matches;
   }
 
   private static String repositoryText(String relativePath) throws IOException {
