@@ -141,6 +141,12 @@ updates must stay on the latest patched 4.1 release.
 - This ADR is `Accepted` for the Netty 4.1.141.Final choice only. The production implementation
   and its integration tests are recorded separately in the implementation status page.
 
+## Spike evidence (2026-11-23)
+
+The PART 40.3 re-check in [spike 1](../research/spikes/01-transport.md) records a passing
+`:transport:test` invocation and cites the existing Paper smoke run. It does not change the accepted
+library or claim a support tier. Netty 4.1 EOL tracking remains a follow-up.
+
 ## References
 
 - Master specification, section 4.1 and Part 32.2 (starting hypotheses).

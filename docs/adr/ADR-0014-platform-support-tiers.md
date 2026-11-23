@@ -107,14 +107,21 @@ Forge/NeoForge) is a set of hypotheses, not a support claim. See
 - Add the compatibility report issue form and Discussion category.
 - Re-check server download APIs and checksums when implementing the harness.
 
-## Evidence and validation
+## Evidence and validation (historical, 2026-11-17)
 
 - The tier definitions and rules follow master specification sections 3.1 and 3.6.
-- **Not verified:** the harness does not exist, and no server has been run. The current
-  support matrix has zero entries in every tier. CI includes Java/Web/CLI/Python tests but
-  no real Minecraft server.
-- The Docker daemon is not running on the current development host; this does not affect
-  the policy, but it will affect local harness work until it is available.
+- **Not verified at the time:** the harness did not exist, and no server had been run. The
+  support matrix had zero entries in every tier.
+- The Docker daemon was not running on the current development host at that time.
+
+## Spike evidence (2026-11-23)
+
+The PART 40.3 records in [the spike index](../research/spikes/README.md) add source and local
+evidence for transport, Windows JAR replacement, update folders, log capture, Folia scheduling,
+embedded UI size, and restart behavior. The existing Paper smoke rows in
+[the support matrix](../compatibility/support-matrix.md) still do not earn a tier. Update-folder,
+log capture, Folia scheduling, and supervisor restart behavior remain unverified on real target
+servers; D-001 is still open. No ADR-0014 rule is relaxed by these spikes.
 
 ## References
 

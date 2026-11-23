@@ -117,6 +117,14 @@ This ADR accepts the design; it does not claim the engine is implemented.
   supported, but it has no restart method; the contract needs to be completed before
   implementation.
 
+## Spike evidence (2026-11-23)
+
+[Windows JAR replacement spike 2](../research/spikes/02-windows-jar-replacement.md) confirms that
+in-place replacement is share-mode dependent, and [restart behavior spike 7](../research/spikes/07-restart-behavior.md)
+records systemd, Docker, loop-script, and Pterodactyl evidence requirements without claiming a run.
+D-001 remains open, so the restart-mode contract is unchanged: shutdown-only is the default until a
+real supervisor run justifies another mode.
+
 ## References
 
 - Master specification, sections 7.2, 24.5, and 33.5.
