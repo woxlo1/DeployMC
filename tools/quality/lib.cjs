@@ -290,7 +290,7 @@ function buildReport(results) {
     `gzip baseline ${BUDGETS[0].baselineBytes} bytes and plugin JAR baseline ` +
       `${BUDGETS[1].baselineBytes} bytes. These are local baselines, not support or`,
     `performance claims. Evidence: [PR #210](${EVIDENCE_URL}), accessed ${EVIDENCE_ACCESSED}.`,
-    `The full spike at \`${SPIKE_PATH}\` will be available when PR #210 merges.`,
+    `The full spike is at \`${SPIKE_PATH}\`, merged in PR #210 at \`a998f7e\`.`,
     '',
     '## Summary',
     '',
