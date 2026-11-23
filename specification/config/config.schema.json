@@ -648,6 +648,45 @@
         }
       }
     },
+    "observability": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Opt-in observability controls. Diagnostics never contain secrets, tokens, file contents, or raw request paths.",
+      "properties": {
+        "logging": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": ["text", "json"],
+              "default": "text",
+              "description": "Format for the dedicated diagnostic log. JSON records keep the request id on every request line.",
+              "x-deploymc-hot-reload": false
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Expose the authenticated Prometheus text endpoint. Disabled by default.",
+              "x-deploymc-hot-reload": false
+            },
+            "permission": {
+              "type": "string",
+              "enum": ["server.read", "metrics.read"],
+              "default": "metrics.read",
+              "description": "Permission identifier required by the metrics endpoint. RBAC evaluation does not exist yet; until then only admin-equivalent identities pass.",
+              "x-deploymc-hot-reload": false
+            }
+          }
+        }
+      }
+    },
     "roles": {
       "type": "object",
       "maxProperties": 256,

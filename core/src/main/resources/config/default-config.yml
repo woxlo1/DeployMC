@@ -134,6 +134,18 @@ limits:
   rate-limit-per-minute: 300   # hot-reloadable; role limits can lower it
   max-websocket-connections: 50 # restart only
 
+observability:
+  logging:
+    # text or json. Request log lines always carry the transport request id.
+    # restart only
+    format: text
+  metrics:
+    # Opt-in authenticated Prometheus endpoint. Restart only.
+    enabled: false
+    # Until RBAC exists, only admin-equivalent identities pass this gate.
+    # restart only
+    permission: metrics.read
+
 # Role names are lowercase keys. `admin`, `developer`, `observer`, and
 # `ci-deployer` are conventions, not built-ins. Hot-reloadable.
 roles: {}

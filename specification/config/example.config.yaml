@@ -103,6 +103,13 @@ limits:
   rate-limit-per-minute: 300
   max-websocket-connections: 50
 
+observability:
+  logging:
+    format: text
+  metrics:
+    enabled: false
+    permission: metrics.read
+
 roles:
   admin:
     permissions:
