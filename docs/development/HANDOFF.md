@@ -12,6 +12,11 @@ Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   and Java size subsets, full `verify-all.cjs`, Spotless check, commitlint, and `git diff --check`
   passed locally. No real server, supervisor, Folia, browser, editor benchmark, E2E, or in-game
   command was run; D-001 still blocks restart evidence.
+- Issue #119 PART 41 quality reporting adds `tools/quality/check.cjs`, a deterministic report, five
+  report tests, and documentation. It enforces only the two budgets derived from #118 and marks the
+  other 11 areas `NOT MEASURED`. The 5 tests, quality check, full `verify-all.cjs`, Spotless,
+  commitlint, and `git diff --check` passed locally. The final evidence PR is in flight; issue #119
+  closes after it merges.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
@@ -418,14 +423,15 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- PR #210 is the final consolidated evidence PR for issue #118. It has a Japanese verification
-  comment; the post-merge evidence comment and required workflow results are recorded after merge.
-  The `spikes/118-part40-3` branch is temporary for this update. Issue #118 closes after this merge.
+- The final consolidated evidence PR for issue #119 is in flight on `impl/119-quality-gates`. It
+  includes the quality tool, tests, documentation, and status updates; issue #119 closes after it
+  merges. A Japanese verification comment will be posted after required checks, and post-merge
+  evidence and workflow results will be recorded after merge.
 - No PART 36 implementation PRs remain in flight. PRs #203-#207 are merged with Japanese verification
   and post-merge evidence comments; all required checks and post-merge CI/CodeQL/Scorecard passed.
   PR #207 used a rebase merge because the owner requires multiple reviewable commits for large work.
-  The `docs/issue-117-final-evidence` branch is temporary for this final evidence update. Issue #117
-  closes after this PR merges.
+  The `docs/issue-117-final-evidence` branch was temporary for that evidence update. Issue #117
+  closed at `83b9107`.
 - No PART 33 test PRs remain in flight. PRs #199-#201 merged at `0b83150`, `98b6b79`, and `5d279c6`
   with Japanese verification and post-merge evidence comments; all required checks and post-merge
   CI/CodeQL/Scorecard passed. Their temporary branches were deleted after evidence was posted. The
@@ -451,10 +457,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. Continue with #119, then #120, then category 4 (#121-#123) and category 5 (#124-#130) in issue
-   order. Issues #115, #116, #117, and #118 are complete; their final consolidated evidence is
-   recorded in the status pages and on the issues. Later work may be prepared in parallel but must not
-   merge ahead of an earlier open issue without owner approval.
+1. After this PR merges, continue with #120 and then #123 in the owner-approved ascending order.
+   Issues #115, #116, #117, and #118 are complete; their final consolidated evidence is recorded in
+   the status pages and on the issues. Issue #119 closes after this PR merges. Later work may be
+   prepared in parallel but must not merge ahead of an earlier open issue without owner approval.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

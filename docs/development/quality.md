@@ -64,5 +64,5 @@ API breakage, docs link/key checks, i18n gate results, and flakiness. The report
   a documented, owner-approved reason.
 - Budgets derived from spikes must keep the spike evidence link and access date.
 
-The reporting tool is tracked by #119. The issue remains open until the final evidence PR records
-verification. v1 acceptance also references this file from [v1-checklist.md](v1-checklist.md).
+The reporting tool is tracked by #119; its final evidence PR records the local verification. v1
+acceptance also references this file from [v1-checklist.md](v1-checklist.md).

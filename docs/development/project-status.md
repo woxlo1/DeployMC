@@ -2,12 +2,13 @@
 
 Last updated: 2026-11-23 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `b882f95` after
-PR #207. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+implementation). GitHub merge evidence below was verified against `main` through `a998f7e` after
+PR #210. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
 All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
-baseline stages are merged with local and post-merge evidence; consolidated evidence is recorded here
-and issue #117 closes after this merge. PART 40.3 early risk-reduction spikes are recorded in PR
-#210; issue #118 closes after this merge.)
+baseline stages are merged with local and post-merge evidence; issue #117 closed at `83b9107`.
+PART 40.3 early risk-reduction spikes merged in PR #210 at `a998f7e`; issue #118 closed at
+`2026-11-23T11:04:06Z`. Issue #119 adds PART 41 quality reporting; its final evidence is recorded
+here and issue #119 closes after this PR merges.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -990,7 +991,7 @@ or running-product claim is made.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
-PR #210 records the seven spiked areas from PART 40.3: transport, Windows JAR replacement,
+PR #210 recorded the seven spiked areas from PART 40.3: transport, Windows JAR replacement,
 update-folder semantics, log capture, Folia scheduling, embedded UI size, and restart behavior.
 The findings are stored in [`docs/research/spikes/`](../../docs/research/spikes/README.md) and linked
 from ADR-0003, ADR-0004, ADR-0008, ADR-0011, and ADR-0014. D-001 is linked to the restart,
@@ -1003,6 +1004,21 @@ real Minecraft server opens a JAR. The log-corpus suite ran 6 tests with `OK`. T
 subsets, the full `node tools/build/verify-all.cjs`, `spotlessCheck`, commitlint, and `git diff --check`
 all passed locally on 2026-11-23. No real server, supervisor, Folia, browser, E2E, in-game command, or
 Monaco/CodeMirror benchmark was run, and no support tier was earned.
+
+## PART 41 quality reporting (issue #119)
+
+Issue #119 adds a deterministic quality report at
+[`tools/quality/check.cjs`](../../tools/quality/check.cjs), with rules in
+[`docs/development/quality.md`](quality.md). The report reads only existing Web gzip and plugin JAR
+artifacts. It never builds, tests, calls the network, or reads CI results. All twelve PART 41 areas
+are listed; unmeasured areas are not silently treated as passing. On the local artifacts,
+`node tools/quality/check.cjs` exited 0 with Web main JS gzip 50632 bytes within the 60000-byte
+budget and the plugin JAR 4721584 bytes within the 5500000-byte budget. The other 11 areas printed
+`NOT MEASURED`. `node --test tools/quality/test/report.test.cjs` reported 5 tests, 5 passed, and 0
+failed. The full `node tools/build/verify-all.cjs`, `spotlessCheck`, commitlint, and
+`git diff --check` passed locally. No coverage, E2E, static-analysis baseline, startup, idle, API,
+docs link/key, i18n, or flakiness gate was implemented, and no CI regression gate or required check
+was added.
 
 ## Earlier pull-request evidence
 
@@ -1260,9 +1276,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115, #116, #117, and #118 are
-complete, and their final consolidated evidence is recorded. Continue with #119, then #120, then
-category 4 (#121-#123) and category 5 (#124-#130). Work on later items may be prepared in parallel but
-must not be merged ahead of an earlier open issue unless the owner explicitly approves.
+complete, and their final consolidated evidence is recorded. Issue #119 closes after this PR merges.
+Continue with #120, then #123 in the owner-approved ascending order among the remaining open issues.
+Work on later items may be prepared in parallel but must not be merged ahead of an earlier open issue
+unless the owner explicitly approves.
 
 ## Release checklist
 
