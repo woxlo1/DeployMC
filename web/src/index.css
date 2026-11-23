@@ -70,3 +70,58 @@ select {
   padding: 0.35rem 0.5rem;
   font: inherit;
 }
+
+.doctor__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.doctor__form input,
+.doctor__form button {
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+}
+
+.doctor__summary,
+.doctor__evidence {
+  padding-left: 1rem;
+}
+
+.doctor__summary div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.doctor__summary dt::after {
+  content: ':';
+}
+
+.doctor__checks {
+  padding-left: 1.25rem;
+}
+
+.doctor__check {
+  margin-bottom: 1rem;
+}
+
+.doctor__check-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.doctor__label {
+  opacity: 0.75;
+}
+
+.doctor__error {
+  color: #b00020;
+}
+
+.doctor__reminder {
+  font-style: italic;
+  opacity: 0.85;
+}
