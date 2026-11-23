@@ -38,6 +38,9 @@ Valid keys are `java`, `web`, `cli`, `python`, `spec`, `i18n`, and `compat`. Sel
 above, so `--only=java,web` still builds Web first. `--only=java` assumes `web/dist` already exists;
 on a clean checkout, run the full command or `--only=web,java` once first.
 
+`node tools/quality/check.cjs` reads the resulting Web/JAR artifacts and prints the PART 41 quality
+report; see [quality.md](../../docs/development/quality.md). It does not build or run checks.
+
 ## Requirements
 
 All tools in [CONTRIBUTING.md](../../CONTRIBUTING.md) must be on `PATH`: JDK 21, Node.js 24, pnpm 9,
