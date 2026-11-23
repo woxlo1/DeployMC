@@ -19,7 +19,10 @@ at `49f300a`, PR #190 recorded catch-up evidence at `49a9375`, PR #191 added log
 filter vectors at `9b7b5ee`, all with passing post-merge `main` workflows. All PART 35 fixture/data
 stages are merged with evidence; issue #115 is complete. PART 33 algorithm regression suites
 merged in PR #199 at `0b83150`, PR #200 at `98b6b79`, and PR #201 at `5d279c6`, adding 60
-dedicated tests; issue #116 records the final evidence.)
+dedicated tests; issue #116 records the final evidence. PART 36 observability baseline stages merged
+in PR #203 at `072feda`, PR #204 at `2f3abfc`, PR #205 at `7555c3d`, PR #206 at `d42f5d2`, and PR
+#207 at `b882f95`, all with passing post-merge `main` workflows. Consolidated evidence is recorded
+here; issue #117 closes after this merge.)
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -40,8 +43,13 @@ startup banner, authenticated `/api/v1/server`, a conflicting-library fixture lo
 DeployMC, and a clean explicit disable with Netty threads released. This is smoke evidence, not a
 support tier or a full feature validation. The transport rejects every route except `/healthz`,
 `/readyz`, and authenticated handlers without a valid token. Implemented handlers are
-`GET /api/v1/server`, the WP-2.6 file/validation routes, and the six WP-2.6 snapshot routes;
-deployment, console, and audit resources still have no handlers. The first PART 35 fixture stage adds
+`GET /api/v1/server`, the WP-2.6 file/validation routes, the six WP-2.6 snapshot routes, the
+authenticated doctor route, and the opt-in authenticated metrics route; deployment, console, and
+audit resources still have no handlers. `/api/v1/server/doctor` serves a redacted report from a
+server-free `DoctorService`. Structured request logging is selected by configuration, and metrics
+are dispatched only when `observability.metrics.enabled` is true. No running server, browser, E2E
+run, or in-game command has exercised these PART 36 routes; the Web doctor panel is build-verified
+only. Other PART 36 areas remain specification or fixture contracts. The first PART 35 fixture stage adds
 a source-built `DeployMCTestA` plugin with 1.0.0 and 1.1.0 JARs, but no harness or server run consumes
 it yet. PR #174 squash-merged that stage at
 `bdcd64a6a329ce9c3c37a541ee850137d44b30d9` on `2026-11-22T02:56:30Z`. The verification comment is at
@@ -77,10 +85,10 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 331 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, and snapshot REST adapter cases | Gradle `test` tasks; JUnit XML: 331 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 473 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, snapshot REST adapter, doctor, observability, and self-protection cases | Gradle `test` tasks; JUnit XML: 473 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
-| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 63 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
+| Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 73 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
 | Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, 230 relocated SnakeYAML classes, relocated Netty, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot, unrelocated Netty/YAML, or multi-release entries | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Plugin JAR verification | `:plugin:verifyPluginJar` fails on out-of-namespace classes, malformed or manifest-less multi-release entries, missing versioned bases, duplicate entries/classes, service entries outside the namespace, or common-path bytecode above major 52; CI reports the size | Production JAR plus 12 positive/negative fixture JARs |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, static asset delivery, and a fail-closed token gate with health exceptions | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; `AuthenticationGateTest`: 5 tests; 0 failures |
@@ -126,6 +134,11 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 33 file-safety suites | 24 tests for `SandboxResolver`, `FileOperationsService`, `YamlValidator`/`ValidatorRegistry`, `DiffEngine`/`DiffLimits`, and the hostile-input manifest | PR #199 merged at `0b83150` with post-merge CI/CodeQL/Scorecard pass; 24 `:core:test --tests '*Part33*'` tests PASSED locally; documented gaps recorded as `NOT IMPLEMENTED`; no server, UI, or E2E consumer |
 | PART 33 runtime-limits suites | 16 tests for snapshot GC against the real store, log-attribution fixture contracts, and rate-limit/backpressure specs plus the bounded WebSocket queue | PR #200 merged at `98b6b79` with post-merge CI/CodeQL/Scorecard pass; rebased onto the #199 merge after the first merge attempt was blocked by a stale base; 35 `:core:test` and 5 `:transport:test` Part33 tests PASSED after rebase; no product rate limiter added |
 | PART 33 auth/RBAC suites | 20 contract tests for JWT vectors, RBAC configuration and normative rules, and the deployment state-machine artifact | PR #201 merged at `5d279c6` after rebasing onto the #199/#200 merges; all required checks passed on the rebased head with post-merge CI/CodeQL/Scorecard pass; 55 `:core:test` and 5 `:transport:test` Part33 tests PASSED after rebase; no product verifier, evaluator, engine, or parity claim |
+| PART 36 observability specification | Normative doctor report and problem codes, redaction rules, structured log and metric contracts, self-protection limits, and authenticated `/api/v1/server/doctor` and `/api/v1/metrics` routes | PR #203 merged at `072feda` with post-merge CI/CodeQL/Scorecard pass; `npm run lint` and `npm test` in `tools/spec` passed locally; no server, UI, or E2E consumer |
+| PART 36 doctor core | Java 8 `DoctorService`, `DoctorInputs`, `DoctorReport.redacted()` transformation and `isRedacted()` flag, with deterministic environment and configuration checks | PR #205 merged at `7555c3d` with post-merge CI/CodeQL/Scorecard pass; focused core tests passed; no running server, command, or UI consumed the service at that stage |
+| PART 36 transport observability | Configurable plain/JSON request logging, bounded metrics registry, opt-in authenticated metrics dispatch, authenticated doctor dispatch hook, and executor watchdog with server-free regression tests | PR #206 merged at `d42f5d2` with post-merge CI/CodeQL/Scorecard pass; 102 `:transport:test` tests passed, including a 10/10 watchdog flake recheck; no running server or browser |
+| PART 36 Web doctor panel | Localized doctor status, check detail, redaction notice, and bearer-token request in the packaged Web UI | PR #204 merged at `2f3abfc` with post-merge CI/CodeQL/Scorecard pass; `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), and `pnpm build` passed; no browser rendering |
+| PART 36 Bukkit host wiring | Fail-closed host observability config, `bindPortOwnedByHost(true)`, authenticated doctor JSON, redacted 13-check `/deploymc doctor`, JSON/plain logger selection, and opt-in metrics handoff | PR #207 rebase-merged at `b882f95` as five separate Conventional Commits with post-merge CI/CodeQL/Scorecard pass; 73 Bukkit tests, `spotlessCheck`, `verifyJava8`, and `node tools/i18n/check` passed; no running server, mock Bukkit, browser, E2E, or in-game command |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
@@ -686,10 +699,10 @@ The following are documented as intended behavior. They are **not** code.
 | Threading model | [Threading model](../architecture/threading-model.md) | Documents only |
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
 | Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
-| REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Auth gate, health, file/validation, and snapshot handlers implemented; deployment, console, and audit resource handlers are not |
+| REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Auth gate, health, file/validation, snapshot, doctor, and opt-in metrics handlers implemented; deployment, console, and audit resource handlers are not |
 | WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Upgrade authentication and frame limits implemented; the AsyncAPI event protocol and application handlers are not |
 | RBAC and audit | [Threat model](../../specification/security/threat-model.md), [audit format](../../specification/audit/audit-log-format.md) | Drafts; every current token is admin-equivalent and no audit record is written |
-| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, and `/deploymc` commands |
+| Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, fail-closed observability adapter, and `/deploymc` commands |
 | Audit log | [Audit log format](../../specification/audit/audit-log-format.md) | Format definition; no log is written |
 | Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
 | Support matrix | [Support matrix](../compatibility/support-matrix.md) | Tier matrix empty; v1 smoke harness built, including conflict and thread-dump checks |
@@ -698,8 +711,8 @@ The following are documented as intended behavior. They are **not** code.
 ## Not started
 
 - Remaining authenticated REST and WebSocket application endpoints bound to the OpenAPI and
-  AsyncAPI skeletons. The gate, `GET /api/v1/server`, file/validation, and snapshot routes are
-  implemented; deployment, console, and audit routes are not.
+  AsyncAPI skeletons. The gate, `GET /api/v1/server`, file/validation, snapshot, doctor, and opt-in
+  metrics routes are implemented; deployment, console, and audit routes are not.
 - Cloudflare Access and `local-onetime` authentication modes, RBAC, and the audit log. The minimal
   `token` mode is implemented and refuses startup for the other two modes.
 - Running-server use of `FileOperationsService`. The core service consumes `SandboxPath`, and the
@@ -715,7 +728,8 @@ The following are documented as intended behavior. They are **not** code.
 - Real-server execution of in-game `/deploymc` commands; the WP-1.8 smoke uses the HTTP API and a fixture disable command, not the product command surface.
 - Native review of the Japanese command and authentication catalogs.
 - Contract tests that check a running implementation against the API skeletons.
-- Web UI screens (file tree, editor, diff, deployment view, console, audit).
+- Web UI screens (file tree, editor, diff, deployment view, console, audit); the PART 36 doctor
+  panel exists and is build-verified only.
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
 - Tier 1/2/3 entries and the full integration suite; the v1 smoke harness exists but intentionally earns no tier.
@@ -755,6 +769,11 @@ the individual commands in [AGENTS.md](../../AGENTS.md) and [CONTRIBUTING.md](..
 On Windows the script handles the ASCII path and Cargo target workarounds described in
 [environment.md](environment.md). If a command on this page fails, this page is wrong and must be
 corrected in the same change that fixes or breaks it.
+
+For PART 36, the final evidence branch ran `node tools/build/verify-all.cjs` with `PASS` for `web`,
+`java`, `cli`, `python`, `spec`, `i18n`, and `compat`; current Gradle JUnit XML reports 473 tests,
+0 failures, 0 errors, and 1 skipped symlink test. `git diff --check` produced no output and exited 0.
+PRs #203-#207 each have passing post-merge CI, CodeQL, and Scorecard runs on `main`.
 
 ## Related documents
 
