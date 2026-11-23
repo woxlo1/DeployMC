@@ -68,6 +68,21 @@ class DeployMCHttpHandlerTest {
   }
 
   @Test
+  void delegatesDoctorPathBeforeTheGeneralApiHandler() throws Exception {
+    HttpHandler api =
+        request -> {
+          throw new AssertionError("doctor routes must not reach the general API handler");
+        };
+    HttpHandler doctor = request -> HttpResponse.json(200, "{\"doctor\":true}");
+    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, null, null, doctor);
+
+    HttpResponse response = handler.handle(request(DoctorHandler.PATH));
+
+    assertEquals(200, response.status());
+    assertEquals("{\"doctor\":true}", new String(response.body(), StandardCharsets.UTF_8));
+  }
+
+  @Test
   void doesNotDelegateLookalikeOrGeneralApiPaths() throws Exception {
     HttpHandler api = request -> HttpResponse.json(200, "{\"api\":true}");
     HttpHandler files =
