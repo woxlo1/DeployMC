@@ -68,6 +68,21 @@ Individual commands, useful for investigating one failure:
 | i18n | `node tools/i18n/check && node --test tools/i18n/test/check.test.cjs` |
 | Commit messages | `npx commitlint --from <base> --to <head>` with `commitlint.config.cjs` |
 
+## Pre-push checks
+
+Before every push, fetch `origin/main` and run these four checks from the repository root:
+
+```powershell
+npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD
+node tools/build/verify-all.cjs
+.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache
+git diff --check
+```
+
+Use the exact commands so local evidence is reproducible. A local pass does not replace the required
+checks above. See [parallel work and ordered merges](parallel-workflow.md) for the full workflow and
+[PR evidence templates](../../tools/pr-evidence/README.md) for the required Japanese comments.
+
 Windows paths containing non-ASCII characters can break Gradle test workers and the GNU linker. See
 `environment.md` for the junction and `CARGO_TARGET_DIR` workarounds. CI runners use ASCII paths and
 are not affected.
