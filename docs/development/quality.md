@@ -47,8 +47,9 @@ performance, support, or compatibility claims.
 | Web main JS gzip | <= 60000 bytes | 50632 bytes | [Embedded UI size spike (PR #210)](https://github.com/woxlo1/DeployMC/pull/210), accessed 2026-11-23 |
 | Final plugin JAR | <= 5500000 bytes | 4721584 bytes | [Embedded UI size spike (PR #210)](https://github.com/woxlo1/DeployMC/pull/210), accessed 2026-11-23 |
 
-The full spike will be at `docs/research/spikes/06-embedded-ui-size.md` after PR #210 merges. Until
-then, PR #210 is the evidence link for the two local measurements.
+The full spike is at
+[`docs/research/spikes/06-embedded-ui-size.md`](../research/spikes/06-embedded-ui-size.md), merged in
+PR #210 at `a998f7e`. PR #210 remains the evidence link for the two local measurements.
 
 Only these two budgets are measured by the reporting tool. Every other PART 41 area remains an
 unmeasured signal, including coverage, E2E, static-analysis findings, startup, idle overhead,
