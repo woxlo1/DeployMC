@@ -29,6 +29,11 @@ the related decisions are finalized.
 | D-005 | Should languages beyond Japanese be started before native reviewers exist? | Phase 0 i18n and later | Machine-translated content must be labeled and not presented as reviewed |
 | D-006 | Should a Discord server be created now, or should Discussions be the only community channel initially? | Phase 0 community setup | Community links in the README remain Discussions-only |
 | D-007 | What weekly time budget should the public roadmap assume? | Roadmap publication | Roadmap communication may be unrealistic |
+| D-009 | Which dispositions should be applied to the 17 triaged Dependabot PRs, especially close candidates #27/#35 and rebase-then-merge candidates #24/#36/#38? | Before any dependency PR is merged, closed, or rewritten | Failing gates stay red and no dependency PR can be changed safely |
+
+See [dependabot-triage.md](dependabot-triage.md) for per-PR evidence. The triage is read-only; no PR
+was merged, closed, rebased, or approved. #27 and #35 require JUnit 6 on a Java 8 project, so they
+stay open until the owner decides whether to close them or change the Java baseline.
 
 The PART 40.3 [restart-behavior spike](../research/spikes/07-restart-behavior.md) is blocked by D-001:
 without the real hosting setup and versions, no systemd, Docker, loop-script, or Pterodactyl result
