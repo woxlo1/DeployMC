@@ -139,6 +139,16 @@ PR #207 was rebase-merged so its five Conventional Commits remain on `main`, fol
 large-work commit-split rule. Issue #117 closed at `83b9107`. Only server-free tests and builds
 verified these paths; no running server, Bukkit mock, browser, E2E run, full integration suite, or
 in-game command exercised them.
+WP-3.1 auth framework merged in [PR #222](https://github.com/woxlo1/DeployMC/pull/222) at `41b6fee`
+and `1ba834b` with issue #56 closing through the final evidence PR. It adds a final
+`Authenticator`/`AuthenticationRequest` boundary, a fail-closed authentication filter, an immutable
+async-safe `AuthContext`, bounded identity claims, explicit context propagation into HTTP and
+WebSocket paths, and detail-free 401/403 Problem Details with localized `rbac.denied` messages.
+`/healthz` and `/readyz` remain the only unauthenticated endpoints. All 18 required PR checks and
+post-merge CI/CodeQL/Scorecard passed; `node tools/build/verify-all.cjs` reported all seven toolchains
+`PASS`, and the merged tree has 495 Java tests (0 failures, 0 errors, 1 skipped). Evidence is
+server-free and embedded-socket only; no RBAC engine (WP-3.4) or Cloudflare verifier (WP-3.2) is
+claimed, and no running server, browser, E2E run, full integration suite, or in-game command was used.
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
