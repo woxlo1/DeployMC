@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import http.client
 import json
 import sys
 import tempfile
@@ -183,6 +184,47 @@ class MockJwksServerTest(unittest.TestCase):
             self.assertEqual(2, len(document["keys"]))
             self.assertEqual(2, first.state()["generation"])
             self.assertEqual(404, jwks_server.fetch("/unknown", first.port)[0])
+
+    def test_control_endpoints_and_etag_revalidation(self) -> None:
+        with jwks_server.JwksServer.from_directory(HERE) as server:
+            status, state, _ = jwks_server.fetch("/control/requests", server.port)
+            self.assertEqual(200, status)
+            self.assertEqual(0, state["jwks_requests"])
+
+            status, _, headers = jwks_server.fetch("/cdn-cgi/access/certs", server.port)
+            self.assertEqual(200, status)
+            status, state, _ = jwks_server.fetch("/control/requests", server.port)
+            self.assertEqual(1, state["jwks_requests"])
+
+            connection = http.client.HTTPConnection("127.0.0.1", server.port, timeout=5.0)
+            try:
+                connection.request(
+                    "GET",
+                    "/cdn-cgi/access/certs",
+                    headers={"If-None-Match": headers["ETag"]},
+                )
+                response = connection.getresponse()
+                response.read()
+                self.assertEqual(304, response.status)
+                self.assertEqual(headers["ETag"], response.getheader("ETag"))
+            finally:
+                connection.close()
+
+            status, state, _ = jwks_server.fetch("/control/rotate", server.port)
+            self.assertEqual(200, status)
+            self.assertEqual("rotated", state["state"])
+            status, document, _ = jwks_server.fetch("/jwks", server.port)
+            self.assertEqual(1, len(document["keys"]))
+
+            status, state, _ = jwks_server.fetch("/control/unavailable?value=1", server.port)
+            self.assertEqual(200, status)
+            self.assertTrue(state["unavailable"])
+            self.assertEqual(503, jwks_server.fetch("/jwks", server.port)[0])
+
+            status, state, _ = jwks_server.fetch("/control/unavailable?value=0", server.port)
+            self.assertFalse(state["unavailable"])
+            status, state, _ = jwks_server.fetch("/control/reset", server.port)
+            self.assertEqual("initial", state["state"])
 
 
 if __name__ == "__main__":

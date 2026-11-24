@@ -2,8 +2,9 @@
 """Localhost-only mock JWKS server for JWT fixture consumers.
 
 The server binds to an OS-assigned port on 127.0.0.1, never a fixed port, and serves
-only the generated public JWKS documents. Rotation and unavailability are explicit
-so tests can exercise cache, retry, and fail-closed paths deterministically.
+only the generated public JWKS documents. Rotation, unavailability and request counts
+are exposed through explicit localhost control paths so tests can exercise cache,
+retry, ETag revalidation, and fail-closed paths deterministically.
 """
 
 from __future__ import annotations
@@ -16,9 +17,11 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 JWKS_PATHS = ("/cdn-cgi/access/certs", "/jwks")
+CONTROL_PATHS = ("/control/rotate", "/control/reset", "/control/unavailable", "/control/requests")
+CACHE_CONTROL = "public, max-age=3600"
 
 
 class JwksServer:
@@ -29,6 +32,7 @@ class JwksServer:
         self._state = "initial"
         self._unavailable = False
         self._generation = 0
+        self._jwks_requests = 0
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._httpd = ThreadingHTTPServer(("127.0.0.1", 0), self._handler_class())
@@ -63,8 +67,12 @@ class JwksServer:
 
     def state(self) -> dict[str, Any]:
         with self._lock:
-            return {"generation": self._generation, "state": self._state,
-                    "unavailable": self._unavailable}
+            return {
+                "generation": self._generation,
+                "state": self._state,
+                "unavailable": self._unavailable,
+                "jwks_requests": self._jwks_requests,
+            }
 
     def _handler_class(self) -> type[BaseHTTPRequestHandler]:
         outer = self
@@ -73,9 +81,13 @@ class JwksServer:
             protocol_version = "HTTP/1.1"
 
             def do_GET(self) -> None:  # noqa: N802 - required by BaseHTTPRequestHandler
-                path = urlsplit(self.path).path
+                parts = urlsplit(self.path)
+                path = parts.path
                 if path == "/state":
                     outer._send_json(self, outer.state(), 200)
+                    return
+                if path in CONTROL_PATHS:
+                    outer._control(self, path, parts.query)
                     return
                 if path not in JWKS_PATHS:
                     outer._send_json(self, {"error": "not_found"}, 404)
@@ -83,6 +95,7 @@ class JwksServer:
                 with outer._lock:
                     document = outer._documents[outer._state]
                     unavailable = outer._unavailable
+                    outer._jwks_requests += 1
                 if unavailable:
                     outer._send_json(
                         self,
@@ -95,17 +108,44 @@ class JwksServer:
                     document, sort_keys=True, separators=(",", ":"), ensure_ascii=False
                 ).encode("utf-8")
                 digest = hashlib.sha256(payload).hexdigest()
+                etag = '"{0}"'.format(digest)
+                if self.headers.get("If-None-Match") == etag:
+                    outer._send_json_bytes(
+                        self,
+                        b"",
+                        304,
+                        {"Cache-Control": CACHE_CONTROL, "ETag": etag},
+                    )
+                    return
                 outer._send_json_bytes(
                     self,
                     payload,
                     200,
-                    {"Cache-Control": "public, max-age=3600", "ETag": '"{0}"'.format(digest)},
+                    {"Cache-Control": CACHE_CONTROL, "ETag": etag},
                 )
 
             def log_message(self, format: str, *args: Any) -> None:
                 return
 
         return Handler
+
+    def _control(
+        self, handler: BaseHTTPRequestHandler, path: str, query: str
+    ) -> None:
+        if path == "/control/rotate":
+            self.rotate()
+        elif path == "/control/reset":
+            self.reset()
+        elif path == "/control/unavailable":
+            values = parse_qs(query).get("value", ["1"])
+            self.set_unavailable(values[0] in ("1", "true"))
+        elif path == "/control/requests":
+            self._send_json(handler, self.state(), 200)
+            return
+        else:
+            self._send_json(handler, {"error": "not_found"}, 404)
+            return
+        self._send_json(handler, self.state(), 200)
 
     def _send_json(
         self,
@@ -158,7 +198,8 @@ def fetch(path: str, port: int) -> tuple[int, dict[str, Any], dict[str, str]]:
         connection.request("GET", path)
         response = connection.getresponse()
         payload = response.read()
-        return response.status, json.loads(payload), dict(response.getheaders())
+        document = json.loads(payload) if payload else {}
+        return response.status, document, dict(response.getheaders())
     finally:
         connection.close()
 

@@ -1,7 +1,9 @@
 # JWT security fixtures
 
-Test-only JWT vectors and a localhost JWKS server for the future Cloudflare Access verifier.
-No product JWT verifier consumes these fixtures yet.
+Test-only JWT vectors and a localhost JWKS server for the Cloudflare Access verifier.
+`io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareJwtVerifier` consumes these fixtures
+through the localhost server in `CloudflareJwtVerifierTest`; no external Cloudflare service is
+contacted.
 
 ## Safety and determinism
 
@@ -35,8 +37,16 @@ valid signatures so that a future verifier must reject them for the intended cla
 
 `mock_jwks_server.py` binds only to `127.0.0.1` on an OS-assigned port. It serves the generated
 public JWKS at `/cdn-cgi/access/certs` and `/jwks`, returns `Cache-Control` and an `ETag`, and
-supports explicit `rotate()`, `reset()`, and `set_unavailable(True)` state changes. The `503`
+supports explicit `rotate()`, `reset()`, and `set_unavailable(True)` state changes. The same
+changes are available over loopback control paths (`/control/rotate`, `/control/reset`,
+`/control/unavailable?value=1`, `/control/requests`) so a non-Python test process can drive them.
+The server answers `If-None-Match` with `304` when the current ETag still matches. The `503`
 response includes `Retry-After: 1`. No fixed port is used and no external network is contacted.
+
+The per-vector `initial_jwks` and `rotated_jwks` expectations are fixture metadata for two distinct
+JWKS documents, not a single verifier-cache contract. A real cache retains keys until its bounded
+refresh point, so the product test presents each vector with the document containing its signing
+key and tests rotation, ETag revalidation, and staleness separately.
 
 ```powershell
 python tests/security/jwt/mock_jwks_server.py
