@@ -1,4 +1,4 @@
-package io.github.woxlo1.deploymc.transport.part33;
+package io.github.woxlo1.deploymc.transport.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -54,11 +54,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 /** PART 33.8 contract: declared limits, real bounded WebSocket queue, absent HTTP rate limiter. */
-class Part33RateLimitBackpressureContractTest {
+class RateLimitBackpressureContractTest {
 
   private static final String SPEC =
       "docs/development/DeployMC_Complete_Master_Development_Specification.md";
-  private static final String TOKEN = "dmc_part33_contract_token_0123456789";
+  private static final String TOKEN = "dmc_contract_token_0123456789";
 
   @Test
   void openApiDeclares429AndRetryAfter() throws Exception {

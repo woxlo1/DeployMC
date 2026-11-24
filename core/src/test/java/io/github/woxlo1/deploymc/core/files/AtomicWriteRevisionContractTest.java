@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /** PART 33.2 contract and regression checks for the real atomic write path. */
-class Part33AtomicWriteRevisionContractTest {
+class AtomicWriteRevisionContractTest {
 
   private static final String SPEC_PATH =
       "docs/development/DeployMC_Complete_Master_Development_Specification.md";
@@ -180,7 +180,7 @@ class Part33AtomicWriteRevisionContractTest {
                     FileRevision.of(original)));
 
     assertEquals(FileOperationException.Reason.VALIDATION_FAILED, failure.reason());
-    assertTrue(failure.parameters().contains("validation.part33-error"));
+    assertTrue(failure.parameters().contains("validation.contract-error"));
     assertArrayEquals(original, Files.readAllBytes(tempDir.resolve("data.txt")));
     assertTrue(snapshots.empty());
     assertTrue(tempFiles().isEmpty());
@@ -300,11 +300,11 @@ class Part33AtomicWriteRevisionContractTest {
       (path, content) ->
           ValidationResult.matched(
               path,
-              "part33",
+              "contract",
               Collections.singletonList(
                   new ValidationIssue(
                       Severity.ERROR,
-                      "validation.part33-error",
+                      "validation.contract-error",
                       "",
                       0,
                       0,

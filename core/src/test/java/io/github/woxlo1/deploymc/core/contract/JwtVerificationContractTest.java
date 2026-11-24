@@ -1,4 +1,4 @@
-package io.github.woxlo1.deploymc.core.part33;
+package io.github.woxlo1.deploymc.core.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.io.TempDir;
  * server. No product JWT verifier exists in this repository. These tests validate fixture and
  * generator artifacts only; they claim neither verifier behavior nor Cloudflare parity.
  */
-class Part33JwtVerificationContractTest {
+class JwtVerificationContractTest {
 
   private static final String NO_PRODUCT_IMPLEMENTATION =
       "No product JWT verifier exists; this is a SPEC/FIXTURE CONTRACT test only";
@@ -530,8 +530,7 @@ class Part33JwtVerificationContractTest {
 
   private static byte[] bytes(String name) throws IOException {
     String resource = RESOURCE + name;
-    try (InputStream stream =
-        Part33JwtVerificationContractTest.class.getResourceAsStream(resource)) {
+    try (InputStream stream = JwtVerificationContractTest.class.getResourceAsStream(resource)) {
       assertNotNull(stream, "Missing JWT fixture resource: " + resource);
       ByteArrayOutputStream output = new ByteArrayOutputStream();
       byte[] buffer = new byte[8192];
