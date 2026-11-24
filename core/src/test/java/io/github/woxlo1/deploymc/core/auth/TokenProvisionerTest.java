@@ -41,7 +41,7 @@ class TokenProvisionerTest {
 
     TokenStore reloaded = TokenStore.load(directory);
     AuthenticationResult result =
-        new TokenAuthenticator(reloaded, clock).authenticate("Bearer " + created.token());
+        new TokenAuthenticator(reloaded, clock).authenticate(TestRequests.bearer(created.token()));
     assertTrue(result.authenticated());
     assertEquals(created.record().id(), result.identity().id());
     assertTrue(fileContent.contains("secretHash"));

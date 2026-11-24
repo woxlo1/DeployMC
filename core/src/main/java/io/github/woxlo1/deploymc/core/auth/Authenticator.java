@@ -1,13 +1,13 @@
 package io.github.woxlo1.deploymc.core.auth;
 
 /**
- * Minimal authentication boundary used by HTTP requests and WebSocket upgrades.
+ * Final WP-3.1 authentication boundary for HTTP requests and WebSocket upgrades.
  *
- * <p>The argument is the raw {@code Authorization} header value or {@code null}. The final form in
- * WP-3.1 will accept a richer request context; this interface is deliberately narrow so that no
- * caller can supply an identity directly.
+ * <p>An implementation receives only an immutable {@link AuthenticationRequest} and returns an
+ * {@link AuthenticationResult}. It must derive every identity field from verified credential
+ * material, never from untrusted request attributes or client-supplied identity headers.
  */
 public interface Authenticator {
 
-  AuthenticationResult authenticate(String authorizationHeader);
+  AuthenticationResult authenticate(AuthenticationRequest request);
 }
