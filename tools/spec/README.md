@@ -18,12 +18,13 @@ npm test
 | Check | Tool | Target |
 |---|---|---|
 | `lint:openapi` | `@redocly/cli` with `redocly.yaml` | `specification/api/openapi.yaml` |
-| `lint:asyncapi` | `@asyncapi/cli` | `specification/api/asyncapi.yaml` |
+| `lint:asyncapi` | local script using `@asyncapi/parser` | `specification/api/asyncapi.yaml` |
 | `lint:config` | local script using `ajv` and `yaml` | `specification/config/example.config.yaml` against `config.schema.json` |
 | `lint:state-machine` | local script using `yaml` | the normative YAML block in `specification/deployment/state-machine.md` |
 
-`npm test` runs `node:test` cases for the two local checkers, including negative cases such
-as an undefined role reference and an illegal deployment transition.
+`npm test` runs `node:test` cases for the three local checkers, including negative cases such
+as an invalid or empty AsyncAPI document, an undefined role reference, and an illegal deployment
+transition.
 
 All paths are resolved from this file's location, so the commands also work when invoked
 as `npm run lint --prefix tools/spec` from the repository root (the form used in CI).
@@ -54,9 +55,10 @@ action, cancellation is not possible after `APPLYING`, `RESTARTING` only leads t
 ## Dependencies
 
 Versions are pinned in `package.json` and locked in `package-lock.json`. CI uses `npm ci`.
-Third-party actions in the workflow are pinned by commit SHA. The AsyncAPI CLI emits a
-Node `punycode` deprecation warning from a transitive dependency; it does not affect the
-result.
+Third-party actions in the workflow are pinned by commit SHA. AsyncAPI validation calls the
+official parser directly; the CLI plugin manager and its bundled `npm` dependency tree are not
+installed. The parser's Spectral dependency emits a Node `punycode` deprecation warning; it does
+not affect the result.
 
 Status: this tooling is new in WP-0.5. It checks specification consistency only. It is not
 a contract test against an implementation, because no transport server exists yet.
