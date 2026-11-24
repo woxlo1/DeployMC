@@ -285,7 +285,7 @@ public final class SnapshotApiHandler implements HttpHandler {
   private HttpResponse restore(
       HttpRequest request, Locale locale, TransportMessages messages, String id)
       throws SnapshotStoreException, RequestProblem, FileOperationException {
-    Identity identity = request.identity();
+    Identity identity = request.context().identity();
     if (identity == null || identity.id().trim().isEmpty()) {
       return problem(request, messages, locale, 500, "server.internal", true, null);
     }

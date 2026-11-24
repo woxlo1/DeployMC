@@ -579,8 +579,8 @@ class NettyTransportServerTest {
 
     private NettyTransportServer netty() {
       Authenticator authenticator =
-          header ->
-              ("Bearer " + TEST_TOKEN).equals(header)
+          request ->
+              ("Bearer " + TEST_TOKEN).equals(request.header("Authorization"))
                   ? AuthenticationResult.authenticated(
                       new Identity("test", "test", "token", true, null))
                   : AuthenticationResult.failed(AuthenticationFailure.INVALID);

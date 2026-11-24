@@ -125,8 +125,8 @@ class NettyTransportServerObservabilityTest {
 
   private static NettyTransportServer newServer(TransportConfig config, MetricsRegistry metrics) {
     Authenticator authenticator =
-        header ->
-            ("Bearer " + TOKEN).equals(header)
+        request ->
+            ("Bearer " + TOKEN).equals(request.header("Authorization"))
                 ? AuthenticationResult.authenticated(
                     new Identity("test", "test", "token", true, null))
                 : AuthenticationResult.failed(AuthenticationFailure.INVALID);
