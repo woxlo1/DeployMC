@@ -224,7 +224,7 @@ class RbacEvaluationContractTest {
     assertTrue(sources.size() < 1000, "Source scan must stay bounded");
     String status = normalized("docs/development/implementation-status.md");
     assertTrue(
-        status.contains("There is no deployment engine, authorization, audit log"),
+        status.contains("there is no RBAC authorization engine, deployment engine, audit log"),
         NO_PRODUCT_IMPLEMENTATION);
   }
 
