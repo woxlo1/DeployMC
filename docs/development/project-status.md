@@ -1,16 +1,18 @@
 # Project Status
 
-Last updated: 2026-11-23 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-24 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `d068990` after
-PR #212. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+implementation). GitHub merge evidence below was verified against `main` through `671a702` after
+PR #213. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
 All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
 baseline stages are merged with local and post-merge evidence; issue #117 closed at `83b9107`.
 PART 40.3 early risk-reduction spikes merged in PR #210 at `a998f7e`; issue #118 closed at
 `2026-11-23T11:04:06Z`. PART 41 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed
 at `2026-11-23T11:25:53Z`. PART 39 specification change control merged in PR #212 at `d068990`;
-issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 adds the dependency and advisory response
-policy; its final evidence is recorded here and issue #123 closes after this PR merges.
+issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged in PR #213 at
+`671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
+recorded in `docs/development/dependabot-triage.md`; its final evidence PR is in flight and issue
+#121 will close after merge.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1279,12 +1281,12 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120 are
-complete, and their final consolidated evidence is recorded. Issue #123 was prepared in parallel and
-approved for merge immediately after #120; it closes after this PR merges. Continue with the open
-category 4 issues #121 (Dependabot triage) and #122 (advisory remediation), then category 5
-(#124-#130). Work on later items may be prepared in parallel but must not be merged ahead of an
-earlier open issue unless the owner explicitly approves.
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120 and issue
+#123 are complete, and their final consolidated evidence is recorded. Issue #123 was prepared in
+parallel and approved for merge immediately after #120; PR #213 merged at `671a702`. This PR
+completes issue #121. Continue with the open category 4 issue #122 (advisory remediation), then
+category 5 (#124-#130). Work on later items may be prepared in parallel but must not be merged ahead
+of an earlier open issue unless the owner explicitly approves.
 
 ## Release checklist
 
@@ -1411,3 +1413,33 @@ This is a documentation-only change: no product code, CI workflow, branch protec
 user-facing string, Dependabot pull request, advisory, or repository setting changed. The policy
 records existing gaps instead of asserting unimplemented supply-chain controls. No running server,
 full integration suite, browser, or in-game command exercised the policy.
+
+## Issue #121 local verification (pre-merge)
+
+These commands were run on 2026-11-24 from the `docs/121-dependabot-triage` worktree, which uses an
+ASCII path, after `git fetch origin main` showed `origin/main` at
+`671a702e5cb8ee3c965f59461df1a43dcabfe53e`. This is local evidence only; CI was not run locally and
+remains the merge authority.
+
+```text
+git fetch origin main
+  exit 0; origin/main at 671a702e5cb8ee3c965f59461df1a43dcabfe53e
+
+npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD
+  first run failed body-max-line-length; the commit body was shortened and the final run exited 0
+
+node tools/build/verify-all.cjs
+  PASS web, java, cli, python, spec, i18n, compat
+
+.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache
+  BUILD SUCCESSFUL; 75 actionable tasks: 75 up-to-date
+
+git diff --check
+  no output; exit 0
+```
+
+The triage record classifies 3 pull requests as `SAFE_TO_MERGE`, 2 as `BREAKING_CHANGE_REVIEW`, and
+12 as `KEEP_OPEN_FAILING`. No pull request was merged, closed, rebased, approved, or had auto-merge
+changed; no required check, gate, manifest, or lockfile was changed. #27 and #35 are close candidates
+awaiting the owner decision recorded as D-009 in [decisions-pending.md](decisions-pending.md#open).
+No running server, browser, E2E run, full integration suite, or in-game command consumed the triage.

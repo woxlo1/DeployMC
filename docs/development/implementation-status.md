@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-23 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-24 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #168 merged the
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
@@ -26,8 +26,10 @@ here; issue #117 closed at `83b9107`. PART 40.3 early risk-reduction spikes merg
 `a998f7e` with a reproducible Windows replacement probe; issue #118 closed at
 `2026-11-23T11:04:06Z`. PART 41 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed
 at `2026-11-23T11:25:53Z`. PART 39 specification change control merged in PR #212 at `d068990`;
-issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 adds a dependency selection and advisory
-response policy; its final evidence is recorded here and issue #123 closes after this PR merges.
+issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged in PR #213 at
+`671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
+recorded in `docs/development/dependabot-triage.md`; its final evidence PR is in flight and issue
+#121 will close after merge.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -115,8 +117,9 @@ sources were checked with a 2026-11-23 access date and are listed in the documen
 The policy explicitly records current gaps instead of claiming controls that do not exist: no Gradle
 dependency verification metadata, no Python development lockfile, no SBOM/signing/provenance
 pipeline, no exercised release branch, and no custom auto-merge enforcement workflow. No Dependabot
-pull request, advisory, or repository setting was changed by this issue; #121 and #122 remain the
-issues for individual Dependabot triage and advisory remediation.
+pull request, advisory, or repository setting was changed by this issue. Issue #123 closed at
+`2026-11-24T07:29:03Z`; #121 and #122 remain the issues for individual Dependabot triage and
+advisory remediation.
 
 | Command | Result |
 |---|---|
@@ -125,6 +128,35 @@ issues for individual Dependabot triage and advisory remediation.
 | `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
 | `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`, `75 actionable tasks: 75 up-to-date` |
 | `git diff --check` | exit 0 |
+
+## PART 40.5 Dependabot triage (issue #121)
+
+Issue #121 records the individual triage of open Dependabot pull requests #23-#39 in
+[`dependabot-triage.md`](dependabot-triage.md), following the
+[dependency policy](dependency-policy.md). For every pull request, the observed check states,
+failing-job logs, auto-merge state, official upstream sources accessed 2026-11-24, and one
+classification are recorded. The result is 3 `SAFE_TO_MERGE` (#24, #36, #38), 2
+`BREAKING_CHANGE_REVIEW` (#28, #31), and 12 `KEEP_OPEN_FAILING` (#23, #25, #26, #27, #29, #30,
+#32, #33, #34, #35, #37, #39). No pull request was superseded. #27 and #35 are close candidates
+requiring owner decision because JUnit 6 requires JVM 17+ while this project targets Java 8;
+open decisions are tracked in [decisions-pending.md](decisions-pending.md#open).
+
+The merge candidates still need a rebase to current `main` and a fresh full required-check run.
+Compatibility contexts were absent from several 18-check heads, so those green rows are not claims
+that the full required set passed. No bulk merge, gate change, or auto-merge change was made.
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | exit 0; `origin/main` at `671a702e5cb8ee3c965f59461df1a43dcabfe53e` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | first run failed `body-max-line-length`; the commit body was shortened and the final run exited 0 |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`, `75 actionable tasks: 75 up-to-date` |
+| `git diff --check` | exit 0 |
+
+This is documentation-only local evidence: no product code, CI workflow, branch protection,
+required check, dependency manifest, lockfile, Dependabot pull request, advisory, or repository
+setting changed. No running server, browser, E2E run, full integration suite, or in-game command was
+used. CI remains the merge authority.
 
 ## Summary
 
@@ -239,7 +271,8 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 40.3 early spikes | Seven records under `docs/research/spikes/` and a reproducible Windows file-replacement probe | PR #210 records the observed, source-verified, and `NOT RUN` results; Windows probe share-mode failure `0x80070020` observed; 6 log corpus tests, transport suite, Web/Java size subsets, and full `verify-all.cjs` passed locally; no real server, supervisor, Folia, browser, or editor benchmark |
 | PART 41 quality reporting | Deterministic report over existing Web gzip and plugin JAR artifacts, with fail-closed handling and explicit `NOT MEASURED` for the other areas | PR #211 merged at `e0f6ddb`; 5 quality tests passed, check exit 0 with both budgets PASS, and full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no other PART 41 gate was implemented |
 | PART 39 spec change control | `spec-errata.md` with seed `E-001`, reviewed `spec/` PR workflow, owner approval rules, and mandatory milestone consistency audit | PR #212 merged at `d068990`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no requirement weakened or removed |
-| PART 40.4 dependency policy | Selection, pinning, review, update, exemption, advisory verification, severity response, and release-branch security policy with recorded gaps | Final evidence PR for #123; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no Dependabot PR, advisory, or setting changed |
+| PART 40.4 dependency policy | Selection, pinning, review, update, exemption, advisory verification, severity response, and release-branch security policy with recorded gaps | PR #213 merged at `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no Dependabot PR, advisory, or setting changed |
+| PART 40.5 Dependabot triage | Individual evidence and classification for PRs #23-#39 with official sources, failure logs, and owner actions | Final evidence PR for #121 in flight; 3 rebase-then-merge candidates, 2 breaking-change reviews, 12 failing PRs kept open, and 2 close candidates awaiting owner decision; no PR changed by the triage |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for

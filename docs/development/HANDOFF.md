@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
@@ -22,10 +22,14 @@ Last updated: 2026-11-23. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   `spec-errata.md` with seed `E-001`, the reviewed `spec/` branch workflow, explicit owner approval
   rules, and a mandatory milestone consistency audit. The 20 required checks and post-merge CI,
   CodeQL, and Scorecard passed; issue #120 closed at `2026-11-23T11:43:16Z`.
-- Issue #123 PART 40.4 dependency policy adds `dependency-policy.md` and links it from the CI guide.
-  It documents selection, pinning, review, updates, exemptions, advisory verification, severity
-  response, and release-branch security fixes with recorded gaps. The final evidence PR is in flight;
-  issue #123 closes after it merges.
+- Issue #123 PART 40.4 dependency policy merged in PR #213 at `671a702`. It adds
+  `dependency-policy.md` and links it from the CI guide, documenting selection, pinning, review,
+  updates, exemptions, advisory verification, severity response, and release-branch security fixes
+  with recorded gaps. Issue #123 closed at `2026-11-24T07:29:03Z`.
+- Issue #121 PART 40.5 triage records all 17 open Dependabot PRs (#23-#39) in
+  `docs/development/dependabot-triage.md`. It identifies 3 rebase-then-merge candidates, 2
+  breaking-change reviews, 12 failing PRs that stay open, and 2 close candidates awaiting owner
+  decision. The final evidence PR is in flight; no dependency PR was changed.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
@@ -432,10 +436,11 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- The final consolidated evidence PR for issue #123 is in flight on `docs/123-dependency-policy`. It
-  includes the dependency policy, CI guide link, local evidence, and status updates; issue #123 closes
-  after it merges. A Japanese verification comment will be posted after required checks, and
-  post-merge evidence and workflow results will be recorded after merge.
+- The final consolidated evidence PR for issue #121 is in flight on `docs/121-dependabot-triage`.
+  It includes the per-PR triage, status updates, and local evidence; issue #121 closes after merge.
+  A Japanese verification comment will be posted after required checks, and post-merge evidence and
+  workflow results will be recorded after merge. No dependency PR will be merged or closed by this
+  evidence PR.
 - No PART 36 implementation PRs remain in flight. PRs #203-#207 are merged with Japanese verification
   and post-merge evidence comments; all required checks and post-merge CI/CodeQL/Scorecard passed.
   PR #207 used a rebase merge because the owner requires multiple reviewable commits for large work.
@@ -455,8 +460,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   `test/filter-vector-fixtures` were deleted after evidence was posted. The
   `docs/issue-115-evidence-catchup-197` branch is temporary for this final evidence update. Evidence
   is recorded in the status pages and pull-request comments.
-- 17 open Dependabot PRs (#23-#39), tracked for triage by #121. Do not merge them in bulk.
-- Open issues: 75; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
+- 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
+  or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
+- Open issues: 68 on 2026-11-24; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
@@ -466,11 +472,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. After this PR merges, continue with #121 (Dependabot triage) and #122 (advisory remediation), then
-   category 5 (#124-#130). Issues #115 through #120 are complete; their final consolidated evidence
-   is recorded in the status pages and on the issues. Issue #123 closes after this PR merges. Later
-   work may be prepared in parallel but must not merge ahead of an earlier open issue without owner
-   approval.
+1. After this PR merges, continue with #122 (advisory remediation), then category 5 (#124-#130).
+   Issues #115 through #120 and #123 are complete; their final consolidated evidence is recorded in
+   the status pages and on the issues. This PR closes #121. Later work may be prepared in parallel
+   but must not merge ahead of an earlier open issue without owner approval.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

@@ -144,9 +144,11 @@ with a reproducible Windows replacement probe. The records distinguish observed 
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
 quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed at `2026-11-23T11:25:53Z`. PART 39
 specification change control merged in PR #212 at `d068990`; issue #120 closed at
-`2026-11-23T11:43:16Z`. PART 40.4 adds `docs/development/dependency-policy.md` with recorded gaps;
-issue #123 closes with its final evidence PR. D-001 still blocks restart, update-folder, and
-oldest/newest-version evidence.
+`2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged in PR #213 at `671a702`; issue #123
+closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage for PRs #23-#39 is recorded
+in `docs/development/dependabot-triage.md`; its final evidence PR is in flight and issue #121 will
+close after merge. No dependency PR was merged, closed, rebased, or approved by that triage. D-001
+still blocks restart, update-folder, and oldest/newest-version evidence.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The
