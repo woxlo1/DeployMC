@@ -29,7 +29,8 @@ Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 - Issue #121 PART 40.5 triage records all 17 open Dependabot PRs (#23-#39) in
   `docs/development/dependabot-triage.md`. It identifies 3 rebase-then-merge candidates, 2
   breaking-change reviews, 12 failing PRs that stay open, and 2 close candidates awaiting owner
-  decision. The final evidence PR is in flight; no dependency PR was changed.
+  decision. PR #215 merged its final evidence at `267d690`; issue #121 closed at
+  `2026-11-24T07:55:44Z`. No dependency PR was changed.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
@@ -436,11 +437,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- The final consolidated evidence PR for issue #121 is in flight on `docs/121-dependabot-triage`.
-  It includes the per-PR triage, status updates, and local evidence; issue #121 closes after merge.
-  A Japanese verification comment will be posted after required checks, and post-merge evidence and
-  workflow results will be recorded after merge. No dependency PR will be merged or closed by this
-  evidence PR.
+- No issue #121 PRs remain in flight. PR #215 was rebase-merged at `267d690`; Japanese verification
+  and post-merge evidence comments are recorded. All required checks and post-merge CI/CodeQL/
+  Scorecard passed, and issue #121 closed at `2026-11-24T07:55:44Z`. No dependency PR was merged or
+  closed.
 - No PART 36 implementation PRs remain in flight. PRs #203-#207 are merged with Japanese verification
   and post-merge evidence comments; all required checks and post-merge CI/CodeQL/Scorecard passed.
   PR #207 used a rebase merge because the owner requires multiple reviewable commits for large work.
@@ -472,9 +472,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. After this PR merges, continue with #122 (advisory remediation), then category 5 (#124-#130).
-   Issues #115 through #120 and #123 are complete; their final consolidated evidence is recorded in
-   the status pages and on the issues. This PR closes #121. Later work may be prepared in parallel
+1. Continue with #122 (advisory remediation), then category 5 (#124-#130). Issues #115 through #120,
+   #121, and #123 are complete; their final consolidated evidence is recorded in the status pages and
+   on the issues. PR #215 closed #121 at `267d690`. Later work may be prepared in parallel
    but must not merge ahead of an earlier open issue without owner approval.
 2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
