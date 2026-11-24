@@ -13,8 +13,11 @@ issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged 
 `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
 recorded in `docs/development/dependabot-triage.md`; PR #215 merged its final evidence at `267d690`
 with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
-`2026-11-24T07:55:44Z`. Issue #122 advisory remediation is represented by PR #217, which carries
-`Closes #122` and closes the issue when merged.
+`2026-11-24T07:55:44Z`. Issue #122 advisory remediation merged PR #217 at `9be2fa0` with passing
+CI, CodeQL, and Scorecard, but a post-merge Security recheck found 3 open alerts, so the issue was
+reopened at `2026-11-24T08:42:28Z`. The residual follow-up pull request from
+`deps/122-residual-alerts` carries `Closes #122`; it upgrades Vite to 6.4.5 and replaces the AsyncAPI
+CLI with the official parser to remove the bundled `npm` dependency tree.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the

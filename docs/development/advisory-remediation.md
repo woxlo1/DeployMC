@@ -33,7 +33,7 @@ Observed pre-remediation inventory: 60 alerts total, 57 open and 3 auto-dismisse
 
 | Area | Before | After | Evidence |
 |---|---|---|---|
-| Web `vite` | 6.0.5 | 6.4.4 | Official Vite v6.4.4 release page; GHSA ranges for all Vite alerts are satisfied |
+| Web `vite` | 6.0.5 | 6.4.5 | Official Vite v6.4.4 and v6.4.5 release pages; GHSA-8g5g first patched 6.4.5 |
 | Web `vitest` | 2.1.8 | 4.1.12 | Official Vitest v4.1.12 release notes harden manual and redirect mocks |
 | Web `@vitest/mocker` | 2.1.8 | 4.1.12 | Transitive through Vitest 4.1.12; canonical GHSA-82fw and GHSA-qxg6 pages |
 | Web `tinypool` | 1.1.1 | not present | Vitest 4.1.12 no longer resolves the vulnerable 1.x package |
@@ -47,6 +47,10 @@ Observed pre-remediation inventory: 60 alerts total, 57 open and 3 auto-dismisse
 | Spec `ajv` under `json-schema-migrate` | 5.5.2 | 6.14.0 | Nested npm override; root `ajv` 8.20.0 was already current |
 | Spec `ajv` under `webapi-parser` | 6.5.2 | 6.14.0 | Nested npm override |
 | Spec `@babel/core` under generator React SDK | 7.12.9 | 7.29.13 | npm override; GHSA-4x5r first patched 7.29.6 |
+| Spec AsyncAPI validation | `@asyncapi/cli` 6.3.1 | `@asyncapi/parser` 3.6.6 | Official parser validation docs; CLI plugin manager and bundled `npm` removed from the tree |
+| Spec npm overrides | 8 entries | 2 entries | `npm ls` confirmed only `jsonpath-plus` and `minimatch` are still required |
+
+The first eleven rows were merged in PR #217. The last two rows are the post-merge residual fix.
 
 ## Unique advisory triage
 
@@ -94,16 +98,37 @@ are collapsed into one row.
 | low | open | GHSA-jqfw-vq24-v9c3<br>CVE-2025-58752 | vite | web/pnpm-lock.yaml<br>web/package.json | 6.0.5 | >= 6.0.0, <= 6.3.5 | 6.3.6 | [GHSA-jqfw-vq24-v9c3](https://github.com/advisories/GHSA-jqfw-vq24-v9c3) | web direct -> 6.4.4 |
 | low | auto_dismissed | GHSA-xffm-g5w8-qvg7<br>- | @eslint/plugin-kit | web/pnpm-lock.yaml | 0.2.8 | < 0.3.4 | 0.3.4 | [GHSA-xffm-g5w8-qvg7](https://github.com/advisories/GHSA-xffm-g5w8-qvg7) | auto-dismissed; no change |
 
+## Post-merge residual remediation
+
+PR #217 was rebase-merged at `9be2fa0c39e5d8f21d2665d31fd5ba257bb07f7a` on
+2026-11-24T08:37:26Z, and CI, CodeQL, and Scorecard all passed after the merge. The Security-tab
+recheck then reported 62 alerts: 57 `fixed`, 2 `auto_dismissed`, and 3 still `open`. Issue #122 was
+reopened at 2026-11-24T08:42:28Z rather than accepting the remainder as risk.
+
+| Alert | Advisory | Package | Manifest | Vulnerable / patched | Cause | Residual fix |
+|---|---|---|---|---|---|---|
+| #63, #64 | [GHSA-8g5g-mxqh-grgj](https://github.com/advisories/GHSA-8g5g-mxqh-grgj) / CVE-2026-118662 | `vite` | `web/package.json`, `web/pnpm-lock.yaml` | `= 6.4.4` / `6.4.5` | Published after the #217 triage snapshot | Web Vite `6.4.4 -> 6.4.5`; `pnpm install` updated the lockfile |
+| #60 | [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) / CVE-2026-118764 | `minimatch` | `tools/spec/package-lock.json` | `>= 7.0.0, < 11.0.1` / `11.0.1` | `minimatch@10.2.5` bundled inside `npm@11.21.2`, pulled in by `@asyncapi/cli -> @asyncapi/modelina-cli -> @oclif/plugin-plugins`; npm `overrides` cannot rewrite bundled dependencies | Replaced `@asyncapi/cli` with direct `@asyncapi/parser@3.6.6` validation; bundled `npm` is no longer in the dependency tree |
+
+The parser replacement uses the official `@asyncapi/parser` API documented in the AsyncAPI
+validation guide and parser guide, both checked on 2026-11-24. `check-asyncapi.cjs` fails on
+`DiagnosticSeverity.Error`, reports warnings without failing, and rejects an empty document. The
+repository has no custom AsyncAPI governance ruleset, so no CLI-only lint rule was dropped. Three
+`node:test` cases cover the repository document, an invalid document, and an empty document.
+
 ## Reachability and compatibility assessment
 
 - Vite and Vitest advisories concern development servers and test tooling. Production artifacts are
   built from the pinned React runtime dependencies; the Web build and Vitest suites were rerun.
 - Vitest 4.1.12 requires Node 20, 22, or 24+. The Web package requires Node 22+, and CI uses Node 24.
-  Vite 6.4.4 supports Node 18, 20, and 22+. The existing `@vitejs/plugin-react` peer range accepts
+  Vite 6.4.5 supports Node 18, 20, and 22+. The existing `@vitejs/plugin-react` peer range accepts
   Vite 6.
 - The specification tools are development-only lints and checks. Upstream packages still constrain
   some transitive dependencies to old majors, so npm `overrides` were used instead of rewriting the
   upstream packages. All specification lint and checker tests were rerun.
+- Removing the AsyncAPI CLI drops generator, modelina, and oclif plugin-manager packages that the
+  spec tools never invoked. `@asyncapi/parser` 3.6.6 was already the deduplicated parser used by the
+  CLI tree, so the direct dependency does not introduce a new parser major.
 - `simple-git` 4.0.1 is the GitHub-listed first patched version, but its upstream release notes only
   say that `package.json` was prepared for publishing and the GHSA text also says no released
   remediation was identified. The parser was therefore additionally overridden to 2.0.1. The
@@ -125,9 +150,12 @@ Commands were run from the repository root unless a directory is shown.
 | `cd web && pnpm lint` | exit 0 |
 | `cd web && pnpm format:check` | `All matched files use Prettier code style!` |
 | `cd web && pnpm test` | 5 files and 37 tests passed with Vitest 4.1.12 |
-| `cd web && pnpm build` | Vite 6.4.4 build succeeded; 2 gzip and 2 Brotli assets precompressed |
+| `cd web && pnpm build` | Vite 6.4.5 build succeeded; 2 gzip and 2 Brotli assets precompressed |
+| `cd tools/spec && npm ci` | exit 0 with the regenerated lockfile |
+| `cd tools/spec && npm ls npm --all` | empty tree; bundled `npm` is absent |
+| `cd tools/spec && npm install` | `found 0 vulnerabilities` after the CLI removal |
 | `cd tools/spec && npm run lint` | OpenAPI, AsyncAPI, config, and state-machine lint passed |
-| `cd tools/spec && npm test` | 14 tests passed, 0 failed |
+| `cd tools/spec && npm test` | 17 tests passed, 0 failed |
 
 Gradle commands ran through the ASCII junction
 `C:\Users\satos\AppData\Local\Temp\opencode\dmc-catchup` because this host repository path contains
@@ -135,20 +163,22 @@ non-ASCII characters.
 
 ## Residual risk
 
-- npm `overrides` cannot rewrite the dependencies bundled inside the `npm` package in
-  `tools/spec/package-lock.json`. A nested `glob@13.0.6` and `minimatch@10.2.5` remain there. This
-  chain is development-only, is not invoked by the specification lint/test scripts, and corresponds
-  to an auto-dismissed `glob` advisory. No additional override was left in the manifest because it
-  was verified not to change the bundled tree.
-- `npm audit` still reports moderate advisories in the wider AsyncAPI/npm transitive tree. Those are
-  not the same set as the GitHub Security alerts triaged here; no fix is available without replacing
-  the upstream toolchain. No new accepted-risk exemption was created by this page.
-- No server, browser, E2E run, full integration suite, or in-game command was exercised.
+- The bundled-`npm` chain containing `glob@13.0.6` and `minimatch@10.2.5` was removed by replacing
+  the AsyncAPI CLI with the parser. No override failed silently and no exception was requested.
+- Two GitHub alerts remain `auto_dismissed` (`glob` and `@eslint/plugin-kit`). They were reviewed but
+  not reopened or manually dismissed. The `glob` package is no longer present after the CLI removal;
+  the `@eslint/plugin-kit` alert is a development-only lint dependency.
+- No server, browser, E2E run, full integration suite, or in-game command was exercised. No accepted
+  risk is recorded on this page; the final Security-tab recheck after merge remains authoritative.
 
 ## Issue and pull request
 
-- PR #217 is the final consolidated evidence pull request for issue #122 and carries
-  `Closes #122`. The issue is closed when that pull request is merged.
-- Existing dependency PRs #23-#39 remain untouched under D-009.
-- Japanese verification and post-merge evidence for PR #217 are recorded in the PR comments. The
-  post-merge Security-tab recheck is the authority for the remaining alert state.
+- PR #217 was the first consolidated evidence pull request for issue #122; it was rebase-merged at
+  `9be2fa0` and has Japanese verification and post-merge evidence comments. It reduced 57 open alerts
+  to 3, so it did not complete the issue.
+- Issue #122 was reopened after that recheck. The follow-up pull request from
+  `deps/122-residual-alerts` carries `Closes #122` and applies the residual fixes above. It is the
+  final consolidated evidence pull request; the Security-tab recheck after its merge determines
+  whether any alert remains open.
+- Existing dependency PRs #23-#39 remain untouched under D-009. No accepted-risk exemption was
+  created.

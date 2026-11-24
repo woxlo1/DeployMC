@@ -171,7 +171,9 @@ Could not resolve org.junit.jupiter:junit-jupiter:6.1.3.
 5. Every PR is behind current `main`. Before any action, fetch `origin/main`, rebase the individual
    branch, rerun the four local pre-push checks and the full required check set, and post a Japanese
    verification comment. Auto-merge must not be treated as approval or as a bypass.
-6. Issue #122 advisory remediation is prepared in PR #217 and recorded in
+6. Issue #122 advisory remediation merged PR #217 at `9be2fa0`, but a post-merge Security recheck
+   found 3 open alerts and the issue was reopened. The residual follow-up in
+   `deps/122-residual-alerts` is recorded in
    [`advisory-remediation.md`](advisory-remediation.md). This document still does not inspect the
    Security tab's current advisory set or claim that a vulnerability count is fixed.
 
