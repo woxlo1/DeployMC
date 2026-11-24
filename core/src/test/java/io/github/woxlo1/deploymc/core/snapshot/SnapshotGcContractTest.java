@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /** PART 33.6 garbage-collection contract probes against the real snapshot store. */
-class Part33SnapshotGcContractTest {
+class SnapshotGcContractTest {
 
   private static final Instant START = Instant.parse("2026-02-01T00:00:00Z");
 

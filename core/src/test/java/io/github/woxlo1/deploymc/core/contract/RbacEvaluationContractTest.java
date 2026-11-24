@@ -1,4 +1,4 @@
-package io.github.woxlo1.deploymc.core.part33;
+package io.github.woxlo1.deploymc.core.contract;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
  * in this repository. These tests validate the normative algorithm and its configuration and error
  * artifacts only; they claim neither implemented behavior nor parity with any external system.
  */
-class Part33RbacEvaluationContractTest {
+class RbacEvaluationContractTest {
 
   private static final String NO_PRODUCT_IMPLEMENTATION =
       "No product RBAC evaluator exists; this is a SPEC/FIXTURE CONTRACT test only";

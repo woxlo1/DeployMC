@@ -1,4 +1,4 @@
-package io.github.woxlo1.deploymc.core.part33;
+package io.github.woxlo1.deploymc.core.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,7 +39,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.Test;
 
 /** PART 33.9 contract checks for implemented YAML limits and documented archive gaps. */
-class Part33YamlArchiveSafetyLimitsContractTest {
+class YamlArchiveSafetyLimitsContractTest {
 
   private static final String SPEC_PATH =
       "docs/development/DeployMC_Complete_Master_Development_Specification.md";
@@ -346,7 +346,7 @@ class Part33YamlArchiveSafetyLimitsContractTest {
   private static Properties manifest() throws IOException {
     Properties properties = new Properties();
     try (InputStream stream =
-        Part33YamlArchiveSafetyLimitsContractTest.class.getResourceAsStream(MANIFEST)) {
+        YamlArchiveSafetyLimitsContractTest.class.getResourceAsStream(MANIFEST)) {
       assertNotNull(stream, "Missing test resource: " + MANIFEST);
       properties.load(stream);
     }

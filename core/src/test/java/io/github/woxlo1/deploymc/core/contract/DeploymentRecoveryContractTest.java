@@ -1,4 +1,4 @@
-package io.github.woxlo1.deploymc.core.part33;
+package io.github.woxlo1.deploymc.core.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
  * deployment engine exists in this repository. These tests parse the normative transition data and
  * check the documented invariants; they claim neither implemented behavior nor platform support.
  */
-class Part33DeploymentRecoveryContractTest {
+class DeploymentRecoveryContractTest {
 
   private static final String NO_PRODUCT_IMPLEMENTATION =
       "No product deployment engine exists; this is a SPEC/FIXTURE CONTRACT test only";

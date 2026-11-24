@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /** PART 33.1 contract and regression checks for the real sandbox resolver. */
-class Part33SandboxPathResolutionContractTest {
+class SandboxPathResolutionContractTest {
 
   private static final String SPEC_PATH =
       "docs/development/DeployMC_Complete_Master_Development_Specification.md";

@@ -1,4 +1,4 @@
-package io.github.woxlo1.deploymc.core.part33;
+package io.github.woxlo1.deploymc.core.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  * PART 33.7 spec and fixture contract only. No product log consumer exists, and no parity with one
  * is claimed.
  */
-class Part33LogAttributionContractTest {
+class LogAttributionContractTest {
 
   private static final String SPEC =
       "docs/development/DeployMC_Complete_Master_Development_Specification.md";
