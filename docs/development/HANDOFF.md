@@ -31,6 +31,10 @@ Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   breaking-change reviews, 12 failing PRs that stay open, and 2 close candidates awaiting owner
   decision. PR #215 merged its final evidence at `267d690`; issue #121 closed at
   `2026-11-24T07:55:44Z`. No dependency PR was changed.
+- Issue #122 advisory remediation is prepared in PR #217. Web Vite/Vitest and specification-tool
+  transitive dependencies were upgraded or overridden, and `docs/development/advisory-remediation.md`
+  records all unique GHSA records, official sources, verification, and residual risks. The owner
+  approved the full remediation attempt; existing Dependabot PRs #23-#39 were not touched.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
@@ -437,6 +441,9 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
+- PR #217 is the final evidence pull request for issue #122 and is not yet merged. It carries
+  `Closes #122`; the issue is closed when the PR merges. Japanese verification and post-merge
+  evidence are recorded on that PR. No existing Dependabot PR was changed.
 - No issue #121 PRs remain in flight. PR #215 was rebase-merged at `267d690`; Japanese verification
   and post-merge evidence comments are recorded. All required checks and post-merge CI/CodeQL/
   Scorecard passed, and issue #121 closed at `2026-11-24T07:55:44Z`. No dependency PR was merged or
@@ -472,7 +479,8 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## Exact next steps
 
-1. Continue with #122 (advisory remediation), then category 5 (#124-#130). Issues #115 through #120,
+1. PR #217 is the final evidence pull request for #122 (advisory remediation). After it merges and
+   post-merge evidence is posted, continue with category 5 (#124-#130). Issues #115 through #120,
    #121, and #123 are complete; their final consolidated evidence is recorded in the status pages and
    on the issues. PR #215 closed #121 at `267d690`. Later work may be prepared in parallel
    but must not merge ahead of an earlier open issue without owner approval.

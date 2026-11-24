@@ -13,7 +13,8 @@ issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged 
 `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
 recorded in `docs/development/dependabot-triage.md`; PR #215 merged its final evidence at `267d690`
 with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
-`2026-11-24T07:55:44Z`.
+`2026-11-24T07:55:44Z`. Issue #122 advisory remediation is represented by PR #217, which carries
+`Closes #122` and closes the issue when merged.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1285,9 +1286,10 @@ Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -
 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120, #121, and
 #123 are complete, and their final consolidated evidence is recorded. Issue #123 was prepared in
 parallel and approved for merge immediately after #120; PR #213 merged at `671a702`. PR #215 merged
-at `267d690` and closed #121. Continue with the open category 4 issue #122 (advisory remediation), then
-category 5 (#124-#130). Work on later items may be prepared in parallel but must not be merged ahead
-of an earlier open issue unless the owner explicitly approves.
+at `267d690` and closed #121. PR #217 is the final evidence pull request for the remaining category 4
+issue #122 (advisory remediation) and closes it when merged. After that merge, continue with category
+5 (#124-#130). Work on later items may be prepared in parallel but must not be merged ahead of an
+earlier open issue unless the owner explicitly approves.
 
 ## Release checklist
 

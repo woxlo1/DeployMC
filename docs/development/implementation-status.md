@@ -158,6 +158,37 @@ required check, dependency manifest, lockfile, Dependabot pull request, advisory
 setting changed. No running server, browser, E2E run, full integration suite, or in-game command was
 used. CI remains the merge authority.
 
+## PART 40 dependency advisory remediation (issue #122)
+
+Issue #122 remediates the advisories observed on the repository Security tab. The owner approved a
+full remediation attempt, including major upgrades, while keeping Dependabot pull requests #23-#39
+untouched under D-009. [`advisory-remediation.md`](advisory-remediation.md) records all 37 unique
+GHSA records from the 57 open pre-remediation alerts, the canonical sources checked on 2026-11-24,
+the resolved versions, compatibility notes, and residual risks. Web Vite moved to 6.4.4, Vitest to
+4.1.12, and a targeted `minimatch` override to 11.0.1. The specification tools received npm
+overrides for `simple-git`, `@simple-git/argv-parser`, `jsonpath-plus`, `minimatch`, `glob`, nested
+`ajv`, and `@babel/core`. PR #217 carries `Closes #122`; the issue is closed when that pull request
+is merged. CI remains the merge authority.
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | exit 0 |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | exit 0 |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat` |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`, `75 actionable tasks: 75 up-to-date` |
+| `git diff --check` | exit 0 |
+| `cd web && pnpm lint` | exit 0 |
+| `cd web && pnpm format:check` | `All matched files use Prettier code style!` |
+| `cd web && pnpm test` | 5 files and 37 tests passed with Vitest 4.1.12 |
+| `cd web && pnpm build` | Vite 6.4.4 build succeeded; 2 gzip and 2 Brotli assets precompressed |
+| `cd tools/spec && npm run lint` | OpenAPI, AsyncAPI, config, and state-machine lint passed |
+| `cd tools/spec && npm test` | 14 tests passed, 0 failed |
+
+No product code, CI gate, branch protection, user-facing string, or localization catalog changed.
+No existing Dependabot pull request was merged, closed, rebased, approved, or had auto-merge changed.
+The post-merge Security-tab alert state is recorded in the PR evidence; no accepted-risk exemption
+was created. No server, browser, E2E run, full integration suite, or in-game command was used.
+
 ## Summary
 
 DeployMC is **pre-alpha**. The repository contains documentation, specifications, architecture
@@ -273,6 +304,7 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 39 spec change control | `spec-errata.md` with seed `E-001`, reviewed `spec/` PR workflow, owner approval rules, and mandatory milestone consistency audit | PR #212 merged at `d068990`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no requirement weakened or removed |
 | PART 40.4 dependency policy | Selection, pinning, review, update, exemption, advisory verification, severity response, and release-branch security policy with recorded gaps | PR #213 merged at `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no Dependabot PR, advisory, or setting changed |
 | PART 40.5 Dependabot triage | Individual evidence and classification for PRs #23-#39 with official sources, failure logs, and owner actions | PR #215 merged at `267d690`; issue #121 closed at `2026-11-24T07:55:44Z`; 3 rebase-then-merge candidates, 2 breaking-change reviews, 12 failing PRs kept open, and 2 close candidates awaiting owner decision; no PR changed by the triage |
+| PART 40 advisory remediation | Upgraded web build/test tools and patched transitive specification-tool dependencies with a full GHSA triage record | PR #217 carries `Closes #122`; local all-toolchain, lint, test, build, commitlint, Spotless, and diff checks passed; issue closes on merge; no existing Dependabot PR changed |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
