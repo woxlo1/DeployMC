@@ -6,9 +6,10 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.Objects;
 
-/** First {@link Authenticator} implementation: host-provisioned bearer tokens. */
+/** WP-3.1 {@link Authenticator} implementation: host-provisioned bearer tokens. */
 public final class TokenAuthenticator implements Authenticator {
 
+  private static final String AUTHORIZATION = "Authorization";
   private static final String BEARER = "Bearer ";
   private static final int MIN_TOKEN_LENGTH = 16;
   private static final int MAX_TOKEN_LENGTH = 512;
@@ -22,7 +23,11 @@ public final class TokenAuthenticator implements Authenticator {
   }
 
   @Override
-  public AuthenticationResult authenticate(String authorizationHeader) {
+  public AuthenticationResult authenticate(AuthenticationRequest request) {
+    if (request == null) {
+      return AuthenticationResult.failed(AuthenticationFailure.REQUIRED);
+    }
+    String authorizationHeader = request.header(AUTHORIZATION);
     if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
       return AuthenticationResult.failed(AuthenticationFailure.REQUIRED);
     }

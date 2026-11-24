@@ -55,7 +55,12 @@ public final class TokenRecord {
 
   /** Identity exposed to the application. The token value is never part of it. */
   public Identity identity() {
-    return new Identity(id, label, "token", true, java.util.Collections.<String>emptyList());
+    java.util.Map<String, String> claims = new java.util.LinkedHashMap<String, String>();
+    claims.put("token.id", id);
+    claims.put("token.label", label);
+    claims.put("auth.method", "token");
+    return new Identity(
+        id, label, "token", true, java.util.Collections.<String>emptyList(), claims);
   }
 
   private static String requireText(String value, String name) {
