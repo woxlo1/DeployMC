@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -33,13 +32,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * PART 33.3 fixture contract: committed Cloudflare Access JWT vectors and the localhost mock JWKS
- * server. No product JWT verifier exists in this repository. These tests validate fixture and
- * generator artifacts only; they claim neither verifier behavior nor Cloudflare parity.
+ * server. These tests validate fixture and generator artifacts only; they claim neither verifier
+ * behavior nor Cloudflare parity. Product verification is exercised by {@code
+ * CloudflareJwtVerifierTest} in the {@code core.auth.cloudflare} package.
  */
 class JwtVerificationContractTest {
-
-  private static final String NO_PRODUCT_IMPLEMENTATION =
-      "No product JWT verifier exists; this is a SPEC/FIXTURE CONTRACT test only";
 
   private static final String RESOURCE = "/jwt/";
   private static final int MAX_FILE_BYTES = 256 * 1024;
@@ -103,7 +100,8 @@ class JwtVerificationContractTest {
       // No external interpreter on this host: the pinned seeds, time, encoding and digests are
       // still checked by manifestPinsDeterministicGeneratorContract and the manifest test below.
       assertTrue(
-          fixture("generate_jwt_vectors.py").contains("KEY_SEEDS = {"), NO_PRODUCT_IMPLEMENTATION);
+          fixture("generate_jwt_vectors.py").contains("KEY_SEEDS = {"),
+          "Pinned generator markers must remain present without Python");
       return;
     }
     Path generator = repositoryRoot().resolve("tests/security/jwt/generate_jwt_vectors.py");
@@ -330,47 +328,30 @@ class JwtVerificationContractTest {
     }
     String readme = fixture("README.md");
     assertTrue(readme.contains("binds only to `127.0.0.1`"));
-    assertTrue(readme.contains("No product JWT verifier consumes these fixtures yet."));
+    assertTrue(readme.contains("CloudflareJwtVerifierTest"));
+    for (String marker :
+        Arrays.asList(
+            "/control/rotate", "/control/reset", "/control/unavailable", "If-None-Match", "304")) {
+      assertTrue(server.contains(marker), "Mock server lost control marker: " + marker);
+    }
+    assertTrue(readme.contains("/control/unavailable?value=1"));
   }
 
   @Test
-  void noProductJwtVerifierExists() throws Exception {
+  void productVerifierIgnoresUnsignedIdentityHeaders() throws Exception {
     Path root = repositoryRoot();
-    List<Path> sources = new ArrayList<Path>();
-    for (String module : Arrays.asList("core", "api", "transport", "platform")) {
-      Path source = root.resolve(module + "/src/main/java");
-      if (!Files.isDirectory(source)) {
-        continue;
-      }
-      sources.addAll(javaFiles(source));
-    }
-    assertFalse(sources.isEmpty(), "No main Java sources found");
-    for (Path source : sources) {
-      String name = source.getFileName().toString().toLowerCase(Locale.ROOT);
-      assertFalse(name.contains("jwt"), source + " would be a product verifier");
-      assertFalse(name.contains("jwks"), source + " would be a product verifier");
-      assertFalse(name.contains("cloudflare"), source + " would be a product verifier");
-      String text = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
-      assertFalse(text.contains("Cf-Access-Jwt-Assertion"), source.toString());
-      assertFalse(text.contains("verifyRs256"), source.toString());
-    }
-    assertTrue(sources.size() < 1000, "Source scan must stay bounded");
-    assertTrue(readmeContainsContract(), NO_PRODUCT_IMPLEMENTATION);
-  }
-
-  private boolean readmeContainsContract() throws IOException {
-    return fixtureAtRoot("docs/development/implementation-status.md")
-        .contains("no product JWT verifier");
-  }
-
-  private static List<Path> javaFiles(Path root) throws IOException {
-    try (java.util.stream.Stream<Path> stream = Files.walk(root, 12)) {
-      return stream
-          .filter(Files::isRegularFile)
-          .filter(path -> path.getFileName().toString().endsWith(".java"))
-          .limit(1000)
-          .collect(java.util.stream.Collectors.<Path>toList());
-    }
+    Path verifier =
+        root.resolve(
+            "core/src/main/java/io/github/woxlo1/deploymc/core/auth/cloudflare/CloudflareJwtVerifier.java");
+    assertTrue(Files.isRegularFile(verifier), "Missing product verifier source");
+    String source = new String(Files.readAllBytes(verifier), StandardCharsets.UTF_8);
+    assertTrue(source.contains("cf-access-jwt-assertion"));
+    assertTrue(source.contains("cf-access-authenticated-user-email"));
+    assertTrue(source.contains("FORWARDED_EMAIL_HEADER"));
+    assertFalse(
+        source.contains("headers().get(FORWARDED_EMAIL_HEADER)"),
+        "The forwarded email header must never be read as an identity source");
+    assertTrue(fixtureAtRoot("specification/api/errors.md").contains("`auth.jwks-unavailable`"));
   }
 
   private static String outcome(Map<String, Object> vector, String state) {
