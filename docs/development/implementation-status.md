@@ -164,11 +164,13 @@ Issue #122 remediates the advisories observed on the repository Security tab. Th
 full remediation attempt, including major upgrades, while keeping Dependabot pull requests #23-#39
 untouched under D-009. [`advisory-remediation.md`](advisory-remediation.md) records all 37 unique
 GHSA records from the 57 open pre-remediation alerts, the canonical sources checked on 2026-11-24,
-the resolved versions, compatibility notes, and residual risks. Web Vite moved to 6.4.4, Vitest to
-4.1.12, and a targeted `minimatch` override to 11.0.1. The specification tools received npm
-overrides for `simple-git`, `@simple-git/argv-parser`, `jsonpath-plus`, `minimatch`, `glob`, nested
-`ajv`, and `@babel/core`. PR #217 carries `Closes #122`; the issue is closed when that pull request
-is merged. CI remains the merge authority.
+the resolved versions, compatibility notes, and residual risks. PR #217 was rebase-merged at
+`9be2fa0` on 2026-11-24T08:37:26Z with passing CI, CodeQL, and Scorecard, but the post-merge Security
+recheck still found 3 open alerts. Issue #122 was reopened at 2026-11-24T08:42:28Z. The follow-up
+pull request from `deps/122-residual-alerts` upgrades Web Vite `6.4.4 -> 6.4.5`, replaces the
+`@asyncapi/cli` spec-tool wrapper with direct `@asyncapi/parser` validation so the bundled `npm`
+tree is removed, and reduces the spec overrides to `jsonpath-plus` and `minimatch`. That pull request
+carries `Closes #122`. CI remains the merge authority.
 
 | Command | Result |
 |---|---|
@@ -180,14 +182,16 @@ is merged. CI remains the merge authority.
 | `cd web && pnpm lint` | exit 0 |
 | `cd web && pnpm format:check` | `All matched files use Prettier code style!` |
 | `cd web && pnpm test` | 5 files and 37 tests passed with Vitest 4.1.12 |
-| `cd web && pnpm build` | Vite 6.4.4 build succeeded; 2 gzip and 2 Brotli assets precompressed |
+| `cd web && pnpm build` | Vite 6.4.5 build succeeded; 2 gzip and 2 Brotli assets precompressed |
+| `cd tools/spec && npm ci` | exit 0; `found 0 vulnerabilities` |
+| `cd tools/spec && npm ls npm --all` | empty tree; bundled `npm` is absent |
 | `cd tools/spec && npm run lint` | OpenAPI, AsyncAPI, config, and state-machine lint passed |
-| `cd tools/spec && npm test` | 14 tests passed, 0 failed |
+| `cd tools/spec && npm test` | 17 tests passed, 0 failed |
 
 No product code, CI gate, branch protection, user-facing string, or localization catalog changed.
 No existing Dependabot pull request was merged, closed, rebased, approved, or had auto-merge changed.
-The post-merge Security-tab alert state is recorded in the PR evidence; no accepted-risk exemption
-was created. No server, browser, E2E run, full integration suite, or in-game command was used.
+No accepted-risk exemption was created. The final post-merge Security-tab alert state is recorded in
+the PR evidence. No server, browser, E2E run, full integration suite, or in-game command was used.
 
 ## Summary
 
