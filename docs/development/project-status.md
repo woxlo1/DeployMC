@@ -904,7 +904,7 @@ documentation, or user-facing strings changed in those PRs.
   [verification](https://github.com/woxlo1/DeployMC/pull/200#issuecomment-7091107868) and
   [evidence](https://github.com/woxlo1/DeployMC/pull/200#issuecomment-7091552631). The first merge
   attempt was rejected because #199 had advanced `main`; the branch was rebased and re-verified
-  (35 core and 5 transport Part33 tests PASSED). Post-merge workflows: CI
+  (35 core and 5 transport contract-regression tests PASSED). Post-merge workflows: CI
   [45111254553](https://github.com/woxlo1/DeployMC/actions/runs/45111254553), CodeQL
   [45111254527](https://github.com/woxlo1/DeployMC/actions/runs/45111254527), Scorecard
   [45111254520](https://github.com/woxlo1/DeployMC/actions/runs/45111254520).
@@ -912,7 +912,7 @@ documentation, or user-facing strings changed in those PRs.
   `5d279c6bd2ed1a681ebed7ef0657e85039b72633` on `2026-11-23T04:25:47Z`;
   [verification](https://github.com/woxlo1/DeployMC/pull/201#issuecomment-7091132575) and
   [evidence](https://github.com/woxlo1/DeployMC/pull/201#issuecomment-7091634008). It was rebased
-  onto the #199 and #200 merges and re-verified (55 core and 5 transport Part33 tests PASSED).
+  onto the #199 and #200 merges and re-verified (55 core and 5 transport contract-regression tests PASSED).
   Post-merge workflows: CI [45111799148](https://github.com/woxlo1/DeployMC/actions/runs/45111799148),
   CodeQL [45111799132](https://github.com/woxlo1/DeployMC/actions/runs/45111799132), Scorecard
   [45111799194](https://github.com/woxlo1/DeployMC/actions/runs/45111799194).
