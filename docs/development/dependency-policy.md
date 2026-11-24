@@ -95,8 +95,9 @@ A reviewer checks, at minimum:
 5. The exact verification commands and results recorded in the pull request. A green check is not a
    substitute for reading what changed.
 
-Dependabot pull requests are triaged individually; do not merge in bulk. Rolling back a dependency
-requires the same review and verification as adding it.
+Dependabot pull requests are triaged individually; do not merge in bulk. The recorded triage of the
+open pull requests #23-#39 is in [dependabot-triage.md](dependabot-triage.md). Rolling back a
+dependency requires the same review and verification as adding it.
 
 ## Routine updates and guarded auto-merge
 
