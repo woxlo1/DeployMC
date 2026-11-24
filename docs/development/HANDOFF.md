@@ -31,13 +31,14 @@ Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   breaking-change reviews, 12 failing PRs that stay open, and 2 close candidates awaiting owner
   decision. PR #215 merged its final evidence at `267d690`; issue #121 closed at
   `2026-11-24T07:55:44Z`. No dependency PR was changed.
-- Issue #122 advisory remediation merged PR #217 at `9be2fa0` with passing CI, CodeQL, and Scorecard.
-  The post-merge Security recheck still found 3 open alerts, so the issue was reopened at
-  `2026-11-24T08:42:28Z`. The residual follow-up in `deps/122-residual-alerts` upgrades Web Vite to
-  6.4.5 and replaces `@asyncapi/cli` with direct `@asyncapi/parser` validation, removing the bundled
-  `npm` tree and its `minimatch` alert. `docs/development/advisory-remediation.md` records all unique
-  GHSA records, official sources, verification, and residual risk. The owner approved the full
-  remediation attempt; existing Dependabot PRs #23-#39 were not touched.
+- Issue #122 advisory remediation merged PR #217 at `9be2fa0`, was reopened at
+  `2026-11-24T08:42:28Z` after 3 alerts remained, and then merged PR #218 at `ba22d03`. PR #218
+  upgraded Web Vite to 6.4.5 and replaced `@asyncapi/cli` with direct `@asyncapi/parser` validation,
+  removing the bundled `npm` tree and its `minimatch` alert. Post-merge CI, CodeQL, and Scorecard
+  passed, the final Security-tab recheck found 0 open alerts, and issue #122 closed at
+  `2026-11-24T09:04:02Z`. `docs/development/advisory-remediation.md` records all unique GHSA records,
+  official sources, verification, and final state. The owner approved the full remediation attempt;
+  existing Dependabot PRs #23-#39 were not touched.
 - Issue #117 PART 36 observability baseline merged in five stages: PR #203 (`072feda`) added the
   normative doctor, logging, metrics, and self-protection contract; PR #204 (`2f3abfc`) added the
   Web doctor panel; PR #205 (`7555c3d`) added `core.doctor`; PR #206 (`d42f5d2`) added transport
