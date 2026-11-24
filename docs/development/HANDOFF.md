@@ -5,6 +5,14 @@ Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## What was just done
 
+- Issue #56 WP-3.1 auth framework merged its implementation in PR #222 as two Conventional Commits:
+  `41b6fee` added the final core request/authentication boundary and `1ba834b` wired the explicit
+  `AuthContext` and uniform 401/403 failures through the transport. All 18 required PR checks passed,
+  Japanese verification and post-merge evidence were posted, and post-merge CI/CodeQL/Scorecard passed
+  at `1ba834b`. `node tools/build/verify-all.cjs` reported all seven toolchains `PASS`; the merged tree
+  has 495 Java tests with 0 failures, 0 errors, and 1 skipped. No running server, Bukkit mock, browser,
+  E2E, full integration suite, or in-game command exercised WP-3.1, and no RBAC engine exists yet.
+  This final evidence PR closes #56 after rebase merge.
 - Issue #118 PART 40.3 early spikes are recorded in PR #210. Seven documents under
   `docs/research/spikes/` separate `OBSERVED`, `SOURCE-VERIFIED`, `LOCAL-ONLY`, and `NOT RUN`; ADRs
   link to the evidence without changing decisions. The Windows replacement probe observed
@@ -445,9 +453,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- PR #217 is the final evidence pull request for issue #122 and is not yet merged. It carries
-  `Closes #122`; the issue is closed when the PR merges. Japanese verification and post-merge
-  evidence are recorded on that PR. No existing Dependabot PR was changed.
+- This final evidence pull request for issue #56 is not yet merged. It carries `Closes #56`; the issue
+  closes when the PR merges. PR #222 implementation evidence, Japanese verification and post-merge
+  comments, and passing CI/CodeQL/Scorecard runs are recorded in the status pages. No existing
+  Dependabot PR was changed.
 - No issue #121 PRs remain in flight. PR #215 was rebase-merged at `267d690`; Japanese verification
   and post-merge evidence comments are recorded. All required checks and post-merge CI/CodeQL/
   Scorecard passed, and issue #121 closed at `2026-11-24T07:55:44Z`. No dependency PR was merged or
@@ -473,22 +482,26 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 68 on 2026-11-24; issue #55 is closed. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 66 immediately before this final evidence PR merges on 2026-11-24; issue #56 closes
+  on merge. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks the next category 2 work.
+- Nothing blocks local implementation of the next category 2 work. D-002 must be resolved before
+  real Cloudflare Access verification or plan-specific guide claims for WP-3.2.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
-  compatibility, Cloudflare, distribution, and community work.
+  compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
+  branches #23-#39.
 
 ## Exact next steps
 
-1. PR #217 is the final evidence pull request for #122 (advisory remediation). After it merges and
-   post-merge evidence is posted, continue with category 5 (#124-#130). Issues #115 through #120,
-   #121, and #123 are complete; their final consolidated evidence is recorded in the status pages and
-   on the issues. PR #215 closed #121 at `267d690`. Later work may be prepared in parallel
-   but must not merge ahead of an earlier open issue without owner approval.
-2. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
+1. Merge this final evidence PR, post the Japanese post-merge evidence comment after required
+   post-merge workflows finish, and confirm issue #56 is closed as completed.
+2. Start WP-3.2 (issue #57), the Cloudflare Access JWT verifier, using the committed JWT vectors and
+   mock JWKS fixture contract. Do not claim real Cloudflare compatibility until D-002 is resolved.
+   Later work may be prepared in parallel but must not merge ahead of an earlier open issue without
+   owner approval.
+3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
 ## Gotchas

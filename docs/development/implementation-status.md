@@ -30,12 +30,55 @@ issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged 
 `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
 recorded in `docs/development/dependabot-triage.md`; PR #215 merged its final evidence at `267d690`
 with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
-`2026-11-24T07:55:44Z`.
+`2026-11-24T07:55:44Z`. WP-3.1 merged in [PR #222](https://github.com/woxlo1/DeployMC/pull/222) as
+two Conventional Commits (`41b6fee`, `1ba834b`) with passing required checks and post-merge CI,
+CodeQL, and Scorecard; this final evidence PR closes issue #56.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
 describes intended phase order; the [master specification](DeployMC_Complete_Master_Development_Specification.md)
 is the normative design.
+
+## WP-3.1 auth framework (issue #56)
+
+WP-3.1 completes the request-boundary authentication framework without adding a thread-local identity.
+`core.auth` now provides an immutable `AuthenticationRequest`, a final `Authenticator` contract,
+a fail-closed `AuthenticationFilter`, an explicit immutable `AuthContext`, bounded `Identity` claims,
+and a detail-free `AuthorizationDeniedException` signal. `TokenAuthenticator` consumes the request
+boundary instead of a bare header. The transport routes every request except `/healthz` and `/readyz`
+through the filter, carries the `AuthContext` into HTTP handlers and WebSocket sessions, and maps
+authentication failures to 401 and authorization denials to a uniform 403 `rbac.denied` Problem
+Details response. No permission, path, identity, claim, or credential detail is included in that
+response. RBAC itself remains a WP-3.4 gap; `AuthorizationDeniedException` only provides the uniform
+403 signal.
+
+Implementation PR [#222](https://github.com/woxlo1/DeployMC/pull/222) was rebase-merged at
+`2026-11-24T10:19:27Z`. Both Conventional Commits remain individually on `main`:
+`41b6fee feat(auth): add request-level authentication framework` and
+`1ba834b feat(transport): wire explicit auth context and uniform failures`. All 18 required pull-request
+checks passed, along with CodeQL. Japanese verification and post-merge evidence were recorded in
+[comment 7128612929](https://github.com/woxlo1/DeployMC/pull/222#issuecomment-7128612929) and
+[comment 7128703146](https://github.com/woxlo1/DeployMC/pull/222#issuecomment-7128703146).
+Post-merge `main` runs passed at `1ba834b`: CI
+[45373691900](https://github.com/woxlo1/DeployMC/actions/runs/45373691900), CodeQL
+[45373691771](https://github.com/woxlo1/DeployMC/actions/runs/45373691771), and Scorecard
+[45373691760](https://github.com/woxlo1/DeployMC/actions/runs/45373691760).
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | Success; base unchanged before merge |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Success, no output |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat`; exit 0 |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL in 1s` |
+| `git diff --check` | Success, no output |
+
+The merged tree's JUnit XML reports 495 Java tests, 0 failures, 0 errors, and 1 skipped symlink test;
+the prior 473-test baseline therefore rose by 22 net tests. Verified boundaries are the filter's
+missing-authenticator and exception paths, request validation, bounded claims and attributes, async-safe
+context carrying, 401 mapping, uniform 403 mapping, and EN/JA `rbac.denied` strings. Evidence is
+server-free unit and embedded-socket testing only. No running Minecraft server, Bukkit mock, browser,
+E2E run, full integration suite, or in-game command exercised these paths, and no RBAC engine or
+Cloudflare JWT verifier is claimed.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -205,7 +248,9 @@ embedded Netty HTTP/WebSocket transport with server-free integration tests, a cl
 static asset handler for the built Web UI, a Java configuration loader with schema validation,
 migrations, safe reload, and fail-closed property tests, a server-side plugin message i18n
 runtime, an automated final-JAR packaging verifier, and host-provisioned bearer tokens enforced by
-a fail-closed HTTP/WebSocket gate.
+a fail-closed HTTP/WebSocket gate. WP-3.1 adds the final request-level authenticator boundary and an
+explicit immutable `AuthContext` carried into HTTP and WebSocket handlers instead of thread-local
+identity.
 A WP-1.8 smoke run has now observed the plugin enabling on a real Paper server, the localized
 startup banner, authenticated `/api/v1/server`, a conflicting-library fixture loading alongside
 DeployMC, and a clean explicit disable with Netty threads released. This is smoke evidence, not a
@@ -240,8 +285,9 @@ in-game command consumes these routes, and there is no application-level one-cli
 contract now has a Java 8 `core.validation` implementation with bounded YAML, JSON, TOML, and
 properties validators, a deterministic registry, and a fail-closed save-time gate wired into
 `core.files`. The WP-2.6 file/validation adapter calls the registry for the validate endpoint and the
-save gate on writes, but no running server or UI consumes it. There is no deployment engine, authorization, audit
-log, or Web UI screen, and the packaged Web UI has not been rendered in a browser.
+save gate on writes, but no running server or UI consumes it. WP-3.1 provides the authentication
+boundary and a uniform 403 denial path, but there is no RBAC authorization engine, deployment engine,
+audit log, or Web UI screen, and the packaged Web UI has not been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -253,7 +299,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 473 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, provisioner, auth gate, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, snapshot REST adapter, doctor, observability, and self-protection cases | Gradle `test` tasks; JUnit XML: 473 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 495 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, request-boundary authentication, provisioner, auth gate, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, snapshot REST adapter, doctor, observability, and self-protection cases | Gradle `test` tasks; JUnit XML: 495 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 73 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
@@ -283,6 +329,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 5 route-enumeration and gate tests, 63 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
+| WP-3.1 auth framework | Final `Authenticator` and `AuthenticationRequest` boundary, fail-closed `AuthenticationFilter`, immutable async-safe `AuthContext`, bounded `Identity` claims/attributes, context-carrying HTTP and WebSocket requests, and uniform detail-free 401/403 Problem Details with localized `rbac.denied` | 16 new core auth tests, an expanded `TokenAuthenticatorTest`, and 5 embedded-socket transport tests; full build reports 495 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no server, RBAC engine, or Cloudflare verifier |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |

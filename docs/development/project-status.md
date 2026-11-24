@@ -17,7 +17,9 @@ with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
 `2026-11-24T08:42:28Z` after a recheck found 3 open alerts, and then merged PR #218 at `ba22d03` with
 Vite 6.4.5 and the AsyncAPI parser replacing the CLI and its bundled `npm` tree. Post-merge CI,
 CodeQL, and Scorecard passed; the final Security-tab recheck at `2026-11-24T09:08:12Z` found 0 open
-alerts, and issue #122 closed at `2026-11-24T09:04:02Z`.
+alerts, and issue #122 closed at `2026-11-24T09:04:02Z`. WP-3.1 merged in PR #222 at `41b6fee` and
+`1ba834b` with passing required checks and post-merge CI/CodeQL/Scorecard; this final evidence PR
+closes issue #56.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -63,12 +65,14 @@ under Part 39.3.
   PR #203 at `072feda`, the Web doctor panel in PR #204 at `2f3abfc`, the `core.doctor` service in
   PR #205 at `7555c3d`, the transport baseline in PR #206 at `d42f5d2`, and the Bukkit host wiring
   in PR #207 at `b882f95`. PR #207 was rebase-merged so all five Conventional Commits remain
-  individually on `main`, and the issue stayed open through every implementation stage.
+  individually on `main`, and the issue stayed open through every implementation stage. WP-3.1
+  (issue #56) merged in PR #222 as two Conventional Commits at `41b6fee` and `1ba834b`; the final
+  evidence PR closes the issue after rebase merge.
 - Later milestones: `0.3.0` through `0.10.0` exist with the remaining specification work packages
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
-  category 3-5 work remains open. Issue #115 (PART 35 fixtures) is in progress: stage 1 merged the
+  category 3-5 work remains open. Issue #115 (PART 35 fixtures) is complete: stage 1 merged the
   coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; PRs #175-#178
   added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
   `a03435`. PR #179 recorded catch-up evidence, PR #180 added the dependency fixture, PR #181
@@ -1000,6 +1004,43 @@ a Bukkit mock, browser rendering, E2E, the full integration suite, or an in-game
 The unbundled PART 36 algorithms remain specification or fixture contracts; no support tier, parity,
 or running-product claim is made.
 
+## WP-3.1 auth framework (issue #56)
+
+PR [#222](https://github.com/woxlo1/DeployMC/pull/222) completed the WP-3.1 request-level auth
+framework in two reviewable Conventional Commits and was rebase-merged at
+`2026-11-24T10:19:27Z`. Both commits remain on `main`: `41b6fee` added the core boundary and
+`1ba834b` wired the transport. Issue #56 stayed open through the implementation merge; this final
+evidence PR carries `Closes #56`.
+
+Verified code paths include the fail-closed filter for a missing authenticator, malformed request,
+null result, and authenticator exception; immutable `AuthenticationRequest`, `Identity` claims, and
+`AuthContext` attributes with explicit bounds; request-id-bound context propagation into HTTP handlers
+and WebSocket sessions without thread-local identity; 401 mapping for authentication failures; and
+uniform detail-free 403 `rbac.denied` responses for `AuthorizationDeniedException`. `/healthz` and
+`/readyz` remain the only unauthenticated endpoints. EN and JA `rbac.denied` strings were added and
+checked by the i18n tooling.
+
+| Evidence | Result |
+|---|---|
+| Local `git fetch origin main` | Success; base `e6491a9` unchanged before merge |
+| Local `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Success, no output |
+| Local `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat`; exit 0 |
+| Local `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL in 1s` |
+| Local `git diff --check` | Success, no output |
+| Merged-tree JUnit XML | 495 tests, 0 failures, 0 errors, 1 skipped symlink test; 22 net tests above the 473-test baseline |
+| PR required checks | 18/18 pass; CodeQL also pass |
+| Japanese pre-merge verification | [comment 7128612929](https://github.com/woxlo1/DeployMC/pull/222#issuecomment-7128612929) |
+| Japanese post-merge evidence | [comment 7128703146](https://github.com/woxlo1/DeployMC/pull/222#issuecomment-7128703146) |
+| Post-merge CI | Run [45373691900](https://github.com/woxlo1/DeployMC/actions/runs/45373691900), success at `1ba834b` |
+| Post-merge CodeQL | Run [45373691771](https://github.com/woxlo1/DeployMC/actions/runs/45373691771), success at `1ba834b` |
+| Post-merge Scorecard | Run [45373691760](https://github.com/woxlo1/DeployMC/actions/runs/45373691760), success at `1ba834b` |
+
+This is server-free unit and embedded-socket evidence. No running Minecraft server, Bukkit mock,
+browser, E2E run, full integration suite, or in-game command exercised WP-3.1. No RBAC engine exists
+yet (WP-3.4), so `AuthorizationDeniedException` is only the framework's uniform 403 signal, and no
+Cloudflare JWT verifier is claimed (WP-3.2). The temporary implementation branch
+`feature/auth-56-framework` is retained until this final evidence PR merges.
+
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
 PR #210 recorded the seven spiked areas from PART 40.3: transport, Windows JAR replacement,
@@ -1261,7 +1302,10 @@ matrix remains empty and `softwareName` is still `Unknown`.
 - The WP-1.5 command surface and WP-1.6 per-sender message path still have server-free tests only;
   the smoke run does not execute `/deploymc` in-game.
 - Only `auth.mode: token` is implemented. `cloudflare` and `local-onetime` refuse startup.
-- Every token is admin-equivalent until 0.4.0; RBAC and path scopes do not exist yet.
+- Every token is admin-equivalent until 0.4.0; the RBAC engine and path scopes do not exist yet.
+  WP-3.1 only establishes the authenticated context and uniform 403 denial path.
+- WP-3.1 has server-free unit and embedded-socket evidence only; no running server, browser, E2E run,
+  full integration suite, or in-game command exercised the final auth boundary.
 - Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
   real-server verification. See [plugin messages](../i18n/plugin-messages.md).
 - The support-tier matrix is empty; the v1 smoke harness records real Paper evidence but earns no
@@ -1286,13 +1330,14 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120, #121, and
-#123 are complete, and their final consolidated evidence is recorded. Issue #123 was prepared in
-parallel and approved for merge immediately after #120; PR #213 merged at `671a702`. PR #215 merged
-at `267d690` and closed #121. PR #217 is the final evidence pull request for the remaining category 4
-issue #122 (advisory remediation) and closes it when merged. After that merge, continue with category
-5 (#124-#130). Work on later items may be prepared in parallel but must not be merged ahead of an
-earlier open issue unless the owner explicitly approves.
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #123 are complete,
+and their final consolidated evidence is recorded. WP-3.1 (issue #56) is complete with this final
+evidence PR; PR #222 merged its implementation at `41b6fee` and `1ba834b`. The next oldest open item
+is WP-3.2 (issue #57), the Cloudflare Access JWT verifier. Owner decision D-002 remains open, so no
+real Cloudflare Access verification or plan-specific guide claim is made until the owner decides;
+local implementation and fixture-driven verification may still proceed. Work on later items may be
+prepared in parallel but must not be merged ahead of an earlier open issue unless the owner
+explicitly approves.
 
 ## Release checklist
 
