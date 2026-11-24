@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.auth.AuthContext;
 import io.github.woxlo1.deploymc.core.auth.Identity;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -53,22 +54,23 @@ public final class MetricsHandler implements HttpHandler {
               false)
           .withHeader("Allow", "GET");
     }
-    Identity identity = request.identity();
+    AuthContext context = request.context();
+    Identity identity = context.identity();
     if (identity == null) {
       return TransportProblems.problem(
           401,
           "auth.required",
           MessageKeys.AUTH_REQUIRED_TITLE,
           MessageKeys.AUTH_REQUIRED_DETAIL,
-          request.id(),
+          context.requestId(),
           messages,
           false);
     }
     if (!identity.adminEquivalent()) {
-      return TransportProblems.metricsForbidden(request.id(), messages);
+      return TransportProblems.metricsForbidden(context.requestId(), messages);
     }
     return HttpResponse.of(
             200, CONTENT_TYPE, registry.renderPrometheus().getBytes(StandardCharsets.UTF_8))
-        .withHeader(TransportProblems.REQUEST_ID, request.id());
+        .withHeader(TransportProblems.REQUEST_ID, context.requestId());
   }
 }

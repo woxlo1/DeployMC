@@ -1,8 +1,12 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.auth.AuthContext;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
+import io.github.woxlo1.deploymc.core.auth.AuthenticationFilter;
+import io.github.woxlo1.deploymc.core.auth.AuthenticationRequest;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
+import io.github.woxlo1.deploymc.core.auth.AuthorizationDeniedException;
 import io.github.woxlo1.deploymc.core.auth.Identity;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -64,8 +68,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       AttributeKey.valueOf("deploymc.transport.requestId");
   private static final AttributeKey<NettyWebSocketSession> SESSION =
       AttributeKey.valueOf("deploymc.transport.websocketSession");
-  private static final AttributeKey<Identity> AUTHENTICATED_IDENTITY =
-      AttributeKey.valueOf("deploymc.transport.authenticatedIdentity");
+  private static final AttributeKey<AuthContext> AUTH_CONTEXT =
+      AttributeKey.valueOf("deploymc.transport.authContext");
 
   private static final String FORBIDDEN = "forbidden";
   private static final String OVERSIZED_BODY = "oversized_body";
@@ -82,7 +86,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final WebSocketListener webSocketListener;
   private final TransportPolicy policy;
   private final RequestLogger logger;
-  private final Authenticator authenticator;
+  private final AuthenticationFilter authenticationFilter;
   private final TransportMessages messages;
   private final ObservabilityConfig observability;
   private final MetricsRegistry metrics;
@@ -149,7 +153,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     this.webSocketListener = Objects.requireNonNull(webSocketListener, "webSocketListener");
     this.policy = Objects.requireNonNull(policy, "policy");
     this.logger = Objects.requireNonNull(logger, "logger");
-    this.authenticator = authenticator;
+    this.authenticationFilter = new AuthenticationFilter(authenticator);
     this.messages = Objects.requireNonNull(messages, "messages");
     this.observability = config.observability();
     this.metrics = Objects.requireNonNull(metrics, "metrics");
@@ -415,11 +419,26 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     }
   }
 
-  private HttpRequest toInternal(FullHttpRequest request, String id, Identity identity) {
+  private HttpRequest toInternal(FullHttpRequest request, String id, AuthContext context) {
     String uri = request.uri();
     int queryIndex = uri.indexOf('?');
     String path = queryIndex < 0 ? uri : uri.substring(0, queryIndex);
     String query = queryIndex < 0 ? "" : uri.substring(queryIndex + 1);
+    ByteBuf content = request.content();
+    byte[] body = new byte[content.readableBytes()];
+    content.getBytes(content.readerIndex(), body);
+    return HttpRequest.withContext(
+        id, request.method().name(), path, query, copyHeaders(request), body, context);
+  }
+
+  private AuthenticationRequest toAuthenticationRequest(FullHttpRequest request, String id) {
+    String uri = request.uri();
+    int queryIndex = uri.indexOf('?');
+    String path = queryIndex < 0 ? uri : uri.substring(0, queryIndex);
+    return new AuthenticationRequest(id, request.method().name(), path, copyHeaders(request));
+  }
+
+  private static Map<String, List<String>> copyHeaders(FullHttpRequest request) {
     Map<String, List<String>> headers = new HashMap<>();
     for (String name : request.headers().names()) {
       List<String> values = new ArrayList<>();
@@ -428,10 +447,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       }
       headers.put(name.toLowerCase(Locale.ROOT), values);
     }
-    ByteBuf content = request.content();
-    byte[] body = new byte[content.readableBytes()];
-    content.getBytes(content.readerIndex(), body);
-    return new HttpRequest(id, request.method().name(), path, query, headers, body, identity);
+    return headers;
   }
 
   private boolean isWebSocketUpgrade(FullHttpRequest request) {
@@ -586,19 +602,21 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         return;
       }
       FullHttpRequest request = (FullHttpRequest) message;
+      String id = requestId(context);
+      context.channel().attr(AUTH_CONTEXT).set(null);
       String requestPath = path(request.uri());
       if (HEALTHZ.equals(requestPath) || READYZ.equals(requestPath)) {
-        context.channel().attr(AUTHENTICATED_IDENTITY).set(null);
+        context.channel().attr(AUTH_CONTEXT).set(AuthContext.anonymous(id));
         context.fireChannelRead(message);
         return;
       }
       EndpointClass endpoint = classify(requestPath);
-      if (authenticator == null) {
-        rejectAuthentication(context, request, AuthenticationFailure.REQUIRED);
-        return;
+      AuthenticationResult result;
+      try {
+        result = authenticationFilter.filter(toAuthenticationRequest(request, id));
+      } catch (RuntimeException exception) {
+        result = AuthenticationResult.failed(AuthenticationFailure.INVALID);
       }
-      AuthenticationResult result =
-          authenticator.authenticate(request.headers().get(HttpHeaderNames.AUTHORIZATION));
       if (result.authenticated()) {
         Identity identity = result.identity();
         RateLimitDecision decision = rateLimiter.tryIdentity(identity.id(), endpoint);
@@ -611,7 +629,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
           rejectBusy(context, request);
           return;
         }
-        context.channel().attr(AUTHENTICATED_IDENTITY).set(identity);
+        context.channel().attr(AUTH_CONTEXT).set(authenticationFilter.context(id, result));
         context.fireChannelRead(message);
         return;
       }
@@ -670,9 +688,12 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       long started = System.nanoTime();
       HttpRequest internal;
       try {
-        Identity identity = context.channel().attr(AUTHENTICATED_IDENTITY).get();
-        context.channel().attr(AUTHENTICATED_IDENTITY).set(null);
-        internal = toInternal(request, id, identity);
+        AuthContext authContext = context.channel().attr(AUTH_CONTEXT).get();
+        context.channel().attr(AUTH_CONTEXT).set(null);
+        if (authContext == null || !id.equals(authContext.requestId())) {
+          authContext = AuthContext.anonymous(id);
+        }
+        internal = toInternal(request, id, authContext);
       } finally {
         ReferenceCountUtil.release(request);
       }
@@ -684,6 +705,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         } else {
           response = httpHandler.handle(internal);
         }
+      } catch (AuthorizationDeniedException denied) {
+        response = TransportProblems.authorizationDenied(id, messages);
       } catch (Exception exception) {
         response =
             HttpResponse.error(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), INTERNAL_ERROR);
@@ -714,7 +737,12 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     public void userEventTriggered(ChannelHandlerContext context, Object event) {
       if (event == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE) {
         String id = "ws-" + UUID.randomUUID();
-        NettyWebSocketSession session = new NettyWebSocketSession(context, id);
+        AuthContext authContext = context.channel().attr(AUTH_CONTEXT).get();
+        context.channel().attr(AUTH_CONTEXT).set(null);
+        if (authContext == null) {
+          authContext = AuthContext.anonymous(id);
+        }
+        NettyWebSocketSession session = new NettyWebSocketSession(context, id, authContext);
         context.channel().attr(SESSION).set(session);
         webSocketConnections.incrementAndGet();
         metrics.setWebSocketConnections(webSocketConnections.get());
@@ -758,11 +786,14 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
 
     private final ChannelHandlerContext context;
     private final String id;
+    private final AuthContext authContext;
     private final WebSocketOutboundQueue outbound;
 
-    private NettyWebSocketSession(ChannelHandlerContext context, String id) {
+    private NettyWebSocketSession(
+        ChannelHandlerContext context, String id, AuthContext authContext) {
       this.context = context;
       this.id = id;
+      this.authContext = Objects.requireNonNull(authContext, "authContext");
       this.outbound =
           new WebSocketOutboundQueue(
               config,
@@ -787,6 +818,11 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     @Override
     public String remoteAddress() {
       return REDACTED;
+    }
+
+    @Override
+    public AuthContext context() {
+      return authContext;
     }
 
     @Override

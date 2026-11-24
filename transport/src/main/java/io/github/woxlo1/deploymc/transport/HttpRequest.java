@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.auth.AuthContext;
 import io.github.woxlo1.deploymc.core.auth.Identity;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +19,7 @@ public final class HttpRequest {
   private final String query;
   private final Map<String, List<String>> headers;
   private final byte[] body;
-  private final Identity identity;
+  private final AuthContext context;
 
   public HttpRequest(
       String id,
@@ -27,7 +28,7 @@ public final class HttpRequest {
       String query,
       Map<String, List<String>> headers,
       byte[] body) {
-    this(id, method, path, query, headers, body, null);
+    this(id, method, path, query, headers, body, (Identity) null);
   }
 
   public HttpRequest(
@@ -38,10 +39,44 @@ public final class HttpRequest {
       Map<String, List<String>> headers,
       byte[] body,
       Identity identity) {
+    this(
+        id,
+        method,
+        path,
+        query,
+        headers,
+        body,
+        identity == null ? AuthContext.anonymous(id) : AuthContext.authenticated(id, identity));
+  }
+
+  /** Creates a request carrying the explicit identity context produced by the auth filter. */
+  public static HttpRequest withContext(
+      String id,
+      String method,
+      String path,
+      String query,
+      Map<String, List<String>> headers,
+      byte[] body,
+      AuthContext context) {
+    return new HttpRequest(id, method, path, query, headers, body, context);
+  }
+
+  private HttpRequest(
+      String id,
+      String method,
+      String path,
+      String query,
+      Map<String, List<String>> headers,
+      byte[] body,
+      AuthContext context) {
     this.id = Objects.requireNonNull(id, "id");
     this.method = Objects.requireNonNull(method, "method");
     this.path = Objects.requireNonNull(path, "path");
     this.query = query == null ? "" : query;
+    this.context = Objects.requireNonNull(context, "context");
+    if (!id.equals(context.requestId())) {
+      throw new IllegalArgumentException("context request id must match the request id");
+    }
     Map<String, List<String>> copy = new LinkedHashMap<>();
     for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
       String key = entry.getKey().toLowerCase(Locale.ROOT);
@@ -49,7 +84,6 @@ public final class HttpRequest {
     }
     this.headers = Collections.unmodifiableMap(copy);
     this.body = Objects.requireNonNull(body, "body").clone();
-    this.identity = identity;
   }
 
   public String id() {
@@ -81,11 +115,16 @@ public final class HttpRequest {
     return values == null || values.isEmpty() ? null : values.get(0);
   }
 
+  /** Explicit identity context for this request; never derived from a client header. */
+  public AuthContext context() {
+    return context;
+  }
+
   /**
-   * The identity established by the transport authentication gate, never from a header. It is
-   * {@code null} for unauthenticated probes and for direct handler tests.
+   * The identity established by the transport authentication gate. It is {@code null} for
+   * unauthenticated probes and for direct handler tests.
    */
   public Identity identity() {
-    return identity;
+    return context.identity();
   }
 }

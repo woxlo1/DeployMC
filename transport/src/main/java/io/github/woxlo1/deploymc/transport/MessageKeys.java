@@ -28,6 +28,8 @@ public final class MessageKeys {
   public static final String AUTH_INVALID_DETAIL = "problem.auth.invalid.detail";
   public static final String AUTH_EXPIRED_TITLE = "problem.auth.expired.title";
   public static final String AUTH_EXPIRED_DETAIL = "problem.auth.expired.detail";
+  public static final String AUTH_DENIED_TITLE = "problem.rbac.denied.title";
+  public static final String AUTH_DENIED_DETAIL = "problem.rbac.denied.detail";
 
   public static final String REQUEST_INVALID_TITLE = "problem.request.invalid.title";
   public static final String REQUEST_INVALID_DETAIL = "problem.request.invalid.detail";

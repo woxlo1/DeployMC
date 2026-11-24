@@ -32,7 +32,7 @@ public final class DoctorHandler implements HttpHandler {
       return common(
           HttpResponse.error(405, "method_not_allowed").withHeader("Allow", "GET"), request.id());
     }
-    Identity identity = request.identity();
+    Identity identity = request.context().identity();
     if (identity == null) {
       return common(
           problem(

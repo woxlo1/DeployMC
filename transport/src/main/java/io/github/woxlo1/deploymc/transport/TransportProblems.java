@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.auth.AuthorizationDeniedException;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -9,6 +10,7 @@ final class TransportProblems {
   static final String RATE_LIMITED_CODE = "auth.rate-limited";
   static final String SERVER_BUSY_CODE = "server.busy";
   static final String METRICS_FORBIDDEN_CODE = "metrics.forbidden";
+  static final String AUTHORIZATION_DENIED_CODE = AuthorizationDeniedException.DEFAULT_CODE;
   static final String METRICS_NOT_FOUND_CODE = "metrics.not-found";
   static final String RETRY_AFTER = "Retry-After";
   static final String RATE_LIMIT_LIMIT = "RateLimit-Limit";
@@ -56,6 +58,18 @@ final class TransportProblems {
         METRICS_FORBIDDEN_CODE,
         MessageKeys.METRICS_FORBIDDEN_TITLE,
         MessageKeys.METRICS_FORBIDDEN_DETAIL,
+        requestId,
+        messages,
+        false);
+  }
+
+  /** Uniform 403 for authorization denials. No permission, path, or identity detail is included. */
+  static HttpResponse authorizationDenied(String requestId, TransportMessages messages) {
+    return problem(
+        403,
+        AUTHORIZATION_DENIED_CODE,
+        MessageKeys.AUTH_DENIED_TITLE,
+        MessageKeys.AUTH_DENIED_DETAIL,
         requestId,
         messages,
         false);
