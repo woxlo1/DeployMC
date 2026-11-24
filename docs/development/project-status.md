@@ -2,8 +2,8 @@
 
 Last updated: 2026-11-24 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
-implementation). GitHub merge evidence below was verified against `main` through `671a702` after
-PR #213. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
+implementation). GitHub merge evidence below was verified against `main` through `267d690` after
+PR #215. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
 All PART 33 algorithm regression suites are merged; issue #116 is complete. All PART 36 observability
 baseline stages are merged with local and post-merge evidence; issue #117 closed at `83b9107`.
 PART 40.3 early risk-reduction spikes merged in PR #210 at `a998f7e`; issue #118 closed at
@@ -11,8 +11,9 @@ PART 40.3 early risk-reduction spikes merged in PR #210 at `a998f7e`; issue #118
 at `2026-11-23T11:25:53Z`. PART 39 specification change control merged in PR #212 at `d068990`;
 issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged in PR #213 at
 `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
-recorded in `docs/development/dependabot-triage.md`; its final evidence PR is in flight and issue
-#121 will close after merge.
+recorded in `docs/development/dependabot-triage.md`; PR #215 merged its final evidence at `267d690`
+with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
+`2026-11-24T07:55:44Z`.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1281,10 +1282,10 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 ## Next tasks
 
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
-(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120 and issue
+(#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #120, #121, and
 #123 are complete, and their final consolidated evidence is recorded. Issue #123 was prepared in
-parallel and approved for merge immediately after #120; PR #213 merged at `671a702`. This PR
-completes issue #121. Continue with the open category 4 issue #122 (advisory remediation), then
+parallel and approved for merge immediately after #120; PR #213 merged at `671a702`. PR #215 merged
+at `267d690` and closed #121. Continue with the open category 4 issue #122 (advisory remediation), then
 category 5 (#124-#130). Work on later items may be prepared in parallel but must not be merged ahead
 of an earlier open issue unless the owner explicitly approves.
 

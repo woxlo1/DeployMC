@@ -146,9 +146,10 @@ quality reporting merged in PR #211 at `e0f6ddb`; issue #119 closed at `2026-11-
 specification change control merged in PR #212 at `d068990`; issue #120 closed at
 `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged in PR #213 at `671a702`; issue #123
 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage for PRs #23-#39 is recorded
-in `docs/development/dependabot-triage.md`; its final evidence PR is in flight and issue #121 will
-close after merge. No dependency PR was merged, closed, rebased, or approved by that triage. D-001
-still blocks restart, update-folder, and oldest/newest-version evidence.
+in `docs/development/dependabot-triage.md`; PR #215 merged its final evidence at `267d690` with
+passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at `2026-11-24T07:55:44Z`. No dependency
+PR was merged, closed, rebased, or approved by that triage. D-001 still blocks restart, update-folder,
+and oldest/newest-version evidence.
 
 To check every language toolchain at once, run `node tools/build/verify-all.cjs` from the repository
 root (see [`tools/build/README.md`](tools/build/README.md)). CI remains the merge authority. The

@@ -28,8 +28,9 @@ here; issue #117 closed at `83b9107`. PART 40.3 early risk-reduction spikes merg
 at `2026-11-23T11:25:53Z`. PART 39 specification change control merged in PR #212 at `d068990`;
 issue #120 closed at `2026-11-23T11:43:16Z`. PART 40.4 dependency policy merged in PR #213 at
 `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`. PART 40.5 individual Dependabot triage is
-recorded in `docs/development/dependabot-triage.md`; its final evidence PR is in flight and issue
-#121 will close after merge.
+recorded in `docs/development/dependabot-triage.md`; PR #215 merged its final evidence at `267d690`
+with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
+`2026-11-24T07:55:44Z`.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -118,8 +119,7 @@ The policy explicitly records current gaps instead of claiming controls that do 
 dependency verification metadata, no Python development lockfile, no SBOM/signing/provenance
 pipeline, no exercised release branch, and no custom auto-merge enforcement workflow. No Dependabot
 pull request, advisory, or repository setting was changed by this issue. Issue #123 closed at
-`2026-11-24T07:29:03Z`; #121 and #122 remain the issues for individual Dependabot triage and
-advisory remediation.
+`2026-11-24T07:29:03Z`; #121 is complete, and #122 remains the issue for advisory remediation.
 
 | Command | Result |
 |---|---|
@@ -272,7 +272,7 @@ These were actually run, not just written. Commands are the ones documented in
 | PART 41 quality reporting | Deterministic report over existing Web gzip and plugin JAR artifacts, with fail-closed handling and explicit `NOT MEASURED` for the other areas | PR #211 merged at `e0f6ddb`; 5 quality tests passed, check exit 0 with both budgets PASS, and full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no other PART 41 gate was implemented |
 | PART 39 spec change control | `spec-errata.md` with seed `E-001`, reviewed `spec/` PR workflow, owner approval rules, and mandatory milestone consistency audit | PR #212 merged at `d068990`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no requirement weakened or removed |
 | PART 40.4 dependency policy | Selection, pinning, review, update, exemption, advisory verification, severity response, and release-branch security policy with recorded gaps | PR #213 merged at `671a702`; issue #123 closed at `2026-11-24T07:29:03Z`; documentation-only change with full `verify-all.cjs`, commitlint, Spotless, and `git diff --check` passed; no Dependabot PR, advisory, or setting changed |
-| PART 40.5 Dependabot triage | Individual evidence and classification for PRs #23-#39 with official sources, failure logs, and owner actions | Final evidence PR for #121 in flight; 3 rebase-then-merge candidates, 2 breaking-change reviews, 12 failing PRs kept open, and 2 close candidates awaiting owner decision; no PR changed by the triage |
+| PART 40.5 Dependabot triage | Individual evidence and classification for PRs #23-#39 with official sources, failure logs, and owner actions | PR #215 merged at `267d690`; issue #121 closed at `2026-11-24T07:55:44Z`; 3 rebase-then-merge candidates, 2 breaking-change reviews, 12 failing PRs kept open, and 2 close candidates awaiting owner decision; no PR changed by the triage |
 
 The WP-2.3 implementation all-toolchain run was `node tools/build/verify-all.cjs` on the merged tree
 after PR #159, with `DEPLOYMC_JAVA_ROOT` set to the existing ASCII junction; it reported `PASS` for
