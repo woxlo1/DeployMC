@@ -116,6 +116,12 @@ validation guide and parser guide, both checked on 2026-11-24. `check-asyncapi.c
 repository has no custom AsyncAPI governance ruleset, so no CLI-only lint rule was dropped. Three
 `node:test` cases cover the repository document, an invalid document, and an empty document.
 
+PR #218 was rebase-merged at `ba22d03989013fb6131c8483ce33f359ad374b48` on 2026-11-24T09:04:00Z.
+Its three Conventional Commits remain on `main`. CI, CodeQL, and Scorecard all passed after the
+merge. Issue #122 closed at 2026-11-24T09:04:02Z. The final Security-tab recheck at
+2026-11-24T09:08:12Z reported 62 alerts: 61 `fixed`, 0 `open`, and 1 `auto_dismissed`. No accepted
+risk was recorded.
+
 ## Reachability and compatibility assessment
 
 - Vite and Vitest advisories concern development servers and test tooling. Production artifacts are
@@ -156,6 +162,10 @@ Commands were run from the repository root unless a directory is shown.
 | `cd tools/spec && npm install` | `found 0 vulnerabilities` after the CLI removal |
 | `cd tools/spec && npm run lint` | OpenAPI, AsyncAPI, config, and state-machine lint passed |
 | `cd tools/spec && npm test` | 17 tests passed, 0 failed |
+| Post-merge CI run 45361654341 | `success` at 2026-11-24T09:05:54Z |
+| Post-merge CodeQL run 45361654346 | `success` at 2026-11-24T09:07:57Z |
+| Post-merge Scorecard run 45361654342 | `success` at 2026-11-24T09:04:44Z |
+| Final Security-tab recheck | 62 total, 61 `fixed`, 0 `open`, 1 `auto_dismissed` at 2026-11-24T09:08:12Z |
 
 Gradle commands ran through the ASCII junction
 `C:\Users\satos\AppData\Local\Temp\opencode\dmc-catchup` because this host repository path contains
@@ -165,20 +175,20 @@ non-ASCII characters.
 
 - The bundled-`npm` chain containing `glob@13.0.6` and `minimatch@10.2.5` was removed by replacing
   the AsyncAPI CLI with the parser. No override failed silently and no exception was requested.
-- Two GitHub alerts remain `auto_dismissed` (`glob` and `@eslint/plugin-kit`). They were reviewed but
-  not reopened or manually dismissed. The `glob` package is no longer present after the CLI removal;
-  the `@eslint/plugin-kit` alert is a development-only lint dependency.
+- One GitHub alert remains `auto_dismissed` (`@eslint/plugin-kit`). It was not reopened or manually
+  dismissed and is a development-only lint dependency. The previously auto-dismissed `glob` alert was
+  resolved when the AsyncAPI CLI removal deleted that dependency tree.
 - No server, browser, E2E run, full integration suite, or in-game command was exercised. No accepted
-  risk is recorded on this page; the final Security-tab recheck after merge remains authoritative.
+  risk is recorded on this page. The final Security-tab recheck found 0 open alerts.
 
 ## Issue and pull request
 
 - PR #217 was the first consolidated evidence pull request for issue #122; it was rebase-merged at
   `9be2fa0` and has Japanese verification and post-merge evidence comments. It reduced 57 open alerts
   to 3, so it did not complete the issue.
-- Issue #122 was reopened after that recheck. The follow-up pull request from
-  `deps/122-residual-alerts` carries `Closes #122` and applies the residual fixes above. It is the
-  final consolidated evidence pull request; the Security-tab recheck after its merge determines
-  whether any alert remains open.
+- Issue #122 was reopened after that recheck. PR #218 from `deps/122-residual-alerts` carried
+  `Closes #122`, applied the residual fixes above, and was rebase-merged at `ba22d03`. It is the
+  final consolidated evidence pull request. The issue closed at 2026-11-24T09:04:02Z, and the
+  Security-tab recheck afterwards found 0 open alerts.
 - Existing dependency PRs #23-#39 remain untouched under D-009. No accepted-risk exemption was
   created.

@@ -164,13 +164,15 @@ Issue #122 remediates the advisories observed on the repository Security tab. Th
 full remediation attempt, including major upgrades, while keeping Dependabot pull requests #23-#39
 untouched under D-009. [`advisory-remediation.md`](advisory-remediation.md) records all 37 unique
 GHSA records from the 57 open pre-remediation alerts, the canonical sources checked on 2026-11-24,
-the resolved versions, compatibility notes, and residual risks. PR #217 was rebase-merged at
-`9be2fa0` on 2026-11-24T08:37:26Z with passing CI, CodeQL, and Scorecard, but the post-merge Security
-recheck still found 3 open alerts. Issue #122 was reopened at 2026-11-24T08:42:28Z. The follow-up
-pull request from `deps/122-residual-alerts` upgrades Web Vite `6.4.4 -> 6.4.5`, replaces the
-`@asyncapi/cli` spec-tool wrapper with direct `@asyncapi/parser` validation so the bundled `npm`
-tree is removed, and reduces the spec overrides to `jsonpath-plus` and `minimatch`. That pull request
-carries `Closes #122`. CI remains the merge authority.
+the resolved versions, compatibility notes, and final Security-tab state. PR #217 was rebase-merged
+at `9be2fa0` on 2026-11-24T08:37:26Z with passing CI, CodeQL, and Scorecard, but the post-merge
+Security recheck still found 3 open alerts. Issue #122 was reopened at 2026-11-24T08:42:28Z. PR #218
+from `deps/122-residual-alerts` upgraded Web Vite `6.4.4 -> 6.4.5`, replaced the `@asyncapi/cli`
+spec-tool wrapper with direct `@asyncapi/parser` validation so the bundled `npm` tree was removed,
+and reduced the spec overrides to `jsonpath-plus` and `minimatch`. PR #218 was rebase-merged at
+`ba22d03` on 2026-11-24T09:04:00Z with passing CI, CodeQL, and Scorecard. Issue #122 closed at
+2026-11-24T09:04:02Z; the final Security-tab recheck at 2026-11-24T09:08:12Z reported 61 `fixed`,
+0 `open`, and 1 `auto_dismissed`. CI remains the merge authority.
 
 | Command | Result |
 |---|---|
@@ -187,11 +189,13 @@ carries `Closes #122`. CI remains the merge authority.
 | `cd tools/spec && npm ls npm --all` | empty tree; bundled `npm` is absent |
 | `cd tools/spec && npm run lint` | OpenAPI, AsyncAPI, config, and state-machine lint passed |
 | `cd tools/spec && npm test` | 17 tests passed, 0 failed |
+| Post-merge CI / CodeQL / Scorecard for `ba22d03` | runs 45361654341 / 45361654346 / 45361654342 all `success` |
+| Final Security-tab recheck | 62 total, 61 `fixed`, 0 `open`, 1 `auto_dismissed` at 2026-11-24T09:08:12Z |
 
 No product code, CI gate, branch protection, user-facing string, or localization catalog changed.
 No existing Dependabot pull request was merged, closed, rebased, approved, or had auto-merge changed.
-No accepted-risk exemption was created. The final post-merge Security-tab alert state is recorded in
-the PR evidence. No server, browser, E2E run, full integration suite, or in-game command was used.
+No accepted-risk exemption was created. No server, browser, E2E run, full integration suite, or
+in-game command was used.
 
 ## Summary
 
