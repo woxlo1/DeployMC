@@ -56,8 +56,9 @@ Three renderings are required:
 | `environment` | Platform info, plugin version, API version. | `PASS` when all values are present. |
 | `capabilities` | `CapabilityCatalog` plus the platform capability map. | `PASS` when every key is `AVAILABLE`; `WARN` for `UNAVAILABLE` or `UNKNOWN`. |
 | `bind` | Loopback flag and a bounded local port probe. | `FAIL` for a non-loopback bind or a port owned by another process; `WARN` when the probe is inconclusive. |
-| `auth.mode` | Active startup mode. | `PASS` for `token`; `WARN` for reserved modes that refuse startup. |
+| `auth.mode` | Active startup mode. | `PASS` for implemented `token` or `cloudflare` modes; `WARN` for reserved modes that refuse startup. |
 | `auth.tunnel` | None yet. | `WARN`, `implemented: false`. |
+| `auth.jwt` | Redacted counters from the Cloudflare Access JWT verifier. | `PASS` when diagnostics exist with zero closed rejections; `WARN` for any rejection or missing diagnostics; `implemented: false` when no snapshot is supplied. Counts appear only in localized `detail`, never in evidence. |
 | `sandbox` | Root existence, writability, symlink policy, and protected-path resolution. | `FAIL` for an unusable root or rejected protected-path probe; `WARN` when free-space detection is unavailable. |
 | `snapshot` | Open store, lock status, verify report, and size against retention. | `FAIL` when the store is locked or over its byte limit; `WARN` for verify issues; `WARN`, `implemented: false` when no store is available. |
 | `deployment` | In-process active deployment count from the snapshot store. | `WARN` because persisted transactions, safe state, and restart viability are not implemented. |
