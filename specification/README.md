@@ -1,6 +1,6 @@
 # Specification skeletons
 
-> **Status: 2026-11-21.** These documents define normative contracts. Only the features
+> **Status: 2026-11-25.** These documents define normative contracts. Only the features
 > explicitly marked as implemented below have running code. A skeleton is normative for
 > design work, not evidence that a feature works.
 
@@ -18,7 +18,8 @@
 | [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification | No writer |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
 | [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |
-| [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | Implemented |
+| [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | WP-3.3 implemented; WP-3.4 owner and scope enforcement normative but not yet implemented |
+| [security/rbac.md](security/rbac.md) | Closed permission registry, role/path evaluation, token owner intersection, explain mode, and reload behavior | Normative contract for issue #59; no product evaluator until the implementation PR is merged |
 
 ## How these documents are checked
 

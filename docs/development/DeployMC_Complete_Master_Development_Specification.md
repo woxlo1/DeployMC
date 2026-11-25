@@ -617,7 +617,7 @@ Design and verify:
 
 ## 9.5 RBAC and Policy
 
-Configuration lives in the host-controlled `config.yml`. It must be fully validated at startup with precise error messages, and invalid configuration must fail safe (deny, not allow).
+Configuration lives in the host-controlled `config.yml`. It must be fully validated at startup with precise error messages, and invalid configuration must fail safe (deny, not allow). The normative WP-3.4 contract, including the closed permission registry, token owner mapping, reason codes, and explain-mode redaction, is `specification/security/rbac.md`. An absent `paths.allow` means the whole sandbox minus protected paths; an explicitly empty `paths.allow` grants no path scope. Tokens evaluate through their owner, never as admin-equivalent by default.
 
 Illustrative shape (finalize through the config schema):
 
@@ -1538,6 +1538,7 @@ Each WP lists: **Goal**, **Tasks**, **Deliverables**, **Verification**. Treat th
 
 ### WP-3.4 RBAC engine
 - Tasks: role/permission model per 9.5 and 24.2; path-scope evaluation via the sandbox resolver; deny-overrides; effective-permission computation for `/me`; config validation (unknown permission names are errors); explain-mode used by `doctor` and tests ("why was this denied?"); property tests ensuring a token can never exceed its owner's permissions.
+- Normative contract: `specification/security/rbac.md`. The closed registry has 23 permissions; token scopes narrow the owner's effective permissions; `local-onetime` is an ordinary RBAC identity; invalid reloads deny all; WebSocket permission loss closes with `4403`. Audit record generation remains WP-3.5.
 
 ### WP-3.5 Audit log
 - Tasks: format per 24.3; append-only writer with batching and fsync policy; hash chain; rotation; reader/verifier; query API; export; redaction guarantees verified by tests; behavior on disk-full (fail the operation or enter degraded mode per a documented policy; never silently drop audit records for privileged operations).
@@ -1830,7 +1831,7 @@ telemetry:
 
 ## 24.2 Permission Identifiers
 
-Permissions are flat, dotted, lowercase identifiers; `*` is allowed only as a whole-grant for admin roles. Initial set:
+Permissions are flat, dotted, lowercase identifiers; `*` is allowed only as a whole-grant for admin roles. The list below is the closed registry; `specification/security/rbac.md` and `config.schema.json` mirror it, and any other name is a configuration error. Initial set:
 
 ```
 server.read                 view server info and doctor report
@@ -2144,7 +2145,7 @@ Use this catalog to derive test cases. It is a minimum. Each listed behavior nee
 - Cloudflare JWT: all cases in WP-3.2; JWKS fetch failure with and without cache; key rotation mid-run; stale-key hard limit; header present but JWT missing; email header spoofing without JWT; multiple AUD values.
 - Tokens: expiry, revocation, scope narrowing, owner permission reduction after issuance, hashed storage verified (no plaintext on disk), brute-force lockout, timing-safe comparison.
 - One-time mode: refuses non-loopback bind; expires; limits attempts; cannot be reused.
-- RBAC: deny overrides allow; unknown identity gets default role; path scope evaluation via sandbox; wildcard semantics; config reload applying/revoking permissions during an open WebSocket (connection closed or downgraded with the documented close code).
+- RBAC: deny overrides allow; unknown identity gets default role; path scope evaluation via sandbox; wildcard semantics; config reload applying/revoking permissions during an open WebSocket (connection closed or downgraded with the documented close code). Tokens evaluate through their `owner` and can never exceed the owner's effective permissions; `local-onetime` uses the reserved identity `local-onetime` and is not admin-equivalent. A permission-revoked WebSocket closes with code `4403` and reason `rbac.permission-revoked`. An invalid reload puts the evaluator into deny-all mode rather than retaining a more permissive snapshot.
 
 ## 25.5 Deployment
 
@@ -2633,6 +2634,8 @@ authorize(identity, permission, path?) -> Decision(allow|deny, reason)
   record decision reason for explain-mode and audit (denials always audited)
 ```
 
+Normative WP-3.4 detail is in `specification/security/rbac.md`. Stable reasons are `NO_ROLE`, `NOT_GRANTED`, `TOKEN_SCOPE_EXCEEDED`, `PATH_DENIED`, and `PATH_SCOPE`. An absent `paths.allow` matches all sandbox paths; an empty `paths.allow` matches none. Deny rules from every assigned role win. WP-3.4 retains reasons for explain mode and the future audit writer; it does not itself write audit records.
+
 ## 33.5 Deployment Execution and Recovery
 
 ```
@@ -3091,6 +3094,7 @@ The agent MUST NOT silently ignore a part of the specification it considers wron
 | ID | Date | Change | Reason |
 |---|---|---|---|
 | E-001 | (initial) | Added WP-1.9 minimal authentication; removed the Phase 2 "temporary authentication stub"; `/api/v1/server` is authenticated from 0.2.0 | Original draft exposed an unauthenticated endpoint in Phase 1, conflicting with 9.3 ("no unauthenticated mode") |
+| E-002 | 2026-11-25 | Added the normative WP-3.4 RBAC contract and reconciled the closed permission registry, absent versus empty `paths.allow`, token owner mapping, `local-onetime` RBAC identity, invalid-reload deny-all, WebSocket close `4403`, and doctor `rbac` check | Issue #59 analysis found conflicts between 24.2/33.4, `config.schema.json`, and `token-records.md`; all changes tighten or clarify authorization and add no bypass |
 
 New errata append here and in the repository file.
 

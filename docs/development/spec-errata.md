@@ -45,3 +45,4 @@ same `spec/` PR.
 | ID | Date | Change | Reason | Evidence |
 |---|---|---|---|---|
 | E-001 | (initial) | Added WP-1.9 minimal authentication; removed the Phase 2 "temporary authentication stub"; `/api/v1/server` is authenticated from 0.2.0 | Original draft exposed an unauthenticated endpoint in Phase 1, conflicting with 9.3 ("no unauthenticated mode") | Part 39.2 seed table |
+| E-002 | 2026-11-25 | Added `specification/security/rbac.md` and reconciled the closed 23-permission registry, absent versus empty `paths.allow`, token owner mapping, `local-onetime` as an RBAC identity, deny-all on invalid reload, WebSocket close `4403`, and doctor `rbac` check | Issue #59 analysis found conflicts between the master algorithm, config schema, and token record contract; every resolution is a tightening or clarification and no bypass was added | Issue #59 spec analysis; `specification/security/rbac.md` |
