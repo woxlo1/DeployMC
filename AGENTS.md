@@ -146,9 +146,27 @@ async-safe `AuthContext`, bounded identity claims, explicit context propagation 
 WebSocket paths, and detail-free 401/403 Problem Details with localized `rbac.denied` messages.
 `/healthz` and `/readyz` remain the only unauthenticated endpoints. All 18 required PR checks and
 post-merge CI/CodeQL/Scorecard passed; `node tools/build/verify-all.cjs` reported all seven toolchains
-`PASS`, and the merged tree has 495 Java tests (0 failures, 0 errors, 1 skipped). Evidence is
-server-free and embedded-socket only; no RBAC engine (WP-3.4) or Cloudflare verifier (WP-3.2) is
-claimed, and no running server, browser, E2E run, full integration suite, or in-game command was used.
+`PASS`, and the merged tree had 495 Java tests (0 failures, 0 errors, 1 skipped). Evidence was
+server-free and embedded-socket only; no RBAC engine was claimed at that stage, and no running server,
+browser, E2E run, full integration suite, or in-game command was used. WP-3.2 later added the
+Cloudflare verifier recorded below.
+
+WP-3.2 Cloudflare Access JWT verification merged its core verifier in [PR #224](https://github.com/woxlo1/DeployMC/pull/224)
+at `d4a1576` and its host, transport, doctor, configuration, Web, and CI wiring in
+[PR #226](https://github.com/woxlo1/DeployMC/pull/226) at `d075646`, with issue #57 closing through
+the final evidence PR. It reads only `Cf-Access-Jwt-Assertion`, accepts RS256 with a required `kid`,
+validates issuer/audience/expiry/not-before/issued-at with bounded skew, uses a bounded HTTPS-only
+JWKS cache with ETag revalidation, a minimum refresh interval, and bounded stale-while-error, and
+fails closed when JWKS is unavailable. `auth.mode: cloudflare` starts at runtime, derives the JWKS
+endpoint from `auth.cloudflare.team-domain`, and refuses in-game token provisioning. Diagnostics
+expose only closed rejection codes and counts; the 14th doctor check `auth.jwt` has no evidence keys,
+and the Web parser and OpenAPI now require 14 checks. All 11 JWT vectors pass through the product
+verifier, the merged tree has 516 Java tests (0 failures, 0 errors, 1 skipped), all seven toolchains
+report `PASS`, and required PR checks plus post-merge CI/CodeQL/Scorecard passed. Evidence is
+server-free, embedded-socket, and localhost-mock-JWKS only; no running server, Bukkit mock, browser,
+E2E run, full integration suite, or in-game command exercised it. Real Cloudflare compatibility and
+plan-specific guidance remain unclaimed until D-002 is resolved, and RBAC is unchanged: Cloudflare
+JWT identities are not admin-equivalent, so the REST doctor route remains host-only.
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
