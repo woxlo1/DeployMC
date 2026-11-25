@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/woxlo1/DeployMC/raw/main/specification/config/config.schema.json",
   "title": "DeployMC configuration",
-  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: the loader validates the structural rules in this schema. As of 0.1.0, only `auth.mode: token` is implemented; `cloudflare` and `local-onetime` are reserved for later work and refuse startup.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
+  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: the loader validates the structural rules in this schema. `auth.mode: token` and `auth.mode: cloudflare` are implemented; `local-onetime` remains reserved for later work and refuses startup. In Cloudflare mode only the `Cf-Access-Jwt-Assertion` header is trusted; forwarded identity headers are ignored.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
   "type": "object",
   "additionalProperties": true,
   "required": ["config-version"],
@@ -88,7 +88,7 @@
           "type": "string",
           "enum": ["cloudflare", "token", "local-onetime"],
           "default": "token",
-          "description": "`token` accepts host-provisioned DeployMC API tokens and is the only implemented mode. `cloudflare` and `local-onetime` are reserved for later work; selecting them refuses startup.",
+          "description": "`token` accepts host-provisioned DeployMC API tokens. `cloudflare` verifies RS256 Cloudflare Access JWT assertions and ignores forwarded identity headers. `local-onetime` is reserved for later work; selecting it refuses startup.",
           "x-deploymc-hot-reload": false
         },
         "cloudflare": {
@@ -130,48 +130,31 @@
               "minimum": 0,
               "maximum": 300,
               "default": 60,
-              "description": "Allowed clock skew for `exp`, `nbf`, and `iat`. A larger value weakens replay protection.",
-              "x-deploymc-hot-reload": true
+              "description": "Allowed clock skew for `exp`, `nbf`, and `iat`. A larger value weakens replay protection. Restart-only because the verifier is built at startup.",
+              "x-deploymc-hot-reload": false
             },
             "jwks-cache-max-age-seconds": {
               "type": "integer",
               "minimum": 60,
               "maximum": 86400,
               "default": 3600,
-              "description": "Normal JWKS cache lifetime. Refresh happens before expiry, not on every request.",
-              "x-deploymc-hot-reload": true
+              "description": "Normal JWKS cache lifetime. Refresh happens before expiry, not on every request. Restart-only because the verifier is built at startup.",
+              "x-deploymc-hot-reload": false
             },
             "jwks-max-stale-seconds": {
               "type": "integer",
               "minimum": 0,
               "maximum": 604800,
               "default": 86400,
-              "description": "Hard limit on serving from a cached JWKS while the endpoint is unreachable. Beyond it authentication fails closed with `auth.jwks-unavailable`. `0` disables stale use.",
-              "x-deploymc-hot-reload": true
+              "description": "Hard limit on serving from a cached JWKS while the endpoint is unreachable. Beyond it authentication fails closed with `auth.jwks-unavailable`. `0` disables stale use. Restart-only because the verifier is built at startup.",
+              "x-deploymc-hot-reload": false
             },
             "require-shared-secret-header": {
               "type": "string",
-              "maxLength": 128,
-              "pattern": "^$|^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+              "const": "",
               "default": "",
-              "description": "Optional defense in depth: a header name that must be present on every request in `cloudflare` mode. The header value is checked against the secret store, never against this file. Empty disables the check.",
+              "description": "Reserved for a future defense-in-depth header check. It must remain empty: no secret store or product consumer exists, so a non-empty value fails validation instead of being silently ignored.",
               "x-deploymc-hot-reload": false
-            }
-          },
-          "if": {
-            "properties": {
-              "require-shared-secret-header": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "required": ["require-shared-secret-header"]
-          },
-          "then": {
-            "properties": {
-              "require-shared-secret-header": {
-                "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
-              }
             }
           }
         },

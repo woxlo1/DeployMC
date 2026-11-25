@@ -28,20 +28,22 @@ bind:
   trusted-proxies: []
 
 auth:
-  # token is the only implemented mode. Restart only. Unauthenticated access
-  # is never an option. cloudflare and local-onetime are reserved for later
-  # work and currently refuse startup.
+  # token and cloudflare are implemented; local-onetime is reserved and
+  # refuses startup. Restart only. Unauthenticated access is never an option.
+  # In cloudflare mode only the Cf-Access-Jwt-Assertion header is trusted.
   mode: token
 
-  # To use Cloudflare Access, add this section and set both values. Secrets
-  # belong in the secret store, never in this file.
+  # To use Cloudflare Access, set mode above to cloudflare and add this section.
+  # The JWKS URL is derived from the team domain; no secret belongs in this file.
+  # clock-skew-seconds, jwks-cache-max-age-seconds and jwks-max-stale-seconds
+  # are restart-only because the verifier is built at startup.
   # cloudflare:
   #   team-domain: "example.cloudflareaccess.com"
   #   audience: "replace-with-access-aud-tag"
   #   clock-skew-seconds: 60
   #   jwks-cache-max-age-seconds: 3600
   #   jwks-max-stale-seconds: 86400
-  #   require-shared-secret-header: ""
+  #   require-shared-secret-header: ""  # reserved; must stay empty
 
   token:
     default-ttl-days: 90       # hot-reloadable; never exceeds max-ttl-days

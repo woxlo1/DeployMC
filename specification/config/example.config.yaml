@@ -20,16 +20,25 @@ bind:
   trusted-proxies: []
 
 auth:
-  # Only `token` is implemented. `cloudflare` and `local-onetime` are reserved
-  # for later work and currently refuse startup.
+  # `token` and `cloudflare` are implemented. `local-onetime` is reserved and
+  # refuses startup. Cloudflare mode verifies the RS256 JWT assertion header
+  # only; forwarded identity headers are ignored.
   mode: token
   token:
     # Used by `/deploymc token create`. Never exceeds max-ttl-days.
     default-ttl-days: 90
     max-ttl-days: 365
-  # cloudflare and local-onetime settings are omitted because those modes are
-  # not implemented. Token records live under plugins/DeployMC/tokens.d/*.json
-  # and are never readable or writable through the API.
+  # To select Cloudflare Access, change mode above to `cloudflare` and add:
+  # cloudflare:
+  #   team-domain: "example.cloudflareaccess.com"
+  #   audience: "replace-with-access-aud-tag"
+  #   clock-skew-seconds: 60
+  #   jwks-cache-max-age-seconds: 3600
+  #   jwks-max-stale-seconds: 86400
+  #   require-shared-secret-header: ""  # reserved; must stay empty
+  # Token records live under plugins/DeployMC/tokens.d/*.json and are never
+  # readable or writable through the API. Token creation is refused in
+  # Cloudflare mode.
 
 sandbox:
   # Relative to the server's `plugins` directory.
