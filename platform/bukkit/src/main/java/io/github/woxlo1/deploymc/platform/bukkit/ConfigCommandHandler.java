@@ -1,6 +1,8 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
 import io.github.woxlo1.deploymc.core.auth.CreatedToken;
+import io.github.woxlo1.deploymc.core.auth.TokenRecord;
+import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.auth.TokenStoreException;
 import io.github.woxlo1.deploymc.core.config.ConfigException;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
@@ -8,10 +10,14 @@ import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.ReloadReport;
 import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -22,11 +28,15 @@ public final class ConfigCommandHandler {
 
   private static final List<String> SUBCOMMANDS =
       Collections.unmodifiableList(Arrays.asList("status", "reload", "doctor", "token"));
+  private static final List<String> TOKEN_ACTIONS =
+      Collections.unmodifiableList(Arrays.asList("create", "revoke", "list"));
+  private static final int MAX_TOKEN_ID_LENGTH = 64;
 
   private final ConfigManager manager;
   private final StartupPlan plan;
   private final AuthenticationRuntime authentication;
   private final DoctorRuntime doctor;
+  private final Clock clock;
 
   public ConfigCommandHandler(ConfigManager manager, StartupPlan plan) {
     this(manager, plan, null, null);
@@ -52,6 +62,7 @@ public final class ConfigCommandHandler {
     this.plan = plan;
     this.authentication = authentication;
     this.doctor = doctor;
+    this.clock = Clock.systemUTC();
   }
 
   /** Handles one invocation. Always returns {@code true} so Bukkit does not show generic usage. */
@@ -88,18 +99,42 @@ public final class ConfigCommandHandler {
     return true;
   }
 
-  /** Returns permitted subcommands for tab completion. */
+  /** Returns permitted subcommands and token actions for tab completion. */
   public List<String> complete(CommandOutput output, String[] arguments) {
     if (!output.hasPermission(CommandPermissions.ROOT)) {
       return Collections.emptyList();
     }
-    if (arguments != null && arguments.length > 1) {
+    String[] args = arguments == null ? new String[0] : arguments;
+    if (args.length == 0) {
+      return permitted(SUBCOMMANDS, output, "");
+    }
+    if (args.length == 1) {
+      return permitted(SUBCOMMANDS, output, args[0]);
+    }
+    if (!"token".equals(args[0]) || !output.hasPermission(CommandPermissions.TOKEN)) {
       return Collections.emptyList();
     }
+    if (args.length == 2) {
+      return permitted(TOKEN_ACTIONS, output, args[1]);
+    }
+    if (args.length == 3 && "revoke".equals(args[1]) && tokenStore() != null) {
+      List<String> ids = new ArrayList<String>();
+      for (TokenRecord record : tokenStore().records()) {
+        if (record.id().startsWith(args[2])) {
+          ids.add(record.id());
+        }
+      }
+      return Collections.unmodifiableList(ids);
+    }
+    return Collections.emptyList();
+  }
+
+  private static List<String> permitted(
+      List<String> candidates, CommandOutput output, String prefix) {
     List<String> result = new ArrayList<String>();
-    for (String subcommand : SUBCOMMANDS) {
-      if (output.hasPermission(permissionFor(subcommand))) {
-        result.add(subcommand);
+    for (String candidate : candidates) {
+      if (candidate.startsWith(prefix) && output.hasPermission(permissionFor(candidate))) {
+        result.add(candidate);
       }
     }
     return Collections.unmodifiableList(result);
@@ -186,31 +221,234 @@ public final class ConfigCommandHandler {
       output.send(messages.format(MessageKeys.COMMAND_CONSOLE_ONLY));
       return;
     }
-    if (args.length < 2 || !"create".equals(args[1])) {
+    if (args.length < 2 || !TOKEN_ACTIONS.contains(args[1])) {
       output.send(messages.format(MessageKeys.COMMAND_TOKEN_USAGE));
       return;
     }
-    if (authentication == null || !authentication.tokenProvisioningEnabled()) {
+    if ("create".equals(args[1])) {
+      createToken(output, messages, args);
+    } else if ("revoke".equals(args[1])) {
+      revokeToken(output, messages, args);
+    } else {
+      listTokens(output, messages);
+    }
+  }
+
+  private void createToken(CommandOutput output, LocalizedMessages messages, String[] args) {
+    if (tokenStore() == null) {
       output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
       return;
     }
-    String label = args.length > 2 ? join(Arrays.asList(args).subList(2, args.length)) : "console";
+    Integer requestedTtl = null;
+    List<String> scopes = new ArrayList<String>();
+    StringBuilder label = new StringBuilder();
+    for (int index = 2; index < args.length; index++) {
+      String argument = args[index];
+      if ("--ttl-days".equals(argument)) {
+        if (++index >= args.length) {
+          invalidValue(output, messages, "ttl-days");
+          return;
+        }
+        requestedTtl = parseTtlDays(args[index], output, messages);
+        if (requestedTtl == null) {
+          return;
+        }
+      } else if (argument.startsWith("--ttl-days=")) {
+        requestedTtl = parseTtlDays(argument.substring("--ttl-days=".length()), output, messages);
+        if (requestedTtl == null) {
+          return;
+        }
+      } else if ("--scopes".equals(argument)) {
+        if (++index >= args.length) {
+          invalidValue(output, messages, "scopes");
+          return;
+        }
+        scopes = parseScopes(args[index], output, messages);
+        if (scopes == null) {
+          return;
+        }
+      } else if (argument.startsWith("--scopes=")) {
+        scopes = parseScopes(argument.substring("--scopes=".length()), output, messages);
+        if (scopes == null) {
+          return;
+        }
+      } else if (argument.startsWith("--")) {
+        invalidValue(output, messages, "option");
+        return;
+      } else {
+        if (label.length() > 0) {
+          label.append(' ');
+        }
+        label.append(argument);
+      }
+    }
+
+    int maxTtl = maxTtlDays();
+    int effectiveTtl =
+        requestedTtl == null
+            ? (int) Math.max(1L, authentication.defaultTokenLifetime().toDays())
+            : requestedTtl;
+    effectiveTtl = Math.max(1, Math.min(effectiveTtl, maxTtl));
     try {
       CreatedToken created =
-          authentication.provisioner().create(label, authentication.defaultTokenLifetime());
+          authentication
+              .provisioner()
+              .create(
+                  label.length() == 0 ? "console" : label.toString(),
+                  Duration.ofDays(effectiveTtl),
+                  scopes);
       output.send(
           messages.format(
               MessageKeys.COMMAND_TOKEN_CREATED,
               values("id", created.record().id(), "label", created.record().label())));
       output.send(
+          messages.format(
+              MessageKeys.COMMAND_TOKEN_EFFECTIVE_TTL,
+              values("days", Integer.toString(effectiveTtl))));
+      if (!created.record().scopes().isEmpty()) {
+        output.send(
+            messages.format(
+                MessageKeys.COMMAND_TOKEN_STORED_SCOPES,
+                values("scopes", join(created.record().scopes()))));
+      }
+      output.send(
           messages.format(MessageKeys.COMMAND_TOKEN_TOKEN_LINE, values("token", created.token())));
       output.send(messages.format(MessageKeys.COMMAND_TOKEN_ADMIN_EQUIVALENT));
     } catch (TokenStoreException | RuntimeException exception) {
+      tokenFailed(output, messages);
+    }
+  }
+
+  private void revokeToken(CommandOutput output, LocalizedMessages messages, String[] args) {
+    TokenStore store = tokenStore();
+    if (store == null) {
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
+      return;
+    }
+    if (args.length != 3 || args[2].trim().isEmpty() || args[2].length() > MAX_TOKEN_ID_LENGTH) {
+      invalidValue(output, messages, "id");
+      return;
+    }
+    String id = args[2];
+    try {
+      store.revoke(id, clock.instant());
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_REVOKED, values("id", id)));
+    } catch (TokenStoreException exception) {
+      if (exception.reason() == TokenStoreException.Reason.RECORD) {
+        output.send(messages.format(MessageKeys.COMMAND_TOKEN_NOT_FOUND, values("id", id)));
+      } else {
+        tokenFailed(output, messages);
+      }
+    } catch (RuntimeException exception) {
+      tokenFailed(output, messages);
+    }
+  }
+
+  private void listTokens(CommandOutput output, LocalizedMessages messages) {
+    TokenStore store = tokenStore();
+    if (store == null) {
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
+      return;
+    }
+    List<TokenRecord> records = store.records();
+    if (records.isEmpty()) {
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_LIST_EMPTY));
+      return;
+    }
+    output.send(
+        messages.format(
+            MessageKeys.COMMAND_TOKEN_LIST_TITLE,
+            values("count", Integer.toString(records.size()))));
+    Instant now = clock.instant();
+    for (TokenRecord record : records) {
+      String statusKey =
+          record.isRevoked()
+              ? MessageKeys.COMMAND_TOKEN_STATUS_REVOKED
+              : (record.isExpired(now)
+                  ? MessageKeys.COMMAND_TOKEN_STATUS_EXPIRED
+                  : MessageKeys.COMMAND_TOKEN_STATUS_ACTIVE);
+      String expiresAt =
+          record.expiresAt() == null
+              ? messages.format(MessageKeys.COMMAND_TOKEN_NEVER)
+              : record.expiresAt().toString();
+      String lastUsedAt =
+          record.lastUsedAt() == null
+              ? messages.format(MessageKeys.COMMAND_TOKEN_NEVER)
+              : record.lastUsedAt().toString();
+      String scopes =
+          record.scopes().isEmpty()
+              ? messages.format(MessageKeys.COMMAND_TOKEN_NONE)
+              : join(record.scopes());
       output.send(
           messages.format(
-              MessageKeys.COMMAND_TOKEN_FAILED,
-              values("error", String.valueOf(exception.getMessage()))));
+              MessageKeys.COMMAND_TOKEN_LIST_ENTRY,
+              values(
+                  "id",
+                  record.id(),
+                  "label",
+                  record.label(),
+                  "status",
+                  messages.format(statusKey),
+                  "expiresAt",
+                  expiresAt,
+                  "lastUsedAt",
+                  lastUsedAt,
+                  "scopes",
+                  scopes)));
     }
+  }
+
+  private TokenStore tokenStore() {
+    return authentication != null && authentication.tokenProvisioningEnabled()
+        ? authentication.store()
+        : null;
+  }
+
+  private int maxTtlDays() {
+    Optional<ConfigView> current = manager.current();
+    int max = current.isPresent() ? current.get().getInt("auth.token.max-ttl-days", 365) : 365;
+    return Math.max(1, max);
+  }
+
+  private Integer parseTtlDays(String raw, CommandOutput output, LocalizedMessages messages) {
+    try {
+      int days = Integer.parseInt(raw);
+      if (days < 1) {
+        throw new NumberFormatException("ttl-days must be positive");
+      }
+      return Integer.valueOf(days);
+    } catch (NumberFormatException exception) {
+      invalidValue(output, messages, "ttl-days");
+      return null;
+    }
+  }
+
+  private List<String> parseScopes(String raw, CommandOutput output, LocalizedMessages messages) {
+    List<String> scopes = new ArrayList<String>();
+    if (raw.trim().isEmpty()) {
+      return scopes;
+    }
+    java.util.Set<String> unique = new LinkedHashSet<String>();
+    for (String part : raw.split(",", -1)) {
+      String scope = part.trim();
+      if (scope.isEmpty()) {
+        continue;
+      }
+      if (!TokenRecord.isValidScope(scope) || !unique.add(scope)) {
+        invalidValue(output, messages, "scopes");
+        return null;
+      }
+      scopes.add(scope);
+    }
+    return scopes;
+  }
+
+  private static void invalidValue(CommandOutput output, LocalizedMessages messages, String name) {
+    output.send(messages.format(MessageKeys.COMMAND_TOKEN_INVALID_VALUE, values("name", name)));
+  }
+
+  private static void tokenFailed(CommandOutput output, LocalizedMessages messages) {
+    output.send(messages.format(MessageKeys.COMMAND_TOKEN_FAILED));
   }
 
   private LocalizedMessages messages(CommandOutput output) {
