@@ -171,8 +171,17 @@ function lintConfigObject(config, { fileName = "config" } = {}) {
   }
 
   const bindAddress = get(config, "bind.address");
-  if (typeof bindAddress === "string" && !["127.0.0.1", "::1", "localhost"].includes(bindAddress)) {
+  const authMode = get(config, "auth.mode");
+  const allowNonLoopback = get(config, "bind.allow-non-loopback") === true;
+  const loopback = ["127.0.0.1", "::1", "localhost"].includes(bindAddress);
+  if (typeof bindAddress === "string" && !loopback) {
     warnings.push(`bind.address: "${bindAddress}" is not loopback; exposure relies on Cloudflare Tunnel or another TLS terminator`);
+  }
+  if (authMode === "local-onetime" && typeof bindAddress === "string" && !loopback && !allowNonLoopback) {
+    errors.push("auth.mode: local-onetime requires a loopback bind or bind.allow-non-loopback: true");
+  }
+  if (authMode === "local-onetime" && allowNonLoopback) {
+    warnings.push("bind.allow-non-loopback: local one-time mode is explicitly allowed outside loopback; local testing only");
   }
 
   const schemaTopLevel = new Set(Object.keys(JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8")).properties || {}));
