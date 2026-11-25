@@ -77,14 +77,14 @@ class DoctorHandlerTest {
   }
 
   @Test
-  void returnsTheRedactedThirteenCheckReportToAdminEquivalentIdentities() throws Exception {
+  void returnsTheRedactedFourteenCheckReportToAdminEquivalentIdentities() throws Exception {
     HttpResponse response = handler.handle(request("GET", DoctorHandler.PATH, ADMIN));
     String json = body(response);
 
     assertEquals(200, response.status());
     assertTrue(json.contains("\"redacted\":true"));
     assertTrue(json.contains("\"scope\":\"limited\""));
-    assertEquals(13, count(json, "\"id\":"));
+    assertEquals(14, count(json, "\"id\":"));
     assertFalse(json.contains("\"evidence\""));
     assertCommonHeaders(response);
   }

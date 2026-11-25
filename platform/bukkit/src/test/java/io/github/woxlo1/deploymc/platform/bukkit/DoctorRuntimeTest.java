@@ -8,6 +8,8 @@ import io.github.woxlo1.deploymc.api.CapabilityState;
 import io.github.woxlo1.deploymc.api.PlatformInfo;
 import io.github.woxlo1.deploymc.core.CapabilityKeys;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtRejection;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
@@ -20,6 +22,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,7 +54,7 @@ class DoctorRuntimeTest {
   }
 
   @Test
-  void runsAllThirteenChecksWithHostFactsAndNoFabricatedSubsystems() {
+  void runsAllFourteenChecksWithHostFactsAndNoFabricatedSubsystems() {
     DoctorReport report = runtime(PlatformCapabilities.empty()).run();
 
     List<String> ids = new ArrayList<String>();
@@ -75,6 +78,11 @@ class DoctorRuntimeTest {
     assertEquals(DoctorStatus.WARN, snapshot.status());
     assertFalse(snapshot.implemented());
     assertTrue(snapshot.evidence().isEmpty());
+
+    DoctorCheck jwt = check(report, DoctorService.ID_AUTH_JWT);
+    assertEquals(DoctorStatus.WARN, jwt.status());
+    assertFalse(jwt.implemented());
+    assertTrue(jwt.evidence().isEmpty());
 
     DoctorCheck deployment = check(report, DoctorService.ID_DEPLOYMENT);
     assertEquals(Boolean.FALSE, deployment.evidence().get("restartCapability"));
@@ -101,7 +109,34 @@ class DoctorRuntimeTest {
     assertFalse(deployment.implemented());
   }
 
+  @Test
+  void reportsFreshCloudflareJwtDiagnosticsWithoutExposingEvidence() {
+    AuthenticationRuntime authentication =
+        AuthenticationRuntime.createCloudflare(
+            CloudflareConfig.of(
+                "https://example.cloudflareaccess.com",
+                Collections.singletonList("deploymc-fake-audience"),
+                60,
+                3600,
+                86400),
+            CLOCK);
+    DoctorRuntime runtime = runtime(PlatformCapabilities.empty(), authentication);
+    authentication.jwtDiagnostics().record(JwtRejection.SIGNATURE_MISMATCH);
+
+    DoctorCheck jwt = check(runtime.run(), DoctorService.ID_AUTH_JWT);
+
+    assertEquals(DoctorStatus.WARN, jwt.status());
+    assertTrue(jwt.implemented());
+    assertTrue(jwt.evidence().isEmpty());
+    assertTrue(jwt.detail().contains("auth.invalid"), jwt.detail());
+  }
+
   private DoctorRuntime runtime(PlatformCapabilities capabilities) {
+    return runtime(capabilities, null);
+  }
+
+  private DoctorRuntime runtime(
+      PlatformCapabilities capabilities, AuthenticationRuntime authentication) {
     return new DoctorRuntime(
         manager,
         plan,
@@ -111,7 +146,8 @@ class DoctorRuntimeTest {
         "en",
         null,
         LocalizedMessages.of(Locale.ENGLISH),
-        CLOCK);
+        CLOCK,
+        authentication);
   }
 
   private static DoctorCheck check(DoctorReport report, String id) {

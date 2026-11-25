@@ -115,7 +115,8 @@ public final class DeployMCPlugin extends JavaPlugin {
               locale,
               view.language(),
               createdFileApi,
-              messages);
+              messages,
+              authentication);
       MetricsRegistry metrics = new MetricsRegistry();
       createdTransport =
           new NettyTransportServer(
