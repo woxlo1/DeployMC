@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Objects;
 
 /** WP-3.1 {@link Authenticator} implementation: host-provisioned bearer tokens. */
@@ -40,23 +41,41 @@ public final class TokenAuthenticator implements Authenticator {
     }
 
     byte[] candidateHash = sha256(token);
-    Identity match = null;
-    boolean expiredMatch = false;
+    TokenRecord match = null;
     for (TokenRecord record : store.records()) {
-      if (!record.matches(candidateHash)) {
-        continue;
-      }
-      if (record.isExpired(clock.instant())) {
-        expiredMatch = true;
-      } else if (match == null) {
-        match = record.identity();
+      if (match == null && record.matches(candidateHash)) {
+        match = record;
       }
     }
-    if (match != null) {
-      return AuthenticationResult.authenticated(match);
+    if (match == null) {
+      return AuthenticationResult.failed(AuthenticationFailure.INVALID);
     }
-    return AuthenticationResult.failed(
-        expiredMatch ? AuthenticationFailure.EXPIRED : AuthenticationFailure.INVALID);
+    Instant now = clock.instant();
+    if (match.isRevoked()) {
+      return AuthenticationResult.failed(AuthenticationFailure.REVOKED);
+    }
+    if (match.isExpired(now)) {
+      return AuthenticationResult.failed(AuthenticationFailure.EXPIRED);
+    }
+    if (shouldPersistLastUse(match, now)) {
+      try {
+        store.updateLastUsed(match, now);
+      } catch (TokenStoreException exception) {
+        return AuthenticationResult.failed(AuthenticationFailure.INTERNAL_ERROR);
+      }
+    }
+    return AuthenticationResult.authenticated(match.identity());
+  }
+
+  private static boolean shouldPersistLastUse(TokenRecord record, Instant now) {
+    Instant previous = record.lastUsedAt();
+    if (previous == null) {
+      return true;
+    }
+    if (now.isBefore(previous)) {
+      return false;
+    }
+    return !now.isBefore(previous.plusSeconds(60L));
   }
 
   private static boolean isPlausibleToken(String token) {
