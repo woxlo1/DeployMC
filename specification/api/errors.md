@@ -6,6 +6,9 @@
 > snapshot codes are produced by the WP-2.3 store and mapped by the WP-2.6 snapshot adapters, diff
 > codes are produced by the Java 8 `core.diff` engine and mapped by the snapshot diff route, and
 > validation codes are produced by the Java 8 `core.validation` engine.
+> The `rbac.*` codes below are normative for WP-3.4 and must not be returned until the product
+> evaluator is implemented; reason-to-code mapping is defined in
+> `specification/security/rbac.md`.
 > D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
 > Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.
