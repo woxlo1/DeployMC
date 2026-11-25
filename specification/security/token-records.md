@@ -48,7 +48,7 @@ rejected.
 | `label` | string | Human-readable label, at most 80 characters; never used as an identity or log key |
 | `secretHash` | string | 64 lowercase hexadecimal digits: the SHA-256 digest of the complete bearer token |
 | `expiresAt` | string, optional | Quoted RFC 3339 UTC instant; the token is expired at this instant |
-| `scopes` | array of strings, optional | At most 16 unique strings matching `^[a-z][a-z0-9-]{0,63}$`; absent or empty means no narrowing |
+| `scopes` | array of strings, optional | At most 16 unique strings of at most 128 characters matching `^(?:\*|[a-z][a-z0-9]*(?:\.[a-z][a-z0-9-]*)+)$`; absent or empty means no narrowing |
 | `revokedAt` | string, optional | Quoted RFC 3339 UTC instant; a revoked token can never authenticate again |
 | `lastUsedAt` | string, optional | Quoted RFC 3339 UTC instant of the last successful authentication that could be persisted |
 
@@ -68,9 +68,10 @@ Example with obviously fake values:
 ### Scope semantics
 
 `scopes` are stored on the record and exposed in the identity claims as
-`token.scopes`. In WP-3.3 they are intentionally **not enforced** because no RBAC
-engine exists. Every valid token remains admin-equivalent until WP-3.4. A scope name
-that is not recognized by the later permission registry is rejected then, not in
+`token.scopes`, comma-separated in declaration order; the claim is omitted when the
+array is absent or empty. In WP-3.3 they are intentionally **not enforced** because no
+RBAC engine exists. Every valid token remains admin-equivalent until WP-3.4. A scope
+name that is not recognized by the later permission registry is rejected then, not in
 WP-3.3. Do not interpret a stored scope as an enforced permission.
 
 ## Lifecycle
@@ -88,10 +89,10 @@ state only. No command prints a secret, digest, or raw exception message.
 
 `revoke` writes `revokedAt` durably. Revocation is checked before expiry; when both
 apply, the closed `auth.revoked` code wins. `lastUsedAt` is persisted at most once per
-minute per token to bound writes; a failure to persist it fails the request closed.
-Metadata writes use a temporary file, a re-read of the target record, and an atomic
-replace. A collision or any I/O failure fails closed rather than overwriting a
-concurrent change.
+minute per token to bound writes; a failure to persist it fails the request closed with
+the retryable `internal.error` code. Metadata writes use a temporary file, a re-read of
+the target record, and an atomic replace. A collision or any I/O failure fails closed
+rather than overwriting a concurrent change.
 
 Clients send the token as `Authorization: Bearer <token>`. Deterministic failure
 order is: missing credential (`auth.required`), malformed credential (`auth.invalid`),
