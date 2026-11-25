@@ -144,7 +144,7 @@ function parseReport(value: unknown): DoctorReport | null {
     !STATUSES.includes(value.overall) ||
     value.scope !== 'limited' ||
     !Array.isArray(value.checks) ||
-    value.checks.length < 13 ||
+    value.checks.length < 14 ||
     value.checks.length > 64
   ) {
     return null;
