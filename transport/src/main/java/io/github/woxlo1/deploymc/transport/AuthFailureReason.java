@@ -8,6 +8,8 @@ public enum AuthFailureReason {
   EXPIRED("expired"),
   NOT_YET_VALID("not-yet-valid"),
   JWKS_UNAVAILABLE("jwks-unavailable"),
+  ONE_TIME_CONSUMED("one-time-consumed"),
+  ONE_TIME_EXPIRED("one-time-expired"),
   INTERNAL_ERROR("internal-error");
 
   private final String wireLabel;
@@ -43,6 +45,10 @@ public enum AuthFailureReason {
         return NOT_YET_VALID;
       case JWKS_UNAVAILABLE:
         return JWKS_UNAVAILABLE;
+      case ONE_TIME_CONSUMED:
+        return ONE_TIME_CONSUMED;
+      case ONE_TIME_EXPIRED:
+        return ONE_TIME_EXPIRED;
       case INTERNAL_ERROR:
         return INTERNAL_ERROR;
       case REQUIRED:

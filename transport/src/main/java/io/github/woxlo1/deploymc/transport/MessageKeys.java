@@ -34,6 +34,11 @@ public final class MessageKeys {
   public static final String AUTH_NOT_YET_VALID_DETAIL = "problem.auth.not-yet-valid.detail";
   public static final String AUTH_JWKS_UNAVAILABLE_TITLE = "problem.auth.jwks-unavailable.title";
   public static final String AUTH_JWKS_UNAVAILABLE_DETAIL = "problem.auth.jwks-unavailable.detail";
+  public static final String AUTH_ONE_TIME_CONSUMED_TITLE = "problem.auth.one-time-consumed.title";
+  public static final String AUTH_ONE_TIME_CONSUMED_DETAIL =
+      "problem.auth.one-time-consumed.detail";
+  public static final String AUTH_ONE_TIME_EXPIRED_TITLE = "problem.auth.one-time-expired.title";
+  public static final String AUTH_ONE_TIME_EXPIRED_DETAIL = "problem.auth.one-time-expired.detail";
   public static final String INTERNAL_ERROR_TITLE = "problem.internal.error.title";
   public static final String INTERNAL_ERROR_DETAIL = "problem.internal.error.detail";
   public static final String AUTH_DENIED_TITLE = "problem.rbac.denied.title";

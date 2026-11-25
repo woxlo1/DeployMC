@@ -192,6 +192,46 @@ class AuthenticationGateTest {
   }
 
   @Test
+  void mapsConsumedOneTimeTokenToDetailFreeUnauthorized() throws Exception {
+    Authenticator authenticator =
+        request -> AuthenticationResult.failed(AuthenticationFailure.ONE_TIME_CONSUMED);
+    NettyTransportServer server =
+        newServer(new NoopLogger(), new HealthAwareHandler(), authenticator);
+    try {
+      server.start();
+      String response = rawRequest(server.port(), "GET", "/api/v1/server", null);
+
+      assertTrue(response.startsWith("HTTP/1.1 401 Unauthorized"), response);
+      assertTrue(response.contains("\"code\":\"auth.one-time-consumed\""), response);
+      assertTrue(response.contains("\"retryable\":false"), response);
+      assertTrue(response.toLowerCase(Locale.ROOT).contains("www-authenticate: bearer"), response);
+      assertFalse(response.contains(TOKEN), response);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
+  void mapsExpiredOneTimeTokenToDetailFreeUnauthorized() throws Exception {
+    Authenticator authenticator =
+        request -> AuthenticationResult.failed(AuthenticationFailure.ONE_TIME_EXPIRED);
+    NettyTransportServer server =
+        newServer(new NoopLogger(), new HealthAwareHandler(), authenticator);
+    try {
+      server.start();
+      String response = rawRequest(server.port(), "GET", "/api/v1/server", null);
+
+      assertTrue(response.startsWith("HTTP/1.1 401 Unauthorized"), response);
+      assertTrue(response.contains("\"code\":\"auth.one-time-expired\""), response);
+      assertTrue(response.contains("\"retryable\":false"), response);
+      assertTrue(response.toLowerCase(Locale.ROOT).contains("www-authenticate: bearer"), response);
+      assertFalse(response.contains(TOKEN), response);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
   void mapsTokenStoreFailureToRetryableInternalError() throws Exception {
     Authenticator authenticator =
         request -> AuthenticationResult.failed(AuthenticationFailure.INTERNAL_ERROR);

@@ -257,15 +257,18 @@ public final class DoctorService {
     String mode = value(environment.authMode());
     boolean token = "token".equals(mode);
     boolean cloudflare = "cloudflare".equals(mode);
+    boolean oneTime = "local-onetime".equals(mode);
     String detailKey =
         token
             ? DoctorMessages.DETAIL_AUTH_MODE_PASS
             : (cloudflare
                 ? DoctorMessages.DETAIL_AUTH_MODE_CLOUDFLARE_PASS
-                : DoctorMessages.DETAIL_AUTH_MODE_WARN);
+                : (oneTime
+                    ? DoctorMessages.DETAIL_AUTH_MODE_ONE_TIME_PASS
+                    : DoctorMessages.DETAIL_AUTH_MODE_WARN));
     return DoctorCheck.of(
         ID_AUTH_MODE,
-        token || cloudflare ? DoctorStatus.PASS : DoctorStatus.WARN,
+        token || cloudflare || oneTime ? DoctorStatus.PASS : DoctorStatus.WARN,
         true,
         detail(locale, detailKey, mode),
         detail(locale, DoctorMessages.REMEDIATION_AUTH_MODE),
