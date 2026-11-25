@@ -35,6 +35,8 @@ public final class DoctorMessages {
   public static final String DETAIL_AUTH_MODE_PASS = "doctor.detail.auth.mode.pass";
   public static final String DETAIL_AUTH_MODE_CLOUDFLARE_PASS =
       "doctor.detail.auth.mode.cloudflare.pass";
+  public static final String DETAIL_AUTH_MODE_ONE_TIME_PASS =
+      "doctor.detail.auth.mode.one-time.pass";
   public static final String DETAIL_AUTH_MODE_WARN = "doctor.detail.auth.mode.warn";
   public static final String REMEDIATION_AUTH_MODE = "doctor.remediation.auth.mode";
 

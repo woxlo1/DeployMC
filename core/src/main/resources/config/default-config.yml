@@ -28,9 +28,11 @@ bind:
   trusted-proxies: []
 
 auth:
-  # token and cloudflare are implemented; local-onetime is reserved and
-  # refuses startup. Restart only. Unauthenticated access is never an option.
-  # In cloudflare mode only the Cf-Access-Jwt-Assertion header is trusted.
+  # token, cloudflare, and local-onetime are implemented. Restart only.
+  # Unauthenticated access is never an option. In cloudflare mode only the
+  # Cf-Access-Jwt-Assertion header is trusted. local-onetime issues one
+  # short-lived console token and requires a loopback bind unless
+  # bind.allow-non-loopback is explicitly enabled.
   mode: token
 
   # To use Cloudflare Access, set mode above to cloudflare and add this section.

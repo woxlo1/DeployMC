@@ -395,16 +395,21 @@ class DoctorServiceTest {
   }
 
   @Test
-  void authModeAcceptsCloudflareAndWarnsForReservedModes() throws Exception {
+  void authModeAcceptsCloudflareAndLocalOneTimeAndWarnsForUnknownModes() throws Exception {
     DoctorEnvironment cloudflare =
         environmentBuilder(freePort(), true).authMode("cloudflare").build();
     DoctorReport cloudflareReport = run(inputs(freePort()).environment(cloudflare));
     assertEquals(DoctorStatus.PASS, check(cloudflareReport, "auth.mode").status());
     assertEquals(Boolean.FALSE, check(cloudflareReport, "auth.mode").evidence().get("tokenMode"));
 
-    DoctorEnvironment reserved =
+    DoctorEnvironment oneTime =
         environmentBuilder(freePort(), true).authMode("local-onetime").build();
-    DoctorReport report = run(inputs(freePort()).environment(reserved));
+    DoctorReport oneTimeReport = run(inputs(freePort()).environment(oneTime));
+    assertEquals(DoctorStatus.PASS, check(oneTimeReport, "auth.mode").status());
+    assertEquals(Boolean.FALSE, check(oneTimeReport, "auth.mode").evidence().get("tokenMode"));
+
+    DoctorEnvironment unknown = environmentBuilder(freePort(), true).authMode("none").build();
+    DoctorReport report = run(inputs(freePort()).environment(unknown));
     assertEquals(DoctorStatus.WARN, check(report, "auth.mode").status());
     assertEquals(Boolean.FALSE, check(report, "auth.mode").evidence().get("tokenMode"));
   }

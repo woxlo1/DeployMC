@@ -8,6 +8,8 @@ public enum AuthenticationFailure {
   EXPIRED("auth.expired"),
   NOT_YET_VALID("auth.not-yet-valid"),
   JWKS_UNAVAILABLE("auth.jwks-unavailable"),
+  ONE_TIME_CONSUMED("auth.one-time-consumed"),
+  ONE_TIME_EXPIRED("auth.one-time-expired"),
   INTERNAL_ERROR("internal.error");
 
   private final String code;

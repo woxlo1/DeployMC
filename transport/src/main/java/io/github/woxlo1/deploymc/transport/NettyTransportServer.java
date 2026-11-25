@@ -506,6 +506,14 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         titleKey = MessageKeys.AUTH_NOT_YET_VALID_TITLE;
         detailKey = MessageKeys.AUTH_NOT_YET_VALID_DETAIL;
         break;
+      case ONE_TIME_CONSUMED:
+        titleKey = MessageKeys.AUTH_ONE_TIME_CONSUMED_TITLE;
+        detailKey = MessageKeys.AUTH_ONE_TIME_CONSUMED_DETAIL;
+        break;
+      case ONE_TIME_EXPIRED:
+        titleKey = MessageKeys.AUTH_ONE_TIME_EXPIRED_TITLE;
+        detailKey = MessageKeys.AUTH_ONE_TIME_EXPIRED_DETAIL;
+        break;
       case REQUIRED:
       default:
         titleKey = MessageKeys.AUTH_REQUIRED_TITLE;
