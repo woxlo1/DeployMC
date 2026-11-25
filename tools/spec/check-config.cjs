@@ -25,6 +25,9 @@ const DEFAULTS = {
   "auth.token.max-ttl-days": 365,
 };
 
+const SCHEMA = JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8"));
+const PERMISSIONS = new Set(SCHEMA.$defs.permission.enum || []);
+
 function readYaml(filePath) {
   const text = fs.readFileSync(filePath, "utf8");
   const doc = YAML.parseDocument(text, { prettyErrors: true });
@@ -89,6 +92,18 @@ function lintConfigObject(config, { fileName = "config" } = {}) {
 
   const roles = config.roles && typeof config.roles === "object" ? config.roles : {};
   const roleNames = new Set(Object.keys(roles));
+
+  if (roleNames.has("none")) {
+    errors.push('roles.none: "none" is reserved for the implicit deny-only role');
+  }
+
+  for (const [name, role] of Object.entries(roles)) {
+    for (const permission of (role && role.permissions) || []) {
+      if (permission !== "*" && !PERMISSIONS.has(permission)) {
+        errors.push(`roles.${name}.permissions: unknown permission "${permission}"`);
+      }
+    }
+  }
 
   const defaultRole = config["default-role"] ?? "none";
   if (defaultRole !== "none" && !roleNames.has(defaultRole)) {
@@ -184,7 +199,7 @@ function lintConfigObject(config, { fileName = "config" } = {}) {
     warnings.push("bind.allow-non-loopback: local one-time mode is explicitly allowed outside loopback; local testing only");
   }
 
-  const schemaTopLevel = new Set(Object.keys(JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8")).properties || {}));
+  const schemaTopLevel = new Set(Object.keys(SCHEMA.properties || {}));
   for (const key of Object.keys(config)) {
     if (!schemaTopLevel.has(key)) {
       warnings.push(`${key}: unknown top-level key (ignored by the schema, warned by the loader)`);
@@ -247,4 +262,4 @@ if (require.main === module) {
   process.exitCode = main(process.argv.slice(2));
 }
 
-module.exports = { lintConfigFile, lintConfigObject, readYaml, get, isRelativeContained };
+module.exports = { lintConfigFile, lintConfigObject, readYaml, get, isRelativeContained, PERMISSIONS };

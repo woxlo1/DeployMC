@@ -146,9 +146,10 @@ observability:
   metrics:
     # Opt-in authenticated Prometheus endpoint. Restart only.
     enabled: false
-    # Until RBAC exists, only admin-equivalent identities pass this gate.
+    # Must be in the closed RBAC registry. Until RBAC exists, only
+    # admin-equivalent identities pass this gate.
     # restart only
-    permission: metrics.read
+    permission: server.read
 
 # Role names are lowercase keys. `admin`, `developer`, `observer`, and
 # `ci-deployer` are conventions, not built-ins. Hot-reloadable.

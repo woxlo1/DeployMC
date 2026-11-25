@@ -661,9 +661,9 @@
             },
             "permission": {
               "type": "string",
-              "enum": ["server.read", "metrics.read"],
-              "default": "metrics.read",
-              "description": "Permission identifier required by the metrics endpoint. RBAC evaluation does not exist yet; until then only admin-equivalent identities pass.",
+              "enum": ["server.read"],
+              "default": "server.read",
+              "description": "Permission identifier required by the metrics endpoint. It must be in the closed RBAC registry; until the evaluator exists only admin-equivalent identities pass.",
               "x-deploymc-hot-reload": false
             }
           }
@@ -707,9 +707,9 @@
       "propertyNames": {
         "minLength": 1,
         "maxLength": 320,
-        "description": "Verified identity: an email address, a service-token common name, or a DeployMC token owner id. It is never taken from an unverified header."
+        "description": "Verified identity: an email address, a service-token common name, a DeployMC token owner id from the token record `owner` field, or the reserved `local-onetime` id. It is never taken from an unverified header."
       },
-      "description": "Identity-to-role mapping. An identity absent from this map gets `default-role`.",
+      "description": "Identity-to-role mapping. An identity absent from this map gets `default-role`; token labels are never identity keys.",
       "x-deploymc-hot-reload": true
     },
     "default-role": {
@@ -750,13 +750,38 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 64,
-      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+      "pattern": "^[a-z][a-z0-9-]{0,63}$",
+      "not": { "const": "none" }
     },
     "permission": {
       "type": "string",
-      "pattern": "^(?:\\*|[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+)$",
+      "enum": [
+        "server.read",
+        "files.read",
+        "files.write",
+        "files.delete",
+        "files.upload",
+        "snapshots.read",
+        "snapshots.restore",
+        "snapshots.prune",
+        "deployments.read",
+        "deployments.create",
+        "deployments.create.jar",
+        "deployments.approve",
+        "deployments.cancel",
+        "deployments.rollback",
+        "server.restart",
+        "console.read",
+        "console.command",
+        "audit.read",
+        "audit.export",
+        "tokens.manage.self",
+        "tokens.manage.all",
+        "webhooks.manage",
+        "users.read"
+      ],
       "maxLength": 128,
-      "description": "Flat dotted permission identifier such as `files.write` or `deployments.create.jar`. `*` is allowed only as a whole grant for an administrative role."
+      "description": "Closed RBAC permission registry. `*` is not a permission; it is a role-only whole-grant handled by `#/$defs/role`."
     },
     "pathGlob": {
       "type": "string",
@@ -788,9 +813,12 @@
           "uniqueItems": true,
           "maxItems": 256,
           "items": {
-            "$ref": "#/$defs/permission"
+            "anyOf": [
+              { "$ref": "#/$defs/permission" },
+              { "const": "*" }
+            ]
           },
-          "description": "Granted permissions. A permission without a path scope applies to the whole sandbox minus protected paths."
+          "description": "Granted permissions from the closed registry; `*` grants every registry permission to this role only. A permission without a path scope applies to the whole sandbox minus protected paths."
         },
         "paths": {
           "type": "object",
@@ -803,7 +831,7 @@
               "items": {
                 "$ref": "#/$defs/pathGlob"
               },
-              "description": "Path scopes this role may touch. Empty means no path-scoped permission is granted."
+              "description": "Path scopes this role may touch. Absent means all sandbox paths minus protected paths; Empty means no path-scoped permission is granted."
             },
             "deny": {
               "type": "array",
