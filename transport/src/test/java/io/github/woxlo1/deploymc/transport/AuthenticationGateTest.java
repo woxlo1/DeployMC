@@ -172,6 +172,45 @@ class AuthenticationGateTest {
   }
 
   @Test
+  void mapsRevokedCredentialToDetailFreeUnauthorized() throws Exception {
+    Authenticator authenticator =
+        request -> AuthenticationResult.failed(AuthenticationFailure.REVOKED);
+    NettyTransportServer server =
+        newServer(new NoopLogger(), new HealthAwareHandler(), authenticator);
+    try {
+      server.start();
+      String response = rawRequest(server.port(), "GET", "/api/v1/server", null);
+
+      assertTrue(response.startsWith("HTTP/1.1 401 Unauthorized"), response);
+      assertTrue(response.contains("\"code\":\"auth.revoked\""), response);
+      assertTrue(response.contains("\"retryable\":false"), response);
+      assertTrue(response.toLowerCase(Locale.ROOT).contains("www-authenticate: bearer"), response);
+      assertFalse(response.contains(TOKEN), response);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
+  void mapsTokenStoreFailureToRetryableInternalError() throws Exception {
+    Authenticator authenticator =
+        request -> AuthenticationResult.failed(AuthenticationFailure.INTERNAL_ERROR);
+    NettyTransportServer server =
+        newServer(new NoopLogger(), new HealthAwareHandler(), authenticator);
+    try {
+      server.start();
+      String response = rawRequest(server.port(), "GET", "/api/v1/server", null);
+
+      assertTrue(response.startsWith("HTTP/1.1 500 Internal Server Error"), response);
+      assertTrue(response.contains("\"code\":\"internal.error\""), response);
+      assertTrue(response.contains("\"retryable\":true"), response);
+      assertFalse(response.toLowerCase(Locale.ROOT).contains("www-authenticate"), response);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
   void mapsUnavailableJwksToRetryableServiceUnavailable() throws Exception {
     Authenticator authenticator =
         request -> AuthenticationResult.failed(AuthenticationFailure.JWKS_UNAVAILABLE);

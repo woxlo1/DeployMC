@@ -3,6 +3,7 @@ package io.github.woxlo1.deploymc.core.auth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -46,6 +48,25 @@ class TokenProvisionerTest {
     assertEquals(created.record().id(), result.identity().id());
     assertTrue(fileContent.contains("secretHash"));
     assertNotNull(created.record().secretHash());
+  }
+
+  @Test
+  void storesValidatedScopesWithoutSecretMaterial() throws Exception {
+    TokenStore store = TokenStore.load(tempDir.resolve("tokens.d"));
+    TokenProvisioner provisioner =
+        new TokenProvisioner(store, Clock.systemUTC(), new SecureRandom());
+
+    CreatedToken created =
+        provisioner.create(
+            "scoped ci", Duration.ofDays(1), Arrays.asList("files.read", "server.status"));
+
+    assertEquals(Arrays.asList("files.read", "server.status"), created.record().scopes());
+    assertEquals(
+        Arrays.asList("files.read", "server.status"),
+        TokenStore.load(tempDir.resolve("tokens.d")).records().get(0).scopes());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> provisioner.create("bad", null, Arrays.asList("not a scope")));
   }
 
   @Test
