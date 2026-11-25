@@ -15,6 +15,9 @@ here with their date and outcome, then reflected in the relevant ADR or configur
 | 2026-11-16 | Initial language priority | English canonical, Japanese first translation |
 | 2026-11-17 | Branch protection and required checks | Enabled on `main`: linear history, no force-push or deletion, conversation resolution applies to admins, 15 required checks with `strict` (see [ci.md](ci.md)) |
 | 2026-11-21 | D-008 structural-budget error mapping | Unified: every structural budget failure is top-level `validation.limit-exceeded` (413) with a format-specific issue code in `errors[]`; JSON depth moves from a top-level code to that shape. Recorded in the content-validation contract and error catalog. |
+| 2026-11-25 | WP-3.3 token hashing | Store SHA-256 over the complete 256-bit random token. A password KDF or separate HMAC key adds no meaningful preimage resistance for this secret and would add key-rotation failure modes. Existing SHA-256 records remain valid. |
+| 2026-11-25 | WP-3.3 scope enforcement | Store and propagate `scopes` as `token.scopes` in WP-3.3, but do not enforce them until the WP-3.4 RBAC engine exists. Every valid token remains admin-equivalent until then. |
+| 2026-11-25 | WP-3.3 local one-time token | Keep the token in memory only, print it once to the console, require loopback unless `bind.allow-non-loopback: true` is explicit, and bound it by TTL and failed-attempt limits. Restart invalidates it; there is no fallback to another auth mode. |
 
 ## Open
 
