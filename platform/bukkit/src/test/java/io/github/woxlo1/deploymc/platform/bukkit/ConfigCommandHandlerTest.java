@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.woxlo1.deploymc.api.PlatformInfo;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
+import io.github.woxlo1.deploymc.core.auth.TokenRecord;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -195,9 +197,7 @@ class ConfigCommandHandlerTest {
     AuthenticationRuntime authentication =
         AuthenticationRuntime.create(
             store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30));
-    ConfigCommandHandler tokenHandler =
-        new ConfigCommandHandler(
-            manager, StartupPlan.fromConfig(manager.current().get(), "0.1.0-test"), authentication);
+    ConfigCommandHandler tokenHandler = tokenHandler(authentication);
     RecordingOutput console = operatorOutput(true);
 
     tokenHandler.handle(console, new String[] {"token", "create", "ci runner"});
@@ -247,6 +247,248 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
+  void tokenCreateHonorsTtlAndScopesWithoutPrintingDigest() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-options.d"));
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30)));
+    RecordingOutput console = operatorOutput(true);
+
+    tokenHandler.handle(
+        console,
+        new String[] {
+          "token", "create", "ci runner", "--ttl-days", "2", "--scopes", "files.read,files.write"
+        });
+
+    assertTrue(containsMessage(console, "Created token"));
+    assertTrue(
+        console.messages.contains(
+            english(MessageKeys.COMMAND_TOKEN_EFFECTIVE_TTL, values("days", "2"))));
+    assertTrue(
+        console.messages.contains(
+            english(
+                MessageKeys.COMMAND_TOKEN_STORED_SCOPES,
+                values("scopes", "files.read, files.write"))));
+    String token = tokenFrom(console);
+    assertTrue(token.startsWith("dmc_"), token);
+    assertNoDigest(console);
+    String record = readOnlyRecord(store);
+    assertTrue(record.contains("files.read"), record);
+    assertTrue(record.contains("files.write"), record);
+    assertFalse(record.contains(token), record);
+  }
+
+  @Test
+  void tokenCreateClampsRequestedTtlToHostMaximum() throws Exception {
+    Files.write(
+        configFile,
+        DefaultConfigWriter.template()
+            .replace("max-ttl-days: 365", "max-ttl-days: 7")
+            .getBytes(StandardCharsets.UTF_8));
+    manager.reload();
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-clamp.d"));
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30)));
+    RecordingOutput console = operatorOutput(true);
+
+    tokenHandler.handle(console, new String[] {"token", "create", "--ttl-days", "400", "clamped"});
+
+    assertTrue(
+        console.messages.contains(
+            english(MessageKeys.COMMAND_TOKEN_EFFECTIVE_TTL, values("days", "7"))));
+  }
+
+  @Test
+  void tokenCreateRejectsInvalidOptionsWithClosedMessage() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-invalid.d"));
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30)));
+
+    String[][] invalid = {
+      {"token", "create", "--ttl-days", "0"},
+      {"token", "create", "--ttl-days", "not-a-number"},
+      {"token", "create", "--scopes", "Bad.Scope"},
+      {"token", "create", "--scopes", "files.read,files.read"},
+      {"token", "create", "--unknown"}
+    };
+    String[] names = {"ttl-days", "ttl-days", "scopes", "scopes", "option"};
+    for (int index = 0; index < invalid.length; index++) {
+      RecordingOutput console = operatorOutput(true);
+
+      tokenHandler.handle(console, invalid[index]);
+
+      assertEquals(
+          Collections.singletonList(
+              english(MessageKeys.COMMAND_TOKEN_INVALID_VALUE, values("name", names[index]))),
+          console.messages);
+    }
+    assertTrue(store.records().isEmpty());
+  }
+
+  @Test
+  void tokenCreateFailureDoesNotLeakExceptionDetails() throws Exception {
+    Path missingDirectory = temporaryDirectory.resolve("tokens-missing.d");
+    TokenStore store = TokenStore.load(missingDirectory);
+    Files.delete(missingDirectory);
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(1)));
+    RecordingOutput console = operatorOutput(true);
+
+    tokenHandler.handle(console, new String[] {"token", "create"});
+
+    assertEquals(
+        Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_FAILED)), console.messages);
+    assertNoDigest(console);
+  }
+
+  @Test
+  void tokenRevokeAndListReportStateWithoutSecrets() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-lifecycle.d"));
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(3)));
+    RecordingOutput empty = operatorOutput(true);
+
+    tokenHandler.handle(empty, new String[] {"token", "list"});
+
+    assertEquals(
+        Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_LIST_EMPTY)), empty.messages);
+
+    RecordingOutput created = operatorOutput(true);
+    tokenHandler.handle(created, new String[] {"token", "create", "ops"});
+    String token = tokenFrom(created);
+    TokenRecord record = store.records().get(0);
+    String activeEntry =
+        english(
+            MessageKeys.COMMAND_TOKEN_LIST_ENTRY,
+            values(
+                "id",
+                record.id(),
+                "label",
+                "ops",
+                "status",
+                english(MessageKeys.COMMAND_TOKEN_STATUS_ACTIVE),
+                "expiresAt",
+                record.expiresAt().toString(),
+                "lastUsedAt",
+                english(MessageKeys.COMMAND_TOKEN_NEVER),
+                "scopes",
+                english(MessageKeys.COMMAND_TOKEN_NONE)));
+    RecordingOutput active = operatorOutput(true);
+
+    tokenHandler.handle(active, new String[] {"token", "list"});
+
+    assertTrue(active.messages.contains(activeEntry), active.messages.toString());
+    assertNoSecret(active, token);
+    assertEquals(
+        Collections.singletonList(record.id()),
+        tokenHandler.complete(operatorOutput(false), new String[] {"token", "revoke", "t-"}));
+
+    RecordingOutput revoked = operatorOutput(true);
+    tokenHandler.handle(revoked, new String[] {"token", "revoke", record.id()});
+
+    assertEquals(
+        Collections.singletonList(
+            english(MessageKeys.COMMAND_TOKEN_REVOKED, values("id", record.id()))),
+        revoked.messages);
+    assertTrue(store.records().get(0).isRevoked());
+
+    RecordingOutput after = operatorOutput(true);
+    tokenHandler.handle(after, new String[] {"token", "list"});
+
+    assertTrue(containsMessage(after, english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
+    assertNoSecret(after, token);
+
+    RecordingOutput missing = operatorOutput(true);
+    tokenHandler.handle(missing, new String[] {"token", "revoke", "t-000000000000"});
+
+    assertEquals(
+        Collections.singletonList(
+            english(MessageKeys.COMMAND_TOKEN_NOT_FOUND, values("id", "t-000000000000"))),
+        missing.messages);
+  }
+
+  @Test
+  void tokenListChecksRevocationBeforeExpiry() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-status.d"));
+    byte[] expiredHash = new byte[32];
+    byte[] revokedHash = new byte[32];
+    revokedHash[0] = 1;
+    byte[] bothHash = new byte[32];
+    bothHash[0] = 2;
+    store.write(
+        new TokenRecord(
+            "t-000000000001", "expired", expiredHash, Instant.parse("2020-01-01T00:00:00Z")));
+    store.write(
+        new TokenRecord(
+            "t-000000000002",
+            "revoked",
+            revokedHash,
+            Instant.parse("2030-01-01T00:00:00Z"),
+            Collections.<String>emptyList(),
+            Instant.parse("2025-01-01T00:00:00Z"),
+            null));
+    store.write(
+        new TokenRecord(
+            "t-000000000003",
+            "both",
+            bothHash,
+            Instant.parse("2020-01-01T00:00:00Z"),
+            Collections.<String>emptyList(),
+            Instant.parse("2021-01-01T00:00:00Z"),
+            null));
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(1)));
+    RecordingOutput console = operatorOutput(true);
+
+    tokenHandler.handle(console, new String[] {"token", "list"});
+
+    assertTrue(
+        containsMessage(
+            console,
+            "t-000000000001 | expired | " + english(MessageKeys.COMMAND_TOKEN_STATUS_EXPIRED)));
+    assertTrue(
+        containsMessage(
+            console,
+            "t-000000000002 | revoked | " + english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
+    assertTrue(
+        containsMessage(
+            console,
+            "t-000000000003 | both | " + english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
+  }
+
+  @Test
+  void tokenProvisioningIsRefusedInLocalOneTimeMode() {
+    AuthenticationRuntime oneTime =
+        AuthenticationRuntime.createLocalOneTime(
+            Clock.systemUTC(), new SecureRandom(), Duration.ofMinutes(5), 3);
+    ConfigCommandHandler tokenHandler = tokenHandler(oneTime);
+    RecordingOutput console = operatorOutput(true);
+
+    tokenHandler.handle(console, new String[] {"token", "create"});
+    tokenHandler.handle(console, new String[] {"token", "list"});
+    tokenHandler.handle(console, new String[] {"token", "revoke", "t-000000000000"});
+
+    assertEquals(
+        Arrays.asList(
+            english(MessageKeys.COMMAND_TOKEN_UNAVAILABLE),
+            english(MessageKeys.COMMAND_TOKEN_UNAVAILABLE),
+            english(MessageKeys.COMMAND_TOKEN_UNAVAILABLE)),
+        console.messages);
+    assertFalse(oneTime.oneTimeToken().toString().contains(oneTime.oneTimeToken().secret()));
+  }
+
+  @Test
   void completionOnlyReturnsPermittedSubcommands() {
     RecordingOutput limited =
         new RecordingOutput(false, CommandPermissions.ROOT, CommandPermissions.STATUS);
@@ -255,6 +497,47 @@ class ConfigCommandHandlerTest {
     assertEquals(
         Collections.singletonList("status"), handler.complete(limited, new String[] {"st"}));
     assertTrue(handler.complete(denied, new String[] {"st"}).isEmpty());
+    assertEquals(
+        Collections.singletonList("create"),
+        handler.complete(operatorOutput(false), new String[] {"token", "cr"}));
+    assertTrue(
+        handler.complete(operatorOutput(false), new String[] {"token", "revoke", "t-"}).isEmpty());
+  }
+
+  private ConfigCommandHandler tokenHandler(AuthenticationRuntime authentication) {
+    return new ConfigCommandHandler(
+        manager, StartupPlan.fromConfig(manager.current().get(), "0.1.0-test"), authentication);
+  }
+
+  private static String tokenFrom(RecordingOutput output) {
+    for (String message : output.messages) {
+      if (message.startsWith("Token: ")) {
+        return message.substring("Token: ".length());
+      }
+    }
+    throw new AssertionError("no token line in " + output.messages);
+  }
+
+  private static String readOnlyRecord(TokenStore store) throws Exception {
+    Path[] files;
+    try (java.util.stream.Stream<Path> stream = Files.list(store.directory())) {
+      files = stream.toArray(Path[]::new);
+    }
+    assertEquals(1, files.length);
+    return new String(Files.readAllBytes(files[0]), StandardCharsets.UTF_8);
+  }
+
+  private static void assertNoDigest(RecordingOutput output) {
+    for (String message : output.messages) {
+      assertFalse(message.contains("secretHash"), message);
+    }
+  }
+
+  private static void assertNoSecret(RecordingOutput output, String secret) {
+    for (String message : output.messages) {
+      assertFalse(message.contains(secret), message);
+      assertFalse(message.contains("secretHash"), message);
+    }
   }
 
   private DoctorRuntime doctorRuntime(StartupPlan plan) {
