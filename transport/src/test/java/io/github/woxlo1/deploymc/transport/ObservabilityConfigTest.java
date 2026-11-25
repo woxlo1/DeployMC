@@ -105,5 +105,7 @@ class ObservabilityConfigTest {
     }
     assertEquals("auth-failure", ShedScope.AUTH_FAILURE.label());
     assertEquals("expired", AuthFailureReason.EXPIRED.wireLabel());
+    assertEquals("not-yet-valid", AuthFailureReason.NOT_YET_VALID.wireLabel());
+    assertEquals("jwks-unavailable", AuthFailureReason.JWKS_UNAVAILABLE.wireLabel());
   }
 }

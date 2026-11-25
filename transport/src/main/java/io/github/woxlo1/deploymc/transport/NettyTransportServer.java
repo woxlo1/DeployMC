@@ -465,6 +465,18 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   }
 
   private HttpResponse unauthorized(String requestId, AuthenticationFailure failure) {
+    if (failure == AuthenticationFailure.JWKS_UNAVAILABLE) {
+      HttpResponse unavailable =
+          HttpResponse.problem(
+              HttpResponseStatus.SERVICE_UNAVAILABLE.code(),
+              failure.code(),
+              messages.format(MessageKeys.AUTH_JWKS_UNAVAILABLE_TITLE),
+              messages.format(MessageKeys.AUTH_JWKS_UNAVAILABLE_DETAIL),
+              requestId,
+              true,
+              Collections.<HttpResponse.ProblemIssue>emptyList());
+      return unavailable.withHeader(HttpHeaderNames.RETRY_AFTER.toString(), "5");
+    }
     String titleKey;
     String detailKey;
     switch (failure) {
@@ -475,6 +487,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       case EXPIRED:
         titleKey = MessageKeys.AUTH_EXPIRED_TITLE;
         detailKey = MessageKeys.AUTH_EXPIRED_DETAIL;
+        break;
+      case NOT_YET_VALID:
+        titleKey = MessageKeys.AUTH_NOT_YET_VALID_TITLE;
+        detailKey = MessageKeys.AUTH_NOT_YET_VALID_DETAIL;
         break;
       case REQUIRED:
       default:

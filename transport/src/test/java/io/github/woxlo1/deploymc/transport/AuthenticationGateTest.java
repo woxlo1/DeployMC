@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
+import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
 import io.github.woxlo1.deploymc.core.auth.Identity;
 import io.github.woxlo1.deploymc.core.auth.TokenAuthenticator;
@@ -150,6 +152,44 @@ class AuthenticationGateTest {
     }
   }
 
+  @Test
+  void mapsNotYetValidToNonRetryableUnauthorized() throws Exception {
+    Authenticator authenticator =
+        request -> AuthenticationResult.failed(AuthenticationFailure.NOT_YET_VALID);
+    NettyTransportServer server =
+        newServer(new NoopLogger(), new HealthAwareHandler(), authenticator);
+    try {
+      server.start();
+      String response = rawRequest(server.port(), "GET", "/api/v1/server", null);
+
+      assertTrue(response.startsWith("HTTP/1.1 401 Unauthorized"), response);
+      assertTrue(response.contains("\"code\":\"auth.not-yet-valid\""), response);
+      assertTrue(response.contains("\"retryable\":false"), response);
+      assertTrue(response.toLowerCase(Locale.ROOT).contains("www-authenticate: bearer"), response);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
+  void mapsUnavailableJwksToRetryableServiceUnavailable() throws Exception {
+    Authenticator authenticator =
+        request -> AuthenticationResult.failed(AuthenticationFailure.JWKS_UNAVAILABLE);
+    NettyTransportServer server =
+        newServer(new NoopLogger(), new HealthAwareHandler(), authenticator);
+    try {
+      server.start();
+      String response = rawRequest(server.port(), "GET", "/api/v1/server", null);
+
+      assertTrue(response.startsWith("HTTP/1.1 503 Service Unavailable"), response);
+      assertTrue(response.contains("\"code\":\"auth.jwks-unavailable\""), response);
+      assertTrue(response.contains("\"retryable\":true"), response);
+      assertTrue(response.toLowerCase(Locale.ROOT).contains("retry-after: 5"), response);
+    } finally {
+      server.stop();
+    }
+  }
+
   private static final class HealthAwareHandler implements HttpHandler {
 
     private final HealthHandler health = new HealthHandler();
@@ -169,11 +209,12 @@ class AuthenticationGateTest {
 
   private NettyTransportServer newServer(RequestLogger requestLogger, HttpHandler httpHandler)
       throws Exception {
-    TokenStore store = TokenStore.load(tempDir.resolve("tokens.d"));
-    byte[] digest =
-        MessageDigest.getInstance("SHA-256").digest(TOKEN.getBytes(StandardCharsets.UTF_8));
-    store.write(new TokenRecord("t-gate", "gate test", digest, null));
-    Authenticator authenticator = new TokenAuthenticator(store, java.time.Clock.systemUTC());
+    return newServer(requestLogger, httpHandler, tokenAuthenticator());
+  }
+
+  private NettyTransportServer newServer(
+      RequestLogger requestLogger, HttpHandler httpHandler, Authenticator authenticator)
+      throws Exception {
     TransportConfig config =
         TransportConfig.builder(HttpBindConfig.of("127.0.0.1", 0, false)).build();
     return new NettyTransportServer(
@@ -184,6 +225,14 @@ class AuthenticationGateTest {
         requestLogger,
         authenticator,
         TransportMessages.of(Locale.ENGLISH));
+  }
+
+  private Authenticator tokenAuthenticator() throws Exception {
+    TokenStore store = TokenStore.load(tempDir.resolve("tokens.d"));
+    byte[] digest =
+        MessageDigest.getInstance("SHA-256").digest(TOKEN.getBytes(StandardCharsets.UTF_8));
+    store.write(new TokenRecord("t-gate", "gate test", digest, null));
+    return new TokenAuthenticator(store, java.time.Clock.systemUTC());
   }
 
   private static List<Route> routesFromOpenApi() throws IOException {

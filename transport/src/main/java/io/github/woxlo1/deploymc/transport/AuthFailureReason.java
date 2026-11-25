@@ -4,7 +4,9 @@ package io.github.woxlo1.deploymc.transport;
 public enum AuthFailureReason {
   REQUIRED("required"),
   INVALID("invalid"),
-  EXPIRED("expired");
+  EXPIRED("expired"),
+  NOT_YET_VALID("not-yet-valid"),
+  JWKS_UNAVAILABLE("jwks-unavailable");
 
   private final String wireLabel;
 
@@ -33,6 +35,10 @@ public enum AuthFailureReason {
         return INVALID;
       case EXPIRED:
         return EXPIRED;
+      case NOT_YET_VALID:
+        return NOT_YET_VALID;
+      case JWKS_UNAVAILABLE:
+        return JWKS_UNAVAILABLE;
       case REQUIRED:
       default:
         return REQUIRED;
