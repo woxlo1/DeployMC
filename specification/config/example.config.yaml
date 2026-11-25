@@ -20,14 +20,22 @@ bind:
   trusted-proxies: []
 
 auth:
-  # `token` and `cloudflare` are implemented. `local-onetime` is reserved and
-  # refuses startup. Cloudflare mode verifies the RS256 JWT assertion header
-  # only; forwarded identity headers are ignored.
+  # `token` accepts host-provisioned API tokens. `cloudflare` verifies the
+  # RS256 JWT assertion header only; forwarded identity headers are ignored.
+  # `local-onetime` is a loopback-only local testing mode: it prints one short-lived
+  # console token at startup and requires bind.allow-non-loopback: true if the
+  # address is not loopback. See docs/development/implementation-status.md for
+  # the current implementation state of each mode.
   mode: token
   token:
-    # Used by `/deploymc token create`. Never exceeds max-ttl-days.
+    # Used by `/deploymc token create`. Clamped to max-ttl-days. Both values are
+    # restart-only because the provisioning runtime is built at startup.
     default-ttl-days: 90
     max-ttl-days: 365
+  # To select local testing mode, change mode above to `local-onetime` and add:
+  # local-onetime:
+  #   ttl-minutes: 15
+  #   max-attempts: 5
   # To select Cloudflare Access, change mode above to `cloudflare` and add:
   # cloudflare:
   #   team-domain: "example.cloudflareaccess.com"

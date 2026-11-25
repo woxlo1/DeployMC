@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/woxlo1/DeployMC/raw/main/specification/config/config.schema.json",
   "title": "DeployMC configuration",
-  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: the loader validates the structural rules in this schema. `auth.mode: token` and `auth.mode: cloudflare` are implemented; `local-onetime` remains reserved for later work and refuses startup. In Cloudflare mode only the `Cf-Access-Jwt-Assertion` header is trusted; forwarded identity headers are ignored.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
+  "description": "Normative schema for the host-controlled `plugins/DeployMC/config.yml`.\n\nStatus: the loader validates the structural rules in this schema. `token`, `cloudflare`, and `local-onetime` are the normative authentication modes; current implementation state is tracked in `docs/development/implementation-status.md`. In Cloudflare mode only the `Cf-Access-Jwt-Assertion` header is trusted; forwarded identity headers are ignored.\n\nValidation policy:\n\n- Invalid values and unknown keys inside a known section are errors. Unknown keys produce a warning, not an error, and the loader must report them with line and column.\n- Invalid configuration fails closed: the plugin refuses to start or disables the affected feature. It never falls back to a permissive default.\n- Relative paths are resolved against the server's `plugins` directory. Absolute paths and `..` escapes are rejected.\n- A secret (token hash, webhook secret, shared secret value) is never accepted in this file; only file names or header names are configured.\n\nHot-reload behaviour: a property with `x-deploymc-hot-reload: true` can change through an in-game reload. A property with `false` requires a server restart, and the loader reports that the change is ignored until restart. Path, authentication, listener, and sandbox settings are restart-only on purpose.",
   "type": "object",
   "additionalProperties": true,
   "required": ["config-version"],
@@ -88,7 +88,7 @@
           "type": "string",
           "enum": ["cloudflare", "token", "local-onetime"],
           "default": "token",
-          "description": "`token` accepts host-provisioned DeployMC API tokens. `cloudflare` verifies RS256 Cloudflare Access JWT assertions and ignores forwarded identity headers. `local-onetime` is reserved for later work; selecting it refuses startup.",
+          "description": "`token` accepts host-provisioned DeployMC API tokens. `cloudflare` verifies RS256 Cloudflare Access JWT assertions and ignores forwarded identity headers. `local-onetime` issues one loopback-only console token at startup for local testing; a non-loopback bind requires `bind.allow-non-loopback: true`.",
           "x-deploymc-hot-reload": false
         },
         "cloudflare": {
@@ -165,18 +165,18 @@
             "default-ttl-days": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 3650,
+              "maximum": 365,
               "default": 90,
-              "description": "Default lifetime of a newly created API token. It can never exceed `max-ttl-days`.",
-              "x-deploymc-hot-reload": true
+              "description": "Default lifetime of a newly created API token. It is clamped to `max-ttl-days`. Restart-only because the provisioning runtime is built at startup.",
+              "x-deploymc-hot-reload": false
             },
             "max-ttl-days": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 3650,
+              "maximum": 365,
               "default": 365,
-              "description": "Upper bound for token lifetime. A request above it is clamped and the response states the effective value.",
-              "x-deploymc-hot-reload": true
+              "description": "Upper bound for token lifetime. A request above it is clamped and the console command states the effective value. Restart-only because the provisioning runtime is built at startup.",
+              "x-deploymc-hot-reload": false
             }
           }
         },
@@ -189,16 +189,16 @@
               "minimum": 1,
               "maximum": 60,
               "default": 15,
-              "description": "Lifetime of a console-issued one-time token.",
-              "x-deploymc-hot-reload": true
+              "description": "Lifetime of the in-memory one-time token issued at startup. Restart-only because the token and its deadline are created before the listener starts.",
+              "x-deploymc-hot-reload": false
             },
             "max-attempts": {
               "type": "integer",
               "minimum": 1,
               "maximum": 20,
               "default": 5,
-              "description": "Failed redemption attempts before the token is burned.",
-              "x-deploymc-hot-reload": true
+              "description": "Failed redemption attempts before the in-memory one-time token is burned. Restart-only because the attempt budget is created at startup.",
+              "x-deploymc-hot-reload": false
             }
           }
         }

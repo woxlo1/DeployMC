@@ -101,8 +101,11 @@ and those reveal no sensitive information.
 
 ### Token mode requirements
 
-- Generate high-entropy tokens, show them once, store only a hash.
-- Scope tokens by permission and path; a token never exceeds its owner's permissions.
+- Generate high-entropy tokens, show them once, store only a hash. For the 256-bit
+  random secret, SHA-256 over the complete token is the documented storage choice;
+  a salted password KDF or separate HMAC key adds no meaningful benefit here.
+- Store and propagate scopes by WP-3.3, but do not enforce them until the WP-3.4 RBAC
+  engine exists. Until then a valid token remains admin-equivalent.
 - Support expiry, revocation, and last-used tracking.
 - Compare secrets in constant time and rate-limit authentication failures.
 
