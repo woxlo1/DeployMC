@@ -113,6 +113,7 @@ public final class DoctorMessages {
                   REMEDIATION_BIND,
                   DETAIL_AUTH_MODE_PASS,
                   DETAIL_AUTH_MODE_CLOUDFLARE_PASS,
+                  DETAIL_AUTH_MODE_ONE_TIME_PASS,
                   DETAIL_AUTH_MODE_WARN,
                   REMEDIATION_AUTH_MODE,
                   DETAIL_AUTH_TUNNEL,
