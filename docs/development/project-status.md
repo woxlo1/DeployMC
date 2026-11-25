@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-24 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-25 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
 implementation). GitHub merge evidence below was verified against `main` through `267d690` after
 PR #215. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
@@ -18,8 +18,10 @@ with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
 Vite 6.4.5 and the AsyncAPI parser replacing the CLI and its bundled `npm` tree. Post-merge CI,
 CodeQL, and Scorecard passed; the final Security-tab recheck at `2026-11-24T09:08:12Z` found 0 open
 alerts, and issue #122 closed at `2026-11-24T09:04:02Z`. WP-3.1 merged in PR #222 at `41b6fee` and
-`1ba834b` with passing required checks and post-merge CI/CodeQL/Scorecard; this final evidence PR
-closes issue #56.
+`1ba834b` with passing required checks and post-merge CI/CodeQL/Scorecard; issue #56 closed through
+its final evidence PR. WP-3.2 merged its core verifier in PR #224 at `d4a1576` and its host,
+transport, doctor, configuration, Web, and CI wiring in PR #226 at `d075646`, with passing required
+checks and post-merge CI/CodeQL/Scorecard; this final evidence PR closes issue #57.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1037,9 +1039,45 @@ checked by the i18n tooling.
 
 This is server-free unit and embedded-socket evidence. No running Minecraft server, Bukkit mock,
 browser, E2E run, full integration suite, or in-game command exercised WP-3.1. No RBAC engine exists
-yet (WP-3.4), so `AuthorizationDeniedException` is only the framework's uniform 403 signal, and no
-Cloudflare JWT verifier is claimed (WP-3.2). The temporary implementation branch
-`feature/auth-56-framework` is retained until this final evidence PR merges.
+yet (WP-3.4), so `AuthorizationDeniedException` is only the framework's uniform 403 signal. WP-3.2
+later added the Cloudflare verifier recorded above. The temporary implementation branch
+`feature/auth-56-framework` was retained until the WP-3.1 final evidence PR merged.
+
+## WP-3.2 Cloudflare Access JWT verifier (issue #57)
+
+WP-3.2 is complete. [PR #224](https://github.com/woxlo1/DeployMC/pull/224) merged the
+`core.auth.cloudflare` verifier and its product vector tests at `d4a1576` on 2026-11-24T11:16:01Z.
+[PR #226](https://github.com/woxlo1/DeployMC/pull/226) merged the Bukkit startup wiring, transport
+mapping, doctor diagnostics, configuration/schema alignment, Web parser update, and CI Python setup
+at `d075646` on 2026-11-25T05:03:37Z. Both were rebase-merged so their Conventional Commits remain on
+`main`. This final evidence PR closes issue #57.
+
+| Evidence | Result |
+|---|---|
+| Local `git fetch origin main` | Success; base unchanged before each merge |
+| Local `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Success, no output |
+| Local `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat`; exit 0 |
+| Local `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| Local `git diff --check` | Success, no output |
+| Merged-tree JUnit XML | 516 tests, 0 failures, 0 errors, 1 skipped symlink test; 21 net tests above the WP-3.1 baseline |
+| JWT fixture contract | 11 vectors and 3 keys pass through the product `CloudflareJwtVerifierTest` with a localhost mock JWKS server |
+| PR required checks | 18/18 pass for PR #226; required checks for PR #224 also pass |
+| Japanese pre-merge verification | [comment 7129805112](https://github.com/woxlo1/DeployMC/pull/224#issuecomment-7129805112), [comment 7153406425](https://github.com/woxlo1/DeployMC/pull/226#issuecomment-7153406425) |
+| Japanese post-merge evidence | [comment 7152862204](https://github.com/woxlo1/DeployMC/pull/224#issuecomment-7152862204), [comment 7153474449](https://github.com/woxlo1/DeployMC/pull/226#issuecomment-7153474449) |
+| Post-merge CI at `d4a1576` / `d075646` | [45382604464](https://github.com/woxlo1/DeployMC/actions/runs/45382604464), [45550945517](https://github.com/woxlo1/DeployMC/actions/runs/45550945517), success |
+| Post-merge CodeQL at `d4a1576` / `d075646` | [45382604197](https://github.com/woxlo1/DeployMC/actions/runs/45382604197), [45550945474](https://github.com/woxlo1/DeployMC/actions/runs/45550945474), success |
+| Post-merge Scorecard at `d4a1576` / `d075646` | [45382604232](https://github.com/woxlo1/DeployMC/actions/runs/45382604232), [45550945589](https://github.com/woxlo1/DeployMC/actions/runs/45550945589), success |
+
+The verifier reads only `Cf-Access-Jwt-Assertion`, accepts RS256 with a required `kid`, validates
+issuer, audience, expiry, not-before, and issued-at with bounded skew, and never uses
+`Cf-Access-Authenticated-User-Email` as an identity source. JWKS access is HTTPS-only except loopback
+fixtures, has bounded body/ETag/timeout, ETag revalidation, a minimum refresh interval, bounded
+stale-while-error, and fail-closed unavailability. Diagnostics expose only closed rejection codes and
+counts. Evidence is server-free, embedded-socket, and localhost-mock-JWKS only: no running Minecraft
+server, Bukkit mock, browser, E2E run, full integration suite, or in-game command exercised WP-3.2.
+Real Cloudflare compatibility and plan-specific guidance remain unclaimed until D-002 is resolved.
+RBAC is unchanged; Cloudflare JWT identities are not admin-equivalent, so the REST doctor route stays
+host-only.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -1301,11 +1339,15 @@ matrix remains empty and `softwareName` is still `Unknown`.
   on a server.
 - The WP-1.5 command surface and WP-1.6 per-sender message path still have server-free tests only;
   the smoke run does not execute `/deploymc` in-game.
-- Only `auth.mode: token` is implemented. `cloudflare` and `local-onetime` refuse startup.
+- `auth.mode: token` and `cloudflare` are implemented; `local-onetime` still refuses startup.
+  Cloudflare mode is fixture-verified only, and real Cloudflare compatibility remains unclaimed until
+  D-002 is resolved.
 - Every token is admin-equivalent until 0.4.0; the RBAC engine and path scopes do not exist yet.
   WP-3.1 only establishes the authenticated context and uniform 403 denial path.
 - WP-3.1 has server-free unit and embedded-socket evidence only; no running server, browser, E2E run,
-  full integration suite, or in-game command exercised the final auth boundary.
+  full integration suite, or in-game command exercised the final auth boundary. WP-3.2 adds only
+  server-free, embedded-socket, and localhost-mock-JWKS evidence; the REST doctor route remains
+  host-only because Cloudflare JWT identities are not admin-equivalent.
 - Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
   real-server verification. See [plugin messages](../i18n/plugin-messages.md).
 - The support-tier matrix is empty; the v1 smoke harness records real Paper evidence but earns no
@@ -1332,12 +1374,12 @@ D-006 community channel, and D-007 weekly time budget. None blocks Phase 0 docum
 Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -> category 3
 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #123 are complete,
 and their final consolidated evidence is recorded. WP-3.1 (issue #56) is complete with this final
-evidence PR; PR #222 merged its implementation at `41b6fee` and `1ba834b`. The next oldest open item
-is WP-3.2 (issue #57), the Cloudflare Access JWT verifier. Owner decision D-002 remains open, so no
-real Cloudflare Access verification or plan-specific guide claim is made until the owner decides;
-local implementation and fixture-driven verification may still proceed. Work on later items may be
-prepared in parallel but must not be merged ahead of an earlier open issue unless the owner
-explicitly approves.
+evidence PR; PR #222 merged its implementation at `41b6fee` and `1ba834b`. WP-3.2 (issue #57) is
+complete with this final evidence PR; PR #224 merged its core verifier at `d4a1576` and PR #226
+merged its wiring at `d075646`. The next oldest open item is WP-3.3 (issue #58), token and
+one-time-token modes. Owner decision D-002 remains open, so no real Cloudflare Access verification
+or plan-specific guide claim is made until the owner decides. Work on later items may be prepared in
+parallel but must not be merged ahead of an earlier open issue unless the owner explicitly approves.
 
 ## Release checklist
 
