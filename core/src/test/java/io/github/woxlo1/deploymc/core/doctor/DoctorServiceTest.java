@@ -8,6 +8,8 @@ import io.github.woxlo1.deploymc.api.CapabilityState;
 import io.github.woxlo1.deploymc.api.PlatformInfo;
 import io.github.woxlo1.deploymc.core.CapabilityCatalog;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtDiagnostics;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtRejection;
 import io.github.woxlo1.deploymc.core.config.ConfigSchema;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.config.ConfigValidator;
@@ -43,7 +45,7 @@ class DoctorServiceTest {
   @TempDir Path temp;
 
   @Test
-  void reportsAllThirteenChecksInStableOrder() throws Exception {
+  void reportsAllFourteenChecksInStableOrder() throws Exception {
     DoctorReport report = run(inputs(freePort()));
 
     assertEquals(
@@ -53,6 +55,7 @@ class DoctorServiceTest {
             "bind",
             "auth.mode",
             "auth.tunnel",
+            "auth.jwt",
             "sandbox",
             "snapshot",
             "deployment",
@@ -99,6 +102,7 @@ class DoctorServiceTest {
       for (String id :
           Arrays.asList(
               "auth.tunnel",
+              "auth.jwt",
               "platform.jar-replacement",
               "console.capture",
               "deployment",
@@ -345,9 +349,61 @@ class DoctorServiceTest {
   }
 
   @Test
-  void authModeWarnsForReservedModes() throws Exception {
-    DoctorEnvironment reserved =
+  void jwtCheckReportsOnlyClosedRejectionCountsInBothLocales() throws Exception {
+    JwtDiagnostics diagnostics = new JwtDiagnostics(Clock.fixed(NOW, ZoneOffset.UTC));
+    diagnostics.record(JwtRejection.MISSING_ASSERTION);
+    diagnostics.record(JwtRejection.SIGNATURE_MISMATCH);
+    diagnostics.record(JwtRejection.TOKEN_EXPIRED);
+    diagnostics.record(JwtRejection.NOT_YET_VALID);
+    diagnostics.record(JwtRejection.JWKS_UNAVAILABLE);
+
+    for (Locale locale : Arrays.asList(Locale.ROOT, Locale.JAPANESE)) {
+      DoctorCheck jwt =
+          check(
+              run(inputs(freePort()).locale(locale).jwtDiagnosticsSnapshot(diagnostics.snapshot())),
+              DoctorService.ID_AUTH_JWT);
+
+      assertEquals(DoctorStatus.WARN, jwt.status(), locale.toString());
+      assertTrue(jwt.implemented(), locale.toString());
+      assertTrue(jwt.evidence().isEmpty(), locale.toString());
+      assertEquals(
+          DoctorMessages.format(
+              locale,
+              DoctorMessages.DETAIL_AUTH_JWT_COUNTS,
+              Long.valueOf(1L),
+              Long.valueOf(1L),
+              Long.valueOf(1L),
+              Long.valueOf(1L),
+              Long.valueOf(1L)),
+          jwt.detail());
+      assertFalse(jwt.detail().contains("attacker"), locale.toString());
+      assertFalse(jwt.detail().contains("eyJ"), locale.toString());
+    }
+  }
+
+  @Test
+  void jwtCheckPassesWhenNoClosedRejectionsWereRecorded() throws Exception {
+    JwtDiagnostics diagnostics = new JwtDiagnostics(Clock.fixed(NOW, ZoneOffset.UTC));
+    DoctorCheck jwt =
+        check(
+            run(inputs(freePort()).jwtDiagnosticsSnapshot(diagnostics.snapshot())),
+            DoctorService.ID_AUTH_JWT);
+
+    assertEquals(DoctorStatus.PASS, jwt.status());
+    assertTrue(jwt.implemented());
+    assertTrue(jwt.evidence().isEmpty());
+  }
+
+  @Test
+  void authModeAcceptsCloudflareAndWarnsForReservedModes() throws Exception {
+    DoctorEnvironment cloudflare =
         environmentBuilder(freePort(), true).authMode("cloudflare").build();
+    DoctorReport cloudflareReport = run(inputs(freePort()).environment(cloudflare));
+    assertEquals(DoctorStatus.PASS, check(cloudflareReport, "auth.mode").status());
+    assertEquals(Boolean.FALSE, check(cloudflareReport, "auth.mode").evidence().get("tokenMode"));
+
+    DoctorEnvironment reserved =
+        environmentBuilder(freePort(), true).authMode("local-onetime").build();
     DoctorReport report = run(inputs(freePort()).environment(reserved));
     assertEquals(DoctorStatus.WARN, check(report, "auth.mode").status());
     assertEquals(Boolean.FALSE, check(report, "auth.mode").evidence().get("tokenMode"));

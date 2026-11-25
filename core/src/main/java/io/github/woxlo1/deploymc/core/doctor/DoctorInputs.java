@@ -1,6 +1,7 @@
 package io.github.woxlo1.deploymc.core.doctor;
 
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtDiagnosticsSnapshot;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxResolver;
 import io.github.woxlo1.deploymc.core.snapshot.SnapshotStore;
@@ -20,6 +21,7 @@ public final class DoctorInputs {
   private final SnapshotStore snapshotStore;
   private final SnapshotStoreConfig snapshotLimits;
   private final ConfigValidationResult configValidation;
+  private final JwtDiagnosticsSnapshot jwtDiagnosticsSnapshot;
   private final int missingLocalizationKeys;
 
   private DoctorInputs(Builder builder) {
@@ -31,6 +33,7 @@ public final class DoctorInputs {
     this.snapshotStore = builder.snapshotStore;
     this.snapshotLimits = builder.snapshotLimits;
     this.configValidation = builder.configValidation;
+    this.jwtDiagnosticsSnapshot = builder.jwtDiagnosticsSnapshot;
     this.missingLocalizationKeys = builder.missingLocalizationKeys;
   }
 
@@ -70,6 +73,11 @@ public final class DoctorInputs {
     return configValidation;
   }
 
+  /** Null outside Cloudflare mode; the snapshot contains only closed rejection counters. */
+  public JwtDiagnosticsSnapshot jwtDiagnosticsSnapshot() {
+    return jwtDiagnosticsSnapshot;
+  }
+
   public int missingLocalizationKeys() {
     return missingLocalizationKeys;
   }
@@ -85,6 +93,7 @@ public final class DoctorInputs {
     private SnapshotStore snapshotStore;
     private SnapshotStoreConfig snapshotLimits;
     private ConfigValidationResult configValidation;
+    private JwtDiagnosticsSnapshot jwtDiagnosticsSnapshot;
     private int missingLocalizationKeys = -1;
 
     public Builder clock(Clock value) {
@@ -124,6 +133,11 @@ public final class DoctorInputs {
 
     public Builder configValidation(ConfigValidationResult value) {
       this.configValidation = value;
+      return this;
+    }
+
+    public Builder jwtDiagnosticsSnapshot(JwtDiagnosticsSnapshot value) {
+      this.jwtDiagnosticsSnapshot = value;
       return this;
     }
 
