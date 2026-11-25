@@ -125,7 +125,7 @@ observability:
     format: text
   metrics:
     enabled: false
-    permission: metrics.read
+    permission: server.read
 
 roles:
   admin:

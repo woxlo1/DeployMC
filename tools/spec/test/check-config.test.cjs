@@ -3,7 +3,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const path = require("node:path");
-const { lintConfigFile, lintConfigObject } = require("../check-config.cjs");
+const { lintConfigFile, lintConfigObject, PERMISSIONS } = require("../check-config.cjs");
 
 const EXAMPLE = path.resolve(__dirname, "..", "..", "..", "specification", "config", "example.config.yaml");
 
@@ -22,6 +22,31 @@ function validConfig() {
 test("the committed example configuration is valid", () => {
   const result = lintConfigFile(EXAMPLE);
   assert.deepEqual(result.errors, []);
+});
+
+test("the permission registry is closed at 23 identifiers", () => {
+  assert.equal(PERMISSIONS.size, 23);
+  assert.ok(PERMISSIONS.has("deployments.create.jar"));
+  assert.ok(!PERMISSIONS.has("metrics.read"));
+  assert.ok(!PERMISSIONS.has("server.status"));
+});
+
+test("an unknown role permission is a key-specific error", () => {
+  const config = validConfig();
+  config.roles.developer.permissions.push("server.status");
+  const result = lintConfigObject(config);
+  assert.ok(
+    result.errors.some((error) =>
+      error.includes('roles.developer.permissions: unknown permission "server.status"'),
+    ),
+  );
+});
+
+test("the reserved role name none is rejected", () => {
+  const config = validConfig();
+  config.roles.none = { permissions: [] };
+  const result = lintConfigObject(config);
+  assert.ok(result.errors.some((error) => error.includes('roles.none: "none" is reserved')));
 });
 
 test("an undefined default role is rejected", () => {

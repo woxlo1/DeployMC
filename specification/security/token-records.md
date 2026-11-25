@@ -45,10 +45,11 @@ rejected.
 | Field | Type | Rules |
 |---|---|---|
 | `id` | string | `^[A-Za-z0-9_-]{1,64}$`; must equal the file name without `.json` |
-| `label` | string | Human-readable label, at most 80 characters; never used as an identity or log key |
+| `label` | string | Human-readable label, at most 80 characters; never used as an identity, owner, or log key |
+| `owner` | string, optional | Verified identity key used for RBAC role lookup; required for new records, at most 320 characters, and never taken from `label` |
 | `secretHash` | string | 64 lowercase hexadecimal digits: the SHA-256 digest of the complete bearer token |
 | `expiresAt` | string, optional | Quoted RFC 3339 UTC instant; the token is expired at this instant |
-| `scopes` | array of strings, optional | At most 16 unique strings of at most 128 characters matching `^(?:\*|[a-z][a-z0-9]*(?:\.[a-z][a-z0-9-]*)+)$`; absent or empty means no narrowing |
+| `scopes` | array of strings, optional | At most 16 unique identifiers from the canonical registry in `specification/security/rbac.md`; `*` is not allowed; absent or empty means no narrowing |
 | `revokedAt` | string, optional | Quoted RFC 3339 UTC instant; a revoked token can never authenticate again |
 | `lastUsedAt` | string, optional | Quoted RFC 3339 UTC instant of the last successful authentication that could be persisted |
 
@@ -58,9 +59,10 @@ Example with obviously fake values:
 {
   "id": "t-example01",
   "label": "ci-deployer",
+  "owner": "ci-service-token",
   "secretHash": "0000000000000000000000000000000000000000000000000000000000000000",
   "expiresAt": "2099-01-01T00:00:00Z",
-  "scopes": ["files.read", "server.status"],
+  "scopes": ["files.read", "server.read"],
   "lastUsedAt": "2098-12-31T23:59:00Z"
 }
 ```
@@ -69,23 +71,28 @@ Example with obviously fake values:
 
 `scopes` are stored on the record and exposed in the identity claims as
 `token.scopes`, comma-separated in declaration order; the claim is omitted when the
-array is absent or empty. In WP-3.3 they are intentionally **not enforced** because no
-RBAC engine exists. Every valid token remains admin-equivalent until WP-3.4. A scope
-name that is not recognized by the later permission registry is rejected then, not in
-WP-3.3. Do not interpret a stored scope as an enforced permission.
+array is absent or empty. In WP-3.3 they were intentionally **not enforced** because no
+RBAC engine existed. From WP-3.4, scopes are a narrowing filter over the permissions of
+the identity named by `owner`: effective permissions are
+`ownerEffective ∩ tokenScopes`, and a token can never exceed its owner's current
+permissions. An absent `owner` maps to `default-role`; no token is implicitly
+admin-equivalent. A scope outside the canonical registry is rejected when the record is
+loaded. Do not interpret a stored scope as a standalone grant.
 
 ## Lifecycle
 
 `/deploymc token` is console-only and uses the following forms:
 
-- `create [label] [--ttl-days N] [--scopes a,b]`
+- `create [label] [--owner identity] [--ttl-days N] [--scopes a,b]`
 - `revoke <id>`
 - `list`
 
 `create` generates 32 cryptographically random bytes, prints `dmc_` plus unpadded
-Base64URL once, and persists only the digest. `--ttl-days` is clamped to
-`1..auth.token.max-ttl-days`; `list` shows id, label, expiry, scopes, and revocation
-state only. No command prints a secret, digest, or raw exception message.
+Base64URL once, and persists only the digest. `--owner` is required for new records and
+must be a verified identity key; it is stored on the record, never inferred from `label`.
+`--ttl-days` is clamped to `1..auth.token.max-ttl-days`; `list` shows id, label, owner,
+expiry, scopes, and revocation state only. No command prints a secret, digest, or raw
+exception message.
 
 `revoke` writes `revokedAt` durably. Revocation is checked before expiry; when both
 apply, the closed `auth.revoked` code wins. `lastUsedAt` is persisted at most once per
