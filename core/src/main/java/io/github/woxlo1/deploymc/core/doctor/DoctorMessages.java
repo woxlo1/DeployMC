@@ -33,11 +33,18 @@ public final class DoctorMessages {
   public static final String REMEDIATION_BIND = "doctor.remediation.bind";
 
   public static final String DETAIL_AUTH_MODE_PASS = "doctor.detail.auth.mode.pass";
+  public static final String DETAIL_AUTH_MODE_CLOUDFLARE_PASS =
+      "doctor.detail.auth.mode.cloudflare.pass";
   public static final String DETAIL_AUTH_MODE_WARN = "doctor.detail.auth.mode.warn";
   public static final String REMEDIATION_AUTH_MODE = "doctor.remediation.auth.mode";
 
   public static final String DETAIL_AUTH_TUNNEL = "doctor.detail.auth.tunnel.notImplemented";
   public static final String REMEDIATION_AUTH_TUNNEL = "doctor.remediation.auth.tunnel";
+
+  public static final String DETAIL_AUTH_JWT_COUNTS = "doctor.detail.auth.jwt.counts";
+  public static final String DETAIL_AUTH_JWT_NO_DIAGNOSTICS =
+      "doctor.detail.auth.jwt.notImplemented";
+  public static final String REMEDIATION_AUTH_JWT = "doctor.remediation.auth.jwt";
 
   public static final String DETAIL_SANDBOX_PASS = "doctor.detail.sandbox.pass";
   public static final String DETAIL_SANDBOX_NO_RESOLVER = "doctor.detail.sandbox.warn.noResolver";
@@ -103,10 +110,14 @@ public final class DoctorMessages {
                   DETAIL_BIND_FAIL_IN_USE,
                   REMEDIATION_BIND,
                   DETAIL_AUTH_MODE_PASS,
+                  DETAIL_AUTH_MODE_CLOUDFLARE_PASS,
                   DETAIL_AUTH_MODE_WARN,
                   REMEDIATION_AUTH_MODE,
                   DETAIL_AUTH_TUNNEL,
                   REMEDIATION_AUTH_TUNNEL,
+                  DETAIL_AUTH_JWT_COUNTS,
+                  DETAIL_AUTH_JWT_NO_DIAGNOSTICS,
+                  REMEDIATION_AUTH_JWT,
                   DETAIL_SANDBOX_PASS,
                   DETAIL_SANDBOX_NO_RESOLVER,
                   DETAIL_SANDBOX_NO_SPACE,

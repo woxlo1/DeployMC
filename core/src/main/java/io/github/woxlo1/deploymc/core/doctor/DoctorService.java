@@ -4,6 +4,8 @@ import io.github.woxlo1.deploymc.api.PlatformInfo;
 import io.github.woxlo1.deploymc.core.CapabilityCatalog;
 import io.github.woxlo1.deploymc.core.CapabilityKeys;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtDiagnosticsSnapshot;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtRejection;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxAccessMode;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxErrorCode;
@@ -37,6 +39,7 @@ public final class DoctorService {
   public static final String ID_BIND = "bind";
   public static final String ID_AUTH_MODE = "auth.mode";
   public static final String ID_AUTH_TUNNEL = "auth.tunnel";
+  public static final String ID_AUTH_JWT = "auth.jwt";
   public static final String ID_SANDBOX = "sandbox";
   public static final String ID_SNAPSHOT = "snapshot";
   public static final String ID_DEPLOYMENT = "deployment";
@@ -54,6 +57,7 @@ public final class DoctorService {
               ID_BIND,
               ID_AUTH_MODE,
               ID_AUTH_TUNNEL,
+              ID_AUTH_JWT,
               ID_SANDBOX,
               ID_SNAPSHOT,
               ID_DEPLOYMENT,
@@ -89,6 +93,7 @@ public final class DoctorService {
             false,
             detail(locale, DoctorMessages.DETAIL_AUTH_TUNNEL),
             detail(locale, DoctorMessages.REMEDIATION_AUTH_TUNNEL)));
+    checks.add(authJwt(locale, inputs.jwtDiagnosticsSnapshot()));
     checks.add(sandbox(locale, inputs.sandboxResolver()));
     checks.add(snapshot(locale, snapshots));
     checks.add(deployment(locale, environment, snapshots));
@@ -251,16 +256,78 @@ public final class DoctorService {
   private static DoctorCheck authMode(Locale locale, DoctorEnvironment environment) {
     String mode = value(environment.authMode());
     boolean token = "token".equals(mode);
+    boolean cloudflare = "cloudflare".equals(mode);
+    String detailKey =
+        token
+            ? DoctorMessages.DETAIL_AUTH_MODE_PASS
+            : (cloudflare
+                ? DoctorMessages.DETAIL_AUTH_MODE_CLOUDFLARE_PASS
+                : DoctorMessages.DETAIL_AUTH_MODE_WARN);
     return DoctorCheck.of(
         ID_AUTH_MODE,
-        token ? DoctorStatus.PASS : DoctorStatus.WARN,
+        token || cloudflare ? DoctorStatus.PASS : DoctorStatus.WARN,
+        true,
+        detail(locale, detailKey, mode),
+        detail(locale, DoctorMessages.REMEDIATION_AUTH_MODE),
+        evidence("tokenMode", Boolean.valueOf(token)));
+  }
+
+  private static DoctorCheck authJwt(Locale locale, JwtDiagnosticsSnapshot snapshot) {
+    if (snapshot == null) {
+      return DoctorCheck.of(
+          ID_AUTH_JWT,
+          DoctorStatus.WARN,
+          false,
+          detail(locale, DoctorMessages.DETAIL_AUTH_JWT_NO_DIAGNOSTICS),
+          detail(locale, DoctorMessages.REMEDIATION_AUTH_JWT));
+    }
+    Map<String, Long> counts = closedRejectionCounts(snapshot);
+    Long required = counts.get("auth.required");
+    Long invalid = counts.get("auth.invalid");
+    Long expired = counts.get("auth.expired");
+    Long notYetValid = counts.get("auth.not-yet-valid");
+    Long jwksUnavailable = counts.get("auth.jwks-unavailable");
+    long total =
+        required.longValue()
+            + invalid.longValue()
+            + expired.longValue()
+            + notYetValid.longValue()
+            + jwksUnavailable.longValue();
+    return DoctorCheck.of(
+        ID_AUTH_JWT,
+        total == 0L ? DoctorStatus.PASS : DoctorStatus.WARN,
         true,
         detail(
             locale,
-            token ? DoctorMessages.DETAIL_AUTH_MODE_PASS : DoctorMessages.DETAIL_AUTH_MODE_WARN,
-            mode),
-        detail(locale, DoctorMessages.REMEDIATION_AUTH_MODE),
-        evidence("tokenMode", Boolean.valueOf(token)));
+            DoctorMessages.DETAIL_AUTH_JWT_COUNTS,
+            required,
+            invalid,
+            expired,
+            notYetValid,
+            jwksUnavailable),
+        detail(locale, DoctorMessages.REMEDIATION_AUTH_JWT));
+  }
+
+  private static Map<String, Long> closedRejectionCounts(JwtDiagnosticsSnapshot snapshot) {
+    Map<String, Long> counts = new LinkedHashMap<String, Long>();
+    for (JwtRejection reason : JwtRejection.values()) {
+      counts.put(reason.errorCode(), Long.valueOf(0L));
+    }
+    for (Map.Entry<String, Long> entry : snapshot.countsByReason().entrySet()) {
+      JwtRejection reason;
+      try {
+        reason = JwtRejection.valueOf(entry.getKey());
+      } catch (IllegalArgumentException unknown) {
+        continue;
+      }
+      Long count = entry.getValue();
+      if (count == null || count.longValue() < 0L) {
+        continue;
+      }
+      String code = reason.errorCode();
+      counts.put(code, Long.valueOf(counts.get(code).longValue() + count.longValue()));
+    }
+    return counts;
   }
 
   private static DoctorCheck sandbox(Locale locale, SandboxResolver resolver) {
