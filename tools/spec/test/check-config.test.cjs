@@ -60,6 +60,23 @@ test("a Cloudflare configuration without a team domain is rejected", () => {
   assert.ok(result.errors.some((error) => error.includes("team-domain")));
 });
 
+test("local one-time mode rejects a non-loopback bind without an explicit override", () => {
+  const config = validConfig();
+  config.bind.address = "0.0.0.0";
+  config.auth.mode = "local-onetime";
+  const result = lintConfigObject(config);
+  assert.ok(result.errors.some((error) => error.includes("local-onetime requires a loopback bind")));
+});
+
+test("local one-time mode warns when the loopback override is enabled", () => {
+  const config = validConfig();
+  config.bind["allow-non-loopback"] = true;
+  config.auth.mode = "local-onetime";
+  const result = lintConfigObject(config);
+  assert.deepEqual(result.errors, []);
+  assert.ok(result.warnings.some((warning) => warning.includes("local one-time mode")));
+});
+
 test("unknown top-level keys are warnings, not errors", () => {
   const config = validConfig();
   config.unexpected = true;
