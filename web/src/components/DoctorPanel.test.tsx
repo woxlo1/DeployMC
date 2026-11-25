@@ -12,6 +12,7 @@ const CHECK_IDS = [
   'bind',
   'auth.mode',
   'auth.tunnel',
+  'auth.jwt',
   'sandbox',
   'snapshot',
   'deployment',
@@ -101,6 +102,10 @@ const INVALID_REPORT_CASES: readonly InvalidReportCase[] = [
   {
     name: 'rejects duplicate check ids',
     payload: { ...makeRawReport(), checks: withDuplicateCheckId() },
+  },
+  {
+    name: 'rejects a report with fewer than fourteen checks',
+    payload: { ...makeRawReport(), checks: makeChecks().slice(1) },
   },
   {
     name: 'rejects an over-long detail',
@@ -206,7 +211,7 @@ describe('doctor panel', () => {
       ...checks[0]!,
       detail: 'Environment verified.',
       remediation: 'No action needed.',
-      evidence: { platform: 'paper', checks: 13, available: true },
+      evidence: { platform: 'paper', checks: 14, available: true },
     };
     const report = makeReport({ checks });
     vi.mocked(fetch).mockResolvedValue(mockResponse(report));
@@ -331,7 +336,7 @@ describe('doctor panel', () => {
       detail: 'Environment verified.',
       evidence: {
         mode: 'token',
-        checks: 13,
+        checks: 14,
         available: true,
         platform: '/var/lib/deploymc',
         path: '/opt/server/plugins',
@@ -349,7 +354,7 @@ describe('doctor panel', () => {
     expect(screen.getAllByText('Evidence').length).toBeGreaterThan(0);
     expect(screen.getByText('mode')).toBeInTheDocument();
     expect(screen.getByText('token')).toBeInTheDocument();
-    expect(screen.getByText('13')).toBeInTheDocument();
+    expect(screen.getByText('14')).toBeInTheDocument();
     expect(screen.getByText('[redacted]')).toBeInTheDocument();
     const body = document.body.textContent ?? '';
     expect(body).not.toContain('/var/lib/deploymc');
