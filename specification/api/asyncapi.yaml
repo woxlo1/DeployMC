@@ -17,6 +17,10 @@ info:
 
     - Authentication and `Origin` validation happen at upgrade time. A connection
       that fails authentication is closed before any event is delivered.
+    - Authorization is re-evaluated on every event delivery. If a configuration reload
+      revokes a permission required by a subscribed channel, the subscription is removed.
+      When no authorized subscription remains, the server closes with code `4403` and reason
+      `rbac.permission-revoked`, without sending further events.
     - Every server message uses the envelope fields `id`, `type`, `sequence`,
       `protocolVersion`, and `timestamp`.
     - `sequence` is per connection and increases by one. A client that detects a gap
@@ -127,10 +131,10 @@ components:
       bearerFormat: DeployMC API token
       description: |
         DeployMC-native API token sent in the `Authorization` header at upgrade time.
-        Expiry and revocation are enforced. Scopes are stored and propagated but are
-        not enforced until RBAC; every valid token remains admin-equivalent in WP-3.3.
-        The separate `local-onetime` mode uses a one-shot console token and is never
-        persisted.
+        Expiry and revocation are enforced. WP-3.3 stored and propagated scopes without
+        enforcing them; the WP-3.4 RBAC contract narrows the token to its owner's effective
+        permissions. The separate `local-onetime` mode uses a one-shot console token, is
+        never persisted, and maps to the reserved identity `local-onetime` for RBAC.
 
   messages:
     Subscribe:

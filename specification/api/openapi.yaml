@@ -14,9 +14,11 @@ info:
     transport adapters are implemented. The adapters have server-free contract tests, but no
     running-server smoke test or Web UI consumes them yet. The doctor and metrics routes in
     this document are normative contracts for issue #117; they are not implemented until the
-    corresponding product stage is merged. Until 0.4.0 every valid token is admin-equivalent;
-    role and path scoping arrive with RBAC. The remaining server resource fields and the
-    deployment, console, and audit resources are defined for later work packages.
+    corresponding product stage is merged. The RBAC contract in
+    `specification/security/rbac.md` is normative for issue #59; `/api/v1/me` and role/path
+    enforcement must not be claimed before the evaluator is merged. The remaining server
+    resource fields and the deployment, console, and audit resources are defined for later
+    work packages.
 
     Rules that apply to every operation:
 
@@ -226,6 +228,64 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /api/v1/me:
+    get:
+      operationId: getCurrentIdentity
+      tags: [Identity]
+      summary: Get the caller's effective identity and permissions
+      description: |
+        Returns only the caller's own identity kind, opaque identity id, sorted assigned roles,
+        and effective permission identifiers in canonical registry order. `*` is expanded and
+        never returned. No token secret, digest, raw scope string, raw path glob, or other
+        identity's data is returned.
+
+        When `explain` is supplied, the response includes a deterministic decision explanation
+        for that permission and optional sandbox-relative `path`. The path is resolved by the
+        sandbox resolver before evaluation; raw paths and raw globs are never returned.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - name: explain
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PermissionIdentifier'
+          description: Permission identifier to evaluate for explain mode.
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 1024
+          description: Optional sandbox-relative path to evaluate through the sandbox resolver.
+      responses:
+        '200':
+          description: The caller's effective identity, roles, permissions, and optional explanation.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
   /api/v1/metrics:
     get:
       operationId: getMetrics
@@ -234,7 +294,8 @@ paths:
       description: |
         Returns Prometheus text-format metrics. The route exists only when
         `observability.metrics.enabled` is true. It is always behind the authentication gate and the
-        configured permission identifier. Until RBAC exists, only admin-equivalent identities pass.
+        configured permission identifier, which must be in the closed RBAC registry. Until the
+        RBAC evaluator exists, only admin-equivalent identities pass.
         Metrics use fixed names and closed low-cardinality label sets; no identity, path, hostname,
         or IP address is exported.
       security:
@@ -1632,6 +1693,131 @@ components:
               - type: boolean
           description: Allow-listed scalar evidence. Never contains paths, secrets, or identities.
 
+    PermissionIdentifier:
+      type: string
+      enum:
+        - server.read
+        - files.read
+        - files.write
+        - files.delete
+        - files.upload
+        - snapshots.read
+        - snapshots.restore
+        - snapshots.prune
+        - deployments.read
+        - deployments.create
+        - deployments.create.jar
+        - deployments.approve
+        - deployments.cancel
+        - deployments.rollback
+        - server.restart
+        - console.read
+        - console.command
+        - audit.read
+        - audit.export
+        - tokens.manage.self
+        - tokens.manage.all
+        - webhooks.manage
+        - users.read
+      description: Closed WP-3.4 permission registry; `*` is expanded and never returned.
+
+    MeIdentity:
+      type: object
+      additionalProperties: false
+      required: [id, kind]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 320
+          description: Opaque verified identity id belonging to the caller only.
+        kind:
+          type: string
+          enum: [cloudflare, token, local-onetime]
+
+    ExplainResult:
+      type: object
+      additionalProperties: false
+      required: [permission, decision, reason, path, roles]
+      properties:
+        permission:
+          $ref: '#/components/schemas/PermissionIdentifier'
+        decision:
+          type: string
+          enum: [allow, deny]
+        reason:
+          type: string
+          enum: [NO_ROLE, NOT_GRANTED, TOKEN_SCOPE_EXCEEDED, PATH_DENIED, PATH_SCOPE]
+        path:
+          type: object
+          additionalProperties: false
+          required: [requested, resolved, withinScope]
+          properties:
+            requested:
+              type: boolean
+            resolved:
+              type: boolean
+            withinScope:
+              type: boolean
+          description: Booleans only; no raw path or glob is returned.
+        token:
+          type: object
+          additionalProperties: false
+          required: [present, containsPermission]
+          properties:
+            present:
+              type: boolean
+            containsPermission:
+              type: boolean
+          description: Present only for token identities; no raw scope string is returned.
+        roles:
+          type: object
+          additionalProperties: false
+          required: [assigned, granting, denyRuleMatches, allowRuleMatches]
+          properties:
+            assigned:
+              type: integer
+              minimum: 0
+            granting:
+              type: integer
+              minimum: 0
+            denyRuleMatches:
+              type: integer
+              minimum: 0
+            allowRuleMatches:
+              type: integer
+              minimum: 0
+          description: Bounded counts; no role names beyond the caller's own role list.
+
+    MeResponse:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, identity, roles, permissions]
+      properties:
+        schemaVersion:
+          type: string
+          const: '1.0'
+        identity:
+          $ref: '#/components/schemas/MeIdentity'
+        roles:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+          description: Sorted roles assigned to the caller.
+        permissions:
+          type: array
+          maxItems: 23
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PermissionIdentifier'
+          description: Effective permissions after token narrowing, in canonical registry order.
+        explain:
+          $ref: '#/components/schemas/ExplainResult'
+
     DoctorReport:
       type: object
       additionalProperties: false
@@ -1652,7 +1838,7 @@ components:
           description: The doctor baseline does not constitute a support-tier verdict.
         checks:
           type: array
-          minItems: 14
+          minItems: 15
           maxItems: 64
           items:
             $ref: '#/components/schemas/DoctorCheck'

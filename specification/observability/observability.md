@@ -59,6 +59,7 @@ Three renderings are required:
 | `auth.mode` | Active startup mode. | `PASS` for implemented `token` or `cloudflare` modes; `WARN` for reserved modes that refuse startup. |
 | `auth.tunnel` | None yet. | `WARN`, `implemented: false`. |
 | `auth.jwt` | Redacted counters from the Cloudflare Access JWT verifier. | `PASS` when diagnostics exist with zero closed rejections; `WARN` for any rejection or missing diagnostics; `implemented: false` when no snapshot is supplied. Counts appear only in localized `detail`, never in evidence. |
+| `rbac` | Immutable RBAC policy snapshot and synthetic explain-mode probes. | `PASS` only when a product evaluator is wired and the snapshot is valid; `WARN` with `implemented: false` otherwise. Evidence is limited to `roles`, `users`, `default-role`, and `registry-version`; no identity, path, glob, token, or real decision reason. |
 | `sandbox` | Root existence, writability, symlink policy, and protected-path resolution. | `FAIL` for an unusable root or rejected protected-path probe; `WARN` when free-space detection is unavailable. |
 | `snapshot` | Open store, lock status, verify report, and size against retention. | `FAIL` when the store is locked or over its byte limit; `WARN` for verify issues; `WARN`, `implemented: false` when no store is available. |
 | `deployment` | In-process active deployment count from the snapshot store. | `WARN` because persisted transactions, safe state, and restart viability are not implemented. |
@@ -88,8 +89,8 @@ different status from the stored checks.
 
 `GET /api/v1/metrics` is opt-in through `observability.metrics.enabled`. It is always behind the
 normal bearer/cloudflare gate. The configured `observability.metrics.permission` is a stable
-identifier; until the RBAC evaluator exists, only admin-equivalent identities pass and the behavior
-is documented as temporary.
+identifier from the closed RBAC registry. Once the evaluator exists it is checked through RBAC;
+until then only admin-equivalent identities pass and the behavior is documented as temporary.
 
 The response is Prometheus text format `0.0.4` with content type
 `text/plain; version=0.0.4; charset=utf-8`. Rendered names and labels are fixed at build time. The
@@ -134,8 +135,10 @@ The closed endpoint classes are `health`, `server`, `doctor`, `files`, `validati
 
 ## 6. Honesty boundaries
 
-The following remain `NOT IMPLEMENTED` and are not made true by this contract: Cloudflare JWKS
-fetch and clock-skew checks, tunnel-only arrival heuristics, Windows JAR replacement strategy
-detection, console ring-buffer accounting, opt-in update availability checks, a deployment engine
-or persisted transactions, audit records, RBAC evaluation, and product JWT verification. The doctor
+The following remain `NOT IMPLEMENTED` and are not made true by this contract: tunnel-only arrival
+heuristics, Windows JAR replacement strategy detection, console ring-buffer accounting, opt-in
+update availability checks, a deployment engine or persisted transactions, audit records, and RBAC
+evaluation. The WP-3.4 RBAC contract is normative but has no product evaluator until its
+implementation PR is merged. Cloudflare JWT verification is implemented; real Cloudflare
+compatibility and plan-specific guidance remain unclaimed until D-002 is resolved. The doctor
 report and documentation must preserve those boundaries.
