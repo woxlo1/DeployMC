@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-24 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-25 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #168 merged the
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
@@ -32,7 +32,11 @@ recorded in `docs/development/dependabot-triage.md`; PR #215 merged its final ev
 with passing post-merge CI/CodeQL/Scorecard, and issue #121 closed at
 `2026-11-24T07:55:44Z`. WP-3.1 merged in [PR #222](https://github.com/woxlo1/DeployMC/pull/222) as
 two Conventional Commits (`41b6fee`, `1ba834b`) with passing required checks and post-merge CI,
-CodeQL, and Scorecard; this final evidence PR closes issue #56.
+CodeQL, and Scorecard; issue #56 closed through its final evidence PR. WP-3.2 merged its core
+verifier in [PR #224](https://github.com/woxlo1/DeployMC/pull/224) at `d4a1576` and its host,
+transport, doctor, configuration, Web, and CI wiring in
+[PR #226](https://github.com/woxlo1/DeployMC/pull/226) at `d075646`, with passing required checks
+and post-merge CI, CodeQL, and Scorecard; this final evidence PR closes issue #57.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -77,8 +81,70 @@ the prior 473-test baseline therefore rose by 22 net tests. Verified boundaries 
 missing-authenticator and exception paths, request validation, bounded claims and attributes, async-safe
 context carrying, 401 mapping, uniform 403 mapping, and EN/JA `rbac.denied` strings. Evidence is
 server-free unit and embedded-socket testing only. No running Minecraft server, Bukkit mock, browser,
-E2E run, full integration suite, or in-game command exercised these paths, and no RBAC engine or
-Cloudflare JWT verifier is claimed.
+E2E run, full integration suite, or in-game command exercised these paths, and no RBAC engine was
+claimed at that stage. WP-3.2 later added the Cloudflare verifier recorded below.
+
+## WP-3.2 Cloudflare Access JWT verifier (issue #57)
+
+WP-3.2 adds a bounded, fail-closed Cloudflare Access verifier and wires it into the host.
+`core.auth.cloudflare` accepts only RS256 assertions with a `kid`, resolves the matching key through a
+bounded JWKS client, validates `iss`, `aud`, `exp`, `nbf`, and `iat` with bounded clock skew, and
+accepts both user and service-token audience claims. Only `Cf-Access-Jwt-Assertion` is read;
+`Cf-Access-Authenticated-User-Email` is never an identity source. Diagnostics expose only closed
+rejection codes and counts, never token contents, raw headers, or identity claims.
+
+`HttpJwksClient` permits HTTPS only, except loopback HTTP for local fixtures, and follows no redirects.
+It bounds body size, ETag length, and timeout; honors `Cache-Control max-age`; revalidates with
+`If-None-Match`; enforces a minimum refresh interval; and allows stale-while-error only within the
+configured maximum staleness. JWKS unavailability fails closed as `auth.jwks-unavailable`. The
+verifier is built at startup from `auth.cloudflare`: the JWKS endpoint is derived from
+`auth.cloudflare.team-domain`, and clock skew, cache, and max-stale settings are restart-only.
+`require-shared-secret-header` remains reserved and now rejects non-empty values in both the JSON
+schema and the product loader. `auth.mode: cloudflare` starts the verifier and refuses in-game token
+provisioning through the existing `COMMAND_TOKEN_UNAVAILABLE` result.
+
+Transport maps `NOT_YET_VALID` to a localized 401 `auth.not-yet-valid` with `retryable: false` and
+JWKS unavailability to a localized 503 `auth.jwks-unavailable` with `retryable: true` and
+`Retry-After: 5`. The 14th doctor check, `auth.jwt`, aggregates closed rejection counters into five
+categories and puts counts only in localized `detail`; it has no evidence keys, passes when
+diagnostics exist with zero rejections, warns on any rejection or missing diagnostics, and is
+`implemented: false` without a snapshot. The Web parser and OpenAPI now require 14 checks, and
+`auth.mode` passes for both `token` and `cloudflare`.
+
+The core verifier merged in [PR #224](https://github.com/woxlo1/DeployMC/pull/224) at `d4a1576` on
+2026-11-24T11:16:01Z; the host, transport, doctor, configuration, Web, and CI wiring merged in
+[PR #226](https://github.com/woxlo1/DeployMC/pull/226) at `d075646` on 2026-11-25T05:03:37Z. Both
+PRs were rebase-merged so their Conventional Commits remain individually on `main`. Japanese
+verification and post-merge evidence are in
+[comment 7129805112](https://github.com/woxlo1/DeployMC/pull/224#issuecomment-7129805112),
+[comment 7152862204](https://github.com/woxlo1/DeployMC/pull/224#issuecomment-7152862204),
+[comment 7153406425](https://github.com/woxlo1/DeployMC/pull/226#issuecomment-7153406425), and
+[comment 7153474449](https://github.com/woxlo1/DeployMC/pull/226#issuecomment-7153474449).
+All required pull-request checks passed: 18/18 for PR #226. Post-merge `main` runs passed at
+`d4a1576`: CI [45382604464](https://github.com/woxlo1/DeployMC/actions/runs/45382604464), CodeQL
+[45382604197](https://github.com/woxlo1/DeployMC/actions/runs/45382604197), and Scorecard
+[45382604232](https://github.com/woxlo1/DeployMC/actions/runs/45382604232). At `d075646`: CI
+[45550945517](https://github.com/woxlo1/DeployMC/actions/runs/45550945517), CodeQL
+[45550945474](https://github.com/woxlo1/DeployMC/actions/runs/45550945474), and Scorecard
+[45550945589](https://github.com/woxlo1/DeployMC/actions/runs/45550945589).
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | Success; base unchanged before each merge |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Success, no output |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat`; exit 0 |
+| `.\gradlew.bat build verifyJava8 --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`; Java 8 bytecode check and plugin JAR verification passed |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| `git diff --check` | Success, no output |
+
+The merged tree's JUnit XML reports 516 Java tests, 0 failures, 0 errors, and 1 skipped symlink test;
+the 495-test WP-3.1 baseline therefore rose by 21 net tests. All 11 committed JWT vectors pass through
+the product `CloudflareJwtVerifierTest`, including rotation, ETag revalidation, stale-while-error,
+JWKS unavailability, and forwarded-header rejection. Evidence is server-free unit, embedded-socket,
+and localhost-mock-JWKS only. No running Minecraft server, Bukkit mock, browser, E2E run, full
+integration suite, or in-game command exercised these paths. Real Cloudflare compatibility and
+plan-specific guidance remain unclaimed until D-002 is resolved. RBAC is unchanged: Cloudflare JWT
+identities are not admin-equivalent, so the authenticated REST doctor route remains host-only.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -329,7 +395,8 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.5 commands | `/deploymc status|reload|doctor|token`, permission nodes, config-driven startup, console-only token stub, limited doctor, and English/Japanese command catalogs | 42 server-free Bukkit tests, full build, Java 8 check, generated descriptor and JAR inspection |
 | WP-1.6 i18n runtime | Per-key sender/server/English fallback, named placeholders, diagnostics, reflective sender locale detection, and legacy color formatting | 50 server-free Bukkit tests, full build, Java 8 check, and `node tools/i18n/check` |
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 5 route-enumeration and gate tests, 63 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
-| WP-3.1 auth framework | Final `Authenticator` and `AuthenticationRequest` boundary, fail-closed `AuthenticationFilter`, immutable async-safe `AuthContext`, bounded `Identity` claims/attributes, context-carrying HTTP and WebSocket requests, and uniform detail-free 401/403 Problem Details with localized `rbac.denied` | 16 new core auth tests, an expanded `TokenAuthenticatorTest`, and 5 embedded-socket transport tests; full build reports 495 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no server, RBAC engine, or Cloudflare verifier |
+| WP-3.1 auth framework | Final `Authenticator` and `AuthenticationRequest` boundary, fail-closed `AuthenticationFilter`, immutable async-safe `AuthContext`, bounded `Identity` claims/attributes, context-carrying HTTP and WebSocket requests, and uniform detail-free 401/403 Problem Details with localized `rbac.denied` | 16 new core auth tests, an expanded `TokenAuthenticatorTest`, and 5 embedded-socket transport tests; full build reports 495 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no server or RBAC engine |
+| WP-3.2 Cloudflare Access verifier | RS256-only `kid`-keyed JWT verification, bounded JWKS cache with ETag revalidation and bounded stale-while-error, fail-closed unavailability, closed diagnostics, host startup wiring, 401/503 problem mapping, and a redacted 14th doctor check | 11 committed JWT vectors through the product verifier, cache/rotation/staleness tests, transport and Bukkit wiring tests, full build reporting 516 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no real Cloudflare tenant, running server, or in-game command |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |
@@ -934,8 +1001,9 @@ The following are documented as intended behavior. They are **not** code.
 - Remaining authenticated REST and WebSocket application endpoints bound to the OpenAPI and
   AsyncAPI skeletons. The gate, `GET /api/v1/server`, file/validation, snapshot, doctor, and opt-in
   metrics routes are implemented; deployment, console, and audit routes are not.
-- Cloudflare Access and `local-onetime` authentication modes, RBAC, and the audit log. The minimal
-  `token` mode is implemented and refuses startup for the other two modes.
+- `local-onetime` authentication mode, RBAC, and the audit log. The minimal `token` and the new
+  `cloudflare` modes are implemented; `local-onetime` still refuses startup. Real Cloudflare
+  compatibility is not claimed until D-002 is resolved.
 - Running-server use of `FileOperationsService`. The core service consumes `SandboxPath`, and the
   REST adapter calls it, but no running server or UI uses those routes yet.
 - Application-level one-click restore and running-server use of `core.snapshot`. The store,
