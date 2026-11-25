@@ -8,6 +8,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /** Creates host-provisioned tokens and persists only their SHA-256 digests. */
@@ -30,6 +32,15 @@ public final class TokenProvisioner {
 
   /** Creates a token with the requested lifetime. A null or zero lifetime means no expiry. */
   public CreatedToken create(String label, Duration lifetime) throws TokenStoreException {
+    return create(label, lifetime, Collections.<String>emptyList());
+  }
+
+  /**
+   * Creates a token with the requested lifetime and stored scopes. Scope validation is structural;
+   * enforcement belongs to the later RBAC engine.
+   */
+  public CreatedToken create(String label, Duration lifetime, Collection<String> scopes)
+      throws TokenStoreException {
     String safeLabel = cleanLabel(label);
     byte[] secret = new byte[SECRET_BYTES];
     random.nextBytes(secret);
@@ -41,7 +52,8 @@ public final class TokenProvisioner {
     if (lifetime != null && !lifetime.isZero() && !lifetime.isNegative()) {
       expiresAt = clock.instant().plus(lifetime);
     }
-    TokenRecord record = new TokenRecord(id, safeLabel, sha256(token), expiresAt);
+    TokenRecord record =
+        new TokenRecord(id, safeLabel, sha256(token), expiresAt, scopes, null, null);
     store.write(record);
     return new CreatedToken(record, token);
   }
