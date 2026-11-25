@@ -26,12 +26,16 @@ public final class MessageKeys {
   public static final String AUTH_REQUIRED_DETAIL = "problem.auth.required.detail";
   public static final String AUTH_INVALID_TITLE = "problem.auth.invalid.title";
   public static final String AUTH_INVALID_DETAIL = "problem.auth.invalid.detail";
+  public static final String AUTH_REVOKED_TITLE = "problem.auth.revoked.title";
+  public static final String AUTH_REVOKED_DETAIL = "problem.auth.revoked.detail";
   public static final String AUTH_EXPIRED_TITLE = "problem.auth.expired.title";
   public static final String AUTH_EXPIRED_DETAIL = "problem.auth.expired.detail";
   public static final String AUTH_NOT_YET_VALID_TITLE = "problem.auth.not-yet-valid.title";
   public static final String AUTH_NOT_YET_VALID_DETAIL = "problem.auth.not-yet-valid.detail";
   public static final String AUTH_JWKS_UNAVAILABLE_TITLE = "problem.auth.jwks-unavailable.title";
   public static final String AUTH_JWKS_UNAVAILABLE_DETAIL = "problem.auth.jwks-unavailable.detail";
+  public static final String INTERNAL_ERROR_TITLE = "problem.internal.error.title";
+  public static final String INTERNAL_ERROR_DETAIL = "problem.internal.error.detail";
   public static final String AUTH_DENIED_TITLE = "problem.rbac.denied.title";
   public static final String AUTH_DENIED_DETAIL = "problem.rbac.denied.detail";
 
