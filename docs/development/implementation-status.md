@@ -36,7 +36,12 @@ CodeQL, and Scorecard; issue #56 closed through its final evidence PR. WP-3.2 me
 verifier in [PR #224](https://github.com/woxlo1/DeployMC/pull/224) at `d4a1576` and its host,
 transport, doctor, configuration, Web, and CI wiring in
 [PR #226](https://github.com/woxlo1/DeployMC/pull/226) at `d075646`, with passing required checks
-and post-merge CI, CodeQL, and Scorecard; this final evidence PR closes issue #57.
+and post-merge CI, CodeQL, and Scorecard; its final evidence PR closed issue #57. WP-3.3 merged its
+normative contract in [PR #228](https://github.com/woxlo1/DeployMC/pull/228) at `72bddd2`, its core
+lifecycle implementation in [PR #229](https://github.com/woxlo1/DeployMC/pull/229) at `8056492`, and
+its host and console wiring in [PR #230](https://github.com/woxlo1/DeployMC/pull/230) at `49c544e`,
+with passing required checks and post-merge CI, CodeQL, and Scorecard; this final evidence PR closes
+issue #58.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -145,6 +150,70 @@ and localhost-mock-JWKS only. No running Minecraft server, Bukkit mock, browser,
 integration suite, or in-game command exercised these paths. Real Cloudflare compatibility and
 plan-specific guidance remain unclaimed until D-002 is resolved. RBAC is unchanged: Cloudflare JWT
 identities are not admin-equivalent, so the authenticated REST doctor route remains host-only.
+
+## WP-3.3 full API tokens and one-time-token modes (issue #58)
+
+WP-3.3 completes the token lifecycle and the separate `local-onetime` mode. The normative contract
+in `specification/security/token-records.md` records the SHA-256-over-full-token choice, the
+`dmc_` 256-bit Base64URL format, optional `scopes`, `revokedAt`, and `lastUsedAt` fields, the
+failure ordering, and closed console output that never prints a digest or raw exception. Scopes are
+stored and propagated as `token.scopes` in declaration order, omitted when empty. The contract
+explicitly does not enforce them until WP-3.4 RBAC; every valid token remains admin-equivalent.
+
+`core.auth` now persists immutable token records with structural scope validation, revocation
+checked before expiry, last-used persistence with retryable `internal.error` on failure, and
+fail-closed metadata writes using a temporary file, target re-read/byte comparison, and atomic
+replace. New records use a hard link so a filename collision fails closed. Transport maps the
+closed `auth.revoked` and internal failures to localized Problem Details and stable metric labels.
+
+`local-onetime` creates one 256-bit in-memory token, prints it once to the console, and holds no
+token store. A missing credential does not consume an attempt; a wrong or malformed credential does.
+The burned state wins over later credentials and returns the closed `auth.one-time-consumed` code.
+The mode is loopback-only unless `bind.allow-non-loopback: true` is explicitly set, which produces a
+localized startup warning. There is no fallback between auth modes. The 14th doctor check treats
+`local-onetime` as implemented and PASS. Console commands support
+`token create [label] [--ttl-days N] [--scopes a,b]`, `token revoke <id>`, and `token list`, with TTL
+clamping, scope validation, tab completion, and fixed failure messages. Host token provisioning is
+refused in `local-onetime` mode.
+
+The contract merged in [PR #228](https://github.com/woxlo1/DeployMC/pull/228) at `72bddd2` on
+2026-11-25T05:48:26Z; the core implementation merged in
+[PR #229](https://github.com/woxlo1/DeployMC/pull/229) at `8056492` on 2026-11-25T06:09:48Z; the
+host and console wiring was rebase-merged in
+[PR #230](https://github.com/woxlo1/DeployMC/pull/230) at `49c544e` on 2026-11-25T06:46:37Z. All
+three PRs were rebase-merged so their Conventional Commits remain individually on `main`. Japanese
+verification and post-merge evidence are recorded in
+[comment 7154152926](https://github.com/woxlo1/DeployMC/pull/228#issuecomment-7154152926),
+[comment 7154220471](https://github.com/woxlo1/DeployMC/pull/228#issuecomment-7154220471),
+[comment 7154500726](https://github.com/woxlo1/DeployMC/pull/229#issuecomment-7154500726),
+[comment 7154588415](https://github.com/woxlo1/DeployMC/pull/229#issuecomment-7154588415),
+[comment 7155139976](https://github.com/woxlo1/DeployMC/pull/230#issuecomment-7155139976), and
+[comment 7155206157](https://github.com/woxlo1/DeployMC/pull/230#issuecomment-7155206157).
+All 18 required pull-request checks passed for each stage. Post-merge `main` runs passed at
+`72bddd2`: CI [45556112732](https://github.com/woxlo1/DeployMC/actions/runs/45556112732), CodeQL
+[45556112699](https://github.com/woxlo1/DeployMC/actions/runs/45556112699), and Scorecard
+[45556112758](https://github.com/woxlo1/DeployMC/actions/runs/45556112758). At `8056492`: CI
+[45558568411](https://github.com/woxlo1/DeployMC/actions/runs/45558568411), CodeQL
+[45558568270](https://github.com/woxlo1/DeployMC/actions/runs/45558568270), and Scorecard
+[45558568259](https://github.com/woxlo1/DeployMC/actions/runs/45558568259). At `49c544e`: CI
+[45563118640](https://github.com/woxlo1/DeployMC/actions/runs/45563118640), CodeQL
+[45563118631](https://github.com/woxlo1/DeployMC/actions/runs/45563118631), and Scorecard
+[45563118649](https://github.com/woxlo1/DeployMC/actions/runs/45563118649).
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | Success; base unchanged immediately before each merge |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Success, no output |
+| `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat`; exit 0 |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`, 75 actionable tasks up-to-date |
+| `git diff --check` | Success, no output |
+| `npm run lint` and `npm test` in `tools/spec` | Success; 19 specification tests, 0 failed |
+
+The merged tree's JUnit XML reports 544 Java tests, 0 failures, 0 errors, and 1 skipped symlink test;
+the 516-test WP-3.2 baseline therefore rose by 28 net tests. Evidence is server-free unit,
+embedded-socket, and server-free command-output testing only. No running Minecraft server, Bukkit
+mock, browser, E2E run, full integration suite, or in-game command exercised these paths. Scope
+enforcement and RBAC remain WP-3.4 work; D-001 and D-002 are unchanged.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -397,6 +466,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-1.9 authentication foundation | Host-provisioned SHA-256 token records, constant-time verification, expiry, fail-closed HTTP/WebSocket gate, health exceptions, localized 401 Problem Details, and one-time token creation | 11 core auth tests, 5 route-enumeration and gate tests, 63 Bukkit tests, full build, Java 8 check, and `node tools/build/verify-all.cjs` |
 | WP-3.1 auth framework | Final `Authenticator` and `AuthenticationRequest` boundary, fail-closed `AuthenticationFilter`, immutable async-safe `AuthContext`, bounded `Identity` claims/attributes, context-carrying HTTP and WebSocket requests, and uniform detail-free 401/403 Problem Details with localized `rbac.denied` | 16 new core auth tests, an expanded `TokenAuthenticatorTest`, and 5 embedded-socket transport tests; full build reports 495 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no server or RBAC engine |
 | WP-3.2 Cloudflare Access verifier | RS256-only `kid`-keyed JWT verification, bounded JWKS cache with ETag revalidation and bounded stale-while-error, fail-closed unavailability, closed diagnostics, host startup wiring, 401/503 problem mapping, and a redacted 14th doctor check | 11 committed JWT vectors through the product verifier, cache/rotation/staleness tests, transport and Bukkit wiring tests, full build reporting 516 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no real Cloudflare tenant, running server, or in-game command |
+| WP-3.3 token and one-time-token modes | Normative token record/command/one-time contract; SHA-256 token storage with scopes, revocation, last-used persistence, fail-closed metadata writes and closed auth mappings; loopback-only in-memory one-time runtime with bounded TTL and attempts; console create/revoke/list with TTL clamping and tab completion | Specification checker 19 tests; server-free core, transport, and Bukkit command tests; merged tree reports 544 Java tests with 0 failures, 0 errors, 1 skipped; all 18 required checks for each of PR #228, #229, and #230 plus post-merge CI/CodeQL/Scorecard passed; no running server or in-game command |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |

@@ -21,7 +21,10 @@ alerts, and issue #122 closed at `2026-11-24T09:04:02Z`. WP-3.1 merged in PR #22
 `1ba834b` with passing required checks and post-merge CI/CodeQL/Scorecard; issue #56 closed through
 its final evidence PR. WP-3.2 merged its core verifier in PR #224 at `d4a1576` and its host,
 transport, doctor, configuration, Web, and CI wiring in PR #226 at `d075646`, with passing required
-checks and post-merge CI/CodeQL/Scorecard; this final evidence PR closes issue #57.
+checks and post-merge CI/CodeQL/Scorecard; its final evidence PR closed issue #57. WP-3.3 merged its
+normative contract in PR #228 at `72bddd2`, its core token lifecycle in PR #229 at `8056492`, and its
+host and console wiring in PR #230 at `49c544e`, with passing required checks and post-merge
+CI/CodeQL/Scorecard; this final evidence PR closes issue #58.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1079,6 +1082,44 @@ Real Cloudflare compatibility and plan-specific guidance remain unclaimed until 
 RBAC is unchanged; Cloudflare JWT identities are not admin-equivalent, so the REST doctor route stays
 host-only.
 
+## WP-3.3 full API tokens and one-time-token modes (issue #58)
+
+WP-3.3 is complete. [PR #228](https://github.com/woxlo1/DeployMC/pull/228) merged the normative
+token contract at `72bddd2` on 2026-11-25T05:48:26Z,
+[PR #229](https://github.com/woxlo1/DeployMC/pull/229) merged the core token lifecycle and auth
+enforcement at `8056492` on 2026-11-25T06:09:48Z, and
+[PR #230](https://github.com/woxlo1/DeployMC/pull/230) rebase-merged the host and console wiring at
+`49c544e` on 2026-11-25T06:46:37Z. All three PRs were rebase-merged so their Conventional Commits
+remain on `main`. This final evidence PR closes issue #58.
+
+| Evidence | Result |
+|---|---|
+| Local `git fetch origin main` | Success; base unchanged immediately before each merge |
+| Local `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Success, no output |
+| Local `node tools/build/verify-all.cjs` | `PASS web`, `PASS java`, `PASS cli`, `PASS python`, `PASS spec`, `PASS i18n`, `PASS compat`; exit 0 |
+| Local `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL`, 75 actionable tasks up-to-date |
+| Local `git diff --check` | Success, no output |
+| Local `npm run lint` and `npm test` in `tools/spec` | Success; 19 specification tests, 0 failed |
+| Merged-tree JUnit XML | 544 tests, 0 failures, 0 errors, 1 skipped symlink test; 28 net tests above the WP-3.2 baseline |
+| PR required checks | 18/18 pass for each of PR #228, PR #229, and PR #230 |
+| Japanese pre-merge verification | [comment 7154152926](https://github.com/woxlo1/DeployMC/pull/228#issuecomment-7154152926), [comment 7154500726](https://github.com/woxlo1/DeployMC/pull/229#issuecomment-7154500726), [comment 7155139976](https://github.com/woxlo1/DeployMC/pull/230#issuecomment-7155139976) |
+| Japanese post-merge evidence | [comment 7154220471](https://github.com/woxlo1/DeployMC/pull/228#issuecomment-7154220471), [comment 7154588415](https://github.com/woxlo1/DeployMC/pull/229#issuecomment-7154588415), [comment 7155206157](https://github.com/woxlo1/DeployMC/pull/230#issuecomment-7155206157) |
+| Post-merge CI at `72bddd2` / `8056492` / `49c544e` | [45556112732](https://github.com/woxlo1/DeployMC/actions/runs/45556112732), [45558568411](https://github.com/woxlo1/DeployMC/actions/runs/45558568411), [45563118640](https://github.com/woxlo1/DeployMC/actions/runs/45563118640), success |
+| Post-merge CodeQL at `72bddd2` / `8056492` / `49c544e` | [45556112699](https://github.com/woxlo1/DeployMC/actions/runs/45556112699), [45558568270](https://github.com/woxlo1/DeployMC/actions/runs/45558568270), [45563118631](https://github.com/woxlo1/DeployMC/actions/runs/45563118631), success |
+| Post-merge Scorecard at `72bddd2` / `8056492` / `49c544e` | [45556112758](https://github.com/woxlo1/DeployMC/actions/runs/45556112758), [45558568259](https://github.com/woxlo1/DeployMC/actions/runs/45558568259), [45563118649](https://github.com/woxlo1/DeployMC/actions/runs/45563118649), success |
+
+The token contract stores only a SHA-256 digest of the complete 256-bit random secret and records
+optional declaration-order scopes, revocation, and last-used time. Core writes use temporary files,
+target re-read/byte comparison, atomic replace, and hard-link collision refusal. Revocation is
+checked before expiry, last-used persistence failure is retryable `internal.error`, and transport
+mappings are closed and localized. The `local-onetime` mode keeps one token in memory, prints it once,
+requires a loopback bind unless explicitly overridden, bounds TTL and attempts, burns after repeated
+failures, and has no fallback to another auth mode. Console create/revoke/list commands clamp TTL,
+validate scopes, complete tab input, and never print a digest or raw exception. Scopes are stored and
+shown but not enforced until WP-3.4 RBAC. Evidence is server-free unit, embedded-socket, and
+server-free command-output testing only: no running Minecraft server, Bukkit mock, browser, E2E run,
+full integration suite, or in-game command exercised WP-3.3. D-001 and D-002 are unchanged.
+
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
 PR #210 recorded the seven spiked areas from PART 40.3: transport, Windows JAR replacement,
@@ -1375,11 +1416,13 @@ Owner-directed order: #2, #7, #10, #41-#52 (all done) -> category 2 (#53-#114) -
 (#115-#120) -> category 4 (#121-#123) -> category 5 (#124-#130). Issues #115 through #123 are complete,
 and their final consolidated evidence is recorded. WP-3.1 (issue #56) is complete with this final
 evidence PR; PR #222 merged its implementation at `41b6fee` and `1ba834b`. WP-3.2 (issue #57) is
-complete with this final evidence PR; PR #224 merged its core verifier at `d4a1576` and PR #226
-merged its wiring at `d075646`. The next oldest open item is WP-3.3 (issue #58), token and
-one-time-token modes. Owner decision D-002 remains open, so no real Cloudflare Access verification
-or plan-specific guide claim is made until the owner decides. Work on later items may be prepared in
-parallel but must not be merged ahead of an earlier open issue unless the owner explicitly approves.
+complete; PR #224 merged its core verifier at `d4a1576` and PR #226 merged its wiring at `d075646`.
+WP-3.3 (issue #58) is complete with this final evidence PR; PR #228 merged the contract at `72bddd2`,
+PR #229 merged the core lifecycle at `8056492`, and PR #230 merged the host and console wiring at
+`49c544e`. The next oldest open item is WP-3.4 (issue #59), the RBAC engine. Owner decision D-002
+remains open, so no real Cloudflare Access verification or plan-specific guide claim is made until
+the owner decides. Work on later items may be prepared in parallel but must not be merged ahead of an
+earlier open issue unless the owner explicitly approves.
 
 ## Release checklist
 

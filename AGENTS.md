@@ -167,6 +167,23 @@ server-free, embedded-socket, and localhost-mock-JWKS only; no running server, B
 E2E run, full integration suite, or in-game command exercised it. Real Cloudflare compatibility and
 plan-specific guidance remain unclaimed until D-002 is resolved, and RBAC is unchanged: Cloudflare
 JWT identities are not admin-equivalent, so the REST doctor route remains host-only.
+
+WP-3.3 full API tokens and one-time-token modes merged its normative contract in
+[PR #228](https://github.com/woxlo1/DeployMC/pull/228) at `72bddd2`, its core lifecycle in
+[PR #229](https://github.com/woxlo1/DeployMC/pull/229) at `8056492`, and its host and console wiring
+in [PR #230](https://github.com/woxlo1/DeployMC/pull/230) at `49c544e`, with issue #58 closing through
+its final evidence PR. Tokens are stored only as SHA-256 digests of the complete 256-bit secret;
+records support optional declaration-order scopes, revocation before expiry, persisted last use, and
+fail-closed metadata writes. `local-onetime` holds one in-memory token, prints it once, requires a
+loopback bind unless explicitly overridden, bounds lifetime and attempts, burns after repeated wrong
+credentials, and has no fallback between auth modes. Console create/revoke/list commands clamp TTL,
+validate scopes, complete tab input, and never print a digest or raw exception. Scopes are stored and
+displayed but not enforced until WP-3.4 RBAC. All 18 required checks and post-merge CI/CodeQL/Scorecard
+passed for each stage; `node tools/build/verify-all.cjs` reported all seven toolchains `PASS`, and the
+merged tree has 544 Java tests (0 failures, 0 errors, 1 skipped). Evidence is server-free,
+embedded-socket, and server-free command-output only; no running server, Bukkit mock, browser, E2E
+run, full integration suite, or in-game command exercised WP-3.3. D-001 and D-002 are unchanged.
+
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
