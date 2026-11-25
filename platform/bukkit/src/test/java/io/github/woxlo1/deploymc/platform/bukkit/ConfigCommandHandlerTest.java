@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.github.woxlo1.deploymc.api.PlatformInfo;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
@@ -221,6 +222,28 @@ class ConfigCommandHandlerTest {
     String record = new String(Files.readAllBytes(files[0]), StandardCharsets.UTF_8);
     assertTrue(record.contains("secretHash"));
     assertFalse(record.contains(token));
+  }
+
+  @Test
+  void tokenProvisioningIsRefusedInCloudflareMode() throws Exception {
+    CloudflareConfig config =
+        CloudflareConfig.of(
+            "https://example.cloudflareaccess.com",
+            Collections.singleton("audience-fake"),
+            60,
+            3600,
+            86400);
+    AuthenticationRuntime authentication =
+        AuthenticationRuntime.createCloudflare(config, Clock.systemUTC());
+    ConfigCommandHandler cloudflareHandler =
+        new ConfigCommandHandler(manager, StartupPlan.defaults("0.1.0-test"), authentication);
+    RecordingOutput console = operatorOutput(true);
+
+    cloudflareHandler.handle(console, new String[] {"token", "create", "ci runner"});
+
+    assertEquals(
+        Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_UNAVAILABLE)),
+        console.messages);
   }
 
   @Test

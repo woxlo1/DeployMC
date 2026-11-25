@@ -3,6 +3,7 @@ package io.github.woxlo1.deploymc.platform.bukkit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,8 +33,17 @@ class StartupPlanTest {
   }
 
   @Test
+  void cloudflareModeIsAccepted() {
+    StartupPlan plan = StartupPlan.of("127.0.0.1", 8080, false, "cloudflare", "0.1.0-SNAPSHOT");
+
+    assertEquals("cloudflare", plan.authMode());
+    assertTrue(plan.cloudflareMode());
+    assertFalse(plan.tokenMode());
+  }
+
+  @Test
   void unsupportedAuthModeFailsClosed() {
-    for (String mode : Arrays.asList("none", "cloudflare", "local-onetime")) {
+    for (String mode : Arrays.asList("none", "local-onetime")) {
       StartupConfigurationException failure =
           assertThrows(
               StartupConfigurationException.class,

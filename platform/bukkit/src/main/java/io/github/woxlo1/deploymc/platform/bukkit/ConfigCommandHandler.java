@@ -190,7 +190,7 @@ public final class ConfigCommandHandler {
       output.send(messages.format(MessageKeys.COMMAND_TOKEN_USAGE));
       return;
     }
-    if (authentication == null) {
+    if (authentication == null || !authentication.tokenProvisioningEnabled()) {
       output.send(messages.format(MessageKeys.COMMAND_TOKEN_UNAVAILABLE));
       return;
     }

@@ -2,6 +2,8 @@ package io.github.woxlo1.deploymc.platform.bukkit;
 
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.auth.TokenStoreException;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
+import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfigException;
 import io.github.woxlo1.deploymc.core.config.ConfigException;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigMigration;
@@ -69,12 +71,25 @@ public final class DeployMCPlugin extends JavaPlugin {
       messages = LocalizedMessages.of(ConfigLanguage.toLocale(view.language()));
       StartupPlan plan = StartupPlan.fromConfig(view, getDescription().getVersion());
 
-      int defaultTtl = view.getInt("auth.token.default-ttl-days", 90);
-      int maxTtl = view.getInt("auth.token.max-ttl-days", 365);
-      Duration lifetime = Duration.ofDays(Math.max(1, Math.min(defaultTtl, maxTtl)));
-      TokenStore tokenStore = TokenStore.load(getDataFolder().toPath().resolve("tokens.d"));
-      AuthenticationRuntime authentication =
-          AuthenticationRuntime.create(tokenStore, Clock.systemUTC(), new SecureRandom(), lifetime);
+      AuthenticationRuntime authentication;
+      if (plan.cloudflareMode()) {
+        try {
+          authentication =
+              AuthenticationRuntime.createCloudflare(
+                  CloudflareConfig.fromConfig(view), Clock.systemUTC());
+        } catch (CloudflareConfigException invalid) {
+          Map<String, String> values = Collections.singletonMap("reason", invalid.code());
+          throw new StartupConfigurationException(MessageKeys.STARTUP_CLOUDFLARE_INVALID, values);
+        }
+      } else {
+        int defaultTtl = view.getInt("auth.token.default-ttl-days", 90);
+        int maxTtl = view.getInt("auth.token.max-ttl-days", 365);
+        Duration lifetime = Duration.ofDays(Math.max(1, Math.min(defaultTtl, maxTtl)));
+        TokenStore tokenStore = TokenStore.load(getDataFolder().toPath().resolve("tokens.d"));
+        authentication =
+            AuthenticationRuntime.create(
+                tokenStore, Clock.systemUTC(), new SecureRandom(), lifetime);
+      }
 
       created = new BukkitPlatformAdapter(this, plan, messages);
 
