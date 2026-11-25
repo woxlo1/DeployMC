@@ -1143,12 +1143,15 @@ components:
       bearerFormat: DeployMC API token
       description: |
         Host-provisioned DeployMC API token, sent as `Authorization: Bearer <token>`.
-        This is the only implemented authentication mode in 0.1.0.
+        Used in `token` authentication mode; current implementation state is tracked
+        in `docs/development/implementation-status.md`.
 
         Tokens are high-entropy, shown once by `/deploymc token create`, and stored
-        only as a SHA-256 hash under `plugins/DeployMC/tokens.d`. Optional expiry is
-        enforced. Until 0.4.0 every token is admin-equivalent; permission and path
-        scoping arrive with RBAC and are not implemented yet.
+        only as a SHA-256 hash under `plugins/DeployMC/tokens.d`. Expiry, revocation,
+        and last-used tracking are part of the WP-3.3 contract. `scopes` are stored
+        and propagated but are not enforced until RBAC: every valid token remains
+        admin-equivalent until then. The separate `local-onetime` mode prints one
+        short-lived console token and never persists it.
     sessionCookie:
       type: apiKey
       in: cookie

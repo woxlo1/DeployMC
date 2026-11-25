@@ -93,12 +93,17 @@ an implementation that lacks the feature.
 |---|---|---|---|
 | `auth.required` | 401 | no | No credential was supplied. |
 | `auth.invalid` | 401 | no | The credential is malformed, has an invalid signature, or fails `iss`/`aud` validation. |
+| `auth.revoked` | 401 | no | The credential was revoked. Obtain a new one. |
 | `auth.expired` | 401 | no | The credential expired. Obtain a new one. |
 | `auth.not-yet-valid` | 401 | no | `nbf`/`iat` is in the future beyond the allowed clock skew. |
 | `auth.jwks-unavailable` | 503 | yes | No valid cached signing key exists and the JWKS endpoint is unreachable. Fail closed. |
 | `auth.rate-limited` | 429 | yes | Too many failed authentication attempts from this identity or source. |
 | `auth.one-time-consumed` | 401 | no | The local one-time token was already used. |
 | `auth.one-time-expired` | 401 | no | The local one-time token expired. |
+
+`auth.revoked` applies only to persistent host API tokens. The two `auth.one-time-*`
+codes apply only to `local-onetime` and never identify a specific token or attempt count
+in the response.
 
 ### Request and transport
 

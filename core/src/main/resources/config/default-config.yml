@@ -46,12 +46,12 @@ auth:
   #   require-shared-secret-header: ""  # reserved; must stay empty
 
   token:
-    default-ttl-days: 90       # hot-reloadable; never exceeds max-ttl-days
-    max-ttl-days: 365          # hot-reloadable
+    default-ttl-days: 90       # restart-only; clamped to max-ttl-days
+    max-ttl-days: 365          # restart-only
 
   local-onetime:
-    ttl-minutes: 15            # hot-reloadable
-    max-attempts: 5            # hot-reloadable
+    ttl-minutes: 15            # restart-only; token is issued before the listener
+    max-attempts: 5            # restart-only; attempt budget is created at startup
 
 sandbox:
   # Relative to the server's plugins directory. Absolute paths and `..`

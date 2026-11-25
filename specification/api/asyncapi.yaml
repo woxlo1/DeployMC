@@ -127,7 +127,10 @@ components:
       bearerFormat: DeployMC API token
       description: |
         DeployMC-native API token sent in the `Authorization` header at upgrade time.
-        The token is scoped by permission and path; a token never exceeds its owner.
+        Expiry and revocation are enforced. Scopes are stored and propagated but are
+        not enforced until RBAC; every valid token remains admin-equivalent in WP-3.3.
+        The separate `local-onetime` mode uses a one-shot console token and is never
+        persisted.
 
   messages:
     Subscribe:
