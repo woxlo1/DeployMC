@@ -14,6 +14,7 @@ public final class StartupPlan {
 
   private static final String TOKEN_MODE = "token";
   private static final String CLOUDFLARE_MODE = "cloudflare";
+  private static final String LOCAL_ONE_TIME_MODE = "local-onetime";
 
   private final HttpBindConfig bind;
   private final String authMode;
@@ -43,14 +44,18 @@ public final class StartupPlan {
         pluginVersion);
   }
 
-  /** Creates a validated plan. Token and Cloudflare Access modes are implemented. */
+  /**
+   * Creates a validated plan. Token, Cloudflare Access, and local one-time modes are implemented.
+   */
   public static StartupPlan of(
       String address, int port, boolean allowNonLoopback, String authMode, String pluginVersion) {
     if (authMode == null) {
       throw new IllegalArgumentException("authMode");
     }
     Objects.requireNonNull(pluginVersion, "pluginVersion");
-    if (!TOKEN_MODE.equals(authMode) && !CLOUDFLARE_MODE.equals(authMode)) {
+    if (!TOKEN_MODE.equals(authMode)
+        && !CLOUDFLARE_MODE.equals(authMode)
+        && !LOCAL_ONE_TIME_MODE.equals(authMode)) {
       Map<String, String> values = new LinkedHashMap<String, String>();
       values.put("mode", authMode);
       throw new StartupConfigurationException(MessageKeys.STARTUP_AUTH_UNSUPPORTED, values);
@@ -82,11 +87,18 @@ public final class StartupPlan {
     return CLOUDFLARE_MODE.equals(authMode);
   }
 
+  public boolean localOneTimeMode() {
+    return LOCAL_ONE_TIME_MODE.equals(authMode);
+  }
+
   /** Returns message keys for warnings the banner must print, in stable order. */
   public List<String> warningKeys() {
     List<String> keys = new ArrayList<String>();
     if (!bind.isLoopbackOnly()) {
       keys.add(MessageKeys.WARNING_NON_LOOPBACK);
+      if (localOneTimeMode()) {
+        keys.add(MessageKeys.WARNING_LOCAL_ONE_TIME_NON_LOOPBACK);
+      }
     }
     keys.add(MessageKeys.WARNING_NO_RESTART_SCRIPT);
     return Collections.unmodifiableList(keys);

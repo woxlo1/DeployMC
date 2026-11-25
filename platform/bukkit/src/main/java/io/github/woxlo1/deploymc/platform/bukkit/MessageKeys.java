@@ -13,7 +13,10 @@ public final class MessageKeys {
   public static final String STARTUP_TOKEN_STORE_DIRECTORY = "startup.tokenStore.directory";
   public static final String STARTUP_TOKEN_STORE_RECORD = "startup.tokenStore.record";
   public static final String STARTUP_TOKEN_STORE_IO = "startup.tokenStore.io";
+  public static final String STARTUP_ONE_TIME_TOKEN = "startup.oneTimeToken";
   public static final String WARNING_NON_LOOPBACK = "warning.nonLoopback";
+  public static final String WARNING_LOCAL_ONE_TIME_NON_LOOPBACK =
+      "warning.localOneTimeNonLoopback";
   public static final String WARNING_NO_RESTART_SCRIPT = "warning.noRestartScript";
   public static final String MESSAGE_MISSING_KEY = "message.missingKey";
   public static final String MESSAGE_MISSING_PLACEHOLDER = "message.missingPlaceholder";
@@ -59,8 +62,21 @@ public final class MessageKeys {
   public static final String COMMAND_TOKEN_UNAVAILABLE = "command.token.unavailable";
   public static final String COMMAND_TOKEN_USAGE = "command.token.usage";
   public static final String COMMAND_TOKEN_CREATED = "command.token.created";
+  public static final String COMMAND_TOKEN_EFFECTIVE_TTL = "command.token.effectiveTtl";
+  public static final String COMMAND_TOKEN_STORED_SCOPES = "command.token.storedScopes";
   public static final String COMMAND_TOKEN_TOKEN_LINE = "command.token.tokenLine";
   public static final String COMMAND_TOKEN_ADMIN_EQUIVALENT = "command.token.adminEquivalent";
+  public static final String COMMAND_TOKEN_INVALID_VALUE = "command.token.invalidValue";
+  public static final String COMMAND_TOKEN_REVOKED = "command.token.revoked";
+  public static final String COMMAND_TOKEN_NOT_FOUND = "command.token.notFound";
+  public static final String COMMAND_TOKEN_LIST_EMPTY = "command.token.list.empty";
+  public static final String COMMAND_TOKEN_LIST_TITLE = "command.token.list.title";
+  public static final String COMMAND_TOKEN_LIST_ENTRY = "command.token.list.entry";
+  public static final String COMMAND_TOKEN_STATUS_ACTIVE = "command.token.status.active";
+  public static final String COMMAND_TOKEN_STATUS_REVOKED = "command.token.status.revoked";
+  public static final String COMMAND_TOKEN_STATUS_EXPIRED = "command.token.status.expired";
+  public static final String COMMAND_TOKEN_NEVER = "command.token.never";
+  public static final String COMMAND_TOKEN_NONE = "command.token.none";
   public static final String COMMAND_TOKEN_FAILED = "command.token.failed";
   public static final String COMMAND_REGISTRATION_FAILED = "command.registrationFailed";
 

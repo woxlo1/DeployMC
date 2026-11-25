@@ -1,6 +1,8 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
+import io.github.woxlo1.deploymc.core.auth.OneTimeToken;
+import io.github.woxlo1.deploymc.core.auth.OneTimeTokenAuthenticator;
 import io.github.woxlo1.deploymc.core.auth.TokenAuthenticator;
 import io.github.woxlo1.deploymc.core.auth.TokenProvisioner;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
@@ -21,18 +23,21 @@ public final class AuthenticationRuntime {
   private final TokenProvisioner provisioner;
   private final Duration defaultTokenLifetime;
   private final JwtDiagnostics jwtDiagnostics;
+  private final OneTimeToken oneTimeToken;
 
   private AuthenticationRuntime(
       TokenStore store,
       Authenticator authenticator,
       TokenProvisioner provisioner,
       Duration defaultTokenLifetime,
-      JwtDiagnostics jwtDiagnostics) {
+      JwtDiagnostics jwtDiagnostics,
+      OneTimeToken oneTimeToken) {
     this.store = store;
     this.authenticator = authenticator;
     this.provisioner = provisioner;
     this.defaultTokenLifetime = defaultTokenLifetime;
     this.jwtDiagnostics = jwtDiagnostics;
+    this.oneTimeToken = oneTimeToken;
   }
 
   /** Creates the host-provisioned token runtime. */
@@ -49,7 +54,22 @@ public final class AuthenticationRuntime {
         new TokenAuthenticator(store, clock),
         new TokenProvisioner(store, clock, random),
         defaultTokenLifetime,
+        null,
         null);
+  }
+
+  /**
+   * Creates the in-process local testing runtime. No token store, provisioner, or JWT verifier is
+   * created, and the token is held only in memory until the process exits.
+   */
+  public static AuthenticationRuntime createLocalOneTime(
+      Clock clock, java.security.SecureRandom random, Duration lifetime, int maxAttempts) {
+    Objects.requireNonNull(clock, "clock");
+    Objects.requireNonNull(random, "random");
+    Objects.requireNonNull(lifetime, "lifetime");
+    OneTimeToken token = OneTimeToken.issue(random, clock, lifetime);
+    return new AuthenticationRuntime(
+        null, new OneTimeTokenAuthenticator(token, clock, maxAttempts), null, null, null, token);
   }
 
   /** Creates the Cloudflare Access runtime. No host token store or provisioner is created. */
@@ -60,7 +80,7 @@ public final class AuthenticationRuntime {
     Authenticator verifier =
         new CloudflareJwtVerifier(
             config, new HttpJwksClient(config.jwksEndpoint()), clock, diagnostics);
-    return new AuthenticationRuntime(null, verifier, null, null, diagnostics);
+    return new AuthenticationRuntime(null, verifier, null, null, diagnostics, null);
   }
 
   public TokenStore store() {
@@ -79,7 +99,12 @@ public final class AuthenticationRuntime {
     return defaultTokenLifetime;
   }
 
-  /** False in Cloudflare mode: issuing a host token there would create an unusable credential. */
+  /** Null outside local one-time mode. The secret is printed once by the host console. */
+  public OneTimeToken oneTimeToken() {
+    return oneTimeToken;
+  }
+
+  /** False in Cloudflare and local one-time modes: a provisioned host token would be unusable. */
   public boolean tokenProvisioningEnabled() {
     return provisioner != null;
   }

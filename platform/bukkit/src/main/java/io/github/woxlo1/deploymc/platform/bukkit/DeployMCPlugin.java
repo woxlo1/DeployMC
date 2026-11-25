@@ -81,6 +81,15 @@ public final class DeployMCPlugin extends JavaPlugin {
           Map<String, String> values = Collections.singletonMap("reason", invalid.code());
           throw new StartupConfigurationException(MessageKeys.STARTUP_CLOUDFLARE_INVALID, values);
         }
+      } else if (plan.localOneTimeMode()) {
+        int ttlMinutes = view.getInt("auth.local-onetime.ttl-minutes", 15);
+        int maxAttempts = view.getInt("auth.local-onetime.max-attempts", 5);
+        authentication =
+            AuthenticationRuntime.createLocalOneTime(
+                Clock.systemUTC(),
+                new SecureRandom(),
+                Duration.ofMinutes(Math.max(1, Math.min(ttlMinutes, 60))),
+                Math.max(1, Math.min(maxAttempts, 20)));
       } else {
         int defaultTtl = view.getInt("auth.token.default-ttl-days", 90);
         int maxTtl = view.getInt("auth.token.max-ttl-days", 365);
@@ -139,6 +148,14 @@ public final class DeployMCPlugin extends JavaPlugin {
       StartupBanner banner = new StartupBanner(messages);
       for (String line : banner.render(created.info(), plan)) {
         getLogger().info(line);
+      }
+      if (plan.localOneTimeMode()) {
+        Map<String, String> values = new java.util.LinkedHashMap<String, String>();
+        values.put("token", authentication.oneTimeToken().secret());
+        values.put("expiresAt", authentication.oneTimeToken().expiresAt().toString());
+        getServer()
+            .getConsoleSender()
+            .sendMessage(messages.format(MessageKeys.STARTUP_ONE_TIME_TOKEN, values));
       }
 
       PluginCommand command = getCommand("deploymc");

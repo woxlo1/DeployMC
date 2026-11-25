@@ -64,4 +64,28 @@ class AuthenticationRuntimeTest {
     assertEquals(null, runtime.jwtDiagnostics());
     assertEquals(null, runtime.jwtDiagnosticsSnapshot());
   }
+
+  @Test
+  void localOneTimeRuntimeAcceptsOneRedemptionAndRefusesProvisioning() {
+    Clock clock = Clock.fixed(Instant.parse("2026-11-25T00:00:00Z"), ZoneOffset.UTC);
+    AuthenticationRuntime runtime =
+        AuthenticationRuntime.createLocalOneTime(
+            clock, new java.security.SecureRandom(), java.time.Duration.ofMinutes(5), 3);
+    String token = runtime.oneTimeToken().secret();
+
+    assertFalse(runtime.tokenProvisioningEnabled());
+    assertEquals(null, runtime.store());
+    assertEquals(null, runtime.provisioner());
+    assertFalse(runtime.oneTimeToken().toString().contains(token));
+    java.util.Map<String, java.util.List<String>> headers =
+        new java.util.LinkedHashMap<String, java.util.List<String>>();
+    headers.put("Authorization", Collections.singletonList("Bearer " + token));
+    AuthenticationRequest request =
+        new AuthenticationRequest("r-1", "GET", "/api/v1/server", headers);
+
+    assertTrue(runtime.authenticator().authenticate(request).authenticated());
+    assertEquals(
+        AuthenticationFailure.ONE_TIME_CONSUMED,
+        runtime.authenticator().authenticate(request).failure());
+  }
 }

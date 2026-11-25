@@ -42,15 +42,33 @@ class StartupPlanTest {
   }
 
   @Test
+  void localOneTimeModeIsAcceptedAndWarnsForNonLoopbackOverride() {
+    StartupPlan loopback =
+        StartupPlan.of("127.0.0.1", 8080, false, "local-onetime", "0.1.0-SNAPSHOT");
+
+    assertTrue(loopback.localOneTimeMode());
+    assertFalse(loopback.tokenMode());
+    assertEquals(
+        Collections.singletonList(MessageKeys.WARNING_NO_RESTART_SCRIPT), loopback.warningKeys());
+
+    StartupPlan exposed = StartupPlan.of("0.0.0.0", 8080, true, "local-onetime", "0.1.0-SNAPSHOT");
+
+    assertEquals(
+        Arrays.asList(
+            MessageKeys.WARNING_NON_LOOPBACK,
+            MessageKeys.WARNING_LOCAL_ONE_TIME_NON_LOOPBACK,
+            MessageKeys.WARNING_NO_RESTART_SCRIPT),
+        exposed.warningKeys());
+  }
+
+  @Test
   void unsupportedAuthModeFailsClosed() {
-    for (String mode : Arrays.asList("none", "local-onetime")) {
-      StartupConfigurationException failure =
-          assertThrows(
-              StartupConfigurationException.class,
-              () -> StartupPlan.of("127.0.0.1", 8080, false, mode, "0.1.0-SNAPSHOT"));
-      assertEquals(MessageKeys.STARTUP_AUTH_UNSUPPORTED, failure.messageKey());
-      assertEquals(mode, failure.values().get("mode"));
-    }
+    StartupConfigurationException failure =
+        assertThrows(
+            StartupConfigurationException.class,
+            () -> StartupPlan.of("127.0.0.1", 8080, false, "none", "0.1.0-SNAPSHOT"));
+    assertEquals(MessageKeys.STARTUP_AUTH_UNSUPPORTED, failure.messageKey());
+    assertEquals("none", failure.values().get("mode"));
   }
 
   @Test
