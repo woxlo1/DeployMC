@@ -1,10 +1,23 @@
 # Handoff
 
-Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-25. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
 
+- Issue #57 WP-3.2 Cloudflare Access JWT verifier is complete. PR #224 merged the core verifier at
+  `d4a1576`; PR #226 merged the host, transport, doctor, configuration, Web, and CI wiring at
+  `d075646`. The verifier accepts only RS256 with a required `kid`, reads only
+  `Cf-Access-Jwt-Assertion`, validates issuer/audience/expiry/not-before/issued-at with bounded skew,
+  uses a bounded HTTPS-only JWKS cache with ETag revalidation and bounded stale-while-error, and fails
+  closed when JWKS is unavailable. Diagnostics expose only closed rejection codes and counts. All 11
+  JWT vectors pass through the product verifier; the merged tree reports 516 Java tests with 0
+  failures, 0 errors, and 1 skipped. Required PR checks and post-merge CI/CodeQL/Scorecard passed at
+  both merge commits; Japanese verification and evidence comments are recorded on both PRs. This
+  final evidence PR closes #57. No running server, Bukkit mock, browser, E2E, full integration suite,
+  or in-game command exercised WP-3.2, and real Cloudflare compatibility remains unclaimed until
+  D-002 is resolved. RBAC is unchanged, so Cloudflare JWT identities are not admin-equivalent and the
+  REST doctor route stays host-only.
 - Issue #56 WP-3.1 auth framework merged its implementation in PR #222 as two Conventional Commits:
   `41b6fee` added the final core request/authentication boundary and `1ba834b` wired the explicit
   `AuthContext` and uniform 401/403 failures through the transport. All 18 required PR checks passed,
@@ -12,7 +25,7 @@ Last updated: 2026-11-24. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   at `1ba834b`. `node tools/build/verify-all.cjs` reported all seven toolchains `PASS`; the merged tree
   has 495 Java tests with 0 failures, 0 errors, and 1 skipped. No running server, Bukkit mock, browser,
   E2E, full integration suite, or in-game command exercised WP-3.1, and no RBAC engine exists yet.
-  This final evidence PR closes #56 after rebase merge.
+  Issue #56 closed through its own final evidence PR; WP-3.2 later added the Cloudflare verifier.
 - Issue #118 PART 40.3 early spikes are recorded in PR #210. Seven documents under
   `docs/research/spikes/` separate `OBSERVED`, `SOURCE-VERIFIED`, `LOCAL-ONLY`, and `NOT RUN`; ADRs
   link to the evidence without changing decisions. The Windows replacement probe observed
@@ -478,17 +491,20 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   `test/config-corpora-fixtures`, `docs/issue-115-evidence-catchup-193`,
   `test/large-tree-fixtures`, `docs/issue-115-evidence-catchup-195`, and
   `test/filter-vector-fixtures` were deleted after evidence was posted. The
-  `docs/issue-115-evidence-catchup-197` branch is temporary for this final evidence update. Evidence
-  is recorded in the status pages and pull-request comments.
+  `docs/issue-115-evidence-catchup-197` branch was temporary for that final evidence update. The
+  `feature/cloudflare-57-wiring` branch was retained until PR #226 merged. The
+  `docs/cloudflare-57-evidence` branch is temporary for this final evidence update. Evidence is
+  recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 66 immediately before this final evidence PR merges on 2026-11-24; issue #56 closes
+- Open issues: 65 immediately before this final evidence PR merges on 2026-11-25; issue #57 closes
   on merge. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks local implementation of the next category 2 work. D-002 must be resolved before
-  real Cloudflare Access verification or plan-specific guide claims for WP-3.2.
+- Nothing blocks local implementation of the next category 2 work. WP-3.2 local implementation and
+  fixture-driven verification are complete; D-002 must still be resolved before real Cloudflare
+  Access verification or plan-specific guide claims.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
   branches #23-#39.
@@ -496,11 +512,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 ## Exact next steps
 
 1. Merge this final evidence PR, post the Japanese post-merge evidence comment after required
-   post-merge workflows finish, and confirm issue #56 is closed as completed.
-2. Start WP-3.2 (issue #57), the Cloudflare Access JWT verifier, using the committed JWT vectors and
-   mock JWKS fixture contract. Do not claim real Cloudflare compatibility until D-002 is resolved.
-   Later work may be prepared in parallel but must not merge ahead of an earlier open issue without
-   owner approval.
+   post-merge workflows finish, and confirm issue #57 is closed as completed.
+2. Start WP-3.3 (issue #58), token and one-time-token modes. Do not claim real Cloudflare
+   compatibility until D-002 is resolved. Later work may be prepared in parallel but must not merge
+   ahead of an earlier open issue without owner approval.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

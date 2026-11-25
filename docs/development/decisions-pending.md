@@ -24,12 +24,15 @@ the related decisions are finalized.
 | ID | Question | Needed by | Impact if unanswered |
 |---|---|---|---|
 | D-001 | What is the owner's real server hosting setup (bare Paper, Pterodactyl, Docker, systemd, Windows service) and which Minecraft versions are in use? | Phase 1 compatibility priorities | Tier 1 matrix order and restart-mode defaults may not match real usage |
-| D-002 | Does the owner have a Cloudflare plan and a domain usable for Tunnel/Access verification? | Phase 3 Cloudflare guide | Parts of the guide can only be marked unverified |
+| D-002 | Does the owner have a Cloudflare plan and a domain usable for Tunnel/Access verification? | Real Cloudflare verification and the Phase 3 Cloudflare guide | WP-3.2 local implementation and fixture verification are complete, but real Access compatibility and plan-specific guidance stay unverified |
 | D-003 | Which distribution accounts exist (Modrinth, Hangar, SpigotMC, Maven Central, npm, PyPI, crates.io)? | Phase 7+ distribution | Publication steps cannot be executed or verified |
 | D-005 | Should languages beyond Japanese be started before native reviewers exist? | Phase 0 i18n and later | Machine-translated content must be labeled and not presented as reviewed |
 | D-006 | Should a Discord server be created now, or should Discussions be the only community channel initially? | Phase 0 community setup | Community links in the README remain Discussions-only |
 | D-007 | What weekly time budget should the public roadmap assume? | Roadmap publication | Roadmap communication may be unrealistic |
 | D-009 | Which dispositions should be applied to the 17 triaged Dependabot PRs, especially close candidates #27/#35 and rebase-then-merge candidates #24/#36/#38? | Before any dependency PR is merged, closed, or rewritten | Failing gates stay red and no dependency PR can be changed safely |
+
+WP-3.2 (issue #57) is implemented and fixture-verified; D-002 now blocks only real Cloudflare tenant
+validation and plan-specific guide claims, not local implementation.
 
 See [dependabot-triage.md](dependabot-triage.md) for per-PR evidence. The triage is read-only; no PR
 was merged, closed, rebased, or approved. #27 and #35 require JUnit 6 on a Java 8 project, so they
