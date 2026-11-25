@@ -9,6 +9,7 @@ public final class MessageKeys {
   public static final String STARTUP_BIND = "startup.bind";
   public static final String STARTUP_AUTH = "startup.auth";
   public static final String STARTUP_AUTH_UNSUPPORTED = "startup.authUnsupported";
+  public static final String STARTUP_CLOUDFLARE_INVALID = "startup.cloudflare.invalid";
   public static final String STARTUP_TOKEN_STORE_DIRECTORY = "startup.tokenStore.directory";
   public static final String STARTUP_TOKEN_STORE_RECORD = "startup.tokenStore.record";
   public static final String STARTUP_TOKEN_STORE_IO = "startup.tokenStore.io";

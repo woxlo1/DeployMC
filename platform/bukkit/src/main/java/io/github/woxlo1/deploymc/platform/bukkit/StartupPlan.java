@@ -13,6 +13,7 @@ import java.util.Objects;
 public final class StartupPlan {
 
   private static final String TOKEN_MODE = "token";
+  private static final String CLOUDFLARE_MODE = "cloudflare";
 
   private final HttpBindConfig bind;
   private final String authMode;
@@ -42,14 +43,14 @@ public final class StartupPlan {
         pluginVersion);
   }
 
-  /** Creates a validated plan. Only host-provisioned token mode is implemented. */
+  /** Creates a validated plan. Token and Cloudflare Access modes are implemented. */
   public static StartupPlan of(
       String address, int port, boolean allowNonLoopback, String authMode, String pluginVersion) {
     if (authMode == null) {
       throw new IllegalArgumentException("authMode");
     }
     Objects.requireNonNull(pluginVersion, "pluginVersion");
-    if (!TOKEN_MODE.equals(authMode)) {
+    if (!TOKEN_MODE.equals(authMode) && !CLOUDFLARE_MODE.equals(authMode)) {
       Map<String, String> values = new LinkedHashMap<String, String>();
       values.put("mode", authMode);
       throw new StartupConfigurationException(MessageKeys.STARTUP_AUTH_UNSUPPORTED, values);
@@ -71,6 +72,14 @@ public final class StartupPlan {
 
   public String pluginVersion() {
     return pluginVersion;
+  }
+
+  public boolean tokenMode() {
+    return TOKEN_MODE.equals(authMode);
+  }
+
+  public boolean cloudflareMode() {
+    return CLOUDFLARE_MODE.equals(authMode);
   }
 
   /** Returns message keys for warnings the banner must print, in stable order. */
