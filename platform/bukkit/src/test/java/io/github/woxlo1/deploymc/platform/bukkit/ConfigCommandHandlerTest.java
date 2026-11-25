@@ -162,7 +162,7 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
-  void doctorReportsAllThirteenChecksAndNoSupportTierVerdict() {
+  void doctorReportsAllFourteenChecksAndNoSupportTierVerdict() {
     RecordingOutput output = operatorOutput(false);
 
     handler.handle(output, new String[] {"doctor"});

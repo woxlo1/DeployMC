@@ -25,6 +25,7 @@ public final class DoctorRuntime {
   private final FileApiRuntime fileApi;
   private final LocalizedMessages messages;
   private final Clock clock;
+  private final AuthenticationRuntime authentication;
 
   public DoctorRuntime(
       ConfigManager manager,
@@ -36,6 +37,30 @@ public final class DoctorRuntime {
       FileApiRuntime fileApi,
       LocalizedMessages messages,
       Clock clock) {
+    this(
+        manager,
+        plan,
+        platformInfo,
+        capabilities,
+        locale,
+        language,
+        fileApi,
+        messages,
+        clock,
+        null);
+  }
+
+  public DoctorRuntime(
+      ConfigManager manager,
+      StartupPlan plan,
+      PlatformInfo platformInfo,
+      PlatformCapabilities capabilities,
+      Locale locale,
+      String language,
+      FileApiRuntime fileApi,
+      LocalizedMessages messages,
+      Clock clock,
+      AuthenticationRuntime authentication) {
     this.manager = Objects.requireNonNull(manager, "manager");
     this.plan = Objects.requireNonNull(plan, "plan");
     this.platformInfo = Objects.requireNonNull(platformInfo, "platformInfo");
@@ -45,6 +70,7 @@ public final class DoctorRuntime {
     this.fileApi = fileApi;
     this.messages = Objects.requireNonNull(messages, "messages");
     this.clock = Objects.requireNonNull(clock, "clock");
+    this.authentication = authentication;
   }
 
   /** Builds a runtime from the live platform adapter. The adapter itself is not used for I/O. */
@@ -56,6 +82,19 @@ public final class DoctorRuntime {
       String language,
       FileApiRuntime fileApi,
       LocalizedMessages messages) {
+    return create(manager, plan, adapter, locale, language, fileApi, messages, null);
+  }
+
+  /** Builds a runtime with the authentication diagnostics needed by the JWT doctor check. */
+  public static DoctorRuntime create(
+      ConfigManager manager,
+      StartupPlan plan,
+      BukkitPlatformAdapter adapter,
+      Locale locale,
+      String language,
+      FileApiRuntime fileApi,
+      LocalizedMessages messages,
+      AuthenticationRuntime authentication) {
     Objects.requireNonNull(adapter, "adapter");
     return new DoctorRuntime(
         manager,
@@ -66,10 +105,11 @@ public final class DoctorRuntime {
         language,
         fileApi,
         messages,
-        Clock.systemUTC());
+        Clock.systemUTC(),
+        authentication);
   }
 
-  /** Runs the 13 PART 36 checks. Absent subsystems stay null and are reported as WARN. */
+  /** Runs the 14 current checks. Absent subsystems are reported as WARN without fabrication. */
   public DoctorReport run() {
     DoctorEnvironment environment =
         DoctorEnvironment.builder()
@@ -96,6 +136,8 @@ public final class DoctorRuntime {
             .snapshotStore(fileApi == null ? null : fileApi.snapshotStore())
             .snapshotLimits(fileApi == null ? null : fileApi.snapshotConfig())
             .configValidation(manager.lastValidation().orElse(null))
+            .jwtDiagnosticsSnapshot(
+                authentication == null ? null : authentication.jwtDiagnosticsSnapshot())
             .missingLocalizationKeys(missingMessageCount(messages))
             .build();
     return new DoctorService().run(inputs);
