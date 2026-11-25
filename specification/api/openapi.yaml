@@ -1649,7 +1649,7 @@ components:
           description: The doctor baseline does not constitute a support-tier verdict.
         checks:
           type: array
-          minItems: 13
+          minItems: 14
           maxItems: 64
           items:
             $ref: '#/components/schemas/DoctorCheck'
