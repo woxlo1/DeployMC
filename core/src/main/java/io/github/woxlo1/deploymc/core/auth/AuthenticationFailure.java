@@ -4,9 +4,11 @@ package io.github.woxlo1.deploymc.core.auth;
 public enum AuthenticationFailure {
   REQUIRED("auth.required"),
   INVALID("auth.invalid"),
+  REVOKED("auth.revoked"),
   EXPIRED("auth.expired"),
   NOT_YET_VALID("auth.not-yet-valid"),
-  JWKS_UNAVAILABLE("auth.jwks-unavailable");
+  JWKS_UNAVAILABLE("auth.jwks-unavailable"),
+  INTERNAL_ERROR("internal.error");
 
   private final String code;
 
