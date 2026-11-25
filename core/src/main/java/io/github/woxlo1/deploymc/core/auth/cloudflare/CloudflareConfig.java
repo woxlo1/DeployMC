@@ -1,8 +1,13 @@
 package io.github.woxlo1.deploymc.core.auth.cloudflare;
 
+import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfigException.Reason;
+import io.github.woxlo1.deploymc.core.config.ConfigView;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -63,6 +68,72 @@ public final class CloudflareConfig {
         clockSkewSeconds,
         cacheMaxAgeSeconds,
         maxStaleSeconds);
+  }
+
+  /**
+   * Creates a verifier configuration from the host-controlled configuration view.
+   *
+   * <p>No value from this file is a secret. The optional shared-secret header name is reserved and
+   * must stay empty because no secret store or product consumer exists for it yet.
+   */
+  public static CloudflareConfig fromConfig(ConfigView view) throws CloudflareConfigException {
+    if (view == null || !(view.get("auth.cloudflare") instanceof Map)) {
+      throw new CloudflareConfigException(Reason.MISSING_SECTION);
+    }
+    String sharedSecretHeader = view.getString("auth.cloudflare.require-shared-secret-header", "");
+    if (!sharedSecretHeader.isEmpty()) {
+      throw new CloudflareConfigException(Reason.UNSUPPORTED_SHARED_SECRET_HEADER);
+    }
+    String teamDomain = view.getString("auth.cloudflare.team-domain", "");
+    if (teamDomain.isEmpty()) {
+      throw new CloudflareConfigException(Reason.MISSING_TEAM_DOMAIN);
+    }
+    if (!HOST.matcher(teamDomain.toLowerCase(java.util.Locale.ROOT)).matches()) {
+      throw new CloudflareConfigException(Reason.INVALID_TEAM_DOMAIN);
+    }
+    Collection<String> audiences = audiences(view.get("auth.cloudflare.audience"));
+    if (audiences.isEmpty()) {
+      throw new CloudflareConfigException(Reason.MISSING_AUDIENCE);
+    }
+    int clockSkew = view.getInt("auth.cloudflare.clock-skew-seconds", 60);
+    int cacheMaxAge = view.getInt("auth.cloudflare.jwks-cache-max-age-seconds", 3600);
+    int maxStale = view.getInt("auth.cloudflare.jwks-max-stale-seconds", 86400);
+    if (clockSkew < 0 || clockSkew > 300) {
+      throw new CloudflareConfigException(Reason.INVALID_CLOCK_SKEW);
+    }
+    if (cacheMaxAge < 60 || cacheMaxAge > 86_400) {
+      throw new CloudflareConfigException(Reason.INVALID_CACHE_MAX_AGE);
+    }
+    if (maxStale < 0 || maxStale > 604_800) {
+      throw new CloudflareConfigException(Reason.INVALID_MAX_STALE);
+    }
+    try {
+      return fromTeamDomain(teamDomain, audiences, clockSkew, cacheMaxAge, maxStale);
+    } catch (IllegalArgumentException invalid) {
+      throw new CloudflareConfigException(Reason.INVALID_AUDIENCE);
+    }
+  }
+
+  private static Collection<String> audiences(Object value) throws CloudflareConfigException {
+    List<String> result = new ArrayList<String>();
+    if (value instanceof String) {
+      result.add((String) value);
+    } else if (value instanceof Collection) {
+      for (Object item : (Collection<?>) value) {
+        if (!(item instanceof String)) {
+          throw new CloudflareConfigException(Reason.INVALID_AUDIENCE);
+        }
+        result.add((String) item);
+      }
+    } else {
+      throw new CloudflareConfigException(Reason.INVALID_AUDIENCE);
+    }
+    return result;
+  }
+
+  /** Derived JWKS endpoint. The host never configures a raw URL. */
+  public String jwksEndpoint() {
+    return issuer + "/cdn-cgi/access/certs";
   }
 
   public String issuer() {
