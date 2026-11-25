@@ -80,6 +80,19 @@ class ConfigValidatorTest {
   }
 
   @Test
+  void reservesTheSharedSecretHeaderNameAndMakesJwksLimitsRestartOnly() throws Exception {
+    ConfigValidationResult result =
+        validate(
+            "config-version: 1\nauth:\n  mode: cloudflare\n  cloudflare:\n    team-domain: example.invalid\n    audience: abc\n    require-shared-secret-header: CF-Access-Shared-Secret\n");
+
+    assertFalse(result.isValid());
+    assertEquals("auth.cloudflare.require-shared-secret-header", result.errors().get(0).path());
+    assertEquals(Boolean.FALSE, schema.hotReloadable("auth.cloudflare.clock-skew-seconds"));
+    assertEquals(Boolean.FALSE, schema.hotReloadable("auth.cloudflare.jwks-cache-max-age-seconds"));
+    assertEquals(Boolean.FALSE, schema.hotReloadable("auth.cloudflare.jwks-max-stale-seconds"));
+  }
+
+  @Test
   void rejectsUnknownRoleReferences() throws Exception {
     ConfigValidationResult result =
         validate(

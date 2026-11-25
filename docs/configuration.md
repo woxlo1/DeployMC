@@ -75,17 +75,22 @@ Tab completion offers only subcommands for which the sender holds the matching p
 new file is invalid, the previous known-good view remains active and the failure is reported. A
 successful report lists changed dotted paths and any paths that require a server restart.
 
-Hot-reloadable settings include `language`, Cloudflare JWKS/cache and token TTL values, sandbox
-protected paths, deny patterns and size limits, snapshot retention, most deployment verification,
-rollback, approval and JAR-policy values, console buffer and command policy, audit rotation and
-retention, the API rate limit, roles, users, `default-role`, webhook policy, and telemetry.
+Hot-reloadable settings include `language`, token TTL values, sandbox protected paths, deny
+patterns and size limits, snapshot retention, most deployment verification, rollback, approval and
+JAR-policy values, console buffer and command policy, audit rotation and retention, the API rate
+limit, roles, users, `default-role`, webhook policy, and telemetry.
 
-Restart-only settings include `config-version`, all `bind` values, `auth.mode`, Cloudflare
-team domain, audience and shared-secret header name, `sandbox.root`, `sandbox.follow-symlinks`,
-snapshot and staging directories, `deploy.restart.mode`, `console.enabled`, `audit.directory`,
-`limits.max-websocket-connections`, and every `observability` setting. The metrics endpoint is
-disabled by default; enabling it exposes only aggregate, low-cardinality metrics behind the normal
-authentication gate.
+Restart-only settings include `config-version`, all `bind` values, `auth.mode`, every Cloudflare
+setting (team domain, audience, clock skew and JWKS cache/staleness limits), `sandbox.root`,
+`sandbox.follow-symlinks`, snapshot and staging directories, `deploy.restart.mode`,
+`console.enabled`, `audit.directory`, `limits.max-websocket-connections`, and every `observability`
+setting. The metrics endpoint is disabled by default; enabling it exposes only aggregate,
+low-cardinality metrics behind the normal authentication gate.
+
+In `auth.mode: cloudflare`, DeployMC verifies only `Cf-Access-Jwt-Assertion` with RS256 and derives
+identity from verified claims. `Cf-Access-Authenticated-User-Email` and other forwarded identity
+headers are never trusted. `require-shared-secret-header` is reserved and must stay empty because
+no secret store or product consumer exists yet; a non-empty value fails validation.
 
 ## Diagnostics
 
