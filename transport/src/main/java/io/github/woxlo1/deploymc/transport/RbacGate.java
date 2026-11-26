@@ -29,6 +29,8 @@ public final class RbacGate {
   public static final String PERMISSION_SNAPSHOTS_RESTORE = "snapshots.restore";
   public static final String PERMISSION_SNAPSHOTS_PRUNE = "snapshots.prune";
   public static final String PERMISSION_CONSOLE_READ = "console.read";
+  public static final String PERMISSION_AUDIT_READ = "audit.read";
+  public static final String PERMISSION_AUDIT_EXPORT = "audit.export";
 
   private static final String UNKNOWN_PERMISSION = "rbac.unknown";
 
@@ -36,6 +38,9 @@ public final class RbacGate {
   private static final String INVALID_PATH = "\u0000";
 
   private static final String FILES_PREFIX = "/api/v1/files";
+  private static final String AUDIT_PATH = "/api/v1/audit";
+  private static final String AUDIT_EXPORT_PATH = AUDIT_PATH + "/export";
+  private static final String AUDIT_VERIFY_PATH = AUDIT_PATH + "/verify";
   private static final String UPLOAD_PATH = FILES_PREFIX + "/upload";
   private static final String RESTORE_SUFFIX = "/restore";
   private static final int MAX_QUERY_LENGTH = 8192;
@@ -85,6 +90,8 @@ public final class RbacGate {
         return evaluator.authorize(context, PERMISSION_FILES_READ, null);
       case SNAPSHOTS:
         return authorizeSnapshots(request);
+      case AUDIT:
+        return authorizeAudit(request);
       case METRICS:
         return evaluator.authorize(context, metricsPermission, null);
       case WEBSOCKET:
@@ -133,6 +140,20 @@ public final class RbacGate {
     }
     if ("GET".equals(method) || "HEAD".equals(method)) {
       return evaluator.authorize(request.context(), PERMISSION_SNAPSHOTS_READ, null);
+    }
+    return unknown(request.context());
+  }
+
+  private AuthorizationDecision authorizeAudit(HttpRequest request) {
+    String method = request.method().toUpperCase(Locale.ROOT);
+    if (!"GET".equals(method)) {
+      return unknown(request.context());
+    }
+    if (AUDIT_EXPORT_PATH.equals(request.path())) {
+      return evaluator.authorize(request.context(), PERMISSION_AUDIT_EXPORT, null);
+    }
+    if (AUDIT_PATH.equals(request.path()) || AUDIT_VERIFY_PATH.equals(request.path())) {
+      return evaluator.authorize(request.context(), PERMISSION_AUDIT_READ, null);
     }
     return unknown(request.context());
   }

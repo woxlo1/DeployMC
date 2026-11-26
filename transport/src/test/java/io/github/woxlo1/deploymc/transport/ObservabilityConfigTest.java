@@ -87,6 +87,8 @@ class ObservabilityConfigTest {
     assertEquals(EndpointClass.FILES, EndpointClass.fromPath("/api/v1/files/a/b.yml?x=1"));
     assertEquals(EndpointClass.VALIDATION, EndpointClass.fromPath("/api/v1/validation/config"));
     assertEquals(EndpointClass.SNAPSHOTS, EndpointClass.fromPath("/api/v1/snapshots/snap-1"));
+    assertEquals(EndpointClass.AUDIT, EndpointClass.fromPath("/api/v1/audit/export"));
+    assertEquals(EndpointClass.OTHER, EndpointClass.fromPath("/api/v1/auditx"));
     assertEquals(EndpointClass.METRICS, EndpointClass.fromPath("/api/v1/metrics"));
     assertEquals(EndpointClass.WEBSOCKET, EndpointClass.fromPath("/api/v1/ws"));
     assertEquals(EndpointClass.STATIC, EndpointClass.fromPath("/assets/index-abcdef12.js"));

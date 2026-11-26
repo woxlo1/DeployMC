@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.audit.AuditException;
 import io.github.woxlo1.deploymc.core.auth.AuthorizationDeniedException;
 import java.util.Collections;
 import java.util.Objects;
@@ -14,6 +15,11 @@ final class TransportProblems {
   static final String TOKEN_SCOPE_EXCEEDED_CODE = "rbac.token-scope-exceeded";
   static final String PATH_DENIED_CODE = "rbac.path-denied";
   static final String METRICS_NOT_FOUND_CODE = "metrics.not-found";
+  static final String AUDIT_UNAVAILABLE_CODE = AuditException.Code.UNAVAILABLE.problemCode();
+  static final String AUDIT_WRITE_FAILED_CODE = AuditException.Code.WRITE_FAILED.problemCode();
+  static final String AUDIT_EXPORT_LIMIT_CODE = AuditException.Code.EXPORT_LIMIT.problemCode();
+  static final String REQUEST_INVALID_CODE = "request.invalid";
+  static final String REQUEST_INVALID_CURSOR_CODE = "request.invalid-cursor";
   static final String RETRY_AFTER = "Retry-After";
   static final String RATE_LIMIT_LIMIT = "RateLimit-Limit";
   static final String RATE_LIMIT_REMAINING = "RateLimit-Remaining";
@@ -99,6 +105,60 @@ final class TransportProblems {
         requestId,
         messages,
         false);
+  }
+
+  /** Maps a fail-closed core audit exception to its catalogued Problem Details. */
+  static HttpResponse auditProblem(
+      AuditException failure, String requestId, TransportMessages messages) {
+    Objects.requireNonNull(failure, "failure");
+    switch (failure.code()) {
+      case UNAVAILABLE:
+        return problem(
+            503,
+            AUDIT_UNAVAILABLE_CODE,
+            MessageKeys.AUDIT_UNAVAILABLE_TITLE,
+            MessageKeys.AUDIT_UNAVAILABLE_DETAIL,
+            requestId,
+            messages,
+            true);
+      case WRITE_FAILED:
+        return problem(
+            503,
+            AUDIT_WRITE_FAILED_CODE,
+            MessageKeys.AUDIT_WRITE_FAILED_TITLE,
+            MessageKeys.AUDIT_WRITE_FAILED_DETAIL,
+            requestId,
+            messages,
+            true);
+      case EXPORT_LIMIT:
+        return problem(
+            413,
+            AUDIT_EXPORT_LIMIT_CODE,
+            MessageKeys.AUDIT_EXPORT_LIMIT_TITLE,
+            MessageKeys.AUDIT_EXPORT_LIMIT_DETAIL,
+            requestId,
+            messages,
+            false);
+      case INVALID_CURSOR:
+        return problem(
+            400,
+            REQUEST_INVALID_CURSOR_CODE,
+            MessageKeys.REQUEST_INVALID_CURSOR_TITLE,
+            MessageKeys.REQUEST_INVALID_CURSOR_DETAIL,
+            requestId,
+            messages,
+            false);
+      case INVALID:
+      default:
+        return problem(
+            400,
+            REQUEST_INVALID_CODE,
+            MessageKeys.REQUEST_INVALID_TITLE,
+            MessageKeys.REQUEST_INVALID_DETAIL,
+            requestId,
+            messages,
+            false);
+    }
   }
 
   static HttpResponse problem(

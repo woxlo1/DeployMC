@@ -70,6 +70,14 @@ public final class MessageKeys {
   public static final String REQUEST_PRECONDITION_REQUIRED_DETAIL =
       "problem.request.precondition-required.detail";
 
+  public static final String AUDIT_UNAVAILABLE_TITLE = "problem.audit.unavailable.title";
+  public static final String AUDIT_UNAVAILABLE_DETAIL = "problem.audit.unavailable.detail";
+  public static final String AUDIT_WRITE_FAILED_TITLE = "problem.audit.write-failed.title";
+  public static final String AUDIT_WRITE_FAILED_DETAIL = "problem.audit.write-failed.detail";
+  public static final String AUDIT_EXPORT_LIMIT_TITLE = "problem.audit.export-limit-exceeded.title";
+  public static final String AUDIT_EXPORT_LIMIT_DETAIL =
+      "problem.audit.export-limit-exceeded.detail";
+
   public static final String FILES_PATH_REJECTED_TITLE = "problem.files.path-rejected.title";
   public static final String FILES_PATH_REJECTED_DETAIL = "problem.files.path-rejected.detail";
   public static final String FILES_NOT_FOUND_TITLE = "problem.files.not-found.title";
