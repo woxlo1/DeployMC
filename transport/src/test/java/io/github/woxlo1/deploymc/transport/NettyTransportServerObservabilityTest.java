@@ -33,8 +33,8 @@ class NettyTransportServerObservabilityTest {
     NettyTransportServer server = newServer(config, new MetricsRegistry());
     try {
       server.start();
-      String first = request(server.port(), "GET /api/v1/test HTTP/1.1", true);
-      String second = request(server.port(), "GET /api/v1/test HTTP/1.1", true);
+      String first = request(server.port(), "GET /api/v1/me HTTP/1.1", true);
+      String second = request(server.port(), "GET /api/v1/me HTTP/1.1", true);
 
       assertTrue(first.startsWith("HTTP/1.1 200"), first);
       assertTrue(first.toLowerCase(Locale.ROOT).contains("x-request-id:"), first);
@@ -133,7 +133,7 @@ class NettyTransportServerObservabilityTest {
     return new NettyTransportServer(
         config,
         request ->
-            "/api/v1/test".equals(request.path())
+            "/api/v1/me".equals(request.path())
                 ? HttpResponse.json(200, "{\"ok\":true}")
                 : HttpResponse.json(404, "{\"code\":\"not-found\"}"),
         new WebSocketListener() {
@@ -150,6 +150,7 @@ class NettyTransportServerObservabilityTest {
         new NoopLogger(),
         authenticator,
         TransportMessages.of(Locale.ENGLISH),
+        RbacTestSupport.permitAll(),
         metrics);
   }
 

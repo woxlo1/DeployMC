@@ -16,7 +16,7 @@ class ObservabilityConfigTest {
     assertEquals(LoggingFormat.TEXT, defaults.loggingFormat());
     assertEquals("text", defaults.loggingFormat().wireLabel());
     assertFalse(defaults.metricsEnabled());
-    assertEquals("metrics.read", defaults.metricsPermission());
+    assertEquals("server.read", defaults.metricsPermission());
     assertEquals(300, defaults.identityRateLimitPerMinute());
     assertEquals(30, defaults.authFailureRateLimitPerMinute());
     assertEquals(4096, defaults.maxRateLimitKeys());
@@ -39,7 +39,7 @@ class ObservabilityConfigTest {
 
   @Test
   void builderAcceptsOnlyStablePermissionIdentifiers() {
-    assertTrue(ObservabilityConfig.isSupportedPermission("metrics.read"));
+    assertFalse(ObservabilityConfig.isSupportedPermission("metrics.read"));
     assertTrue(ObservabilityConfig.isSupportedPermission("server.read"));
     assertFalse(ObservabilityConfig.isSupportedPermission("admin.all"));
     assertFalse(ObservabilityConfig.isSupportedPermission(null));
@@ -81,6 +81,7 @@ class ObservabilityConfigTest {
   void classificationUsesAClosedLowCardinalitySet() {
     assertEquals(EndpointClass.HEALTH, EndpointClass.fromPath("/healthz"));
     assertEquals(EndpointClass.HEALTH, EndpointClass.fromPath("/readyz?probe=1"));
+    assertEquals(EndpointClass.ME, EndpointClass.fromPath("/api/v1/me"));
     assertEquals(EndpointClass.SERVER, EndpointClass.fromPath("/api/v1/server"));
     assertEquals(EndpointClass.DOCTOR, EndpointClass.fromPath("/api/v1/server/doctor"));
     assertEquals(EndpointClass.FILES, EndpointClass.fromPath("/api/v1/files/a/b.yml?x=1"));

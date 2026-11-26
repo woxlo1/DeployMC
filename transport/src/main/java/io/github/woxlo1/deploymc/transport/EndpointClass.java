@@ -3,6 +3,7 @@ package io.github.woxlo1.deploymc.transport;
 /** Closed, low-cardinality classification of transport endpoints. */
 public enum EndpointClass {
   HEALTH("health"),
+  ME("me"),
   SERVER("server"),
   DOCTOR("doctor"),
   FILES("files"),
@@ -55,6 +56,9 @@ public enum EndpointClass {
     }
     if ("/healthz".equals(clean) || "/readyz".equals(clean)) {
       return HEALTH;
+    }
+    if ("/api/v1/me".equals(clean)) {
+      return ME;
     }
     if ("/api/v1/server/doctor".equals(clean)) {
       return DOCTOR;

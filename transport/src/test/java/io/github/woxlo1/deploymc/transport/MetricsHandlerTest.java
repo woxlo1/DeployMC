@@ -14,12 +14,13 @@ import org.junit.jupiter.api.Test;
 class MetricsHandlerTest {
 
   @Test
-  void servesPrometheusTextToAdminIdentity() {
+  void servesPrometheusTextToAuthorizedIdentity() {
     MetricsRegistry registry = new MetricsRegistry();
     registry.recordRequest(EndpointClass.SERVER, 1_000_000L, 200);
-    MetricsHandler handler = new MetricsHandler(registry, "metrics.read");
+    MetricsHandler handler =
+        new MetricsHandler(registry, "server.read", RbacTestSupport.permitAll());
 
-    HttpResponse response = handler.handle(request("GET", MetricsHandler.PATH, admin()));
+    HttpResponse response = handler.handle(request("GET", MetricsHandler.PATH, identity(true)));
 
     assertEquals(200, response.status());
     assertEquals(MetricsHandler.CONTENT_TYPE, firstHeader(response, "content-type"));
@@ -32,8 +33,8 @@ class MetricsHandlerTest {
   @Test
   void returns404ForAnyOtherPath() {
     HttpResponse response =
-        new MetricsHandler(new MetricsRegistry(), "metrics.read")
-            .handle(request("GET", "/api/v1/server", admin()));
+        new MetricsHandler(new MetricsRegistry(), "server.read", RbacTestSupport.permitAll())
+            .handle(request("GET", "/api/v1/server", identity(true)));
 
     assertEquals(404, response.status());
     assertEquals("req-117", firstHeader(response, "x-request-id"));
@@ -43,8 +44,8 @@ class MetricsHandlerTest {
   @Test
   void returns405WithAllowHeaderForNonGetRequests() {
     HttpResponse response =
-        new MetricsHandler(new MetricsRegistry(), "metrics.read")
-            .handle(request("POST", MetricsHandler.PATH, admin()));
+        new MetricsHandler(new MetricsRegistry(), "server.read", RbacTestSupport.permitAll())
+            .handle(request("POST", MetricsHandler.PATH, identity(true)));
 
     assertEquals(405, response.status());
     assertEquals("GET", firstHeader(response, "allow"));
@@ -52,19 +53,26 @@ class MetricsHandlerTest {
   }
 
   @Test
-  void failsClosedForMissingOrNonAdminIdentity() {
-    MetricsHandler handler = new MetricsHandler(new MetricsRegistry(), "metrics.read");
+  void failsClosedForMissingIdentity() {
+    MetricsHandler handler =
+        new MetricsHandler(new MetricsRegistry(), "server.read", RbacTestSupport.permitAll());
 
     HttpResponse missing = handler.handle(request("GET", MetricsHandler.PATH, null));
+
     assertEquals(401, missing.status());
     assertTrue(body(missing).contains("auth.required"));
+  }
 
-    HttpResponse nonAdmin =
-        handler.handle(
-            request(
-                "GET", MetricsHandler.PATH, new Identity("test", "test", "token", false, null)));
-    assertEquals(403, nonAdmin.status());
-    assertTrue(body(nonAdmin).contains("metrics.forbidden"));
+  @Test
+  void returnsStableDecisionCodeForDeniedIdentity() {
+    MetricsHandler handler =
+        new MetricsHandler(new MetricsRegistry(), "server.read", RbacTestSupport.denyAll());
+
+    HttpResponse denied = handler.handle(request("GET", MetricsHandler.PATH, identity(false)));
+
+    assertEquals(403, denied.status());
+    assertTrue(body(denied).contains("\"code\":\"rbac.denied\""), body(denied));
+    assertFalse(body(denied).contains("admin"), body(denied));
   }
 
   @Test
@@ -78,16 +86,19 @@ class MetricsHandlerTest {
   void usesTheInjectedCatalogForProblemDetails() {
     MetricsHandler handler =
         new MetricsHandler(
-            new MetricsRegistry(), "metrics.read", TransportMessages.of(Locale.JAPANESE));
+            new MetricsRegistry(),
+            "server.read",
+            RbacTestSupport.permitAll(),
+            TransportMessages.of(Locale.JAPANESE));
 
-    HttpResponse response = handler.handle(request("GET", "/api/v1/server", admin()));
+    HttpResponse response = handler.handle(request("GET", "/api/v1/server", identity(true)));
 
     assertEquals(404, response.status());
     assertTrue(body(response).contains("メトリクス"));
   }
 
-  private static Identity admin() {
-    return new Identity("test", "test", "token", true, null);
+  private static Identity identity(boolean adminEquivalent) {
+    return new Identity("test", "test", "token", adminEquivalent, null);
   }
 
   private static HttpRequest request(String method, String path, Identity identity) {
