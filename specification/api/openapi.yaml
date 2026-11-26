@@ -1746,8 +1746,9 @@ components:
           type: string
           enum: [allow, deny]
         reason:
-          type: string
-          enum: [NO_ROLE, NOT_GRANTED, TOKEN_SCOPE_EXCEEDED, PATH_DENIED, PATH_SCOPE]
+          type: [string, 'null']
+          enum: [NO_ROLE, NOT_GRANTED, TOKEN_SCOPE_EXCEEDED, PATH_DENIED, PATH_SCOPE, null]
+          description: Stable denial reason; `null` when `decision` is `allow`.
         path:
           type: object
           additionalProperties: false

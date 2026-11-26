@@ -129,7 +129,9 @@ Deny rules from all assigned roles participate in step 6, including roles that d
 requested permission. This is stricter than considering only granting roles and prevents a role
 from being used to nullify another role's path restriction.
 
-Stable reasons and their REST error mapping:
+Stable reasons and their REST error mapping. Only denials carry a reason; an allow decision has no
+reason and is serialized as JSON `null` in explain mode. This is a clarification of the table, not a
+sixth reason:
 
 | Reason | Error code | Meaning |
 |---|---|---|
@@ -153,7 +155,7 @@ Optional query parameters `explain=<permission>` and `path=<sandbox-relative pat
 deterministic explanation of one decision. The `explain` object contains only:
 
 - `permission` and `decision`;
-- `reason`, using the stable reason table above;
+- `reason`, using the stable reason table above or `null` for an allow decision;
 - `path.requested`, `path.resolved`, and `path.withinScope` booleans;
 - `token.present` and `token.containsPermission` booleans when the caller is a token;
 - `roles.assigned`, `roles.granting`, `roles.denyRuleMatches`, and `roles.allowRuleMatches` counts.
