@@ -42,7 +42,7 @@ export class DoctorRequestError extends Error {
 
 const STATUSES: readonly string[] = ['PASS', 'WARN', 'FAIL'];
 const CHECK_ID = /^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9-]+)*$/;
-const EVIDENCE_KEY = /^[A-Za-z][A-Za-z0-9]*$/;
+const EVIDENCE_KEY = /^[A-Za-z][A-Za-z0-9-]*$/;
 const UTC_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 const MAX_TEXT = 512;
 const MAX_EVIDENCE_TEXT = 256;
@@ -144,7 +144,7 @@ function parseReport(value: unknown): DoctorReport | null {
     !STATUSES.includes(value.overall) ||
     value.scope !== 'limited' ||
     !Array.isArray(value.checks) ||
-    value.checks.length < 14 ||
+    value.checks.length < 15 ||
     value.checks.length > 64
   ) {
     return null;
