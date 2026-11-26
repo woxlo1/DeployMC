@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 /**
  * Compiles sandbox-relative path globs. {@code *} stays inside a segment; {@code **} crosses them.
  */
-final class SandboxPathGlob {
+public final class SandboxPathGlob {
 
   private final Pattern pattern;
 
@@ -14,7 +14,7 @@ final class SandboxPathGlob {
     this.pattern = pattern;
   }
 
-  static SandboxPathGlob compile(String glob) {
+  public static SandboxPathGlob compile(String glob) {
     if (glob == null || glob.isEmpty() || glob.charAt(0) == '/') {
       throw new IllegalArgumentException("Sandbox path glob must be relative and non-empty");
     }
@@ -42,7 +42,7 @@ final class SandboxPathGlob {
     return new SandboxPathGlob(Pattern.compile(expression.toString()));
   }
 
-  boolean matches(String normalizedRelativePath) {
+  public boolean matches(String normalizedRelativePath) {
     return pattern.matcher(normalizedRelativePath.toLowerCase(Locale.ROOT)).matches();
   }
 }
