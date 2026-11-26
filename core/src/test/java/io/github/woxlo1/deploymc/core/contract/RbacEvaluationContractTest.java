@@ -11,20 +11,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * PART 33.4 specification contract for role and path evaluation. No product RBAC evaluator exists
- * in this repository. These tests validate the normative algorithm and its configuration and error
- * artifacts only; they claim neither implemented behavior nor parity with any external system.
+ * PART 33.4 specification contract for role and path evaluation. These tests validate the normative
+ * algorithm, its configuration and error artifacts, and the presence of the product evaluator. They
+ * claim neither running-server behavior nor parity with any external system.
  */
 class RbacEvaluationContractTest {
-
-  private static final String NO_PRODUCT_IMPLEMENTATION =
-      "No product RBAC evaluator exists; this is a SPEC/FIXTURE CONTRACT test only";
 
   private static final List<String> PERMISSIONS =
       Arrays.asList(
@@ -204,28 +200,37 @@ class RbacEvaluationContractTest {
   }
 
   @Test
-  void noProductRbacEvaluatorExists() throws Exception {
+  void productEvaluatorImplementsTheNormativeReasons() throws Exception {
     List<Path> sources = mainSources();
     assertFalse(sources.isEmpty(), "No main Java sources found");
+    Path evaluator = null;
+    Path reasons = null;
+    Path registry = null;
     for (Path source : sources) {
-      String name = source.getFileName().toString().toLowerCase(Locale.ROOT);
-      assertFalse(name.contains("rbac"), source + " would be a product evaluator");
-      assertFalse(name.contains("roleevaluator"), source + " would be a product evaluator");
-      assertFalse(name.contains("permissionevaluator"), source + " would be a product evaluator");
-      assertFalse(
-          name.contains("authorizationevaluator"), source + " would be a product evaluator");
-      String text = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
-      for (String reason : REASONS) {
-        assertFalse(text.contains(reason), source + " contains " + reason);
+      String name = source.getFileName().toString();
+      if ("RbacEvaluator.java".equals(name)) {
+        evaluator = source;
+      } else if ("DecisionReason.java".equals(name)) {
+        reasons = source;
+      } else if ("PermissionRegistry.java".equals(name)) {
+        registry = source;
       }
-      assertFalse(text.contains("authorize(identity, permission, path?)"), source.toString());
-      assertFalse(text.contains("intersection(tokenScopes, ownerEffective)"), source.toString());
+    }
+    assertTrue(evaluator != null, "Product RbacEvaluator is missing");
+    assertTrue(reasons != null, "Product DecisionReason is missing");
+    assertTrue(registry != null, "Product PermissionRegistry is missing");
+    String reasonSource = new String(Files.readAllBytes(reasons), StandardCharsets.UTF_8);
+    for (String reason : REASONS) {
+      assertTrue(reasonSource.contains(reason), "Missing product reason: " + reason);
+    }
+    assertTrue(reasonSource.contains("TOKEN_SCOPE_EXCEEDED"));
+    String registrySource = new String(Files.readAllBytes(registry), StandardCharsets.UTF_8);
+    for (String permission : PERMISSIONS) {
+      assertTrue(
+          registrySource.contains("\"" + permission + "\""),
+          "Missing registry entry: " + permission);
     }
     assertTrue(sources.size() < 1000, "Source scan must stay bounded");
-    String status = normalized("docs/development/implementation-status.md");
-    assertTrue(
-        status.contains("there is no RBAC authorization engine, deployment engine, audit log"),
-        NO_PRODUCT_IMPLEMENTATION);
   }
 
   private static void assertError(String catalog, String code, String description) {

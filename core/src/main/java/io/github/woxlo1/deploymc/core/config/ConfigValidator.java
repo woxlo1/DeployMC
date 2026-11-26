@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.core.config;
 
+import io.github.woxlo1.deploymc.core.rbac.PermissionRegistry;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,6 +14,9 @@ import java.util.regex.PatternSyntaxException;
 
 /** Validates parsed configuration against the normative schema with exact line/column findings. */
 public final class ConfigValidator {
+
+  private static final int DEFAULT_MAX_UPLOAD_MB = 64;
+  private static final int DEFAULT_RATE_LIMIT_PER_MINUTE = 300;
 
   private ConfigValidator() {}
 
@@ -392,6 +396,7 @@ public final class ConfigValidator {
     YamlValue roles = root.get("roles");
     if (roles != null && roles.isObject()) {
       knownRoles.addAll(roles.keys());
+      checkRolePolicy(roles, root, locale, issues);
     }
 
     YamlValue defaultRole = root.get("default-role");
@@ -446,6 +451,80 @@ public final class ConfigValidator {
               role.raw());
         }
       }
+    }
+  }
+
+  private static void checkRolePolicy(
+      YamlValue roles, YamlValue root, Locale locale, List<ConfigIssue> issues) {
+    YamlValue reserved = roles.get("none");
+    if (reserved != null) {
+      error(issues, reserved, "roles.none", locale, "config.error.reservedRole");
+    }
+    int maxUploadMb = globalInt(root, "sandbox", "max-upload-size-mb", DEFAULT_MAX_UPLOAD_MB);
+    int maxRate = globalInt(root, "limits", "rate-limit-per-minute", DEFAULT_RATE_LIMIT_PER_MINUTE);
+    for (Map.Entry<String, YamlValue> role : roles.entries().entrySet()) {
+      YamlValue permissions = role.getValue().get("permissions");
+      if (permissions != null && permissions.isArray()) {
+        for (int index = 0; index < permissions.items().size(); index++) {
+          YamlValue permission = permissions.items().get(index);
+          String name = permission.isString() ? permission.raw().toString() : null;
+          if (name != null && !"*".equals(name) && !PermissionRegistry.isKnown(name)) {
+            error(
+                issues,
+                permission,
+                "roles." + role.getKey() + ".permissions[" + index + "]",
+                locale,
+                "config.error.unknownPermission",
+                name);
+          }
+        }
+      }
+      YamlValue limits = role.getValue().get("limits");
+      if (limits == null || !limits.isObject()) {
+        continue;
+      }
+      checkRoleLimit(
+          limits,
+          "max-upload-mb",
+          "roles." + role.getKey() + ".limits.max-upload-mb",
+          maxUploadMb,
+          locale,
+          issues);
+      checkRoleLimit(
+          limits,
+          "rate-limit-per-minute",
+          "roles." + role.getKey() + ".limits.rate-limit-per-minute",
+          maxRate,
+          locale,
+          issues);
+    }
+  }
+
+  private static int globalInt(YamlValue root, String section, String key, int fallback) {
+    YamlValue container = root == null ? null : root.get(section);
+    YamlValue value = container == null ? null : container.get(key);
+    Integer number = integer(value == null ? null : value.raw());
+    return number == null ? fallback : number.intValue();
+  }
+
+  private static void checkRoleLimit(
+      YamlValue limits,
+      String key,
+      String path,
+      int maximum,
+      Locale locale,
+      List<ConfigIssue> issues) {
+    YamlValue value = limits.get(key);
+    Integer number = integer(value == null ? null : value.raw());
+    if (number != null && number.intValue() > maximum) {
+      error(
+          issues,
+          value,
+          path,
+          locale,
+          "config.error.roleLimitExceeded",
+          key,
+          Integer.valueOf(maximum));
     }
   }
 
