@@ -7,6 +7,7 @@ import io.github.woxlo1.deploymc.core.PlatformCapabilities;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtDiagnosticsSnapshot;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtRejection;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicy;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxAccessMode;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxErrorCode;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxRejectionException;
@@ -40,6 +41,7 @@ public final class DoctorService {
   public static final String ID_AUTH_MODE = "auth.mode";
   public static final String ID_AUTH_TUNNEL = "auth.tunnel";
   public static final String ID_AUTH_JWT = "auth.jwt";
+  public static final String ID_RBAC = "rbac";
   public static final String ID_SANDBOX = "sandbox";
   public static final String ID_SNAPSHOT = "snapshot";
   public static final String ID_DEPLOYMENT = "deployment";
@@ -58,6 +60,7 @@ public final class DoctorService {
               ID_AUTH_MODE,
               ID_AUTH_TUNNEL,
               ID_AUTH_JWT,
+              ID_RBAC,
               ID_SANDBOX,
               ID_SNAPSHOT,
               ID_DEPLOYMENT,
@@ -94,6 +97,7 @@ public final class DoctorService {
             detail(locale, DoctorMessages.DETAIL_AUTH_TUNNEL),
             detail(locale, DoctorMessages.REMEDIATION_AUTH_TUNNEL)));
     checks.add(authJwt(locale, inputs.jwtDiagnosticsSnapshot()));
+    checks.add(rbac(locale, inputs.rbacPolicy()));
     checks.add(sandbox(locale, inputs.sandboxResolver()));
     checks.add(snapshot(locale, snapshots));
     checks.add(deployment(locale, environment, snapshots));
@@ -309,6 +313,32 @@ public final class DoctorService {
             notYetValid,
             jwksUnavailable),
         detail(locale, DoctorMessages.REMEDIATION_AUTH_JWT));
+  }
+
+  private static DoctorCheck rbac(Locale locale, RbacPolicy policy) {
+    if (policy == null || !policy.valid()) {
+      return DoctorCheck.of(
+          ID_RBAC,
+          DoctorStatus.WARN,
+          false,
+          detail(locale, DoctorMessages.DETAIL_RBAC_WARN),
+          detail(locale, DoctorMessages.REMEDIATION_RBAC));
+    }
+    return DoctorCheck.of(
+        ID_RBAC,
+        DoctorStatus.PASS,
+        true,
+        detail(locale, DoctorMessages.DETAIL_RBAC_PASS),
+        detail(locale, DoctorMessages.REMEDIATION_RBAC),
+        evidence(
+            "roles",
+            Integer.valueOf(policy.roleCount()),
+            "users",
+            Integer.valueOf(policy.userCount()),
+            "default-role",
+            boundedRole(policy.defaultRole()),
+            "registry-version",
+            Integer.valueOf(policy.registryVersion())));
   }
 
   private static Map<String, Long> closedRejectionCounts(JwtDiagnosticsSnapshot snapshot) {
@@ -611,6 +641,12 @@ public final class DoctorService {
 
   private static String value(String text) {
     return text == null ? "" : text;
+  }
+
+  /** Keeps a host-supplied role name scalar, redacted, and bounded for doctor evidence. */
+  private static String boundedRole(String role) {
+    String safe = DoctorText.redact(value(role));
+    return safe.length() <= 64 ? safe : safe.substring(0, 64);
   }
 
   private static final class SnapshotFacts {

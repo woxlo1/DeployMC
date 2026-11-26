@@ -16,6 +16,7 @@ public final class DoctorCheck {
           new LinkedHashSet<String>(
               Arrays.asList(
                   "activeDeployment",
+                  "default-role",
                   "errors",
                   "freeBytes",
                   "logCaptureCapability",
@@ -28,12 +29,15 @@ public final class DoctorCheck {
                   "port",
                   "portInUse",
                   "portOwned",
+                  "registry-version",
                   "restartCapability",
+                  "roles",
                   "storeBytes",
                   "tokenMode",
                   "unavailable",
                   "unknown",
                   "updateCheckEnabled",
+                  "users",
                   "valuesPresent",
                   "verifyIssues",
                   "warnings")));

@@ -48,6 +48,10 @@ public final class DoctorMessages {
       "doctor.detail.auth.jwt.notImplemented";
   public static final String REMEDIATION_AUTH_JWT = "doctor.remediation.auth.jwt";
 
+  public static final String DETAIL_RBAC_PASS = "doctor.detail.rbac.pass";
+  public static final String DETAIL_RBAC_WARN = "doctor.detail.rbac.warn";
+  public static final String REMEDIATION_RBAC = "doctor.remediation.rbac";
+
   public static final String DETAIL_SANDBOX_PASS = "doctor.detail.sandbox.pass";
   public static final String DETAIL_SANDBOX_NO_RESOLVER = "doctor.detail.sandbox.warn.noResolver";
   public static final String DETAIL_SANDBOX_NO_SPACE = "doctor.detail.sandbox.warn.space";
@@ -121,6 +125,9 @@ public final class DoctorMessages {
                   DETAIL_AUTH_JWT_COUNTS,
                   DETAIL_AUTH_JWT_NO_DIAGNOSTICS,
                   REMEDIATION_AUTH_JWT,
+                  DETAIL_RBAC_PASS,
+                  DETAIL_RBAC_WARN,
+                  REMEDIATION_RBAC,
                   DETAIL_SANDBOX_PASS,
                   DETAIL_SANDBOX_NO_RESOLVER,
                   DETAIL_SANDBOX_NO_SPACE,

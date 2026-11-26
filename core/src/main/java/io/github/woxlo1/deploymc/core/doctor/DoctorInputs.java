@@ -3,6 +3,7 @@ package io.github.woxlo1.deploymc.core.doctor;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.JwtDiagnosticsSnapshot;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicy;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxResolver;
 import io.github.woxlo1.deploymc.core.snapshot.SnapshotStore;
 import io.github.woxlo1.deploymc.core.snapshot.SnapshotStoreConfig;
@@ -22,6 +23,7 @@ public final class DoctorInputs {
   private final SnapshotStoreConfig snapshotLimits;
   private final ConfigValidationResult configValidation;
   private final JwtDiagnosticsSnapshot jwtDiagnosticsSnapshot;
+  private final RbacPolicy rbacPolicy;
   private final int missingLocalizationKeys;
 
   private DoctorInputs(Builder builder) {
@@ -34,6 +36,7 @@ public final class DoctorInputs {
     this.snapshotLimits = builder.snapshotLimits;
     this.configValidation = builder.configValidation;
     this.jwtDiagnosticsSnapshot = builder.jwtDiagnosticsSnapshot;
+    this.rbacPolicy = builder.rbacPolicy;
     this.missingLocalizationKeys = builder.missingLocalizationKeys;
   }
 
@@ -78,6 +81,11 @@ public final class DoctorInputs {
     return jwtDiagnosticsSnapshot;
   }
 
+  /** Null when no RBAC evaluator is wired; the doctor then reports WARN without evidence. */
+  public RbacPolicy rbacPolicy() {
+    return rbacPolicy;
+  }
+
   public int missingLocalizationKeys() {
     return missingLocalizationKeys;
   }
@@ -94,6 +102,7 @@ public final class DoctorInputs {
     private SnapshotStoreConfig snapshotLimits;
     private ConfigValidationResult configValidation;
     private JwtDiagnosticsSnapshot jwtDiagnosticsSnapshot;
+    private RbacPolicy rbacPolicy;
     private int missingLocalizationKeys = -1;
 
     public Builder clock(Clock value) {
@@ -138,6 +147,11 @@ public final class DoctorInputs {
 
     public Builder jwtDiagnosticsSnapshot(JwtDiagnosticsSnapshot value) {
       this.jwtDiagnosticsSnapshot = value;
+      return this;
+    }
+
+    public Builder rbacPolicy(RbacPolicy value) {
+      this.rbacPolicy = value;
       return this;
     }
 

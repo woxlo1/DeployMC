@@ -14,6 +14,9 @@ import io.github.woxlo1.deploymc.core.config.ConfigSchema;
 import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.config.ConfigValidator;
 import io.github.woxlo1.deploymc.core.config.ConfigYamlParser;
+import io.github.woxlo1.deploymc.core.rbac.PathScope;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicy;
+import io.github.woxlo1.deploymc.core.rbac.RolePolicy;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxAccessMode;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxErrorCode;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxRejectionException;
@@ -30,6 +33,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -45,7 +49,7 @@ class DoctorServiceTest {
   @TempDir Path temp;
 
   @Test
-  void reportsAllFourteenChecksInStableOrder() throws Exception {
+  void reportsAllFifteenChecksInStableOrder() throws Exception {
     DoctorReport report = run(inputs(freePort()));
 
     assertEquals(
@@ -56,6 +60,7 @@ class DoctorServiceTest {
             "auth.mode",
             "auth.tunnel",
             "auth.jwt",
+            "rbac",
             "sandbox",
             "snapshot",
             "deployment",
@@ -103,6 +108,7 @@ class DoctorServiceTest {
           Arrays.asList(
               "auth.tunnel",
               "auth.jwt",
+              "rbac",
               "platform.jar-replacement",
               "console.capture",
               "deployment",
@@ -395,6 +401,71 @@ class DoctorServiceTest {
   }
 
   @Test
+  void rbacCheckWarnsWithoutEvaluatorOrValidSnapshotInBothLocales() throws Exception {
+    int port = freePort();
+    for (Locale locale : Arrays.asList(Locale.ROOT, Locale.JAPANESE)) {
+      DoctorCheck unwired = check(run(inputs(port).locale(locale)), DoctorService.ID_RBAC);
+      assertEquals(DoctorStatus.WARN, unwired.status(), locale.toString());
+      assertFalse(unwired.implemented(), locale.toString());
+      assertTrue(unwired.evidence().isEmpty(), locale.toString());
+      assertTrue(isNotImplemented(unwired.detail()), locale.toString());
+      assertFalse(unwired.remediation().isEmpty(), locale.toString());
+
+      DoctorCheck invalid =
+          check(
+              run(inputs(port).locale(locale).rbacPolicy(RbacPolicy.denyAll())),
+              DoctorService.ID_RBAC);
+      assertEquals(DoctorStatus.WARN, invalid.status(), locale.toString());
+      assertFalse(invalid.implemented(), locale.toString());
+      assertTrue(invalid.evidence().isEmpty(), locale.toString());
+      assertTrue(isNotImplemented(invalid.detail()), locale.toString());
+    }
+  }
+
+  @Test
+  void rbacCheckPassesWithExactlyFourBoundedEvidenceKeys() throws Exception {
+    RbacPolicy policy =
+        RbacPolicy.of(
+            Collections.<String, RolePolicy>emptyMap(),
+            Collections.<String, List<String>>emptyMap(),
+            "none");
+    DoctorCheck rbac = check(run(inputs(freePort()).rbacPolicy(policy)), DoctorService.ID_RBAC);
+
+    assertEquals(DoctorStatus.PASS, rbac.status());
+    assertTrue(rbac.implemented());
+    Map<String, Object> expected = new LinkedHashMap<String, Object>();
+    expected.put("default-role", "none");
+    expected.put("registry-version", Integer.valueOf(policy.registryVersion()));
+    expected.put("roles", Integer.valueOf(policy.roleCount()));
+    expected.put("users", Integer.valueOf(policy.userCount()));
+    assertEquals(expected, rbac.evidence());
+    assertFalse(isNotImplemented(rbac.detail()));
+    assertFalse(rbac.remediation().isEmpty());
+  }
+
+  @Test
+  void rbacEvidenceBoundsAndRedactsHostSuppliedRoleNames() throws Exception {
+    StringBuilder name = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      name.append('r');
+    }
+    DoctorCheck bounded =
+        check(
+            run(inputs(freePort()).rbacPolicy(policyWithRole(name.toString()))),
+            DoctorService.ID_RBAC);
+    Object role = bounded.evidence().get("default-role");
+    assertTrue(role instanceof String);
+    assertEquals(64, ((String) role).length());
+
+    DoctorCheck redacted =
+        check(
+            run(inputs(freePort()).rbacPolicy(policyWithRole("C:\\secrets\\admin"))),
+            DoctorService.ID_RBAC);
+    assertEquals(DoctorText.REDACTED, redacted.evidence().get("default-role"));
+    assertFalse(redacted.evidence().toString().contains("C:\\secrets"));
+  }
+
+  @Test
   void authModeAcceptsCloudflareAndLocalOneTimeAndWarnsForUnknownModes() throws Exception {
     DoctorEnvironment cloudflare =
         environmentBuilder(freePort(), true).authMode("cloudflare").build();
@@ -457,6 +528,18 @@ class DoctorServiceTest {
       states.put(key, CapabilityState.AVAILABLE);
     }
     return PlatformCapabilities.of(states);
+  }
+
+  private static RbacPolicy policyWithRole(String role) {
+    Map<String, RolePolicy> roles = new LinkedHashMap<String, RolePolicy>();
+    roles.put(
+        role,
+        new RolePolicy(
+            role,
+            false,
+            Collections.<String>emptyList(),
+            PathScope.wholeSandbox(Collections.<String>emptyList())));
+    return RbacPolicy.of(roles, Collections.<String, List<String>>emptyMap(), role);
   }
 
   private static ConfigValidationResult validConfig() throws Exception {

@@ -13,6 +13,7 @@ const CHECK_IDS = [
   'auth.mode',
   'auth.tunnel',
   'auth.jwt',
+  'rbac',
   'sandbox',
   'snapshot',
   'deployment',
@@ -104,7 +105,7 @@ const INVALID_REPORT_CASES: readonly InvalidReportCase[] = [
     payload: { ...makeRawReport(), checks: withDuplicateCheckId() },
   },
   {
-    name: 'rejects a report with fewer than fourteen checks',
+    name: 'rejects a report with fewer than fifteen checks',
     payload: { ...makeRawReport(), checks: makeChecks().slice(1) },
   },
   {
@@ -211,7 +212,7 @@ describe('doctor panel', () => {
       ...checks[0]!,
       detail: 'Environment verified.',
       remediation: 'No action needed.',
-      evidence: { platform: 'paper', checks: 14, available: true },
+      evidence: { platform: 'paper', checks: 15, available: true },
     };
     const report = makeReport({ checks });
     vi.mocked(fetch).mockResolvedValue(mockResponse(report));
@@ -336,7 +337,7 @@ describe('doctor panel', () => {
       detail: 'Environment verified.',
       evidence: {
         mode: 'token',
-        checks: 14,
+        checks: 15,
         available: true,
         platform: '/var/lib/deploymc',
         path: '/opt/server/plugins',
@@ -354,7 +355,7 @@ describe('doctor panel', () => {
     expect(screen.getAllByText('Evidence').length).toBeGreaterThan(0);
     expect(screen.getByText('mode')).toBeInTheDocument();
     expect(screen.getByText('token')).toBeInTheDocument();
-    expect(screen.getByText('14')).toBeInTheDocument();
+    expect(screen.getByText('15')).toBeInTheDocument();
     expect(screen.getByText('[redacted]')).toBeInTheDocument();
     const body = document.body.textContent ?? '';
     expect(body).not.toContain('/var/lib/deploymc');
@@ -362,6 +363,30 @@ describe('doctor panel', () => {
     expect(body).not.toContain('192.0.2.10');
     expect(body).not.toContain('C:\\secret\\token');
     expect(body).not.toContain(TOKEN);
+    expectTokenAbsentFromStorageAndBrowser();
+  });
+
+  it('accepts a report with bounded rbac evidence keys', async () => {
+    const checks = makeChecks();
+    const rbacIndex = CHECK_IDS.indexOf('rbac');
+    checks[rbacIndex] = {
+      ...checks[rbacIndex]!,
+      evidence: {
+        roles: 2,
+        users: 1,
+        'default-role': 'none',
+        'registry-version': 1,
+      },
+    };
+    vi.mocked(fetch).mockResolvedValue(mockResponse(makeReport({ checks })));
+
+    renderApp();
+    runDoctor(TOKEN);
+
+    expect(await screen.findByText('limited')).toBeInTheDocument();
+    expect(
+      screen.queryByText('The doctor response was invalid or contained sensitive text.'),
+    ).not.toBeInTheDocument();
     expectTokenAbsentFromStorageAndBrowser();
   });
 

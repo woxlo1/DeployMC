@@ -43,6 +43,16 @@ class DoctorCatalogTest {
   }
 
   @Test
+  void rbacMessagesAreLocalizedAndMarkTheUnimplementedState() {
+    assertNotEquals(
+        DoctorMessages.format(Locale.ROOT, DoctorMessages.DETAIL_RBAC_PASS),
+        DoctorMessages.format(Locale.JAPANESE, DoctorMessages.DETAIL_RBAC_PASS));
+    assertTrue(
+        DoctorMessages.format(Locale.JAPANESE, DoctorMessages.DETAIL_RBAC_WARN)
+            .contains("\u672a\u5b9f\u88c5"));
+  }
+
+  @Test
   void formattedDetailsStayWithinSchemaLengthLimit() {
     StringBuilder hostile = new StringBuilder();
     for (int i = 0; i < 2000; i++) {
