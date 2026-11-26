@@ -1,5 +1,8 @@
 package io.github.woxlo1.deploymc.transport;
 
+import io.github.woxlo1.deploymc.core.audit.AuditActions;
+import io.github.woxlo1.deploymc.core.audit.AuditException;
+import io.github.woxlo1.deploymc.core.audit.AuditTarget;
 import io.github.woxlo1.deploymc.core.auth.AuthContext;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationFilter;
@@ -82,6 +85,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private static final String TRANSPORT_ERROR = "transport_error";
   private static final String HEALTHZ = "/healthz";
   private static final String READYZ = "/readyz";
+  private static final String FILES_PREFIX = "/api/v1/files";
+  private static final String FILES_CONTENT_PATH = FILES_PREFIX + "/content";
+  private static final String FILES_MOVE_PATH = FILES_PREFIX + "/move";
+  private static final String FILES_UPLOAD_PATH = FILES_PREFIX + "/upload";
   private static final String REDACTED = "<redacted>";
   private static final Logger WATCHDOG_LOGGER =
       Logger.getLogger("io.github.woxlo1.deploymc.transport.watchdog");
@@ -94,6 +101,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final AuthenticationFilter authenticationFilter;
   private final TransportMessages messages;
   private final RbacGate gate;
+  private final AuditRecorder auditRecorder;
   private final ObservabilityConfig observability;
   private final MetricsRegistry metrics;
   private final RateLimiter rateLimiter;
@@ -123,7 +131,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         policy,
         logger,
         null,
-        TransportMessages.of(Locale.ENGLISH));
+        TransportMessages.of(Locale.ENGLISH),
+        null,
+        new MetricsRegistry(),
+        AuditRecorder.disabledForServerFreeTests());
   }
 
   public NettyTransportServer(
@@ -143,7 +154,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         authenticator,
         messages,
         null,
-        new MetricsRegistry());
+        new MetricsRegistry(),
+        AuditRecorder.disabledForServerFreeTests());
   }
 
   public NettyTransportServer(
@@ -164,7 +176,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         authenticator,
         messages,
         null,
-        metrics);
+        metrics,
+        AuditRecorder.disabledForServerFreeTests());
   }
 
   /** Creates a transport whose authorization decisions use the supplied evaluator. */
@@ -186,7 +199,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         authenticator,
         messages,
         evaluator,
-        new MetricsRegistry());
+        new MetricsRegistry(),
+        AuditRecorder.disabledForServerFreeTests());
   }
 
   public NettyTransportServer(
@@ -199,6 +213,31 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       TransportMessages messages,
       RbacEvaluator evaluator,
       MetricsRegistry metrics) {
+    this(
+        config,
+        httpHandler,
+        webSocketListener,
+        policy,
+        logger,
+        authenticator,
+        messages,
+        evaluator,
+        metrics,
+        AuditRecorder.disabledForServerFreeTests());
+  }
+
+  /** Creates a transport that records authentication and authorization denials. */
+  public NettyTransportServer(
+      TransportConfig config,
+      HttpHandler httpHandler,
+      WebSocketListener webSocketListener,
+      TransportPolicy policy,
+      RequestLogger logger,
+      Authenticator authenticator,
+      TransportMessages messages,
+      RbacEvaluator evaluator,
+      MetricsRegistry metrics,
+      AuditRecorder auditRecorder) {
     this.config = Objects.requireNonNull(config, "config");
     this.httpHandler = Objects.requireNonNull(httpHandler, "httpHandler");
     this.webSocketListener = Objects.requireNonNull(webSocketListener, "webSocketListener");
@@ -209,6 +248,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     this.observability = config.observability();
     this.metrics = Objects.requireNonNull(metrics, "metrics");
     this.gate = new RbacGate(evaluator, observability.metricsPermission());
+    this.auditRecorder = Objects.requireNonNull(auditRecorder, "auditRecorder");
     this.rateLimiter =
         new RateLimiter(
             observability.identityRateLimitPerMinute(),
@@ -517,6 +557,108 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     return EndpointClass.fromPath(requestPath, config.webSocketPath());
   }
 
+  private HttpResponse denyAndRespond(
+      String id,
+      FullHttpRequest request,
+      Identity identity,
+      EndpointClass endpoint,
+      String decisionCode,
+      HttpResponse fallback) {
+    String uri = request == null ? "" : request.uri();
+    int queryIndex = uri.indexOf('?');
+    String path = queryIndex < 0 ? uri : uri.substring(0, queryIndex);
+    String query = queryIndex < 0 ? "" : uri.substring(queryIndex + 1);
+    String method = request == null ? "GET" : request.method().name();
+    try {
+      auditRecorder.denial(
+          new HttpRequest(
+              id,
+              method,
+              path,
+              query,
+              Collections.<String, List<String>>emptyMap(),
+              new byte[0],
+              identity),
+          identity,
+          deniedAction(endpoint, method, path),
+          deniedTarget(endpoint, path, query),
+          decisionCode);
+    } catch (AuditException failure) {
+      return TransportProblems.auditProblem(failure, id, messages)
+          .withHeader(TransportProblems.REQUEST_ID, id);
+    }
+    return fallback;
+  }
+
+  private void recordWebSocketDenial(
+      String id, Identity identity, EndpointClass endpoint, String decisionCode) {
+    try {
+      auditRecorder.denial(
+          new HttpRequest(
+              id,
+              "GET",
+              config.webSocketPath(),
+              "",
+              Collections.<String, List<String>>emptyMap(),
+              new byte[0],
+              identity),
+          identity,
+          deniedAction(endpoint, "GET", config.webSocketPath()),
+          null,
+          decisionCode);
+    } catch (AuditException failure) {
+      logger.rejected(id, failure.problemCode());
+    }
+  }
+
+  private static String deniedAction(EndpointClass endpoint, String method, String path) {
+    if (endpoint == EndpointClass.FILES) {
+      String upper = method.toUpperCase(Locale.ROOT);
+      if ("DELETE".equals(upper)) {
+        return AuditActions.FILES_DELETE;
+      }
+      if ("POST".equals(upper) && (FILES_UPLOAD_PATH.equals(path))) {
+        return AuditActions.FILES_UPLOAD;
+      }
+      if ("POST".equals(upper) && FILES_MOVE_PATH.equals(path)) {
+        return AuditActions.FILES_RENAME;
+      }
+      if ("PUT".equals(upper) && FILES_CONTENT_PATH.equals(path)) {
+        return AuditActions.FILES_WRITE;
+      }
+      if (FILES_CONTENT_PATH.equals(path)) {
+        return AuditActions.FILES_READ;
+      }
+      return AuditActions.FILES_LIST;
+    }
+    if (endpoint == EndpointClass.AUDIT) {
+      return AuditActions.AUDIT_READ;
+    }
+    return AuditActions.AUTH_DENIED;
+  }
+
+  private static AuditTarget deniedTarget(EndpointClass endpoint, String path, String query) {
+    if (endpoint != EndpointClass.FILES) {
+      return null;
+    }
+    try {
+      String raw = null;
+      for (String pair : query.split("&", -1)) {
+        int separator = pair.indexOf('=');
+        if (separator >= 0 && "path".equals(pair.substring(0, separator))) {
+          raw = RbacGate.decodePath(pair.substring(separator + 1));
+          break;
+        }
+      }
+      if (raw == null && path.startsWith(FILES_PREFIX + "/")) {
+        raw = RbacGate.decodePath(path.substring(FILES_PREFIX.length() + 1));
+      }
+      return raw == null ? null : AuditTarget.path(raw);
+    } catch (IllegalArgumentException invalid) {
+      return null;
+    }
+  }
+
   private HttpResponse unauthorized(String requestId, AuthenticationFailure failure) {
     if (failure == AuthenticationFailure.INTERNAL_ERROR) {
       return HttpResponse.problem(
@@ -712,7 +854,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         Identity identity = result.identity();
         RateLimitDecision limit = rateLimiter.tryIdentity(identity.id(), endpoint);
         if (!limit.allowed()) {
-          shed(context, request, limit, ShedScope.IDENTITY);
+          shed(context, request, limit, ShedScope.IDENTITY, identity, endpoint);
           return;
         }
         AuthContext authContext = authenticationFilter.context(id, result);
@@ -721,29 +863,32 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
                 ? gate.authorizeWebSocket(identity)
                 : gate.authorize(toInternal(request, id, authContext));
         if (!authorization.allowed()) {
-          rejectAuthorization(context, request, authorization);
+          rejectAuthorization(context, request, identity, endpoint, authorization);
           return;
         }
         if (endpoint == EndpointClass.WEBSOCKET
             && webSocketConnections.get() >= config.maxWebSocketConnections()) {
-          rejectBusy(context, request);
+          rejectBusy(context, request, identity, endpoint);
           return;
         }
         context.channel().attr(AUTH_CONTEXT).set(authContext);
         context.fireChannelRead(message);
         return;
       }
-      rejectAuthentication(context, request, result.failure());
+      rejectAuthentication(context, request, endpoint, result.failure());
     }
 
     private void rejectAuthentication(
-        ChannelHandlerContext context, FullHttpRequest request, AuthenticationFailure failure) {
+        ChannelHandlerContext context,
+        FullHttpRequest request,
+        EndpointClass endpoint,
+        AuthenticationFailure failure) {
       AuthenticationFailure reason = failure == null ? AuthenticationFailure.REQUIRED : failure;
       metrics.recordAuthFailure(AuthFailureReason.from(reason));
       String remoteKey = String.valueOf(context.channel().remoteAddress());
       RateLimitDecision decision = rateLimiter.tryAuthFailure(remoteKey);
       if (!decision.allowed()) {
-        shed(context, request, decision, ShedScope.AUTH_FAILURE);
+        shed(context, request, decision, ShedScope.AUTH_FAILURE, null, endpoint);
         return;
       }
       String id = requestId(context);
@@ -752,31 +897,47 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       } else {
         logger.rejected(id, reason.code());
       }
+      HttpResponse response =
+          denyAndRespond(id, request, null, endpoint, reason.code(), unauthorized(id, reason));
       ReferenceCountUtil.release(request);
-      writeResponse(context, unauthorized(id, reason));
+      writeResponse(context, response);
     }
 
     private void rejectAuthorization(
-        ChannelHandlerContext context, FullHttpRequest request, AuthorizationDecision decision) {
+        ChannelHandlerContext context,
+        FullHttpRequest request,
+        Identity identity,
+        EndpointClass endpoint,
+        AuthorizationDecision decision) {
       String code =
           decision.errorCode() == null
               ? TransportProblems.AUTHORIZATION_DENIED_CODE
               : decision.errorCode();
+      String id = requestId(context);
       if (isWebSocketUpgrade(request)) {
         logger.websocketRejected(REDACTED, code);
       } else {
-        logger.rejected(requestId(context), code);
+        logger.rejected(id, code);
       }
+      HttpResponse response =
+          denyAndRespond(
+              id,
+              request,
+              identity,
+              endpoint,
+              code,
+              TransportProblems.authorizationDenied(id, code, messages));
       ReferenceCountUtil.release(request);
-      writeResponse(
-          context, TransportProblems.authorizationDenied(requestId(context), code, messages));
+      writeResponse(context, response);
     }
 
     private void shed(
         ChannelHandlerContext context,
         FullHttpRequest request,
         RateLimitDecision decision,
-        ShedScope scope) {
+        ShedScope scope,
+        Identity identity,
+        EndpointClass endpoint) {
       metrics.recordShed(scope);
       String id = requestId(context);
       if (isWebSocketUpgrade(request)) {
@@ -784,15 +945,35 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       } else {
         logger.rejected(id, TransportProblems.RATE_LIMITED_CODE);
       }
+      HttpResponse response =
+          denyAndRespond(
+              id,
+              request,
+              identity,
+              endpoint,
+              TransportProblems.RATE_LIMITED_CODE,
+              TransportProblems.rateLimited(decision, id, messages));
       ReferenceCountUtil.release(request);
-      writeResponse(context, TransportProblems.rateLimited(decision, id, messages));
+      writeResponse(context, response);
     }
 
-    private void rejectBusy(ChannelHandlerContext context, FullHttpRequest request) {
+    private void rejectBusy(
+        ChannelHandlerContext context,
+        FullHttpRequest request,
+        Identity identity,
+        EndpointClass endpoint) {
       String id = requestId(context);
       logger.websocketRejected(REDACTED, TransportProblems.SERVER_BUSY_CODE);
+      HttpResponse response =
+          denyAndRespond(
+              id,
+              request,
+              identity,
+              endpoint,
+              TransportProblems.SERVER_BUSY_CODE,
+              TransportProblems.serverBusy(id, messages));
       ReferenceCountUtil.release(request);
-      writeResponse(context, TransportProblems.serverBusy(id, messages));
+      writeResponse(context, response);
     }
   }
 
@@ -864,7 +1045,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         }
         AuthorizationDecision decision = gate.authorizeWebSocket(authContext.identity());
         if (!decision.allowed()) {
-          closeForPermissionLoss(context, decision);
+          closeForPermissionLoss(context, id, authContext.identity(), decision);
           return;
         }
         NettyWebSocketSession session = new NettyWebSocketSession(context, id, authContext);
@@ -884,8 +1065,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       AuthorizationDecision decision =
           session == null ? null : gate.authorizeWebSocket(session.context().identity());
       if (session == null || !decision.allowed()) {
+        Identity identity = session == null ? null : session.context().identity();
+        String id = session == null ? requestId(context) : session.id();
         ReferenceCountUtil.release(frame);
-        closeForPermissionLoss(context, decision);
+        closeForPermissionLoss(context, id, identity, decision);
         return;
       }
       try {
@@ -896,11 +1079,15 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     }
 
     private void closeForPermissionLoss(
-        ChannelHandlerContext context, AuthorizationDecision decision) {
+        ChannelHandlerContext context,
+        String id,
+        Identity identity,
+        AuthorizationDecision decision) {
       String code =
           decision == null || decision.errorCode() == null
               ? TransportProblems.AUTHORIZATION_DENIED_CODE
               : decision.errorCode();
+      recordWebSocketDenial(id, identity, EndpointClass.WEBSOCKET, code);
       logger.websocketRejected(REDACTED, code);
       CloseWebSocketFrame close =
           new CloseWebSocketFrame(WEBSOCKET_PERMISSION_REVOKED, PERMISSION_REVOKED_REASON);
