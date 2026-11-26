@@ -3095,6 +3095,7 @@ The agent MUST NOT silently ignore a part of the specification it considers wron
 |---|---|---|---|
 | E-001 | (initial) | Added WP-1.9 minimal authentication; removed the Phase 2 "temporary authentication stub"; `/api/v1/server` is authenticated from 0.2.0 | Original draft exposed an unauthenticated endpoint in Phase 1, conflicting with 9.3 ("no unauthenticated mode") |
 | E-002 | 2026-11-25 | Added the normative WP-3.4 RBAC contract and reconciled the closed permission registry, absent versus empty `paths.allow`, token owner mapping, `local-onetime` RBAC identity, invalid-reload deny-all, WebSocket close `4403`, and doctor `rbac` check | Issue #59 analysis found conflicts between 24.2/33.4, `config.schema.json`, and `token-records.md`; all changes tighten or clarify authorization and add no bypass |
+| E-003 | 2026-11-26 | Clarified that `ExplainResult.reason` is a stable denial reason and is JSON `null` for an allow decision; the allow case is not a sixth reason | Issue #59 implementation analysis found that the required OpenAPI enum had no valid value for an allowed explain decision; this preserves the closed reason table and adds no bypass |
 
 New errata append here and in the repository file.
 
