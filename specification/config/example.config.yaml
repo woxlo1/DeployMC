@@ -115,6 +115,8 @@ audit:
   directory: ".deploymc/audit"
   rotate-size-mb: 50
   retention-days: 365
+  fsync-policy: "record"
+  max-batch-records: 1
 
 limits:
   rate-limit-per-minute: 300

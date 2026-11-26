@@ -6,7 +6,7 @@
 
 | Document | Defines | Implementation status |
 |---|---|---|
-| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Auth gate, health, server info, file/validation, and snapshot adapters implemented; the remaining resource handlers are not |
+| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Auth gate, health, server info, file/validation, and snapshot adapters implemented; audit routes are normative for issue #60; the remaining resource handlers are not |
 | [api/asyncapi.yaml](api/asyncapi.yaml) | WebSocket envelope, channels, subscribe/unsubscribe/ping, and event schemas | Upgrade authentication implemented; event protocol is not |
 | [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Auth, file, snapshot, diff, and validation codes have Java implementations and are mapped to REST Problem Details by the file/validation and snapshot adapters |
 | [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | Structural validation implemented |
@@ -15,7 +15,7 @@
 | [snapshot/snapshot-store.md](snapshot/snapshot-store.md) | Content-addressed history format, metadata, retention, restore, GC, verify/repair, and locking | Java 8 `core.snapshot` and six authenticated REST routes implemented; running-server smoke and UI not exercised |
 | [diff/diff-engine.md](diff/diff-engine.md) | Bounded line, word, YAML/JSON semantic, and JAR metadata diff contract | Java 8 `core.diff` and the snapshot diff REST route implemented; running-server smoke and UI not exercised |
 | [validation/content-validation.md](validation/content-validation.md) | WP-2.5 validator, registry, save-time gate, validation result, and comment-preserving YAML edit contract | Java 8 `core.validation`, the `core.files` gate, and the authenticated REST adapter implemented; running-server smoke and UI not exercised |
-| [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification | No writer |
+| [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification, fail-closed write policy, and query contract | Normative contract for issue #60; no writer until the implementation PR |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
 | [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |
 | [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | WP-3.3 implemented; WP-3.4 owner and scope enforcement normative but not yet implemented |
