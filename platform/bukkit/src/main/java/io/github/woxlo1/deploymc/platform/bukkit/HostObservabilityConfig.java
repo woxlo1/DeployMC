@@ -100,7 +100,7 @@ public final class HostObservabilityConfig {
   private static String permission(ConfigView view) {
     Object raw = view.get(METRICS_PERMISSION);
     if (raw == null) {
-      return "metrics.read";
+      return "server.read";
     }
     if (!(raw instanceof String) || !ObservabilityConfig.isSupportedPermission((String) raw)) {
       throw invalid(METRICS_PERMISSION);

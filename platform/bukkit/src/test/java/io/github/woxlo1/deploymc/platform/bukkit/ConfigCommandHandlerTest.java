@@ -9,11 +9,13 @@ import io.github.woxlo1.deploymc.core.PlatformCapabilities;
 import io.github.woxlo1.deploymc.core.auth.TokenRecord;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
+import io.github.woxlo1.deploymc.core.config.ConfigException;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
 import io.github.woxlo1.deploymc.core.doctor.DoctorMessages;
 import io.github.woxlo1.deploymc.core.doctor.DoctorService;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,16 +44,19 @@ class ConfigCommandHandlerTest {
 
   private Path configFile;
   private ConfigManager manager;
+  private RbacPolicyManager policies;
   private ConfigCommandHandler handler;
 
   @BeforeEach
   void setUp() throws Exception {
     configFile = temporaryDirectory.resolve("config.yml");
     DefaultConfigWriter.writeIfMissing(configFile);
+    Files.write(configFile, ownersConfig().getBytes(StandardCharsets.UTF_8));
     manager = new ConfigManager(configFile);
     ConfigView view = manager.load();
     StartupPlan plan = StartupPlan.fromConfig(view, "0.1.0-test");
-    handler = new ConfigCommandHandler(manager, plan, null, doctorRuntime(plan));
+    policies = RbacPolicyManager.from(view);
+    handler = new ConfigCommandHandler(manager, plan, null, doctorRuntime(plan), policies);
   }
 
   @Test
@@ -164,12 +169,45 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
-  void doctorReportsAllFourteenChecksAndNoSupportTierVerdict() {
+  void validReloadInstallsValidatedPolicySnapshot() throws Exception {
+    Files.write(
+        configFile,
+        ownersConfig()
+            .replace("  alice:\n    roles: [ci]", "  carol:\n    roles: [ci]")
+            .getBytes(StandardCharsets.UTF_8));
+    RecordingOutput output = operatorOutput(false);
+
+    handler.handle(output, new String[] {"reload"});
+
+    assertTrue(containsMessage(output, english(MessageKeys.COMMAND_RELOAD_SUCCESS)));
+    assertTrue(policies.current().valid());
+    assertTrue(policies.current().rolesFor("carol").contains("ci"));
+    assertEquals(Collections.singletonList("none"), policies.current().rolesFor("alice"));
+  }
+
+  @Test
+  void invalidReloadInstallsDenyAllPolicy() throws Exception {
+    Files.write(
+        configFile, "config-version: 1\nusers: not-a-map\n".getBytes(StandardCharsets.UTF_8));
+    RecordingOutput output = operatorOutput(false);
+
+    handler.handle(output, new String[] {"reload"});
+
+    assertTrue(
+        containsMessage(
+            output, english(MessageKeys.COMMAND_RELOAD_FAILED, values("error", "")).split(":")[0]));
+    assertFalse(policies.current().valid());
+    assertEquals(Collections.singletonList("none"), policies.current().rolesFor("alice"));
+  }
+
+  @Test
+  void doctorReportsAllFifteenChecksAndNoSupportTierVerdict() {
     RecordingOutput output = operatorOutput(false);
 
     handler.handle(output, new String[] {"doctor"});
 
     assertEquals(english(MessageKeys.COMMAND_DOCTOR_TITLE), output.messages.get(0));
+    assertEquals(15, DoctorService.checkIds().size());
     for (String id : DoctorService.checkIds()) {
       assertTrue(containsMessage(output, "] " + id + ":"), id);
     }
@@ -200,10 +238,16 @@ class ConfigCommandHandlerTest {
     ConfigCommandHandler tokenHandler = tokenHandler(authentication);
     RecordingOutput console = operatorOutput(true);
 
-    tokenHandler.handle(console, new String[] {"token", "create", "ci runner"});
+    tokenHandler.handle(console, new String[] {"token", "create", "ci runner", "--owner", "alice"});
 
     assertTrue(containsMessage(console, "Created token"));
-    assertTrue(console.messages.contains(english(MessageKeys.COMMAND_TOKEN_ADMIN_EQUIVALENT)));
+    assertTrue(
+        console.messages.contains(
+            english(
+                MessageKeys.COMMAND_TOKEN_EFFECTIVE_ACCESS,
+                values("owner", "alice", "permissions", "server.read, files.read, files.write"))));
+    assertFalse(containsMessage(console, "admin-equivalent"));
+    assertEquals("alice", store.records().get(0).owner());
     String tokenLine = null;
     for (String message : console.messages) {
       if (message.startsWith("Token: ")) {
@@ -258,7 +302,14 @@ class ConfigCommandHandlerTest {
     tokenHandler.handle(
         console,
         new String[] {
-          "token", "create", "ci runner", "--ttl-days", "2", "--scopes", "files.read,files.write"
+          "token",
+          "create",
+          "ci runner",
+          "--owner=alice",
+          "--ttl-days",
+          "2",
+          "--scopes",
+          "files.read,files.write"
         });
 
     assertTrue(containsMessage(console, "Created token"));
@@ -270,6 +321,12 @@ class ConfigCommandHandlerTest {
             english(
                 MessageKeys.COMMAND_TOKEN_STORED_SCOPES,
                 values("scopes", "files.read, files.write"))));
+    assertTrue(
+        console.messages.contains(
+            english(
+                MessageKeys.COMMAND_TOKEN_EFFECTIVE_ACCESS,
+                values("owner", "alice", "permissions", "files.read, files.write"))));
+    assertEquals("alice", store.records().get(0).owner());
     String token = tokenFrom(console);
     assertTrue(token.startsWith("dmc_"), token);
     assertNoDigest(console);
@@ -283,7 +340,7 @@ class ConfigCommandHandlerTest {
   void tokenCreateClampsRequestedTtlToHostMaximum() throws Exception {
     Files.write(
         configFile,
-        DefaultConfigWriter.template()
+        ownersConfig()
             .replace("max-ttl-days: 365", "max-ttl-days: 7")
             .getBytes(StandardCharsets.UTF_8));
     manager.reload();
@@ -294,7 +351,9 @@ class ConfigCommandHandlerTest {
                 store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30)));
     RecordingOutput console = operatorOutput(true);
 
-    tokenHandler.handle(console, new String[] {"token", "create", "--ttl-days", "400", "clamped"});
+    tokenHandler.handle(
+        console,
+        new String[] {"token", "create", "--owner", "alice", "--ttl-days", "400", "clamped"});
 
     assertTrue(
         console.messages.contains(
@@ -310,11 +369,11 @@ class ConfigCommandHandlerTest {
                 store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30)));
 
     String[][] invalid = {
-      {"token", "create", "--ttl-days", "0"},
-      {"token", "create", "--ttl-days", "not-a-number"},
-      {"token", "create", "--scopes", "Bad.Scope"},
-      {"token", "create", "--scopes", "files.read,files.read"},
-      {"token", "create", "--unknown"}
+      {"token", "create", "--owner", "alice", "--ttl-days", "0"},
+      {"token", "create", "--owner", "alice", "--ttl-days", "not-a-number"},
+      {"token", "create", "--owner", "alice", "--scopes", "Bad.Scope"},
+      {"token", "create", "--owner", "alice", "--scopes", "files.read,files.read"},
+      {"token", "create", "--owner", "alice", "--unknown"}
     };
     String[] names = {"ttl-days", "ttl-days", "scopes", "scopes", "option"};
     for (int index = 0; index < invalid.length; index++) {
@@ -331,6 +390,32 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
+  void tokenCreateRejectsMissingOrUnknownOwner() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-owner.d"));
+    ConfigCommandHandler tokenHandler =
+        tokenHandler(
+            AuthenticationRuntime.create(
+                store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30)));
+    String[][] invalid = {
+      {"token", "create"},
+      {"token", "create", "--owner"},
+      {"token", "create", "--owner="},
+      {"token", "create", "--owner", "unknown-identity"}
+    };
+
+    for (String[] arguments : invalid) {
+      RecordingOutput console = operatorOutput(true);
+
+      tokenHandler.handle(console, arguments);
+
+      assertEquals(
+          Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_OWNER_INVALID)),
+          console.messages);
+    }
+    assertTrue(store.records().isEmpty());
+  }
+
+  @Test
   void tokenCreateFailureDoesNotLeakExceptionDetails() throws Exception {
     Path missingDirectory = temporaryDirectory.resolve("tokens-missing.d");
     TokenStore store = TokenStore.load(missingDirectory);
@@ -341,7 +426,7 @@ class ConfigCommandHandlerTest {
                 store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(1)));
     RecordingOutput console = operatorOutput(true);
 
-    tokenHandler.handle(console, new String[] {"token", "create"});
+    tokenHandler.handle(console, new String[] {"token", "create", "--owner", "alice"});
 
     assertEquals(
         Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_FAILED)), console.messages);
@@ -363,9 +448,10 @@ class ConfigCommandHandlerTest {
         Collections.singletonList(english(MessageKeys.COMMAND_TOKEN_LIST_EMPTY)), empty.messages);
 
     RecordingOutput created = operatorOutput(true);
-    tokenHandler.handle(created, new String[] {"token", "create", "ops"});
+    tokenHandler.handle(created, new String[] {"token", "create", "ops", "--owner", "alice"});
     String token = tokenFrom(created);
     TokenRecord record = store.records().get(0);
+    assertEquals("alice", record.owner());
     String activeEntry =
         english(
             MessageKeys.COMMAND_TOKEN_LIST_ENTRY,
@@ -374,6 +460,8 @@ class ConfigCommandHandlerTest {
                 record.id(),
                 "label",
                 "ops",
+                "owner",
+                "alice",
                 "status",
                 english(MessageKeys.COMMAND_TOKEN_STATUS_ACTIVE),
                 "expiresAt",
@@ -456,15 +544,24 @@ class ConfigCommandHandlerTest {
     assertTrue(
         containsMessage(
             console,
-            "t-000000000001 | expired | " + english(MessageKeys.COMMAND_TOKEN_STATUS_EXPIRED)));
+            "t-000000000001 | expired | owner "
+                + english(MessageKeys.COMMAND_TOKEN_NONE)
+                + " | "
+                + english(MessageKeys.COMMAND_TOKEN_STATUS_EXPIRED)));
     assertTrue(
         containsMessage(
             console,
-            "t-000000000002 | revoked | " + english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
+            "t-000000000002 | revoked | owner "
+                + english(MessageKeys.COMMAND_TOKEN_NONE)
+                + " | "
+                + english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
     assertTrue(
         containsMessage(
             console,
-            "t-000000000003 | both | " + english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
+            "t-000000000003 | both | owner "
+                + english(MessageKeys.COMMAND_TOKEN_NONE)
+                + " | "
+                + english(MessageKeys.COMMAND_TOKEN_STATUS_REVOKED)));
   }
 
   @Test
@@ -502,11 +599,28 @@ class ConfigCommandHandlerTest {
         handler.complete(operatorOutput(false), new String[] {"token", "cr"}));
     assertTrue(
         handler.complete(operatorOutput(false), new String[] {"token", "revoke", "t-"}).isEmpty());
+    assertEquals(
+        Collections.singletonList("--owner=alice"),
+        handler.complete(operatorOutput(false), new String[] {"token", "create", "--owner=al"}));
+    assertEquals(
+        Collections.singletonList("bob"),
+        handler.complete(operatorOutput(false), new String[] {"token", "create", "--owner", "bo"}));
+  }
+
+  private static String ownersConfig() throws ConfigException {
+    return DefaultConfigWriter.template()
+        .replace(
+            "roles: {}", "roles:\n  ci:\n    permissions: [server.read, files.read, files.write]")
+        .replace("users: {}", "users:\n  alice:\n    roles: [ci]\n  bob:\n    roles: [ci]");
   }
 
   private ConfigCommandHandler tokenHandler(AuthenticationRuntime authentication) {
     return new ConfigCommandHandler(
-        manager, StartupPlan.fromConfig(manager.current().get(), "0.1.0-test"), authentication);
+        manager,
+        StartupPlan.fromConfig(manager.current().get(), "0.1.0-test"),
+        authentication,
+        null,
+        policies);
   }
 
   private static String tokenFrom(RecordingOutput output) {

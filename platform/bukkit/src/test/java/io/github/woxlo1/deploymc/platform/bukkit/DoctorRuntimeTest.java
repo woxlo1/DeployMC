@@ -17,6 +17,7 @@ import io.github.woxlo1.deploymc.core.doctor.DoctorCheck;
 import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
 import io.github.woxlo1.deploymc.core.doctor.DoctorService;
 import io.github.woxlo1.deploymc.core.doctor.DoctorStatus;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -54,7 +55,7 @@ class DoctorRuntimeTest {
   }
 
   @Test
-  void runsAllFourteenChecksWithHostFactsAndNoFabricatedSubsystems() {
+  void runsAllFifteenChecksWithHostFactsAndNoFabricatedSubsystems() {
     DoctorReport report = runtime(PlatformCapabilities.empty()).run();
 
     List<String> ids = new ArrayList<String>();
@@ -84,6 +85,11 @@ class DoctorRuntimeTest {
     assertFalse(jwt.implemented());
     assertTrue(jwt.evidence().isEmpty());
 
+    DoctorCheck rbac = check(report, DoctorService.ID_RBAC);
+    assertEquals(DoctorStatus.WARN, rbac.status());
+    assertFalse(rbac.implemented());
+    assertTrue(rbac.evidence().isEmpty());
+
     DoctorCheck deployment = check(report, DoctorService.ID_DEPLOYMENT);
     assertEquals(Boolean.FALSE, deployment.evidence().get("restartCapability"));
     assertFalse(deployment.implemented());
@@ -95,6 +101,21 @@ class DoctorRuntimeTest {
     DoctorCheck localization = check(report, DoctorService.ID_LOCALIZATION);
     assertEquals(DoctorStatus.PASS, localization.status());
     assertEquals(Integer.valueOf(0), localization.evidence().get("missingKeys"));
+  }
+
+  @Test
+  void reportsTheHostRbacSnapshotWithoutExposingRoleDetails() throws Exception {
+    RbacPolicyManager rbacPolicyManager = RbacPolicyManager.from(manager.load());
+    DoctorRuntime runtime = runtime(PlatformCapabilities.empty(), null, rbacPolicyManager);
+
+    DoctorCheck rbac = check(runtime.run(), DoctorService.ID_RBAC);
+
+    assertEquals(DoctorStatus.PASS, rbac.status());
+    assertTrue(rbac.implemented());
+    assertEquals(Integer.valueOf(0), rbac.evidence().get("roles"));
+    assertEquals(Integer.valueOf(0), rbac.evidence().get("users"));
+    assertEquals("none", rbac.evidence().get("default-role"));
+    assertEquals(Integer.valueOf(1), rbac.evidence().get("registry-version"));
   }
 
   @Test
@@ -137,6 +158,13 @@ class DoctorRuntimeTest {
 
   private DoctorRuntime runtime(
       PlatformCapabilities capabilities, AuthenticationRuntime authentication) {
+    return runtime(capabilities, authentication, null);
+  }
+
+  private DoctorRuntime runtime(
+      PlatformCapabilities capabilities,
+      AuthenticationRuntime authentication,
+      RbacPolicyManager rbacPolicyManager) {
     return new DoctorRuntime(
         manager,
         plan,
@@ -147,7 +175,8 @@ class DoctorRuntimeTest {
         null,
         LocalizedMessages.of(Locale.ENGLISH),
         CLOCK,
-        authentication);
+        authentication,
+        rbacPolicyManager);
   }
 
   private static DoctorCheck check(DoctorReport report, String id) {

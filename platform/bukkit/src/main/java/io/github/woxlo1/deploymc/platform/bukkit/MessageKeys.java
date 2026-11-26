@@ -33,6 +33,7 @@ public final class MessageKeys {
   public static final String LIFECYCLE_FILE_API_STOP_FAILED = "lifecycle.fileApiStopFailed";
   public static final String STARTUP_OBSERVABILITY_INVALID_CONFIG =
       "startup.observability.invalidConfig";
+  public static final String STARTUP_RBAC_INVALID = "startup.rbac.invalid";
   public static final String WARNING_DATA_FOLDER = "warning.dataFolder";
   public static final String WARNING_OBSERVABILITY_SNAPSHOT_GAUGE =
       "warning.observability.snapshotGauge";
@@ -65,7 +66,8 @@ public final class MessageKeys {
   public static final String COMMAND_TOKEN_EFFECTIVE_TTL = "command.token.effectiveTtl";
   public static final String COMMAND_TOKEN_STORED_SCOPES = "command.token.storedScopes";
   public static final String COMMAND_TOKEN_TOKEN_LINE = "command.token.tokenLine";
-  public static final String COMMAND_TOKEN_ADMIN_EQUIVALENT = "command.token.adminEquivalent";
+  public static final String COMMAND_TOKEN_EFFECTIVE_ACCESS = "command.token.effectiveAccess";
+  public static final String COMMAND_TOKEN_OWNER_INVALID = "command.token.ownerInvalid";
   public static final String COMMAND_TOKEN_INVALID_VALUE = "command.token.invalidValue";
   public static final String COMMAND_TOKEN_REVOKED = "command.token.revoked";
   public static final String COMMAND_TOKEN_NOT_FOUND = "command.token.notFound";

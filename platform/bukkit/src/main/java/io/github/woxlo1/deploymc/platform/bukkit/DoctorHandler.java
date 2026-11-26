@@ -1,10 +1,12 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
-import io.github.woxlo1.deploymc.core.auth.Identity;
 import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicy;
 import io.github.woxlo1.deploymc.transport.HttpHandler;
 import io.github.woxlo1.deploymc.transport.HttpRequest;
 import io.github.woxlo1.deploymc.transport.HttpResponse;
+import io.github.woxlo1.deploymc.transport.RbacGate;
 import java.util.Objects;
 
 /** Authenticated host route for the redacted PART 36 doctor report. */
@@ -16,10 +18,16 @@ public final class DoctorHandler implements HttpHandler {
 
   private final DoctorRuntime runtime;
   private final LocalizedMessages messages;
+  private final RbacEvaluator evaluator;
 
   public DoctorHandler(DoctorRuntime runtime, LocalizedMessages messages) {
+    this(runtime, messages, new RbacEvaluator(RbacPolicy.denyAll(), null));
+  }
+
+  public DoctorHandler(DoctorRuntime runtime, LocalizedMessages messages, RbacEvaluator evaluator) {
     this.runtime = Objects.requireNonNull(runtime, "runtime");
     this.messages = Objects.requireNonNull(messages, "messages");
+    this.evaluator = Objects.requireNonNull(evaluator, "evaluator");
   }
 
   @Override
@@ -32,8 +40,7 @@ public final class DoctorHandler implements HttpHandler {
       return common(
           HttpResponse.error(405, "method_not_allowed").withHeader("Allow", "GET"), request.id());
     }
-    Identity identity = request.context().identity();
-    if (identity == null) {
+    if (request.context().identity() == null) {
       return common(
           problem(
               401,
@@ -44,7 +51,7 @@ public final class DoctorHandler implements HttpHandler {
               true),
           request.id());
     }
-    if (!identity.adminEquivalent()) {
+    if (!evaluator.authorize(request.context(), RbacGate.PERMISSION_SERVER_READ, null).allowed()) {
       return common(
           problem(
               403,

@@ -10,6 +10,8 @@ import io.github.woxlo1.deploymc.core.config.ConfigValidationResult;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.ReloadReport;
 import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -36,15 +38,16 @@ public final class ConfigCommandHandler {
   private final StartupPlan plan;
   private final AuthenticationRuntime authentication;
   private final DoctorRuntime doctor;
+  private final RbacPolicyManager policies;
   private final Clock clock;
 
   public ConfigCommandHandler(ConfigManager manager, StartupPlan plan) {
-    this(manager, plan, null, null);
+    this(manager, plan, null, null, null);
   }
 
   public ConfigCommandHandler(
       ConfigManager manager, StartupPlan plan, AuthenticationRuntime authentication) {
-    this(manager, plan, authentication, null);
+    this(manager, plan, authentication, null, null);
   }
 
   public ConfigCommandHandler(
@@ -52,6 +55,15 @@ public final class ConfigCommandHandler {
       StartupPlan plan,
       AuthenticationRuntime authentication,
       DoctorRuntime doctor) {
+    this(manager, plan, authentication, doctor, null);
+  }
+
+  public ConfigCommandHandler(
+      ConfigManager manager,
+      StartupPlan plan,
+      AuthenticationRuntime authentication,
+      DoctorRuntime doctor,
+      RbacPolicyManager policies) {
     if (manager == null) {
       throw new IllegalArgumentException("manager");
     }
@@ -62,6 +74,7 @@ public final class ConfigCommandHandler {
     this.plan = plan;
     this.authentication = authentication;
     this.doctor = doctor;
+    this.policies = policies;
     this.clock = Clock.systemUTC();
   }
 
@@ -126,6 +139,30 @@ public final class ConfigCommandHandler {
       }
       return Collections.unmodifiableList(ids);
     }
+    if ("create".equals(args[1])) {
+      String last = args[args.length - 1];
+      if (last.startsWith("--owner=")) {
+        List<String> suggestions = new ArrayList<String>();
+        for (String owner : knownOwners()) {
+          if (owner.startsWith(last.substring("--owner=".length()))) {
+            suggestions.add("--owner=" + owner);
+          }
+        }
+        return Collections.unmodifiableList(suggestions);
+      }
+      if ("--owner".equals(last)) {
+        return Collections.unmodifiableList(new ArrayList<String>(knownOwners()));
+      }
+      if (args.length >= 4 && "--owner".equals(args[args.length - 2])) {
+        List<String> suggestions = new ArrayList<String>();
+        for (String owner : knownOwners()) {
+          if (owner.startsWith(last)) {
+            suggestions.add(owner);
+          }
+        }
+        return Collections.unmodifiableList(suggestions);
+      }
+    }
     return Collections.emptyList();
   }
 
@@ -176,6 +213,9 @@ public final class ConfigCommandHandler {
   private void reload(CommandOutput output, LocalizedMessages messages) {
     try {
       ReloadReport report = manager.reload();
+      if (policies != null) {
+        policies.install(manager.current().get());
+      }
       output.send(messages.format(MessageKeys.COMMAND_RELOAD_SUCCESS));
       if (report.changedPaths().isEmpty()) {
         output.send(messages.format(MessageKeys.COMMAND_RELOAD_NO_CHANGES));
@@ -197,6 +237,9 @@ public final class ConfigCommandHandler {
                 values("count", Integer.toString(report.warnings().size()))));
       }
     } catch (ConfigException exception) {
+      if (policies != null) {
+        policies.denyAll();
+      }
       output.send(
           messages.format(
               MessageKeys.COMMAND_RELOAD_FAILED,
@@ -241,6 +284,7 @@ public final class ConfigCommandHandler {
     }
     Integer requestedTtl = null;
     List<String> scopes = new ArrayList<String>();
+    String owner = null;
     StringBuilder label = new StringBuilder();
     for (int index = 2; index < args.length; index++) {
       String argument = args[index];
@@ -272,6 +316,14 @@ public final class ConfigCommandHandler {
         if (scopes == null) {
           return;
         }
+      } else if ("--owner".equals(argument)) {
+        if (++index >= args.length) {
+          output.send(messages.format(MessageKeys.COMMAND_TOKEN_OWNER_INVALID));
+          return;
+        }
+        owner = args[index].trim();
+      } else if (argument.startsWith("--owner=")) {
+        owner = argument.substring("--owner=".length()).trim();
       } else if (argument.startsWith("--")) {
         invalidValue(output, messages, "option");
         return;
@@ -281,6 +333,10 @@ public final class ConfigCommandHandler {
         }
         label.append(argument);
       }
+    }
+    if (owner == null || owner.isEmpty() || !knownOwner(owner)) {
+      output.send(messages.format(MessageKeys.COMMAND_TOKEN_OWNER_INVALID));
+      return;
     }
 
     int maxTtl = maxTtlDays();
@@ -295,6 +351,7 @@ public final class ConfigCommandHandler {
               .provisioner()
               .create(
                   label.length() == 0 ? "console" : label.toString(),
+                  owner,
                   Duration.ofDays(effectiveTtl),
                   scopes);
       output.send(
@@ -313,7 +370,14 @@ public final class ConfigCommandHandler {
       }
       output.send(
           messages.format(MessageKeys.COMMAND_TOKEN_TOKEN_LINE, values("token", created.token())));
-      output.send(messages.format(MessageKeys.COMMAND_TOKEN_ADMIN_EQUIVALENT));
+      output.send(
+          messages.format(
+              MessageKeys.COMMAND_TOKEN_EFFECTIVE_ACCESS,
+              values(
+                  "owner",
+                  created.record().owner(),
+                  "permissions",
+                  effectivePermissions(created.record(), messages))));
     } catch (TokenStoreException | RuntimeException exception) {
       tokenFailed(output, messages);
     }
@@ -387,6 +451,10 @@ public final class ConfigCommandHandler {
                   record.id(),
                   "label",
                   record.label(),
+                  "owner",
+                  record.owner() == null
+                      ? messages.format(MessageKeys.COMMAND_TOKEN_NONE)
+                      : record.owner(),
                   "status",
                   messages.format(statusKey),
                   "expiresAt",
@@ -402,6 +470,36 @@ public final class ConfigCommandHandler {
     return authentication != null && authentication.tokenProvisioningEnabled()
         ? authentication.store()
         : null;
+  }
+
+  private String effectivePermissions(TokenRecord record, LocalizedMessages messages) {
+    List<String> permissions;
+    if (policies == null) {
+      permissions = record.scopes();
+    } else {
+      RbacEvaluator evaluator = new RbacEvaluator(policies::current, null);
+      permissions = evaluator.effective(record.identity());
+    }
+    return permissions.isEmpty()
+        ? messages.format(MessageKeys.COMMAND_TOKEN_NONE)
+        : join(permissions);
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<String> knownOwners() {
+    Optional<ConfigView> current = manager.current();
+    if (!current.isPresent()) {
+      return Collections.emptyList();
+    }
+    Object users = current.get().get("users");
+    if (!(users instanceof Map)) {
+      return Collections.emptyList();
+    }
+    return new ArrayList<String>(((Map<String, ?>) users).keySet());
+  }
+
+  private boolean knownOwner(String owner) {
+    return knownOwners().contains(owner);
   }
 
   private int maxTtlDays() {

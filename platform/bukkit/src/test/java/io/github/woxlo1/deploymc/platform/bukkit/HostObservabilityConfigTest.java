@@ -25,7 +25,7 @@ class HostObservabilityConfigTest {
 
     assertEquals(LoggingFormat.TEXT, host.observability().loggingFormat());
     assertFalse(host.observability().metricsEnabled());
-    assertEquals("metrics.read", host.observability().metricsPermission());
+    assertEquals("server.read", host.observability().metricsPermission());
     assertEquals(300, host.observability().identityRateLimitPerMinute());
     assertEquals(50, host.maxWebSocketConnections());
   }
