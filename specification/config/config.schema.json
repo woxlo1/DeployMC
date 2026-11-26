@@ -588,7 +588,7 @@
           "minLength": 1,
           "maxLength": 1024,
           "default": ".deploymc/audit",
-          "description": "Audit log directory, relative to `plugins`. The audit log is never writable through the API.",
+          "description": "Audit log directory, relative to the plugin data directory. The audit log is never writable through the API.",
           "x-deploymc-hot-reload": false
         },
         "rotate-size-mb": {
@@ -604,7 +604,22 @@
           "minimum": 1,
           "maximum": 3650,
           "default": 365,
-          "description": "Age after which rotated audit files may be deleted. The active file is never deleted.",
+          "description": "Age after which anchor-covered rotated audit files may be deleted. The active file is never deleted.",
+          "x-deploymc-hot-reload": true
+        },
+        "fsync-policy": {
+          "type": "string",
+          "enum": ["record", "batch"],
+          "default": "record",
+          "description": "Force the audit file after every record or once after each committed batch.",
+          "x-deploymc-hot-reload": true
+        },
+        "max-batch-records": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256,
+          "default": 1,
+          "description": "Maximum number of records in one synchronous audit batch when fsync-policy is batch.",
           "x-deploymc-hot-reload": true
         }
       }

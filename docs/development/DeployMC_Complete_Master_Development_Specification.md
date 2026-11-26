@@ -1541,7 +1541,7 @@ Each WP lists: **Goal**, **Tasks**, **Deliverables**, **Verification**. Treat th
 - Normative contract: `specification/security/rbac.md`. The closed registry has 23 permissions; token scopes narrow the owner's effective permissions; `local-onetime` is an ordinary RBAC identity; invalid reloads deny all; WebSocket permission loss closes with `4403`. Audit record generation remains WP-3.5.
 
 ### WP-3.5 Audit log
-- Tasks: format per 24.3; append-only writer with batching and fsync policy; hash chain; rotation; reader/verifier; query API; export; redaction guarantees verified by tests; behavior on disk-full (fail the operation or enter degraded mode per a documented policy; never silently drop audit records for privileged operations).
+- Tasks: format per 24.3; append-only writer with batching and fsync policy; hash chain; rotation; reader/verifier; query API; export; redaction guarantees verified by tests; behavior on disk-full (fail the operation or enter degraded mode per a documented policy; never silently drop audit records for privileged operations). Normative contract: `specification/audit/audit-log-format.md`. The selected v1 policy is fail-closed: a `pending` record is committed before a privileged mutation, and a write failure rejects the operation.
 
 ### WP-3.6 Web-facing protections
 - Tasks: rate limiting (per identity and per IP, token-bucket, documented headers); brute-force lockouts for token mode; CSRF defenses for any cookie-based session; WebSocket Origin checks; security headers; request-size limits per endpoint class; trusted-proxy configuration for forwarded headers (default: trust none except loopback tunnel).
@@ -1810,6 +1810,8 @@ audit:
   directory: ".deploymc/audit"
   rotate-size-mb: 50
   retention-days: 365
+  fsync-policy: "record"
+  max-batch-records: 1
 
 limits:
   rate-limit-per-minute: 300

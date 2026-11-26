@@ -1,10 +1,10 @@
 # Audit Log Format
 
-> **Status: specification only (2026-11-17).** No audit log is written by any component
-> yet. This document defines the record format, the hash chain, rotation, and
-> verification so the implementation and the API query shape can be written against it.
-> Where this document and the master specification disagree, this document wins and the
-> master specification is corrected.
+> **Status: normative contract for WP-3.5 (2026-11-26).** The writer, verifier, and REST
+> routes described here are not implemented until the WP-3.5 implementation is merged.
+> This document defines the record format, hash chain, rotation, verification, failure
+> policy, and API query shape. Where this document and the master specification disagree,
+> this document wins and the master specification is corrected.
 
 ## Scope
 
@@ -24,6 +24,13 @@ recorded. A request that fails authentication before an identity is established 
 name an actor, so it is counted as a rate-limit/security metric rather than written as an
 audit record.
 
+`actor.id` is the verified authentication identity, never an unverified header.
+`actor.method` is the authentication method that established it. `actor.roles` is the
+sorted list of effective RBAC role names at decision time; token identities use the
+owner-derived effective roles. `actor.ip` is the transport peer address after trusted
+proxy resolution and is omitted when no request context exists. Host-initiated automatic
+actions use `system`.
+
 The audit log is not a debug log. It answers "who did what, to what, when, and with what
 result", not "why did this stack trace happen".
 
@@ -38,16 +45,20 @@ plugins/DeployMC/.deploymc/audit/      # audit.directory
   anchors/                             # optional exported anchors, see below
 ```
 
-- `audit.jsonl` is the only file appended to. It is opened with append semantics and
-  flushed after each record or small batch. A crash may lose the last unflushed records;
-  the chain makes a partial line detectable.
+- `audit.jsonl` is the only file appended to. It is opened with append semantics.
+  `audit.fsync-policy: record` forces the file after every record; `batch` forces once
+  after a committed batch of at most `audit.max-batch-records` records. Both policies
+  are synchronous from the caller's perspective. A crash can still lose a partial line;
+  the chain makes that detectable.
 - A rotated file is renamed to `audit-<seq>-<timestamp>.jsonl`, where `<seq>` is the
   record number of its last record and `<timestamp>` is the UTC rotation time in
   `YYYY-MM-DDTHH-MM-SSZ` form (colons replaced for Windows compatibility).
 - `format-version` contains the integer format version and a newline. A reader that does
   not know the version refuses to verify and says so.
 - Each line is one UTF-8 JSON object, no indentation, terminated by `\n`. A line longer
-  than 1 MiB is a format error; a well-formed record is far smaller.
+  than 1 MiB is a format error; a well-formed record is far smaller. JSON numbers in
+  `v: 1` are integers representable as signed 64-bit values; decimals and exponents are
+  format errors.
 
 ## Record
 
@@ -124,6 +135,33 @@ Console command text is recorded because command dispatch must be attributable. 
 command policy must reject a command containing a secret before dispatch; DeployMC cannot
 prevent an operator from typing a secret into a console command.
 
+The writer applies a redaction guard before hashing. It rejects detail keys whose names
+indicate credentials, cookies, JWTs, secrets, passwords, tokens, token digests, request
+or response bodies, file contents, or excerpts rather than silently removing them. A
+rejected record is a programming error: no line is written and the caller receives
+`audit.write-failed`. Readers ignore unknown fields for semantic purposes but include all
+parsed fields, with sorted keys and canonical values, when recomputing a hash.
+
+## Write failure and disk-full policy
+
+Version 1 is fail-closed. There is no degraded mode and no in-memory queue that outlives
+the process. An audited privileged operation first commits a `pending` record; if that
+write or its forced flush fails, the operation is rejected with `audit.write-failed`
+before any state change. The caller then performs the operation and commits a final
+`success` or `failed` record with the same `request-id`. `pending` records are never
+rewritten or removed.
+
+If the final write fails after the operation has completed, the caller returns
+`audit.write-failed` and the `pending` record stays in the chain as evidence that the
+operation was attempted. An operator must not treat the returned error as proof that the
+side effect did not happen. Verification reports an unmatched `pending` record as a
+warning, not a chain failure.
+
+The writer never drops a record to save space. Rotation and retention apply only at
+record boundaries. Retention deletes a rotated file only when its last record is older
+than `audit.retention-days` and an anchor covers that file; otherwise the file remains
+and verification reports retention as incomplete. The active file is never deleted.
+
 ## Hash chain
 
 The chain is a SHA-256 sequence:
@@ -135,8 +173,9 @@ hash(record) = "sha256:" + lowercase_hex(
 ```
 
 - `JCS` is the JSON Canonicalization Scheme (RFC 8785), applied to the record object with
-  the `hash` key removed. Canonicalization makes the digest independent of key order,
-  whitespace, and number formatting.
+  the `hash` key removed. Canonicalization makes the digest independent of key order and
+  whitespace. Because this profile permits only signed 64-bit integers, number formatting
+  is already canonical; decimals and exponents are rejected instead of being normalized.
 - `prev` of record `n` is the `hash` of record `n - 1`. The first record in a fresh log
   uses 64 zeros.
 - `seq` increases by exactly one. A gap is a chain error even when every `prev` link
@@ -245,10 +284,10 @@ An anchor is a record summarizing the chain up to a point, intended for export:
 }
 ```
 
-The initial design writes an anchor daily and on clean shutdown, and exposes the latest
-anchor through the audit API so an operator or CI job can store it elsewhere. Publishing
-anchors to an external system is a later work package; until then the documentation must
-not claim that an off-host anchor exists.
+The writer appends an anchor on the first audited write of a new UTC day and on clean
+shutdown. It exposes the latest anchor through `GET /api/v1/audit/verify` so an operator
+or CI job can store it elsewhere. Publishing anchors to an external system is a later
+work package; until then the documentation must not claim that an off-host anchor exists.
 
 ## Verification
 
@@ -272,12 +311,26 @@ Limitations are stated in the output: without an off-host anchor, the last recor
 deleted or the whole log can be replaced by a self-consistent forgery by someone with host
 file access.
 
-## Query and export
+## Query, verification, and export
 
-The audit API and `audit.export` permission serve records from this log. Query filters are
-`from`, `to`, `actor`, `action`, `result`, `deployment-id`, and `path`. Results are
-cursor-paginated and read-only. Export streams the same JSON Lines format with the same
-records, not a reformatted variant, so exported data remains verifiable.
+Three authenticated REST routes expose the log:
+
+- `GET /api/v1/audit` requires `audit.read`. Filters are `from`, `to`, `actor`, `action`,
+  `result`, `deployment-id`, and `path` (matching `target.path`). Results are ordered by
+  ascending `seq`, cursor-paginated with `limit` (default 50, maximum 500), and read-only.
+  The response contains `items`, `nextCursor`, and `total`.
+- `GET /api/v1/audit/verify` requires `audit.read`. It returns the verification report
+  defined in `api/openapi.yaml`. A chain or hash failure is reported in the body with
+  `ok: false`; an unreadable log returns `audit.unavailable`.
+- `GET /api/v1/audit/export` requires `audit.export`. It accepts the same filters without
+  a cursor and streams at most 100,000 matching records as UTF-8 JSON Lines with media
+  type `application/x-ndjson`. A larger result returns `audit.export-limit-exceeded`
+  rather than a partial export. Records are copied verbatim, not reformatted, so the
+  export remains verifiable.
+
+Every successful or failed call to these routes writes an `audit.read` record with the
+filter summary and row count. The record is written after the response work and never
+contains record bodies or details from the rows that were returned.
 
 The API never exposes `details` fields that were later classified as sensitive. If that
 happens, the fix is to stop writing the field, not to filter it inconsistently at read

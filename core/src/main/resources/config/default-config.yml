@@ -130,9 +130,11 @@ console:
       - "whitelist *"
 
 audit:
-  directory: ".deploymc/audit" # restart only
+  directory: ".deploymc/audit" # restart only; relative to the plugin data directory
   rotate-size-mb: 50           # hot-reloadable
-  retention-days: 365          # hot-reloadable
+  retention-days: 365          # hot-reloadable; deletes anchor-covered files only
+  fsync-policy: "record"       # hot-reloadable; record or batch
+  max-batch-records: 1         # hot-reloadable; used by the batch policy
 
 limits:
   rate-limit-per-minute: 300   # hot-reloadable; role limits can lower it
