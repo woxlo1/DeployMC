@@ -1,10 +1,24 @@
 # Handoff
 
-Last updated: 2026-11-25. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-26. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
 
+- Issue #59 WP-3.4 RBAC engine is complete with this final evidence PR. PR #232 merged the normative
+  contract at `4bd654b`; PR #233 was rebase-merged at `ca1d070` on `2026-11-26T08:05:25Z` with nine
+  Conventional Commits preserved on `main`. WP-3.4 adds a closed 23-permission registry, immutable
+  policy snapshots with sandbox-resolved path scopes, owner-derived token scope narrowing, a reserved
+  `local-onetime` identity, deny-all on invalid reload, a centralized REST/WebSocket gate with
+  authenticated `/api/v1/me`, WebSocket close `4403` on permission loss, a redacted 15th doctor check,
+  and console `token create --owner`. Errata E-003 and E-004 clarify explain nullability and remove
+  stale no-RBAC wording. All 18 required checks passed after the compatibility fixture was given an
+  owner-scoped `server.read` role; post-merge CI, CodeQL, and Scorecard passed at `ca1d070`. The
+  merged tree reports 599 Java tests with 0 failures, 0 errors, and 1 skipped, with all seven
+  toolchains passing. Local evidence is server-free, embedded-socket, and command-output only; CI
+  Paper smoke ran on Ubuntu and Windows, but no local running server, Bukkit mock, browser, E2E,
+  full integration suite, or in-game command exercised WP-3.4. Issue #59 was reopened after an
+  unintended auto-close at the implementation merge and closes with this final evidence PR.
 - Issue #58 WP-3.3 token and one-time-token modes is complete. PR #228 merged the normative contract
   at `72bddd2`, PR #229 merged the core token lifecycle and auth enforcement at `8056492`, and PR
   #230 rebase-merged the host and console wiring at `49c544e` with four Conventional Commits. Tokens
@@ -13,11 +27,12 @@ Last updated: 2026-11-25. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   metadata writes. `local-onetime` keeps one token in memory, prints it once, requires loopback unless
   explicitly overridden, bounds TTL and attempts, and burns after repeated wrong credentials. Console
   create/revoke/list commands clamp TTL, validate scopes, complete tab input, and never print a digest
-  or raw exception. Scopes are stored and shown but not enforced until WP-3.4 RBAC. All 18 required
-  checks passed on each stage; post-merge CI/CodeQL/Scorecard passed at all three merge commits. The
-  merged tree reports 544 Java tests with 0 failures, 0 errors, and 1 skipped. This final evidence PR
-  closes #58. Evidence is server-free and embedded-socket only; no running server, Bukkit mock,
-  browser, E2E run, full integration suite, or in-game command exercised WP-3.3.
+  or raw exception. Scopes were stored and shown but not enforced until WP-3.4 RBAC; WP-3.4 now
+  narrows them to the token owner's effective permissions. All 18 required checks passed on each
+  stage; post-merge CI/CodeQL/Scorecard passed at all three merge commits. The merged tree reports
+  544 Java tests with 0 failures, 0 errors, and 1 skipped. PR #231 closed #58. Evidence is server-free
+  and embedded-socket only; no running server, Bukkit mock, browser, E2E run, full integration suite,
+  or in-game command exercised WP-3.3.
 - Issue #57 WP-3.2 Cloudflare Access JWT verifier is complete. PR #224 merged the core verifier at
   `d4a1576`; PR #226 merged the host, transport, doctor, configuration, Web, and CI wiring at
   `d075646`. The verifier accepts only RS256 with a required `kid`, reads only
@@ -29,16 +44,17 @@ Last updated: 2026-11-25. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   passed at both merge commits; Japanese verification and evidence comments are recorded on both PRs.
   Its final evidence PR closed #57. No running server, Bukkit mock, browser, E2E, full integration
   suite, or in-game command exercised WP-3.2, and real Cloudflare compatibility remains unclaimed
-  until D-002 is resolved. RBAC is unchanged, so Cloudflare JWT identities are not admin-equivalent
-  and the REST doctor route stays host-only.
+  until D-002 is resolved. WP-3.4 RBAC still does not make Cloudflare JWT identities
+  admin-equivalent, so the REST doctor route stays host-only.
 - Issue #56 WP-3.1 auth framework merged its implementation in PR #222 as two Conventional Commits:
   `41b6fee` added the final core request/authentication boundary and `1ba834b` wired the explicit
   `AuthContext` and uniform 401/403 failures through the transport. All 18 required PR checks passed,
   Japanese verification and post-merge evidence were posted, and post-merge CI/CodeQL/Scorecard passed
   at `1ba834b`. `node tools/build/verify-all.cjs` reported all seven toolchains `PASS`; the merged tree
   has 495 Java tests with 0 failures, 0 errors, and 1 skipped. No running server, Bukkit mock, browser,
-  E2E, full integration suite, or in-game command exercised WP-3.1, and no RBAC engine exists yet.
-  Issue #56 closed through its own final evidence PR; WP-3.2 later added the Cloudflare verifier.
+  E2E, full integration suite, or in-game command exercised WP-3.1, and no RBAC engine existed at
+  that stage. Issue #56 closed through its own final evidence PR; WP-3.2 later added the Cloudflare
+  verifier and WP-3.4 added RBAC.
 - Issue #118 PART 40.3 early spikes are recorded in PR #210. Seven documents under
   `docs/research/spikes/` separate `OBSERVED`, `SOURCE-VERIFIED`, `LOCAL-ONLY`, and `NOT RUN`; ADRs
   link to the evidence without changing decisions. The Windows replacement probe observed
@@ -495,9 +511,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 - No PART 33 test PRs remain in flight. PRs #199-#201 merged at `0b83150`, `98b6b79`, and `5d279c6`
   with Japanese verification and post-merge evidence comments; all required checks and post-merge
   CI/CodeQL/Scorecard passed. Their temporary branches were deleted after evidence was posted. The
-  `docs/issue-116-evidence-catchup` branch is temporary for this final evidence update.
+  `docs/issue-116-evidence-catchup` branch was temporary for the PART 33 final evidence update.
 - No WP-2.6 implementation PRs remain in flight. Snapshot routes stay behind the bearer-token gate
-  with no bypass; the single provisioned token remains admin-equivalent until Phase 3 RBAC.
+  with no bypass; WP-3.4 RBAC now evaluates each token through its owner and scopes, with no implicit
+  admin equivalence.
 - No WP-2.1-WP-2.5 branches remain, and WP-2.6, all earlier PART 35 feature/evidence branches,
   `test/jwt-vectors-mock-jwks`, `test/hostile-input-fixtures`, `docs/issue-115-evidence-catchup-189`,
   `test/log-corpora-fixtures`, `docs/issue-115-evidence-catchup-191`,
@@ -508,18 +525,20 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   `feature/cloudflare-57-wiring` branch was retained until PR #226 merged. The
   `docs/cloudflare-57-evidence` branch was temporary for that final evidence update. The
   `spec/token-58-contract`, `feature/token-58-core`, and `feature/token-58-host` branches were
-  retained until their PRs merged. The `docs/token-58-evidence` branch is temporary for this final
-  evidence update. Evidence is recorded in the status pages and pull-request comments.
+  retained until their PRs merged. The `docs/token-58-evidence` branch was temporary for the WP-3.3
+  final evidence update. The `feature/rbac-59-engine` branch was retained until PR #233 merged;
+  `feature/rbac-59-final-evidence` is temporary for this final evidence update. Evidence is recorded
+  in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 64 immediately before this final evidence PR merges on 2026-11-25; issue #58 closes
-  on merge. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 63 immediately before this final evidence PR merges on 2026-11-26; issue #59 closes
+  on merge, leaving 62. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks local implementation of WP-3.4. WP-3.2 and WP-3.3 are complete; D-002 must still be
-  resolved before real Cloudflare Access verification or plan-specific guide claims. Stored token
-  scopes are deliberately unenforced until the WP-3.4 RBAC engine exists.
+- Nothing blocks local implementation of WP-3.5 audit record writing. WP-3.2, WP-3.3, and WP-3.4 are
+  complete; D-002 must still be resolved before real Cloudflare Access verification or plan-specific
+  guide claims. Stored token scopes are now enforced as a narrowing filter by WP-3.4 RBAC.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
   branches #23-#39.
@@ -527,8 +546,8 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 ## Exact next steps
 
 1. Merge this final evidence PR, wait for the required post-merge workflows, post the Japanese
-   post-merge evidence comment, and confirm issue #58 is closed as completed.
-2. Start WP-3.4 (issue #59), the RBAC engine. Do not claim real Cloudflare compatibility until
+   post-merge evidence comment, and confirm issue #59 is closed as completed.
+2. Start WP-3.5 (issue #60), audit record writing. Do not claim real Cloudflare compatibility until
    D-002 is resolved. Later work may be prepared in parallel but must not merge ahead of an earlier
    open issue without owner approval.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
