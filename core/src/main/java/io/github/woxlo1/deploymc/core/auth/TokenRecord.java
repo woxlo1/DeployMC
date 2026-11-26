@@ -1,5 +1,6 @@
 package io.github.woxlo1.deploymc.core.auth;
 
+import io.github.woxlo1.deploymc.core.rbac.PermissionRegistry;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -16,13 +17,14 @@ import java.util.regex.Pattern;
 /** One host-provisioned token. Only the secret hash is ever stored. */
 public final class TokenRecord {
 
-  private static final Pattern SCOPE =
-      Pattern.compile("^(?:\\*|[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+)$");
+  private static final Pattern SCOPE = Pattern.compile("^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*)+$");
   private static final int MAX_SCOPES = 16;
   private static final int MAX_SCOPE_LENGTH = 128;
+  private static final int MAX_OWNER_LENGTH = 320;
 
   private final String id;
   private final String label;
+  private final String owner;
   private final byte[] secretHash;
   private final Instant expiresAt;
   private final List<String> scopes;
@@ -41,8 +43,21 @@ public final class TokenRecord {
       Collection<String> scopes,
       Instant revokedAt,
       Instant lastUsedAt) {
+    this(id, label, null, secretHash, expiresAt, scopes, revokedAt, lastUsedAt);
+  }
+
+  public TokenRecord(
+      String id,
+      String label,
+      String owner,
+      byte[] secretHash,
+      Instant expiresAt,
+      Collection<String> scopes,
+      Instant revokedAt,
+      Instant lastUsedAt) {
     this.id = requireText(id, "id");
     this.label = requireText(label, "label");
+    this.owner = validateOwner(owner);
     Objects.requireNonNull(secretHash, "secretHash");
     if (secretHash.length != 32) {
       throw new IllegalArgumentException("secretHash must be a 32-byte SHA-256 digest");
@@ -63,6 +78,13 @@ public final class TokenRecord {
 
   public String label() {
     return label;
+  }
+
+  /**
+   * Verified identity key used for RBAC role lookup, or null when absent. Never derived from label.
+   */
+  public String owner() {
+    return owner;
   }
 
   /** Returns a copy of the digest. */
@@ -110,7 +132,7 @@ public final class TokenRecord {
     if (lastUsedAt != null && !timestamp.isAfter(lastUsedAt)) {
       throw new IllegalArgumentException("lastUsedAt must advance");
     }
-    return new TokenRecord(id, label, secretHash, expiresAt, scopes, revokedAt, timestamp);
+    return new TokenRecord(id, label, owner, secretHash, expiresAt, scopes, revokedAt, timestamp);
   }
 
   /** Returns a record marked revoked. An already revoked record is returned unchanged. */
@@ -119,12 +141,34 @@ public final class TokenRecord {
     if (revokedAt != null) {
       return this;
     }
-    return new TokenRecord(id, label, secretHash, expiresAt, scopes, timestamp, lastUsedAt);
+    return new TokenRecord(id, label, owner, secretHash, expiresAt, scopes, timestamp, lastUsedAt);
   }
 
-  /** Whether a string is a valid WP-3.3 scope name or whole-grant wildcard. */
+  /** Validates an optional owner, returning null when absent. */
+  public static String validateOwner(String owner) {
+    if (owner == null) {
+      return null;
+    }
+    if (owner.trim().isEmpty()) {
+      throw new IllegalArgumentException("owner must not be empty");
+    }
+    if (owner.length() > MAX_OWNER_LENGTH) {
+      throw new IllegalArgumentException("owner exceeds " + MAX_OWNER_LENGTH + " characters");
+    }
+    for (int index = 0; index < owner.length(); index++) {
+      if (Character.isISOControl(owner.charAt(index))) {
+        throw new IllegalArgumentException("owner contains ISO control characters");
+      }
+    }
+    return owner;
+  }
+
+  /** Whether a string is an identifier in the closed registry. The wildcard is not a scope. */
   public static boolean isValidScope(String scope) {
-    return scope != null && scope.length() <= MAX_SCOPE_LENGTH && SCOPE.matcher(scope).matches();
+    return scope != null
+        && scope.length() <= MAX_SCOPE_LENGTH
+        && SCOPE.matcher(scope).matches()
+        && PermissionRegistry.isKnown(scope);
   }
 
   /** Identity exposed to the application. The token value is never part of it. */
@@ -133,6 +177,9 @@ public final class TokenRecord {
     claims.put("token.id", id);
     claims.put("token.label", label);
     claims.put("auth.method", "token");
+    if (owner != null) {
+      claims.put("token.owner", owner);
+    }
     if (!scopes.isEmpty()) {
       StringBuilder joined = new StringBuilder();
       for (int index = 0; index < scopes.size(); index++) {
@@ -143,7 +190,7 @@ public final class TokenRecord {
       }
       claims.put("token.scopes", joined.toString());
     }
-    return new Identity(id, label, "token", true, Collections.<String>emptyList(), claims);
+    return new Identity(id, label, "token", false, Collections.<String>emptyList(), claims);
   }
 
   private static List<String> copyScopes(Collection<String> values) {

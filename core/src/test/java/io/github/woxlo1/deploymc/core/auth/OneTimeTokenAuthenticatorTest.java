@@ -45,7 +45,7 @@ class OneTimeTokenAuthenticatorTest {
     AuthenticationResult first = authenticator.authenticate(TestRequests.bearer(token.secret()));
     assertTrue(first.authenticated());
     assertEquals("local-onetime", first.identity().method());
-    assertTrue(first.identity().adminEquivalent());
+    assertFalse(first.identity().adminEquivalent());
     assertTrue(first.identity().claims().isEmpty());
     assertFalse(first.identity().toString().contains(token.secret()));
     assertEquals(

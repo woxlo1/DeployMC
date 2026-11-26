@@ -63,7 +63,7 @@ class TokenAuthenticatorTest {
     assertEquals("admin", result.identity().label());
     assertEquals("admin", result.identity().displayName());
     assertEquals("token", result.identity().method());
-    assertTrue(result.identity().adminEquivalent());
+    assertFalse(result.identity().adminEquivalent());
     assertEquals("t-valid", result.identity().claims().get("token.id"));
     assertEquals("token", result.identity().claims().get("auth.method"));
     assertFalse(result.identity().toString().contains(token));
@@ -109,7 +109,7 @@ class TokenAuthenticatorTest {
             "ci",
             TestHashes.sha256(token),
             null,
-            Arrays.asList("files.read", "server.status"),
+            Arrays.asList("files.read", "server.read"),
             null,
             null));
     TokenAuthenticator authenticator = new TokenAuthenticator(store, Clock.systemUTC());
@@ -117,8 +117,8 @@ class TokenAuthenticatorTest {
     AuthenticationResult result = authenticator.authenticate(TestRequests.bearer(token));
 
     assertTrue(result.authenticated());
-    assertEquals("files.read,server.status", result.identity().claims().get("token.scopes"));
-    assertTrue(result.identity().adminEquivalent());
+    assertEquals("files.read,server.read", result.identity().claims().get("token.scopes"));
+    assertFalse(result.identity().adminEquivalent());
   }
 
   @Test

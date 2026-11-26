@@ -53,13 +53,13 @@ public final class OneTimeToken {
     return !expiresAt.isAfter(now);
   }
 
-  /** The identity has no credential claims and is admin-equivalent only in this local mode. */
+  /** The identity has no credential claims and is an ordinary RBAC identity. */
   public Identity identity() {
     return new Identity(
         IDENTITY_ID,
         IDENTITY_ID,
         IDENTITY_ID,
-        true,
+        false,
         Collections.<String>emptyList(),
         Collections.<String, String>emptyMap());
   }

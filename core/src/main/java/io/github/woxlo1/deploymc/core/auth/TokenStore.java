@@ -46,7 +46,14 @@ public final class TokenStore {
       Collections.unmodifiableSet(
           new HashSet<String>(
               Arrays.asList(
-                  "id", "label", "secretHash", "expiresAt", "scopes", "revokedAt", "lastUsedAt")));
+                  "id",
+                  "label",
+                  "owner",
+                  "secretHash",
+                  "expiresAt",
+                  "scopes",
+                  "revokedAt",
+                  "lastUsedAt")));
   private static final int MAX_FILE_BYTES = 16 * 1024;
   private static final int MAX_FILES = 1024;
 
@@ -312,16 +319,40 @@ public final class TokenStore {
     Instant revokedAt = parseTimestamp(root.get("revokedAt"), "revokedAt", name);
     Instant lastUsedAt = parseTimestamp(root.get("lastUsedAt"), "lastUsedAt", name);
     List<String> scopes = parseScopes(root.get("scopes"), name);
-    TokenRecord record =
-        new TokenRecord(
-            id.raw().toString(),
-            label.raw().toString(),
-            digest,
-            expiresAt,
-            scopes,
-            revokedAt,
-            lastUsedAt);
+    String owner = parseOwner(root.get("owner"), name);
+    TokenRecord record;
+    try {
+      record =
+          new TokenRecord(
+              id.raw().toString(),
+              label.raw().toString(),
+              owner,
+              digest,
+              expiresAt,
+              scopes,
+              revokedAt,
+              lastUsedAt);
+    } catch (IllegalArgumentException exception) {
+      throw new TokenStoreException(
+          TokenStoreException.Reason.RECORD, "invalid token record: " + name, exception);
+    }
     return new ParsedRecord(record, bytes);
+  }
+
+  private static String parseOwner(YamlValue value, String name) throws TokenStoreException {
+    if (value == null || value.isNull()) {
+      return null;
+    }
+    if (!value.isString()) {
+      throw new TokenStoreException(
+          TokenStoreException.Reason.RECORD, "owner must be a string: " + name);
+    }
+    try {
+      return TokenRecord.validateOwner(value.raw().toString());
+    } catch (IllegalArgumentException exception) {
+      throw new TokenStoreException(
+          TokenStoreException.Reason.RECORD, "invalid token owner: " + name, exception);
+    }
   }
 
   private static List<String> parseScopes(YamlValue value, String name) throws TokenStoreException {
@@ -406,6 +437,9 @@ public final class TokenStore {
     json.append("{\n");
     json.append("  \"id\": ").append(quote(record.id())).append(",\n");
     json.append("  \"label\": ").append(quote(record.label())).append(",\n");
+    if (record.owner() != null) {
+      json.append("  \"owner\": ").append(quote(record.owner())).append(",\n");
+    }
     json.append("  \"secretHash\": ").append(quote(hex(record.secretHash())));
     if (record.expiresAt() != null) {
       json.append(",\n  \"expiresAt\": ").append(quote(record.expiresAt().toString()));

@@ -112,12 +112,12 @@ class TokenStoreTest {
             "ci-deployer",
             TestHashes.sha256("dmc_lifecycle_token_value"),
             Instant.parse("2032-01-01T00:00:00Z"),
-            Arrays.asList("files.read", "server.status"),
+            Arrays.asList("files.read", "server.read"),
             revoked,
             used));
 
     TokenRecord loaded = TokenStore.load(directory).records().get(0);
-    assertEquals(Arrays.asList("files.read", "server.status"), loaded.scopes());
+    assertEquals(Arrays.asList("files.read", "server.read"), loaded.scopes());
     assertEquals(revoked, loaded.revokedAt());
     assertEquals(used, loaded.lastUsedAt());
     assertTrue(loaded.isRevoked());
