@@ -77,8 +77,9 @@ class HarnessTest(unittest.TestCase):
             self.assertNotIn("=", secret)
             record_path = token_dir / "compat-harness.json"
             record = json.loads(record_path.read_text(encoding="utf-8"))
-            self.assertEqual(set(record), {"id", "label", "secretHash"})
-            self.assertEqual(record["id"], "compat-harness")
+            self.assertEqual(set(record), {"id", "label", "owner", "secretHash"})
+            self.assertEqual(record["id"], harness.SMOKE_TOKEN_ID)
+            self.assertEqual(record["owner"], harness.SMOKE_OWNER)
             self.assertEqual(
                 record["secretHash"], hashlib.sha256(secret.encode("utf-8")).hexdigest()
             )
@@ -259,6 +260,11 @@ class HarnessTest(unittest.TestCase):
             self.assertIn("port: 30123", text)
             self.assertNotIn("port: 8080", text)
             self.assertIn("auth:", text)
+            self.assertIn("  {}:".format(harness.SMOKE_ROLE), text)
+            self.assertIn("      - server.read", text)
+            self.assertIn("  {}:".format(harness.SMOKE_OWNER), text)
+            self.assertIn("      - {}".format(harness.SMOKE_ROLE), text)
+            self.assertIn("default-role: none", text)
 
     def test_prepare_sandbox_uses_distinct_api_and_minecraft_ports(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

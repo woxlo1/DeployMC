@@ -39,6 +39,9 @@ BEGIN_MARKER = "<!-- BEGIN GENERATED SMOKE MATRIX -->"
 END_MARKER = "<!-- END GENERATED SMOKE MATRIX -->"
 CONFLICT_PLUGIN_NAME = "DeployMCTestConflictingLibs"
 CONFLICT_PLUGIN_VERSION = "1.0.0"
+SMOKE_TOKEN_ID = "compat-harness"
+SMOKE_OWNER = "compat-harness"
+SMOKE_ROLE = "compat-smoke"
 NETTY_THREAD_PREFIX = "DeployMC-netty-"
 DISABLE_COMMAND = "fixture-disable-deploymc"
 ADAPTER_RELEASED_LOG = "DeployMC disabled; adapter tasks and listeners released."
@@ -263,8 +266,9 @@ def inspect_compatibility_jars(deploy_jar: Path, conflict_jar: Path) -> Dict[str
 def provision_token(token_dir: Path, random_bytes: Callable[[int], bytes] = secrets.token_bytes) -> str:
     secret = "dmc_" + base64.urlsafe_b64encode(random_bytes(32)).decode("ascii").rstrip("=")
     record = {
-        "id": "compat-harness",
+        "id": SMOKE_TOKEN_ID,
         "label": "ci-smoke",
+        "owner": SMOKE_OWNER,
         "secretHash": hashlib.sha256(secret.encode("utf-8")).hexdigest(),
     }
     token_dir.mkdir(parents=True, exist_ok=True)
@@ -284,6 +288,26 @@ def write_config(template: Path, target: Path, port: int) -> None:
     )
     if count != 1:
         raise HarnessError("config template must contain exactly one bind port")
+
+    roles = (
+        "roles:\n"
+        "  {role}:\n"
+        "    permissions:\n"
+        "      - server.read\n"
+    ).format(role=SMOKE_ROLE)
+    replaced, count = re.subn(r"(?m)^roles: \{\}$", roles, replaced)
+    if count != 1:
+        raise HarnessError("config template must contain exactly one empty roles map")
+
+    users = (
+        "users:\n"
+        "  {owner}:\n"
+        "    roles:\n"
+        "      - {role}\n"
+    ).format(owner=SMOKE_OWNER, role=SMOKE_ROLE)
+    replaced, count = re.subn(r"(?m)^users: \{\}$", users, replaced)
+    if count != 1:
+        raise HarnessError("config template must contain exactly one empty users map")
     target.write_text(replaced, encoding="utf-8")
 
 

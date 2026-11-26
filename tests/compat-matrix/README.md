@@ -11,7 +11,8 @@ test infrastructure and is not a production recommendation. It uses two distinct
 binds only to `127.0.0.1`, uses `online-mode=false`, accepts no production credentials, and
 generates a fresh bearer token per run. The token record is written directly to the
 host-controlled `plugins/DeployMC/tokens.d/` directory; the harness never parses a token from
-console output.
+console output. The generated record has an owner mapped in the host-controlled test `config.yml`
+to a role with only `server.read`; unknown identities still receive `default-role: none`.
 
 The conflicting plugin is the `DeployMCTestConflictingLibs` test fixture, not a DeployMC dependency.
 It bundles unrelocated Netty 4.1.100.Final and registers a console-only command that disables
