@@ -10,15 +10,14 @@ info:
     tokens in 0.1.0. Remote access requires a TLS terminator.
 
     **Status: partial.** The authentication gate, health endpoints, the
-    `GET /api/v1/server` application handler, and the WP-2.6 file, validation, and snapshot
-    transport adapters are implemented. The adapters have server-free contract tests, but no
-    running-server smoke test or Web UI consumes them yet. The doctor and metrics routes in
-    this document are normative contracts for issue #117; they are not implemented until the
-    corresponding product stage is merged. The RBAC contract in
-    `specification/security/rbac.md` is normative for issue #59; `/api/v1/me` and role/path
-    enforcement must not be claimed before the evaluator is merged. The remaining server
-    resource fields and the deployment, console, and audit resources are defined for later
-    work packages.
+    `GET /api/v1/server` application handler, the WP-2.6 file, validation, and snapshot
+    transport adapters, the doctor surface, and WP-3.4 RBAC including `/api/v1/me` are
+    implemented. These paths have server-free contract tests, but no running-server smoke
+    test or Web UI consumes them. The RBAC contract is in
+    `specification/security/rbac.md`. The audit routes in this document are a normative
+    contract for issue #60 and must not be claimed until the WP-3.5 writer and adapters
+    are merged. The remaining server resource fields and the deployment and console
+    resources are defined for later work packages.
 
     Rules that apply to every operation:
 
@@ -73,6 +72,10 @@ tags:
     description: |
       Opt-in aggregate operational metrics behind the normal authentication gate. No high-cardinality
       labels are exposed.
+  - name: Audit
+    description: |
+      Authenticated, queryable accountability records with a verifiable hash chain. Audit access is
+      itself audited, and the log never contains credentials or file contents.
 
 paths:
   /healthz:
@@ -1185,6 +1188,139 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /api/v1/audit:
+    get:
+      operationId: queryAudit
+      tags: [Audit]
+      summary: Query audit records
+      description: |
+        Returns immutable audit records in ascending sequence order. Access to this route
+        is itself recorded as an `audit.read` action. Filters are combined with logical AND;
+        `from` and `to` are inclusive RFC 3339 timestamps. Cursors are opaque and must not
+        be constructed by clients.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AuditFrom'
+        - $ref: '#/components/parameters/AuditTo'
+        - $ref: '#/components/parameters/AuditActor'
+        - $ref: '#/components/parameters/AuditAction'
+        - $ref: '#/components/parameters/AuditResult'
+        - $ref: '#/components/parameters/AuditDeploymentId'
+        - $ref: '#/components/parameters/AuditPath'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of audit records.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditQueryResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/audit/export:
+    get:
+      operationId: exportAudit
+      tags: [Audit]
+      summary: Export audit records as JSON Lines
+      description: |
+        Streams matching records verbatim as UTF-8 JSON Lines for offline verification.
+        At most 100,000 records are returned; a larger match returns
+        `audit.export-limit-exceeded` without a partial export. Access to this route is
+        recorded as an `audit.read` action and never includes exported record bodies.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AuditFrom'
+        - $ref: '#/components/parameters/AuditTo'
+        - $ref: '#/components/parameters/AuditActor'
+        - $ref: '#/components/parameters/AuditAction'
+        - $ref: '#/components/parameters/AuditResult'
+        - $ref: '#/components/parameters/AuditDeploymentId'
+        - $ref: '#/components/parameters/AuditPath'
+      responses:
+        '200':
+          description: The matching records as JSON Lines.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Disposition:
+              description: Suggested download name.
+              schema:
+                type: string
+                const: attachment; filename="audit-export.ndjson"
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: One canonical audit record object per line.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/audit/verify:
+    get:
+      operationId: verifyAudit
+      tags: [Audit]
+      summary: Verify the audit hash chain
+      description: |
+        Reads every retained audit file in sequence order and verifies format version,
+        required fields, exact sequence numbers, hash links, computed hashes, rotation
+        continuity, anchors, and timestamp regressions. Integrity failures are returned
+        in the report with `ok: false`; an unreadable store returns `audit.unavailable`.
+        Access to this route is recorded as an `audit.read` action.
+      security:
+        - cloudflareAccess: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Verification report, including limitations.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditVerificationReport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
 components:
   securitySchemes:
     cloudflareAccess:
@@ -1344,6 +1480,66 @@ components:
         type: string
         minLength: 8
         maxLength: 255
+    AuditFrom:
+      name: from
+      in: query
+      required: false
+      description: Inclusive lower bound for the record timestamp.
+      schema:
+        type: string
+        format: date-time
+    AuditTo:
+      name: to
+      in: query
+      required: false
+      description: Inclusive upper bound for the record timestamp.
+      schema:
+        type: string
+        format: date-time
+    AuditActor:
+      name: actor
+      in: query
+      required: false
+      description: Exact verified actor id.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 256
+    AuditAction:
+      name: action
+      in: query
+      required: false
+      description: Exact dotted action identifier.
+      schema:
+        type: string
+        pattern: '^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$'
+        maxLength: 128
+    AuditResult:
+      name: result
+      in: query
+      required: false
+      description: Exact audit result.
+      schema:
+        type: string
+        enum: [success, denied, failed, pending]
+    AuditDeploymentId:
+      name: deployment-id
+      in: query
+      required: false
+      description: Exact deployment correlation id.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 256
+    AuditPath:
+      name: path
+      in: query
+      required: false
+      description: Exact sandbox-relative `target.path`. Never an absolute host path.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 1024
 
   responses:
     BadRequest:
@@ -2602,3 +2798,212 @@ components:
           oneOf:
             - $ref: '#/components/schemas/DiffJarMetadata'
             - type: 'null'
+
+    Hash:
+      type: string
+      pattern: '^sha256:[0-9a-f]{64}$'
+      description: Lowercase SHA-256 digest with the `sha256:` prefix.
+
+    AuditActor:
+      type: object
+      additionalProperties: false
+      required: [id, method, roles]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        method:
+          type: string
+          enum: [cloudflare, token, local-onetime, system]
+        roles:
+          type: array
+          maxItems: 64
+          items:
+            type: string
+            maxLength: 128
+        ip:
+          type: string
+          maxLength: 128
+
+    AuditTarget:
+      type: object
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: Sandbox-relative path; never an absolute host path.
+        revision:
+          $ref: '#/components/schemas/Hash'
+
+    AuditRecord:
+      type: object
+      additionalProperties: true
+      required:
+        - v
+        - seq
+        - ts
+        - prev
+        - hash
+        - actor
+        - action
+        - result
+        - reason
+        - request-id
+        - deployment-id
+        - details
+      properties:
+        v:
+          type: integer
+          const: 1
+        seq:
+          type: integer
+          minimum: 1
+          format: int64
+        ts:
+          type: string
+          format: date-time
+          description: RFC 3339 UTC timestamp with milliseconds and a `Z` suffix.
+        prev:
+          $ref: '#/components/schemas/Hash'
+        hash:
+          $ref: '#/components/schemas/Hash'
+        actor:
+          $ref: '#/components/schemas/AuditActor'
+        action:
+          type: string
+          pattern: '^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$'
+          maxLength: 128
+        target:
+          oneOf:
+            - $ref: '#/components/schemas/AuditTarget'
+            - type: 'null'
+        result:
+          type: string
+          enum: [success, denied, failed, pending]
+        reason:
+          type: [string, 'null']
+          maxLength: 256
+        request-id:
+          type: [string, 'null']
+          maxLength: 128
+        deployment-id:
+          type: [string, 'null']
+          maxLength: 256
+        details:
+          type: object
+          additionalProperties: true
+          description: Non-sensitive action metadata. Credentials and file contents are forbidden.
+
+    AuditQueryResult:
+      type: object
+      additionalProperties: false
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/AuditRecord'
+        nextCursor:
+          type: [string, 'null']
+          minLength: 1
+          maxLength: 512
+        total:
+          type: integer
+          minimum: 0
+          format: int64
+
+    AuditVerificationFailure:
+      type: object
+      additionalProperties: false
+      required: [file, line, seq, code]
+      properties:
+        file:
+          type: string
+          maxLength: 512
+          description: Audit file name; never an absolute host path.
+        line:
+          type: integer
+          minimum: 1
+        seq:
+          type: integer
+          minimum: 0
+          format: int64
+        code:
+          type: string
+          enum:
+            - format-version
+            - encoding
+            - json
+            - invalid-record
+            - sequence-gap
+            - sequence-duplicate
+            - prev-mismatch
+            - hash-mismatch
+            - rotation-continuity
+            - anchor-mismatch
+
+    AuditVerificationWarning:
+      type: object
+      additionalProperties: false
+      required: [code, detail]
+      properties:
+        code:
+          type: string
+          enum: [clock-regression, pending-without-final, retention-incomplete, partial-line]
+        detail:
+          type: string
+          maxLength: 512
+
+    AuditVerificationReport:
+      type: object
+      additionalProperties: false
+      required:
+        - ok
+        - formatVersion
+        - recordsChecked
+        - lastSeq
+        - lastHash
+        - firstFailure
+        - warnings
+        - latestAnchor
+        - limitations
+      properties:
+        ok:
+          type: boolean
+        formatVersion:
+          type: integer
+        recordsChecked:
+          type: integer
+          minimum: 0
+          format: int64
+        lastSeq:
+          type: integer
+          minimum: 0
+          format: int64
+        lastHash:
+          oneOf:
+            - $ref: '#/components/schemas/Hash'
+            - type: 'null'
+        firstFailure:
+          oneOf:
+            - $ref: '#/components/schemas/AuditVerificationFailure'
+            - type: 'null'
+        warnings:
+          type: array
+          maxItems: 1024
+          items:
+            $ref: '#/components/schemas/AuditVerificationWarning'
+        latestAnchor:
+          oneOf:
+            - $ref: '#/components/schemas/AuditRecord'
+            - type: 'null'
+        limitations:
+          type: array
+          maxItems: 16
+          items:
+            type: string
+            maxLength: 512

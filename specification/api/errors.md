@@ -6,9 +6,9 @@
 > snapshot codes are produced by the WP-2.3 store and mapped by the WP-2.6 snapshot adapters, diff
 > codes are produced by the Java 8 `core.diff` engine and mapped by the snapshot diff route, and
 > validation codes are produced by the Java 8 `core.validation` engine.
-> The `rbac.*` codes below are normative for WP-3.4 and must not be returned until the product
-> evaluator is implemented; reason-to-code mapping is defined in
-> `specification/security/rbac.md`.
+> The `rbac.*` codes below are implemented by the WP-3.4 product evaluator; reason-to-code
+> mapping is defined in `specification/security/rbac.md`. The `audit.*` codes are normative
+> for WP-3.5 and must not be returned until the audit writer and REST routes are merged.
 > D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
 > Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.
@@ -82,6 +82,7 @@ Rules:
 | `deployments.` | Deployment engine | Invalid state, busy, validation/verification/rollback failure |
 | `console.` | Console | Capture unavailable, buffer gap, command rejected |
 | `webhooks.` | Event delivery | Invalid target, delivery rejected by SSRF policy |
+| `audit.` | Audit log | Unavailable log, failed commit, or exceeded export bound |
 | `internal.` | Server | Unexpected failure that is not safely attributable |
 
 ## Initial catalog
@@ -250,6 +251,14 @@ The full normative behavior, pointers, positions, and limits are defined in
 |---|---|---|---|
 | `webhooks.invalid-target` | 422 | no | The target URL is malformed or uses an unsupported scheme. |
 | `webhooks.ssrf-blocked` | 422 | no | The target resolves to a blocked address or redirects to one. |
+
+### Audit
+
+| Code | HTTP | Retryable | Meaning |
+|---|---|---|---|
+| `audit.unavailable` | 503 | yes | The audit store cannot be opened or read; fail closed before a privileged mutation. |
+| `audit.write-failed` | 503 | yes | A pending or final audit record could not be committed. Details do not disclose host paths or disk errors. |
+| `audit.export-limit-exceeded` | 413 | no | More than 100,000 records matched the export filter. Narrow the filter; no partial export is returned. |
 
 ### Internal
 
