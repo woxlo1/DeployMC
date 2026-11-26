@@ -9,9 +9,12 @@ import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigMigration;
 import io.github.woxlo1.deploymc.core.config.ConfigSchema;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import io.github.woxlo1.deploymc.transport.DefaultTransportPolicy;
 import io.github.woxlo1.deploymc.transport.JsonRequestLogger;
 import io.github.woxlo1.deploymc.transport.LoggingFormat;
+import io.github.woxlo1.deploymc.transport.MeHandler;
 import io.github.woxlo1.deploymc.transport.MetricsRegistry;
 import io.github.woxlo1.deploymc.transport.NettyTransportServer;
 import io.github.woxlo1.deploymc.transport.RequestLogger;
@@ -116,6 +119,13 @@ public final class DeployMCPlugin extends JavaPlugin {
       createdFileApi =
           FileApiRuntime.create(
               view, pluginsDirectory.toPath(), locale, transportConfig.maxBodyBytes());
+      RbacPolicyManager policies = RbacPolicyManager.from(view);
+      if (!policies.current().valid()) {
+        throw new StartupConfigurationException(
+            MessageKeys.STARTUP_RBAC_INVALID, Collections.<String, String>emptyMap());
+      }
+      RbacEvaluator evaluator =
+          new RbacEvaluator(policies::current, createdFileApi.sandboxResolver());
       createdDoctor =
           DoctorRuntime.create(
               createdConfigManager,
@@ -135,12 +145,14 @@ public final class DeployMCPlugin extends JavaPlugin {
                       plan.pluginVersion(), created.info(), created.capabilities()),
                   createdFileApi.handler(),
                   createdFileApi.snapshotHandler(),
-                  new DoctorHandler(createdDoctor, messages)),
+                  new DoctorHandler(createdDoctor, messages, evaluator),
+                  new MeHandler(evaluator, transportMessages)),
               new NoopWebSocketListener(),
               new DefaultTransportPolicy(transportConfig),
               requestLogger,
               authentication.authenticator(),
               transportMessages,
+              evaluator,
               metrics);
       createdTransport.start();
       publishSnapshotStoreGauge(metrics, createdFileApi, messages);
@@ -166,7 +178,8 @@ public final class DeployMCPlugin extends JavaPlugin {
       }
       DeployMCCommandExecutor executor =
           new DeployMCCommandExecutor(
-              new ConfigCommandHandler(createdConfigManager, plan, authentication, createdDoctor));
+              new ConfigCommandHandler(
+                  createdConfigManager, plan, authentication, createdDoctor, policies));
       command.setExecutor(executor);
       command.setTabCompleter(executor);
 

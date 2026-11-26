@@ -13,32 +13,44 @@ public final class DeployMCHttpHandler implements HttpHandler {
   private static final String FILE_API_PREFIX = "/api/v1/files";
   private static final String SNAPSHOT_API_PREFIX = "/api/v1/snapshots";
   private static final String DOCTOR_PATH = DoctorHandler.PATH;
+  private static final String ME_PATH = "/api/v1/me";
 
   private final HealthHandler health = new HealthHandler();
   private final HttpHandler api;
   private final HttpHandler files;
   private final HttpHandler snapshots;
   private final HttpHandler doctor;
+  private final HttpHandler me;
   private final HttpHandler assets;
 
   public DeployMCHttpHandler(HttpHandler api) {
-    this(api, null, null, null);
+    this(api, null, null, null, null);
   }
 
   public DeployMCHttpHandler(HttpHandler api, HttpHandler files) {
-    this(api, files, null, null);
+    this(api, files, null, null, null);
   }
 
   public DeployMCHttpHandler(HttpHandler api, HttpHandler files, HttpHandler snapshots) {
-    this(api, files, snapshots, null);
+    this(api, files, snapshots, null, null);
   }
 
   public DeployMCHttpHandler(
       HttpHandler api, HttpHandler files, HttpHandler snapshots, HttpHandler doctor) {
+    this(api, files, snapshots, doctor, null);
+  }
+
+  public DeployMCHttpHandler(
+      HttpHandler api,
+      HttpHandler files,
+      HttpHandler snapshots,
+      HttpHandler doctor,
+      HttpHandler me) {
     this.api = Objects.requireNonNull(api, "api");
     this.files = files;
     this.snapshots = snapshots;
     this.doctor = doctor;
+    this.me = me;
     this.assets = new StaticAssetHandler(api);
   }
 
@@ -57,6 +69,9 @@ public final class DeployMCHttpHandler implements HttpHandler {
     }
     if (isSnapshotApiPath(path) && snapshots != null) {
       return snapshots.handle(request);
+    }
+    if (ME_PATH.equals(path) && me != null) {
+      return me.handle(request);
     }
     if (path.startsWith("/api/")) {
       return api.handle(request);

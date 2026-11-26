@@ -83,6 +83,21 @@ class DeployMCHttpHandlerTest {
   }
 
   @Test
+  void delegatesMePathBeforeTheGeneralApiHandler() throws Exception {
+    HttpHandler api =
+        request -> {
+          throw new AssertionError("me routes must not reach the general API handler");
+        };
+    HttpHandler me = request -> HttpResponse.json(200, "{\"me\":true}");
+    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, null, null, null, me);
+
+    HttpResponse response = handler.handle(request("/api/v1/me"));
+
+    assertEquals(200, response.status());
+    assertEquals("{\"me\":true}", new String(response.body(), StandardCharsets.UTF_8));
+  }
+
+  @Test
   void doesNotDelegateLookalikeOrGeneralApiPaths() throws Exception {
     HttpHandler api = request -> HttpResponse.json(200, "{\"api\":true}");
     HttpHandler files =
@@ -93,7 +108,11 @@ class DeployMCHttpHandlerTest {
         request -> {
           throw new AssertionError("only exact snapshot API routes may reach the snapshot handler");
         };
-    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, files, snapshots);
+    HttpHandler me =
+        request -> {
+          throw new AssertionError("only the exact /api/v1/me route may reach the me handler");
+        };
+    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, files, snapshots, null, me);
 
     assertEquals(
         "{\"api\":true}",
@@ -105,6 +124,9 @@ class DeployMCHttpHandlerTest {
     assertEquals(
         "{\"api\":true}",
         new String(handler.handle(request("/api/v1/server")).body(), StandardCharsets.UTF_8));
+    assertEquals(
+        "{\"api\":true}",
+        new String(handler.handle(request("/api/v1/me/other")).body(), StandardCharsets.UTF_8));
   }
 
   private static HttpRequest request(String path) {

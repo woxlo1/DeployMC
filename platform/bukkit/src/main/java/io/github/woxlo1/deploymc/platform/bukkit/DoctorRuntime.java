@@ -8,6 +8,7 @@ import io.github.woxlo1.deploymc.core.doctor.DoctorEnvironment;
 import io.github.woxlo1.deploymc.core.doctor.DoctorInputs;
 import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
 import io.github.woxlo1.deploymc.core.doctor.DoctorService;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import java.lang.reflect.Field;
 import java.time.Clock;
 import java.util.Locale;
@@ -26,6 +27,7 @@ public final class DoctorRuntime {
   private final LocalizedMessages messages;
   private final Clock clock;
   private final AuthenticationRuntime authentication;
+  private final RbacPolicyManager rbacPolicyManager;
 
   public DoctorRuntime(
       ConfigManager manager,
@@ -61,6 +63,32 @@ public final class DoctorRuntime {
       LocalizedMessages messages,
       Clock clock,
       AuthenticationRuntime authentication) {
+    this(
+        manager,
+        plan,
+        platformInfo,
+        capabilities,
+        locale,
+        language,
+        fileApi,
+        messages,
+        clock,
+        authentication,
+        null);
+  }
+
+  public DoctorRuntime(
+      ConfigManager manager,
+      StartupPlan plan,
+      PlatformInfo platformInfo,
+      PlatformCapabilities capabilities,
+      Locale locale,
+      String language,
+      FileApiRuntime fileApi,
+      LocalizedMessages messages,
+      Clock clock,
+      AuthenticationRuntime authentication,
+      RbacPolicyManager rbacPolicyManager) {
     this.manager = Objects.requireNonNull(manager, "manager");
     this.plan = Objects.requireNonNull(plan, "plan");
     this.platformInfo = Objects.requireNonNull(platformInfo, "platformInfo");
@@ -71,6 +99,7 @@ public final class DoctorRuntime {
     this.messages = Objects.requireNonNull(messages, "messages");
     this.clock = Objects.requireNonNull(clock, "clock");
     this.authentication = authentication;
+    this.rbacPolicyManager = rbacPolicyManager;
   }
 
   /** Builds a runtime from the live platform adapter. The adapter itself is not used for I/O. */
@@ -109,7 +138,33 @@ public final class DoctorRuntime {
         authentication);
   }
 
-  /** Runs the 14 current checks. Absent subsystems are reported as WARN without fabrication. */
+  /** Builds a runtime with the RBAC policy snapshot needed by the rbac doctor check. */
+  public static DoctorRuntime create(
+      ConfigManager manager,
+      StartupPlan plan,
+      BukkitPlatformAdapter adapter,
+      Locale locale,
+      String language,
+      FileApiRuntime fileApi,
+      LocalizedMessages messages,
+      AuthenticationRuntime authentication,
+      RbacPolicyManager rbacPolicyManager) {
+    Objects.requireNonNull(adapter, "adapter");
+    return new DoctorRuntime(
+        manager,
+        plan,
+        adapter.info(),
+        adapter.capabilities(),
+        locale,
+        language,
+        fileApi,
+        messages,
+        Clock.systemUTC(),
+        authentication,
+        rbacPolicyManager);
+  }
+
+  /** Runs the 15 current checks. Absent subsystems are reported as WARN without fabrication. */
   public DoctorReport run() {
     DoctorEnvironment environment =
         DoctorEnvironment.builder()
@@ -138,6 +193,7 @@ public final class DoctorRuntime {
             .configValidation(manager.lastValidation().orElse(null))
             .jwtDiagnosticsSnapshot(
                 authentication == null ? null : authentication.jwtDiagnosticsSnapshot())
+            .rbacPolicy(rbacPolicyManager == null ? null : rbacPolicyManager.current())
             .missingLocalizationKeys(missingMessageCount(messages))
             .build();
     return new DoctorService().run(inputs);
