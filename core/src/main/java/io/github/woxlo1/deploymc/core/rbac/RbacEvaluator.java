@@ -42,6 +42,16 @@ public final class RbacEvaluator {
     return policySource.get();
   }
 
+  /** Policy lookup key for one verified identity; token identities resolve to their owner. */
+  public String identityKey(Identity identity) {
+    return lookupIdentity(identity);
+  }
+
+  /** Assigned role names for one verified identity at decision time. */
+  public List<String> rolesFor(Identity identity) {
+    return policy().rolesFor(identityKey(identity));
+  }
+
   private static Supplier<RbacPolicy> fixedPolicy(final RbacPolicy policy) {
     return new Supplier<RbacPolicy>() {
       @Override

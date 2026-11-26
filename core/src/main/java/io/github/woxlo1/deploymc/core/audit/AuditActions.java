@@ -3,6 +3,7 @@ package io.github.woxlo1.deploymc.core.audit;
 /** Stable action identifiers defined by the audit log format. */
 public final class AuditActions {
 
+  public static final String AUTH_DENIED = "auth.denied";
   public static final String FILES_LIST = "files.list";
   public static final String FILES_READ = "files.read";
   public static final String FILES_WRITE = "files.write";
