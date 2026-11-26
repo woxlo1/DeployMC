@@ -231,7 +231,8 @@ class AuthenticationFrameworkTest {
         new DefaultTransportPolicy(config),
         new NoopLogger(),
         authenticator,
-        TransportMessages.of(Locale.ENGLISH));
+        TransportMessages.of(Locale.ENGLISH),
+        RbacTestSupport.permitAll());
   }
 
   private static String request(int port, String requestLineAndHeaders) throws IOException {

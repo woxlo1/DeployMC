@@ -303,7 +303,8 @@ class AuthenticationGateTest {
         new DefaultTransportPolicy(config),
         requestLogger,
         authenticator,
-        TransportMessages.of(Locale.ENGLISH));
+        TransportMessages.of(Locale.ENGLISH),
+        RbacTestSupport.permitAll());
   }
 
   private Authenticator tokenAuthenticator() throws Exception {

@@ -11,6 +11,8 @@ final class TransportProblems {
   static final String SERVER_BUSY_CODE = "server.busy";
   static final String METRICS_FORBIDDEN_CODE = "metrics.forbidden";
   static final String AUTHORIZATION_DENIED_CODE = AuthorizationDeniedException.DEFAULT_CODE;
+  static final String TOKEN_SCOPE_EXCEEDED_CODE = "rbac.token-scope-exceeded";
+  static final String PATH_DENIED_CODE = "rbac.path-denied";
   static final String METRICS_NOT_FOUND_CODE = "metrics.not-found";
   static final String RETRY_AFTER = "Retry-After";
   static final String RATE_LIMIT_LIMIT = "RateLimit-Limit";
@@ -65,14 +67,27 @@ final class TransportProblems {
 
   /** Uniform 403 for authorization denials. No permission, path, or identity detail is included. */
   static HttpResponse authorizationDenied(String requestId, TransportMessages messages) {
-    return problem(
-        403,
-        AUTHORIZATION_DENIED_CODE,
-        MessageKeys.AUTH_DENIED_TITLE,
-        MessageKeys.AUTH_DENIED_DETAIL,
-        requestId,
-        messages,
-        false);
+    return authorizationDenied(requestId, AUTHORIZATION_DENIED_CODE, messages);
+  }
+
+  /** 403 Problem Details carrying only a stable RBAC decision code. */
+  static HttpResponse authorizationDenied(
+      String requestId, String decisionCode, TransportMessages messages) {
+    String code = decisionCode == null ? AUTHORIZATION_DENIED_CODE : decisionCode;
+    String titleKey;
+    String detailKey;
+    if (TOKEN_SCOPE_EXCEEDED_CODE.equals(code)) {
+      titleKey = MessageKeys.RBAC_TOKEN_SCOPE_EXCEEDED_TITLE;
+      detailKey = MessageKeys.RBAC_TOKEN_SCOPE_EXCEEDED_DETAIL;
+    } else if (PATH_DENIED_CODE.equals(code)) {
+      titleKey = MessageKeys.RBAC_PATH_DENIED_TITLE;
+      detailKey = MessageKeys.RBAC_PATH_DENIED_DETAIL;
+    } else {
+      code = AUTHORIZATION_DENIED_CODE;
+      titleKey = MessageKeys.AUTH_DENIED_TITLE;
+      detailKey = MessageKeys.AUTH_DENIED_DETAIL;
+    }
+    return problem(403, code, titleKey, detailKey, requestId, messages, false);
   }
 
   static HttpResponse metricsNotFound(String requestId, TransportMessages messages) {

@@ -2,14 +2,13 @@ package io.github.woxlo1.deploymc.transport;
 
 import io.github.woxlo1.deploymc.core.auth.AuthContext;
 import io.github.woxlo1.deploymc.core.auth.Identity;
+import io.github.woxlo1.deploymc.core.rbac.AuthorizationDecision;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
 
-/**
- * Authenticated Prometheus metrics route. The host registers this handler only when metrics are
- * enabled; until RBAC exists, only admin-equivalent identities pass the permission check.
- */
+/** Authenticated Prometheus metrics route behind the centralized RBAC gate. */
 public final class MetricsHandler implements HttpHandler {
 
   static final String PATH = "/api/v1/metrics";
@@ -17,22 +16,36 @@ public final class MetricsHandler implements HttpHandler {
 
   private final MetricsRegistry registry;
   private final String permission;
+  private final RbacGate gate;
   private final TransportMessages messages;
 
   public MetricsHandler(MetricsRegistry registry, String permission) {
-    this(registry, permission, TransportMessages.of(Locale.ENGLISH));
+    this(registry, permission, null, TransportMessages.of(Locale.ENGLISH));
   }
 
   MetricsHandler(MetricsRegistry registry, String permission, TransportMessages messages) {
+    this(registry, permission, null, messages);
+  }
+
+  public MetricsHandler(MetricsRegistry registry, String permission, RbacEvaluator evaluator) {
+    this(registry, permission, evaluator, TransportMessages.of(Locale.ENGLISH));
+  }
+
+  MetricsHandler(
+      MetricsRegistry registry,
+      String permission,
+      RbacEvaluator evaluator,
+      TransportMessages messages) {
     this.registry = Objects.requireNonNull(registry, "registry");
     if (!ObservabilityConfig.isSupportedPermission(permission)) {
       throw new IllegalArgumentException("permission is not a supported stable identifier");
     }
     this.permission = permission;
+    this.gate = new RbacGate(evaluator, permission);
     this.messages = Objects.requireNonNull(messages, "messages");
   }
 
-  /** Stable permission identifier required by this route until RBAC evaluation exists. */
+  /** Stable permission identifier required by this route. */
   public String permission() {
     return permission;
   }
@@ -66,8 +79,9 @@ public final class MetricsHandler implements HttpHandler {
           messages,
           false);
     }
-    if (!identity.adminEquivalent()) {
-      return TransportProblems.metricsForbidden(context.requestId(), messages);
+    AuthorizationDecision decision = gate.authorize(request);
+    if (!decision.allowed()) {
+      return TransportProblems.authorizationDenied(request.id(), decision.errorCode(), messages);
     }
     return HttpResponse.of(
             200, CONTENT_TYPE, registry.renderPrometheus().getBytes(StandardCharsets.UTF_8))

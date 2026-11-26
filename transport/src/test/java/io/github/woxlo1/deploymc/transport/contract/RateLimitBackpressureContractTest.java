@@ -8,6 +8,10 @@ import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
 import io.github.woxlo1.deploymc.core.auth.Identity;
+import io.github.woxlo1.deploymc.core.rbac.PathScope;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicy;
+import io.github.woxlo1.deploymc.core.rbac.RolePolicy;
 import io.github.woxlo1.deploymc.transport.EndpointClass;
 import io.github.woxlo1.deploymc.transport.HttpBindConfig;
 import io.github.woxlo1.deploymc.transport.HttpResponse;
@@ -47,6 +51,7 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -192,7 +197,23 @@ class RateLimitBackpressureContractTest {
         new NoopLogger(),
         authenticator,
         TransportMessages.of(Locale.ENGLISH),
+        permitAll(),
         metrics);
+  }
+
+  private static RbacEvaluator permitAll() {
+    RolePolicy role =
+        new RolePolicy(
+            "all",
+            true,
+            Collections.<String>emptyList(),
+            PathScope.wholeSandbox(Collections.<String>emptyList()));
+    return new RbacEvaluator(
+        RbacPolicy.of(
+            Collections.<String, RolePolicy>singletonMap("all", role),
+            Collections.<String, java.util.List<String>>emptyMap(),
+            "all"),
+        null);
   }
 
   private static TransportPolicy permissivePolicy() {

@@ -43,6 +43,12 @@ public final class MessageKeys {
   public static final String INTERNAL_ERROR_DETAIL = "problem.internal.error.detail";
   public static final String AUTH_DENIED_TITLE = "problem.rbac.denied.title";
   public static final String AUTH_DENIED_DETAIL = "problem.rbac.denied.detail";
+  public static final String RBAC_TOKEN_SCOPE_EXCEEDED_TITLE =
+      "problem.rbac.token-scope-exceeded.title";
+  public static final String RBAC_TOKEN_SCOPE_EXCEEDED_DETAIL =
+      "problem.rbac.token-scope-exceeded.detail";
+  public static final String RBAC_PATH_DENIED_TITLE = "problem.rbac.path-denied.title";
+  public static final String RBAC_PATH_DENIED_DETAIL = "problem.rbac.path-denied.detail";
 
   public static final String REQUEST_INVALID_TITLE = "problem.request.invalid.title";
   public static final String REQUEST_INVALID_DETAIL = "problem.request.invalid.detail";

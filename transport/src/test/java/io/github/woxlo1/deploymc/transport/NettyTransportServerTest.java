@@ -78,7 +78,7 @@ class NettyTransportServerTest {
       String response =
           rawRequest(
               server.port(),
-              "GET /api/v1/test HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
+              "GET /api/v1/me HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
       assertTrue(response.startsWith("HTTP/1.1 200"), response);
       assertTrue(
           response.toLowerCase(Locale.ROOT).contains("x-content-type-options: nosniff"), response);
@@ -125,7 +125,9 @@ class NettyTransportServerTest {
     NettyTransportServer server = newStaticServer();
     try {
       server.start();
-      String[] paths = {"/../../plugin.yml", "/%2e%2e%2fplugin.yml", "/..%2f..%2fplugin.yml"};
+      String[] paths = {
+        "/assets/../../plugin.yml", "/assets/%2e%2e%2fplugin.yml", "/assets/..%2f..%2fplugin.yml"
+      };
       for (String path : paths) {
         String response =
             rawRequest(
@@ -158,7 +160,7 @@ class NettyTransportServerTest {
       server.start();
       byte[] body = new byte[2048];
       String request =
-          "POST /api/v1/test HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 2048\r\n\r\n";
+          "POST /api/v1/me HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 2048\r\n\r\n";
       String response = rawRequest(server.port(), request, body);
       assertTrue(response.startsWith("HTTP/1.1 413"), response);
       assertTrue(response.contains("oversized_body"), response);
@@ -217,12 +219,12 @@ class NettyTransportServerTest {
     try {
       server.start();
       String badHost =
-          rawRequest(server.port(), "GET /api/v1/test HTTP/1.1\r\nHost: example.invalid\r\n\r\n");
+          rawRequest(server.port(), "GET /api/v1/me HTTP/1.1\r\nHost: example.invalid\r\n\r\n");
       assertTrue(badHost.startsWith("HTTP/1.1 403"), badHost);
       String badOrigin =
           rawRequest(
               server.port(),
-              "GET /api/v1/test HTTP/1.1\r\nHost: 127.0.0.1\r\nOrigin: https://example.invalid\r\n\r\n");
+              "GET /api/v1/me HTTP/1.1\r\nHost: 127.0.0.1\r\nOrigin: https://example.invalid\r\n\r\n");
       assertTrue(badOrigin.startsWith("HTTP/1.1 403"), badOrigin);
     } finally {
       server.stop();
@@ -591,7 +593,8 @@ class NettyTransportServerTest {
           policy,
           logger,
           authenticator,
-          TransportMessages.of(Locale.ENGLISH));
+          TransportMessages.of(Locale.ENGLISH),
+          RbacTestSupport.permitAll());
     }
   }
 

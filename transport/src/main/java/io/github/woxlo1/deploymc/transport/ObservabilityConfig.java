@@ -1,13 +1,9 @@
 package io.github.woxlo1.deploymc.transport;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /** Immutable, fail-closed observability and self-protection settings. */
 public final class ObservabilityConfig {
-
-  private static final Pattern PERMISSION =
-      Pattern.compile("^[a-z][a-z0-9-]{0,63}(\\.[a-z][a-z0-9-]{0,63})+$");
 
   private final LoggingFormat loggingFormat;
   private final boolean metricsEnabled;
@@ -72,12 +68,9 @@ public final class ObservabilityConfig {
     return watchdogTimeoutMillis;
   }
 
-  /** Stable permission identifiers accepted until RBAC evaluation exists. */
+  /** The only supported metrics permission is the closed-registry {@code server.read}. */
   public static boolean isSupportedPermission(String value) {
-    if (value == null || !PERMISSION.matcher(value).matches()) {
-      return false;
-    }
-    return "metrics.read".equals(value) || "server.read".equals(value);
+    return "server.read".equals(value);
   }
 
   private static String requirePermission(String value) {
@@ -109,7 +102,7 @@ public final class ObservabilityConfig {
 
     private LoggingFormat loggingFormat = LoggingFormat.TEXT;
     private boolean metricsEnabled = false;
-    private String metricsPermission = "metrics.read";
+    private String metricsPermission = "server.read";
     private int identityRateLimitPerMinute = 300;
     private int authFailureRateLimitPerMinute = 30;
     private int maxRateLimitKeys = 4096;

@@ -8,6 +8,8 @@ import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
 import io.github.woxlo1.deploymc.core.auth.AuthorizationDeniedException;
 import io.github.woxlo1.deploymc.core.auth.Identity;
+import io.github.woxlo1.deploymc.core.rbac.AuthorizationDecision;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -35,6 +37,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -71,6 +74,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private static final AttributeKey<AuthContext> AUTH_CONTEXT =
       AttributeKey.valueOf("deploymc.transport.authContext");
 
+  private static final int WEBSOCKET_PERMISSION_REVOKED = 4403;
+  private static final String PERMISSION_REVOKED_REASON = "rbac.permission-revoked";
   private static final String FORBIDDEN = "forbidden";
   private static final String OVERSIZED_BODY = "oversized_body";
   private static final String INTERNAL_ERROR = "internal_error";
@@ -88,6 +93,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final RequestLogger logger;
   private final AuthenticationFilter authenticationFilter;
   private final TransportMessages messages;
+  private final RbacGate gate;
   private final ObservabilityConfig observability;
   private final MetricsRegistry metrics;
   private final RateLimiter rateLimiter;
@@ -136,6 +142,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         logger,
         authenticator,
         messages,
+        null,
         new MetricsRegistry());
   }
 
@@ -148,6 +155,50 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       Authenticator authenticator,
       TransportMessages messages,
       MetricsRegistry metrics) {
+    this(
+        config,
+        httpHandler,
+        webSocketListener,
+        policy,
+        logger,
+        authenticator,
+        messages,
+        null,
+        metrics);
+  }
+
+  /** Creates a transport whose authorization decisions use the supplied evaluator. */
+  public NettyTransportServer(
+      TransportConfig config,
+      HttpHandler httpHandler,
+      WebSocketListener webSocketListener,
+      TransportPolicy policy,
+      RequestLogger logger,
+      Authenticator authenticator,
+      TransportMessages messages,
+      RbacEvaluator evaluator) {
+    this(
+        config,
+        httpHandler,
+        webSocketListener,
+        policy,
+        logger,
+        authenticator,
+        messages,
+        evaluator,
+        new MetricsRegistry());
+  }
+
+  public NettyTransportServer(
+      TransportConfig config,
+      HttpHandler httpHandler,
+      WebSocketListener webSocketListener,
+      TransportPolicy policy,
+      RequestLogger logger,
+      Authenticator authenticator,
+      TransportMessages messages,
+      RbacEvaluator evaluator,
+      MetricsRegistry metrics) {
     this.config = Objects.requireNonNull(config, "config");
     this.httpHandler = Objects.requireNonNull(httpHandler, "httpHandler");
     this.webSocketListener = Objects.requireNonNull(webSocketListener, "webSocketListener");
@@ -157,13 +208,15 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     this.messages = Objects.requireNonNull(messages, "messages");
     this.observability = config.observability();
     this.metrics = Objects.requireNonNull(metrics, "metrics");
+    this.gate = new RbacGate(evaluator, observability.metricsPermission());
     this.rateLimiter =
         new RateLimiter(
             observability.identityRateLimitPerMinute(),
             observability.authFailureRateLimitPerMinute(),
             observability.maxRateLimitKeys(),
             Clock.systemUTC());
-    this.metricsHandler = new MetricsHandler(metrics, observability.metricsPermission(), messages);
+    this.metricsHandler =
+        new MetricsHandler(metrics, observability.metricsPermission(), evaluator, messages);
   }
 
   /** Registry used by this transport instance, for host-supplied gauges. */
@@ -657,9 +710,18 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       }
       if (result.authenticated()) {
         Identity identity = result.identity();
-        RateLimitDecision decision = rateLimiter.tryIdentity(identity.id(), endpoint);
-        if (!decision.allowed()) {
-          shed(context, request, decision, ShedScope.IDENTITY);
+        RateLimitDecision limit = rateLimiter.tryIdentity(identity.id(), endpoint);
+        if (!limit.allowed()) {
+          shed(context, request, limit, ShedScope.IDENTITY);
+          return;
+        }
+        AuthContext authContext = authenticationFilter.context(id, result);
+        AuthorizationDecision authorization =
+            endpoint == EndpointClass.WEBSOCKET
+                ? gate.authorizeWebSocket(identity)
+                : gate.authorize(toInternal(request, id, authContext));
+        if (!authorization.allowed()) {
+          rejectAuthorization(context, request, authorization);
           return;
         }
         if (endpoint == EndpointClass.WEBSOCKET
@@ -667,7 +729,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
           rejectBusy(context, request);
           return;
         }
-        context.channel().attr(AUTH_CONTEXT).set(authenticationFilter.context(id, result));
+        context.channel().attr(AUTH_CONTEXT).set(authContext);
         context.fireChannelRead(message);
         return;
       }
@@ -692,6 +754,22 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       }
       ReferenceCountUtil.release(request);
       writeResponse(context, unauthorized(id, reason));
+    }
+
+    private void rejectAuthorization(
+        ChannelHandlerContext context, FullHttpRequest request, AuthorizationDecision decision) {
+      String code =
+          decision.errorCode() == null
+              ? TransportProblems.AUTHORIZATION_DENIED_CODE
+              : decision.errorCode();
+      if (isWebSocketUpgrade(request)) {
+        logger.websocketRejected(REDACTED, code);
+      } else {
+        logger.rejected(requestId(context), code);
+      }
+      ReferenceCountUtil.release(request);
+      writeResponse(
+          context, TransportProblems.authorizationDenied(requestId(context), code, messages));
     }
 
     private void shed(
@@ -744,7 +822,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
           response = httpHandler.handle(internal);
         }
       } catch (AuthorizationDeniedException denied) {
-        response = TransportProblems.authorizationDenied(id, messages);
+        response = TransportProblems.authorizationDenied(id, denied.code(), messages);
       } catch (Exception exception) {
         response =
             HttpResponse.error(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), INTERNAL_ERROR);
@@ -770,6 +848,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final class WebSocketFrameHandler
       extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
+    private WebSocketFrameHandler() {
+      super(false);
+    }
+
     @Override
     @SuppressWarnings("deprecation")
     public void userEventTriggered(ChannelHandlerContext context, Object event) {
@@ -779,6 +861,11 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         context.channel().attr(AUTH_CONTEXT).set(null);
         if (authContext == null) {
           authContext = AuthContext.anonymous(id);
+        }
+        AuthorizationDecision decision = gate.authorizeWebSocket(authContext.identity());
+        if (!decision.allowed()) {
+          closeForPermissionLoss(context, decision);
+          return;
         }
         NettyWebSocketSession session = new NettyWebSocketSession(context, id, authContext);
         context.channel().attr(SESSION).set(session);
@@ -794,9 +881,31 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     @Override
     protected void channelRead0(ChannelHandlerContext context, TextWebSocketFrame frame) {
       NettyWebSocketSession session = context.channel().attr(SESSION).get();
-      if (session != null) {
-        webSocketListener.onText(session, frame.text());
+      AuthorizationDecision decision =
+          session == null ? null : gate.authorizeWebSocket(session.context().identity());
+      if (session == null || !decision.allowed()) {
+        ReferenceCountUtil.release(frame);
+        closeForPermissionLoss(context, decision);
+        return;
       }
+      try {
+        webSocketListener.onText(session, frame.text());
+      } finally {
+        ReferenceCountUtil.release(frame);
+      }
+    }
+
+    private void closeForPermissionLoss(
+        ChannelHandlerContext context, AuthorizationDecision decision) {
+      String code =
+          decision == null || decision.errorCode() == null
+              ? TransportProblems.AUTHORIZATION_DENIED_CODE
+              : decision.errorCode();
+      logger.websocketRejected(REDACTED, code);
+      CloseWebSocketFrame close =
+          new CloseWebSocketFrame(WEBSOCKET_PERMISSION_REVOKED, PERMISSION_REVOKED_REASON);
+      context.writeAndFlush(close).addListener(ChannelFutureListener.CLOSE);
+      context.channel().close();
     }
 
     @Override
