@@ -146,8 +146,8 @@ observability:
   metrics:
     # Opt-in authenticated Prometheus endpoint. Restart only.
     enabled: false
-    # Must be in the closed RBAC registry. Until RBAC exists, only
-    # admin-equivalent identities pass this gate.
+    # Must be server.read in the closed RBAC registry. Callers need the
+    # server.read permission; no implicit admin equivalence exists.
     # restart only
     permission: server.read
 
