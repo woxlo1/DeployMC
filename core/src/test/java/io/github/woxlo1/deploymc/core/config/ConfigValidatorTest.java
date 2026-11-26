@@ -105,6 +105,41 @@ class ConfigValidatorTest {
   }
 
   @Test
+  void rejectsUnknownPermissionsWithKeySpecificFindings() throws Exception {
+    ConfigValidationResult result =
+        validate("config-version: 1\nroles:\n  viewer:\n    permissions:\n      - server.status\n");
+
+    assertFalse(result.isValid());
+    ConfigIssue issue =
+        result.errors().stream()
+            .filter(candidate -> "config.error.unknownPermission".equals(candidate.messageKey()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Missing product permission finding: " + result));
+    assertEquals("roles.viewer.permissions[0]", issue.path());
+    assertTrue(issue.format(Locale.ROOT).contains("server.status"));
+  }
+
+  @Test
+  void reservesNoneAsARoleName() throws Exception {
+    ConfigValidationResult result =
+        validate("config-version: 1\nroles:\n  none:\n    permissions: []\n");
+
+    assertFalse(result.isValid());
+    assertEquals("config.error.reservedRole", result.errors().get(0).messageKey());
+  }
+
+  @Test
+  void rejectsRoleLimitsAboveGlobalLimits() throws Exception {
+    ConfigValidationResult result =
+        validate(
+            "config-version: 1\nsandbox:\n  max-upload-size-mb: 10\nroles:\n  viewer:\n    permissions: []\n    limits:\n      max-upload-mb: 20\n");
+
+    assertFalse(result.isValid());
+    assertEquals("config.error.roleLimitExceeded", result.errors().get(0).messageKey());
+    assertEquals("roles.viewer.limits.max-upload-mb", result.errors().get(0).path());
+  }
+
+  @Test
   void exposesHotReloadMetadata() throws Exception {
     assertEquals(1, schema.supportedVersion());
     assertEquals(Boolean.TRUE, schema.hotReloadable("language"));
