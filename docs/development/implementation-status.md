@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-25 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-26 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #168 merged the
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
@@ -40,8 +40,11 @@ and post-merge CI, CodeQL, and Scorecard; its final evidence PR closed issue #57
 normative contract in [PR #228](https://github.com/woxlo1/DeployMC/pull/228) at `72bddd2`, its core
 lifecycle implementation in [PR #229](https://github.com/woxlo1/DeployMC/pull/229) at `8056492`, and
 its host and console wiring in [PR #230](https://github.com/woxlo1/DeployMC/pull/230) at `49c544e`,
-with passing required checks and post-merge CI, CodeQL, and Scorecard; this final evidence PR closes
-issue #58.
+with passing required checks and post-merge CI, CodeQL, and Scorecard; its final evidence PR closed
+issue #58. WP-3.4 merged its normative contract in
+[PR #232](https://github.com/woxlo1/DeployMC/pull/232) at `4bd654b`, its RBAC implementation in
+[PR #233](https://github.com/woxlo1/DeployMC/pull/233) at `ca1d070`, and this final evidence PR
+closes issue #59.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -157,8 +160,9 @@ WP-3.3 completes the token lifecycle and the separate `local-onetime` mode. The 
 in `specification/security/token-records.md` records the SHA-256-over-full-token choice, the
 `dmc_` 256-bit Base64URL format, optional `scopes`, `revokedAt`, and `lastUsedAt` fields, the
 failure ordering, and closed console output that never prints a digest or raw exception. Scopes are
-stored and propagated as `token.scopes` in declaration order, omitted when empty. The contract
-explicitly does not enforce them until WP-3.4 RBAC; every valid token remains admin-equivalent.
+stored and propagated as `token.scopes` in declaration order, omitted when empty. The WP-3.3 contract
+intentionally did not enforce them until WP-3.4 RBAC; WP-3.4 now narrows token scopes against the
+token owner's effective permissions, and no token is implicitly admin-equivalent.
 
 `core.auth` now persists immutable token records with structural scope validation, revocation
 checked before expiry, last-used persistence with retryable `internal.error` on failure, and
@@ -213,7 +217,71 @@ The merged tree's JUnit XML reports 544 Java tests, 0 failures, 0 errors, and 1 
 the 516-test WP-3.2 baseline therefore rose by 28 net tests. Evidence is server-free unit,
 embedded-socket, and server-free command-output testing only. No running Minecraft server, Bukkit
 mock, browser, E2E run, full integration suite, or in-game command exercised these paths. Scope
-enforcement and RBAC remain WP-3.4 work; D-001 and D-002 are unchanged.
+enforcement and RBAC were delivered in WP-3.4; D-001 and D-002 are unchanged.
+
+## WP-3.4 RBAC engine (issue #59)
+
+WP-3.4 adds a fail-closed RBAC engine and enforces it across the authenticated REST surface,
+WebSocket event delivery, doctor, metrics, and console token provisioning. The normative contract in
+`specification/security/rbac.md` defines a closed 23-permission registry, role grants with path
+scopes, token scopes that only narrow the owner's effective permissions, a reserved `local-onetime`
+identity, deny-all on invalid reload, and WebSocket close code `4403` with
+`rbac.permission-revoked` on permission loss. `/healthz` and `/readyz` remain the only
+unauthenticated endpoints, and no bypass flag exists.
+
+`core.rbac` provides immutable policy snapshots, a deterministic evaluator, stable decision reasons,
+redacted explanations, and an atomically swappable policy manager. Requested file paths are always
+resolved through the host-controlled `SandboxResolver` before path-scope evaluation. Tokens persist
+an optional owner; unknown or absent owners fall back to `default-role`, and token scopes never
+grant more than the owner already has. `local-onetime` is an ordinary RBAC identity and is no longer
+admin-equivalent.
+
+Transport applies a centralized route gate after authentication and before dispatch. The
+authenticated `/api/v1/me` route returns only the caller's own identity kind, opaque id, sorted
+roles, and canonical effective permissions, with optional redacted `explain`. Doctor and metrics use
+`server.read`; files, validation, and snapshots use their bounded operation permissions; WebSocket
+delivery requires `console.read` on every text frame. Stable reason codes map to `rbac.denied`,
+`rbac.token-scope-exceeded`, and `rbac.path-denied` Problem Details. Console `token create` accepts
+`--owner`, and reload installs a new policy snapshot or explicitly denies all on failure. The doctor
+report gained a redacted 15th `rbac` check; the Web panel accepts and displays its bounded evidence
+keys. Audit record generation remains WP-3.5 work.
+
+Normative contract: [PR #232](https://github.com/woxlo1/DeployMC/pull/232) merged at `4bd654b`
+with all 18 required checks passing. Implementation:
+[PR #233](https://github.com/woxlo1/DeployMC/pull/233) was rebase-merged at `ca1d070` on
+`2026-11-26T08:05:25Z`; all nine Conventional Commits remain individually on `main`, and all 18
+required checks passed. The first implementation run `45778218708` failed both compatibility jobs
+because the smoke token had no owner under `default-role: none`; `e948297` scoped the harness token
+to a host-controlled `server.read` role and `ca1d070` removed stale no-RBAC wording. The corrected
+run passed all checks, including both Paper smoke entries. This final evidence PR records the
+consolidated result and closes issue #59.
+
+| Command | Result |
+|---|---|
+| `git fetch origin main` | PASS; base unchanged at `4bd654b` immediately before the implementation merge |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | PASS |
+| `node tools/build/verify-all.cjs` | PASS for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | PASS, `BUILD SUCCESSFUL` |
+| `git diff --check` | PASS, no output |
+| `node tools/i18n/check` | PASS via `verify-all.cjs`; 0 errors, 0 warnings |
+
+The merged tree's JUnit XML reports 599 Java tests, 0 failures, 0 errors, and 1 skipped symlink test;
+the 544-test WP-3.3 baseline therefore rose by 55 net tests. `verifyJava8` and plugin JAR
+verification passed, with maximum common bytecode 52. Web reported 39 tests, CLI 4, Python SDK 13,
+spec tools 22, i18n checker 7, and all offline compatibility/security/fixture suites passed. Local
+evidence is server-free, embedded-socket, and server-free command-output testing only. CI
+compatibility jobs did run the pinned Paper smoke on Ubuntu and Windows at the merged commit, but no
+local running Minecraft server, Bukkit mock, browser, E2E run, full integration suite, or in-game
+command exercised WP-3.4. D-001 and D-002 are unchanged.
+
+Japanese verification and post-merge evidence are recorded in
+[comment 7186070388](https://github.com/woxlo1/DeployMC/pull/233#issuecomment-7186070388),
+[comment 7186169808](https://github.com/woxlo1/DeployMC/pull/233#issuecomment-7186169808), and
+[comment 7186265399](https://github.com/woxlo1/DeployMC/pull/233#issuecomment-7186265399).
+Post-merge `main` runs passed at `ca1d070`: CI
+[45780247527](https://github.com/woxlo1/DeployMC/actions/runs/45780247527), CodeQL
+[45780247623](https://github.com/woxlo1/DeployMC/actions/runs/45780247623), and Scorecard
+[45780247530](https://github.com/woxlo1/DeployMC/actions/runs/45780247530).
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -467,6 +535,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-3.1 auth framework | Final `Authenticator` and `AuthenticationRequest` boundary, fail-closed `AuthenticationFilter`, immutable async-safe `AuthContext`, bounded `Identity` claims/attributes, context-carrying HTTP and WebSocket requests, and uniform detail-free 401/403 Problem Details with localized `rbac.denied` | 16 new core auth tests, an expanded `TokenAuthenticatorTest`, and 5 embedded-socket transport tests; full build reports 495 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no server or RBAC engine |
 | WP-3.2 Cloudflare Access verifier | RS256-only `kid`-keyed JWT verification, bounded JWKS cache with ETag revalidation and bounded stale-while-error, fail-closed unavailability, closed diagnostics, host startup wiring, 401/503 problem mapping, and a redacted 14th doctor check | 11 committed JWT vectors through the product verifier, cache/rotation/staleness tests, transport and Bukkit wiring tests, full build reporting 516 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no real Cloudflare tenant, running server, or in-game command |
 | WP-3.3 token and one-time-token modes | Normative token record/command/one-time contract; SHA-256 token storage with scopes, revocation, last-used persistence, fail-closed metadata writes and closed auth mappings; loopback-only in-memory one-time runtime with bounded TTL and attempts; console create/revoke/list with TTL clamping and tab completion | Specification checker 19 tests; server-free core, transport, and Bukkit command tests; merged tree reports 544 Java tests with 0 failures, 0 errors, 1 skipped; all 18 required checks for each of PR #228, #229, and #230 plus post-merge CI/CodeQL/Scorecard passed; no running server or in-game command |
+| WP-3.4 RBAC engine | Closed 23-permission registry, immutable policy snapshots with sandbox path scopes, owner-derived token scope narrowing, reserved `local-onetime` identity, centralized REST/WebSocket gate, authenticated `/api/v1/me`, redacted 15th doctor check, and console `--owner`; invalid reload denies all and WebSocket permission loss closes with 4403 | Contract PR #232 at `4bd654b`; implementation PR #233 at `ca1d070`; this final evidence PR; server-free core/transport/Bukkit tests, 599 Java tests, all-toolchain verification, i18n, all 18 required checks, post-merge CI/CodeQL/Scorecard, and CI Paper smoke on Ubuntu/Windows; no local running server or in-game command |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |
