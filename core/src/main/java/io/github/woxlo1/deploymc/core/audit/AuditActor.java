@@ -1,5 +1,7 @@
 package io.github.woxlo1.deploymc.core.audit;
 
+import io.github.woxlo1.deploymc.core.auth.Identity;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +45,26 @@ public final class AuditActor {
 
   public static AuditActor of(String id, String method, Collection<String> roles, String ip) {
     return new AuditActor(id, method, roles, ip);
+  }
+
+  /**
+   * Builds an actor from a verified transport identity. Token identities use the owner-derived
+   * policy key and effective roles. The optional peer address is supplied only by a trusted host
+   * seam; unverified client headers are never accepted here.
+   */
+  public static AuditActor fromIdentity(
+      Identity identity, RbacEvaluator evaluator, String trustedPeerAddress) {
+    if (identity == null) {
+      return system();
+    }
+    if (evaluator == null) {
+      return of(identity.id(), identity.method(), Collections.<String>emptyList(), null);
+    }
+    return of(
+        evaluator.identityKey(identity),
+        identity.method(),
+        evaluator.rolesFor(identity),
+        trustedPeerAddress);
   }
 
   /** Rebuilds an actor from a parsed record. Unknown fields are ignored. */

@@ -195,6 +195,7 @@ initial set:
 
 | Action | target | Recorded for |
 |---|---|---|
+| `auth.denied` | none | An unauthenticated, rate-limited, or unmapped request that cannot be attributed to a privileged action. |
 | `files.list` | `path` | Optional; recorded when a listing is denied. |
 | `files.read` | `path` | Optional; recorded for download of a JAR or a protected path, and for every denial. |
 | `files.write` | `path`, revision | Create or modify a text file. |
