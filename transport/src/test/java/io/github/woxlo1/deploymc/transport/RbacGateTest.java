@@ -71,6 +71,24 @@ class RbacGateTest {
   }
 
   @Test
+  void auditRoutesUseDedicatedReadAndExportPermissions() {
+    RbacGate all = new RbacGate(RbacTestSupport.permitAll());
+    assertTrue(all.authorize(request("GET", "/api/v1/audit", "", user(ACTOR))).allowed());
+    assertTrue(all.authorize(request("GET", "/api/v1/audit/verify", "", user(ACTOR))).allowed());
+    assertTrue(all.authorize(request("GET", "/api/v1/audit/export", "", user(ACTOR))).allowed());
+
+    RbacGate reader = new RbacGate(RbacTestSupport.permitting("audit.read"));
+    assertTrue(reader.authorize(request("GET", "/api/v1/audit", "", user(ACTOR))).allowed());
+    assertTrue(reader.authorize(request("GET", "/api/v1/audit/verify", "", user(ACTOR))).allowed());
+    assertDenied(reader.authorize(request("GET", "/api/v1/audit/export", "", user(ACTOR))));
+    assertDenied(reader.authorize(request("POST", "/api/v1/audit", "", user(ACTOR))));
+    assertDenied(reader.authorize(request("GET", "/api/v1/audit/unknown", "", user(ACTOR))));
+    assertDenied(
+        new RbacGate(RbacTestSupport.permitting("audit.export"))
+            .authorize(request("GET", "/api/v1/audit", "", user(ACTOR))));
+  }
+
+  @Test
   void routesWithoutExtraPermissionDoNotConsultTheCallerPolicy() {
     RbacGate denyAll = new RbacGate(RbacTestSupport.denyAll());
     AuthorizationDecision health = denyAll.authorize(request("GET", "/healthz", "", null));

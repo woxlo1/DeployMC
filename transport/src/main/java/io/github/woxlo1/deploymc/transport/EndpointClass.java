@@ -9,6 +9,7 @@ public enum EndpointClass {
   FILES("files"),
   VALIDATION("validation"),
   SNAPSHOTS("snapshots"),
+  AUDIT("audit"),
   METRICS("metrics"),
   WEBSOCKET("websocket"),
   STATIC("static"),
@@ -74,6 +75,9 @@ public enum EndpointClass {
     }
     if (startsWithSegment(clean, "/api/v1/snapshots")) {
       return SNAPSHOTS;
+    }
+    if (startsWithSegment(clean, "/api/v1/audit")) {
+      return AUDIT;
     }
     if ("/api/v1/metrics".equals(clean)) {
       return METRICS;
