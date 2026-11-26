@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Random;
+import java.security.SecureRandom;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** Deterministic fuzz coverage for the resolver, also used by the scheduled CI job. */
+/** Secure-random fuzz coverage for the resolver, also used by the scheduled CI job. */
 class SandboxFuzzTest {
 
   private static final char[] ALPHABET =
@@ -22,10 +22,10 @@ class SandboxFuzzTest {
   @TempDir Path tempDir;
 
   @Test
-  void deterministicFuzzNeverEscapesRoot() throws Exception {
+  void fuzzNeverEscapesRoot() throws Exception {
     Path root = Files.createDirectories(tempDir.resolve("plugins"));
     SandboxResolver resolver = new SandboxResolver(root);
-    Random random = new Random(20261120L);
+    SecureRandom random = new SecureRandom();
     int accepted = 0;
 
     for (int i = 0; i < 5000; i++) {
@@ -50,7 +50,7 @@ class SandboxFuzzTest {
     assertTrue(accepted > 0, "Fuzz corpus should contain some acceptable paths");
   }
 
-  private static String randomString(Random random) {
+  private static String randomString(SecureRandom random) {
     int length = random.nextInt(80);
     StringBuilder builder = new StringBuilder(length);
     for (int i = 0; i < length; i++) {

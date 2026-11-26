@@ -7,16 +7,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.function.UnaryOperator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** Deterministic property test: every generated invalid configuration must fail closed. */
+/** Secure-random property test: every generated invalid configuration must fail closed. */
 class ConfigFailClosedPropertyTest {
 
   @TempDir Path tempDir;
@@ -26,7 +26,7 @@ class ConfigFailClosedPropertyTest {
     ConfigSchema schema = ConfigSchema.load();
     String template = DefaultConfigWriter.template();
     List<UnaryOperator<String>> mutations = mutations();
-    Random random = new Random(20261118L);
+    SecureRandom random = new SecureRandom();
     Path file = tempDir.resolve("random-invalid.yml");
 
     for (int attempt = 0; attempt < 250; attempt++) {
