@@ -165,8 +165,8 @@ verifier, the merged tree has 516 Java tests (0 failures, 0 errors, 1 skipped), 
 report `PASS`, and required PR checks plus post-merge CI/CodeQL/Scorecard passed. Evidence is
 server-free, embedded-socket, and localhost-mock-JWKS only; no running server, Bukkit mock, browser,
 E2E run, full integration suite, or in-game command exercised it. Real Cloudflare compatibility and
-plan-specific guidance remain unclaimed until D-002 is resolved, and RBAC is unchanged: Cloudflare
-JWT identities are not admin-equivalent, so the REST doctor route remains host-only.
+plan-specific guidance remain unclaimed until D-002 is resolved. WP-3.4 RBAC still does not make
+Cloudflare JWT identities admin-equivalent, so the REST doctor route remains host-only.
 
 WP-3.3 full API tokens and one-time-token modes merged its normative contract in
 [PR #228](https://github.com/woxlo1/DeployMC/pull/228) at `72bddd2`, its core lifecycle in
@@ -177,12 +177,28 @@ records support optional declaration-order scopes, revocation before expiry, per
 fail-closed metadata writes. `local-onetime` holds one in-memory token, prints it once, requires a
 loopback bind unless explicitly overridden, bounds lifetime and attempts, burns after repeated wrong
 credentials, and has no fallback between auth modes. Console create/revoke/list commands clamp TTL,
-validate scopes, complete tab input, and never print a digest or raw exception. Scopes are stored and
-displayed but not enforced until WP-3.4 RBAC. All 18 required checks and post-merge CI/CodeQL/Scorecard
-passed for each stage; `node tools/build/verify-all.cjs` reported all seven toolchains `PASS`, and the
-merged tree has 544 Java tests (0 failures, 0 errors, 1 skipped). Evidence is server-free,
-embedded-socket, and server-free command-output only; no running server, Bukkit mock, browser, E2E
-run, full integration suite, or in-game command exercised WP-3.3. D-001 and D-002 are unchanged.
+validate scopes, complete tab input, and never print a digest or raw exception. Scopes were stored and
+displayed but not enforced until WP-3.4 RBAC, which now narrows them to the token owner's effective
+permissions. All 18 required checks and post-merge CI/CodeQL/Scorecard passed for each stage;
+`node tools/build/verify-all.cjs` reported all seven toolchains `PASS`, and the merged tree has 544
+Java tests (0 failures, 0 errors, 1 skipped). Evidence is server-free, embedded-socket, and
+server-free command-output only; no running server, Bukkit mock, browser, E2E run, full integration
+suite, or in-game command exercised WP-3.3. D-001 and D-002 are unchanged.
+
+WP-3.4 RBAC merged its normative contract in [PR #232](https://github.com/woxlo1/DeployMC/pull/232)
+at `4bd654b` and its core, transport, doctor, Bukkit, and Web implementation in
+[PR #233](https://github.com/woxlo1/DeployMC/pull/233) at `ca1d070`. PR #233 was rebase-merged with
+nine Conventional Commits preserved on `main`, all 18 required checks passed after the compatibility
+fixture was given an owner-scoped `server.read` role, and post-merge CI/CodeQL/Scorecard passed. The
+merged tree has 599 Java tests (0 failures, 0 errors, 1 skipped), all seven toolchains report `PASS`,
+and CI Paper smoke passed on Ubuntu and Windows. RBAC uses a closed 23-permission registry, immutable
+policy snapshots with sandbox-resolved path scopes, owner-derived token scope narrowing, a reserved
+`local-onetime` identity, deny-all on invalid reload, a centralized REST/WebSocket gate with
+authenticated `/api/v1/me`, WebSocket close `4403` on permission loss, a redacted 15th doctor check,
+and console `token create --owner`. No token is implicitly admin-equivalent. Local evidence is
+server-free and embedded-socket only; no local running server, Bukkit mock, browser, E2E run, full
+integration suite, or in-game command exercised WP-3.4. Issue #59 closes through this final evidence
+PR. Audit record generation remains WP-3.5 work; D-001 and D-002 are unchanged.
 
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
