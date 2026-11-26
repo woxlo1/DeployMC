@@ -3,6 +3,7 @@ package io.github.woxlo1.deploymc.core.rbac;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.woxlo1.deploymc.core.auth.Identity;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,19 +11,17 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** Deterministic seeded property checks; no external property-testing dependency. */
+/** Secure-random property checks; no external property-testing dependency. */
 class RbacTokenSubsetPropertyTest {
 
-  private static final long SEED = 20261125L;
   private static final int CASES = 500;
 
   @Test
   void tokenEffectivePermissionsNeverExceedOwnerEffectivePermissions() {
-    Random random = new Random(SEED);
+    SecureRandom random = new SecureRandom();
     for (int index = 0; index < CASES; index++) {
       int roleCount = 1 + random.nextInt(5);
       Map<String, RolePolicy> roles = new LinkedHashMap<String, RolePolicy>();
