@@ -293,9 +293,9 @@ paths:
       summary: Get aggregate operational metrics
       description: |
         Returns Prometheus text-format metrics. The route exists only when
-        `observability.metrics.enabled` is true. It is always behind the authentication gate and the
-        configured permission identifier, which must be in the closed RBAC registry. Until the
-        RBAC evaluator exists, only admin-equivalent identities pass.
+        `observability.metrics.enabled` is true. It is always behind the authentication gate and
+        requires the configured `server.read` permission from the closed RBAC registry; no implicit
+        admin equivalence exists.
         Metrics use fixed names and closed low-cardinality label sets; no identity, path, hostname,
         or IP address is exported.
       security:
@@ -1209,9 +1209,9 @@ components:
 
         Tokens are high-entropy, shown once by `/deploymc token create`, and stored
         only as a SHA-256 hash under `plugins/DeployMC/tokens.d`. Expiry, revocation,
-        and last-used tracking are part of the WP-3.3 contract. `scopes` are stored
-        and propagated but are not enforced until RBAC: every valid token remains
-        admin-equivalent until then. The separate `local-onetime` mode prints one
+        and last-used tracking are part of the WP-3.3 contract. `scopes` narrow the
+        effective permissions of the token's `owner` and can never grant more. An absent
+        owner uses `default-role`. The separate `local-onetime` mode prints one
         short-lived console token and never persists it.
     sessionCookie:
       type: apiKey

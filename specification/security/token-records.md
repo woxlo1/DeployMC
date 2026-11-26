@@ -122,9 +122,9 @@ redemption. A wrong or malformed credential consumes one attempt; reaching
 `auth.local-onetime.max-attempts` (1-20, default 5) burns it. A burned or redeemed
 token returns `auth.one-time-consumed`; an expired one returns
 `auth.one-time-expired`. The existing per-source authentication-failure rate limit
-still applies. One-time identities use method `local-onetime`, carry no token value in
-claims, and are admin-equivalent only because this is an explicitly local testing
-mode.
+still applies. One-time identities use the reserved identity `local-onetime`, carry no token
+value in claims, and are evaluated by RBAC like any other identity; they are not
+admin-equivalent.
 
 Host API tokens are not provisionable in `cloudflare` or `local-onetime` mode. The
 one-time credential is not accepted in `token` or `cloudflare` mode. There is no

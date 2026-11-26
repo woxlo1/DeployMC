@@ -663,7 +663,7 @@
               "type": "string",
               "enum": ["server.read"],
               "default": "server.read",
-              "description": "Permission identifier required by the metrics endpoint. It must be in the closed RBAC registry; until the evaluator exists only admin-equivalent identities pass.",
+              "description": "Permission identifier required by the metrics endpoint. It is fixed to server.read in the closed RBAC registry; callers need that grant and no implicit admin equivalence exists.",
               "x-deploymc-hot-reload": false
             }
           }

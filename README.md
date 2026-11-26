@@ -22,7 +22,7 @@ English · [日本語](docs/i18n/README.ja.md)
 | Architecture baseline and architecture decision records | Drafted (Phase 0) |
 | CI workflows and branch protection | Working on `main` |
 | Specifications (REST, WebSocket, configuration, audit, deployment) | Normative drafts; implemented subsets are marked in `specification/README.md` |
-| Authentication foundation | Host-provisioned bearer tokens with a fail-closed HTTP/WebSocket gate; no RBAC yet |
+| Authentication foundation | Host-provisioned bearer tokens with a fail-closed HTTP/WebSocket gate and RBAC over a closed 23-permission registry; no implicit admin equivalence |
 | Authenticated file and validation REST API | Sandboxed list/read/write/move/delete/upload/validate routes with Problem Details, ETag/`If-Match`, ranges, and cursor pagination; server-free adapter tests pass, but no running-server smoke test or UI consumes them yet |
 | Authenticated snapshot REST API | History listing, metadata, exact content with ranges, bounded diff, reversible restore, and retention prune; server-free adapter tests pass, but no running-server smoke test or UI consumes them yet |
 | Plugin runtime, API, Web UI, CLI, SDKs | A pinned Paper smoke run observes plugin enable, authenticated `/api/v1/server`, library isolation, and clean shutdown; no support tier or product feature set is claimed yet |
@@ -30,9 +30,9 @@ English · [日本語](docs/i18n/README.ja.md)
 A more detailed, always current status is maintained in
 [`docs/development/implementation-status.md`](docs/development/implementation-status.md).
 
-> **Token permissions:** until 0.4.0 every valid token is **admin-equivalent**, including for the
-> file, validation, and snapshot APIs. Tokens are not scoped by role or path yet. Do not share a
-> token between principals that need different permissions. See
+> **Token permissions:** tokens are evaluated through their configured `owner` and stored scopes.
+> Unknown or absent owners use `default-role: none`; scopes only narrow the owner's permissions and
+> never grant more. Do not share a token between principals that need different permissions. See
 > [token records](specification/security/token-records.md).
 
 ## Why DeployMC

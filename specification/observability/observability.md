@@ -88,9 +88,9 @@ different status from the stored checks.
 ## 4. Metrics
 
 `GET /api/v1/metrics` is opt-in through `observability.metrics.enabled`. It is always behind the
-normal bearer/cloudflare gate. The configured `observability.metrics.permission` is a stable
-identifier from the closed RBAC registry. Once the evaluator exists it is checked through RBAC;
-until then only admin-equivalent identities pass and the behavior is documented as temporary.
+normal bearer/cloudflare gate. The configured `observability.metrics.permission` is fixed to
+`server.read`, a stable identifier from the closed RBAC registry. The evaluator enforces that
+grant on every request; no identity is implicitly admin-equivalent.
 
 The response is Prometheus text format `0.0.4` with content type
 `text/plain; version=0.0.4; charset=utf-8`. Rendered names and labels are fixed at build time. The
