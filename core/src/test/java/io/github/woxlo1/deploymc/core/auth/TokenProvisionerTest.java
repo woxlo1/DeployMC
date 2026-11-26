@@ -58,11 +58,11 @@ class TokenProvisionerTest {
 
     CreatedToken created =
         provisioner.create(
-            "scoped ci", Duration.ofDays(1), Arrays.asList("files.read", "server.status"));
+            "scoped ci", Duration.ofDays(1), Arrays.asList("files.read", "server.read"));
 
-    assertEquals(Arrays.asList("files.read", "server.status"), created.record().scopes());
+    assertEquals(Arrays.asList("files.read", "server.read"), created.record().scopes());
     assertEquals(
-        Arrays.asList("files.read", "server.status"),
+        Arrays.asList("files.read", "server.read"),
         TokenStore.load(tempDir.resolve("tokens.d")).records().get(0).scopes());
     assertThrows(
         IllegalArgumentException.class,

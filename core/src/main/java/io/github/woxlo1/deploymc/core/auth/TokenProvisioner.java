@@ -32,7 +32,13 @@ public final class TokenProvisioner {
 
   /** Creates a token with the requested lifetime. A null or zero lifetime means no expiry. */
   public CreatedToken create(String label, Duration lifetime) throws TokenStoreException {
-    return create(label, lifetime, Collections.<String>emptyList());
+    return create(label, null, lifetime, Collections.<String>emptyList());
+  }
+
+  /** Creates a token with an explicit owner and the requested lifetime. */
+  public CreatedToken create(String label, String owner, Duration lifetime)
+      throws TokenStoreException {
+    return create(label, owner, lifetime, Collections.<String>emptyList());
   }
 
   /**
@@ -41,6 +47,18 @@ public final class TokenProvisioner {
    */
   public CreatedToken create(String label, Duration lifetime, Collection<String> scopes)
       throws TokenStoreException {
+    return create(label, null, lifetime, scopes);
+  }
+
+  /**
+   * Creates a token with an explicit owner and stored scopes. The owner is a verified identity key
+   * used for RBAC role lookup and is never inferred from the label. Scope validation rejects
+   * anything outside the closed registry; enforcement belongs to the RBAC engine.
+   */
+  public CreatedToken create(
+      String label, String owner, Duration lifetime, Collection<String> scopes)
+      throws TokenStoreException {
+    String safeOwner = TokenRecord.validateOwner(owner);
     String safeLabel = cleanLabel(label);
     byte[] secret = new byte[SECRET_BYTES];
     random.nextBytes(secret);
@@ -53,7 +71,7 @@ public final class TokenProvisioner {
       expiresAt = clock.instant().plus(lifetime);
     }
     TokenRecord record =
-        new TokenRecord(id, safeLabel, sha256(token), expiresAt, scopes, null, null);
+        new TokenRecord(id, safeLabel, safeOwner, sha256(token), expiresAt, scopes, null, null);
     store.write(record);
     return new CreatedToken(record, token);
   }
