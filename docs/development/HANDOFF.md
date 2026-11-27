@@ -1,11 +1,29 @@
 # Handoff
 
-Last updated: 2026-11-26. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-27. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
 
-- Issue #59 WP-3.4 RBAC engine is complete with this final evidence PR. PR #232 merged the normative
+- Issue #60 WP-3.5 audit log is complete with this final evidence PR. PR #235 merged the normative
+  contract at `f4f89a8`; PR #236 merged the Java 8 writer, reader, bounded query, verifier, rotation,
+  retention, and deterministic tests at `d6fd2b8`; PR #237 merged the authenticated query/export/
+  verify routes, mutation recorder, localized transport messages, and RBAC permissions at `e6538f7`;
+  PR #238 replaced generated
+  test randomness with `SecureRandom` at `f085782`; and PR #239 was rebase-merged at `f500486` on
+  `2026-11-27T07:42:55Z` with four Conventional Commits preserved. Audit v1 commits `pending` before
+  a privileged mutation and then `success` or `failed`, uses JCS canonical JSON, `sha256:` chain
+  hashes, an integer-only signed 64-bit number profile, a sensitive-detail guard, rotation
+  continuations, anchor-covered retention, and daily plus clean-shutdown anchors. The Bukkit host
+  opens and closes the store, wraps file/snapshot mutations and automatic snapshots, and records
+  console dispatch, reload, token create/revoke, and `deploymc audit verify`. The command requires
+  `deploymc.command.audit`, and `actor.ip` is always null. All required PR checks passed; PR #239's
+  post-merge CI, CodeQL, and Scorecard runs succeeded. The merged tree reports 642 Java tests with 0
+  failures, 0 errors, and 1 skipped, with all seven toolchains passing. Evidence is server-free,
+  embedded-socket, generated-descriptor, and handler-level only; no running server, Bukkit mock,
+  browser, E2E, full integration suite, or in-game command exercised the audit path. No Web UI
+  consumes the audit routes, and there is no off-host anchor. D-001 and D-002 are unchanged.
+- Issue #59 WP-3.4 RBAC engine is complete with its final evidence PR. PR #232 merged the normative
   contract at `4bd654b`; PR #233 was rebase-merged at `ca1d070` on `2026-11-26T08:05:25Z` with nine
   Conventional Commits preserved on `main`. WP-3.4 adds a closed 23-permission registry, immutable
   policy snapshots with sandbox-resolved path scopes, owner-derived token scope narrowing, a reserved
@@ -18,7 +36,7 @@ Last updated: 2026-11-26. Read [AGENTS.md](../../AGENTS.md) first, then this fil
   toolchains passing. Local evidence is server-free, embedded-socket, and command-output only; CI
   Paper smoke ran on Ubuntu and Windows, but no local running server, Bukkit mock, browser, E2E,
   full integration suite, or in-game command exercised WP-3.4. Issue #59 was reopened after an
-  unintended auto-close at the implementation merge and closes with this final evidence PR.
+  unintended auto-close at the implementation merge and closed with its final evidence PR.
 - Issue #58 WP-3.3 token and one-time-token modes is complete. PR #228 merged the normative contract
   at `72bddd2`, PR #229 merged the core token lifecycle and auth enforcement at `8056492`, and PR
   #230 rebase-merged the host and console wiring at `49c544e` with four Conventional Commits. Tokens
@@ -495,10 +513,11 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- This final evidence pull request for issue #56 is not yet merged. It carries `Closes #56`; the issue
-  closes when the PR merges. PR #222 implementation evidence, Japanese verification and post-merge
-  comments, and passing CI/CodeQL/Scorecard runs are recorded in the status pages. No existing
-  Dependabot PR was changed.
+- This final evidence pull request for issue #60 is not yet merged. It carries `Closes #60`; the issue
+  closes when the PR merges. PRs #235-#239 implementation evidence, Japanese verification and
+  post-merge comments, and passing PR checks and post-merge CI/CodeQL/Scorecard runs are recorded in
+  the status pages. The `docs/audit-60-final-evidence` branch is temporary for this evidence update.
+  No Dependabot PR was changed by this work.
 - No issue #121 PRs remain in flight. PR #215 was rebase-merged at `267d690`; Japanese verification
   and post-merge evidence comments are recorded. All required checks and post-merge CI/CodeQL/
   Scorecard passed, and issue #121 closed at `2026-11-24T07:55:44Z`. No dependency PR was merged or
@@ -527,18 +546,22 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   `spec/token-58-contract`, `feature/token-58-core`, and `feature/token-58-host` branches were
   retained until their PRs merged. The `docs/token-58-evidence` branch was temporary for the WP-3.3
   final evidence update. The `feature/rbac-59-engine` branch was retained until PR #233 merged;
-  `feature/rbac-59-final-evidence` is temporary for this final evidence update. Evidence is recorded
-  in the status pages and pull-request comments.
+  `feature/rbac-59-final-evidence` was temporary for that final evidence update.
+  `spec/audit-60-contract` and `feature/audit-60-core` remain after PRs #235 and #236;
+  `feature/audit-60-transport`, `security/secure-random-tests`, and `feature/audit-60-host` were
+  deleted after their merges. `docs/audit-60-final-evidence` is temporary for this final evidence
+  update. Evidence is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 63 immediately before this final evidence PR merges on 2026-11-26; issue #59 closes
-  on merge, leaving 62. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 62 immediately before this final evidence PR merges on 2026-11-27; issue #60 closes
+  on merge, leaving 61. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks local implementation of WP-3.5 audit record writing. WP-3.2, WP-3.3, and WP-3.4 are
+- Nothing blocks local implementation of WP-3.6 Web-facing protections. WP-3.2 through WP-3.5 are
   complete; D-002 must still be resolved before real Cloudflare Access verification or plan-specific
-  guide claims. Stored token scopes are now enforced as a narrowing filter by WP-3.4 RBAC.
+  guide claims. Stored token scopes are enforced as a narrowing filter by WP-3.4 RBAC, and WP-3.5
+  records privileged mutations and denials without an off-host anchor.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
   branches #23-#39.
@@ -546,8 +569,8 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 ## Exact next steps
 
 1. Merge this final evidence PR, wait for the required post-merge workflows, post the Japanese
-   post-merge evidence comment, and confirm issue #59 is closed as completed.
-2. Start WP-3.5 (issue #60), audit record writing. Do not claim real Cloudflare compatibility until
+   post-merge evidence comment, and confirm issue #60 is closed as completed.
+2. Start WP-3.6 (issue #61), Web-facing protections. Do not claim real Cloudflare compatibility until
    D-002 is resolved. Later work may be prepared in parallel but must not merge ahead of an earlier
    open issue without owner approval.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each

@@ -1,10 +1,11 @@
 # Audit Log Format
 
-> **Status: normative contract for WP-3.5 (2026-11-26).** The writer, verifier, and REST
-> routes described here are not implemented until the WP-3.5 implementation is merged.
-> This document defines the record format, hash chain, rotation, verification, failure
-> policy, and API query shape. Where this document and the master specification disagree,
-> this document wins and the master specification is corrected.
+> **Status: implemented and merged for WP-3.5 (2026-11-27).** The normative contract, Java 8
+> writer/verifier, authenticated REST routes, and Bukkit host/console wiring are merged. Off-host
+> anchoring is not implemented, and no running server, browser, E2E run, full integration suite, or
+> in-game command exercised this path. This document defines the record format, hash chain, rotation,
+> verification, failure policy, and API query shape. Where this document and the master
+> specification disagree, this document wins and the master specification is corrected.
 
 ## Scope
 

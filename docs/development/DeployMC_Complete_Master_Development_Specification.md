@@ -1538,7 +1538,7 @@ Each WP lists: **Goal**, **Tasks**, **Deliverables**, **Verification**. Treat th
 
 ### WP-3.4 RBAC engine
 - Tasks: role/permission model per 9.5 and 24.2; path-scope evaluation via the sandbox resolver; deny-overrides; effective-permission computation for `/me`; config validation (unknown permission names are errors); explain-mode used by `doctor` and tests ("why was this denied?"); property tests ensuring a token can never exceed its owner's permissions.
-- Normative contract: `specification/security/rbac.md`. The closed registry has 23 permissions; token scopes narrow the owner's effective permissions; `local-onetime` is an ordinary RBAC identity; invalid reloads deny all; WebSocket permission loss closes with `4403`. Audit record generation remains WP-3.5.
+- Normative contract: `specification/security/rbac.md`. The closed registry has 23 permissions; token scopes narrow the owner's effective permissions; `local-onetime` is an ordinary RBAC identity; invalid reloads deny all; WebSocket permission loss closes with `4403`. Audit record generation is delivered by WP-3.5.
 
 ### WP-3.5 Audit log
 - Tasks: format per 24.3; append-only writer with batching and fsync policy; hash chain; rotation; reader/verifier; query API; export; redaction guarantees verified by tests; behavior on disk-full (fail the operation or enter degraded mode per a documented policy; never silently drop audit records for privileged operations). Normative contract: `specification/audit/audit-log-format.md`. The selected v1 policy is fail-closed: a `pending` record is committed before a privileged mutation, and a write failure rejects the operation.

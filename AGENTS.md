@@ -197,8 +197,28 @@ policy snapshots with sandbox-resolved path scopes, owner-derived token scope na
 authenticated `/api/v1/me`, WebSocket close `4403` on permission loss, a redacted 15th doctor check,
 and console `token create --owner`. No token is implicitly admin-equivalent. Local evidence is
 server-free and embedded-socket only; no local running server, Bukkit mock, browser, E2E run, full
-integration suite, or in-game command exercised WP-3.4. Issue #59 closes through this final evidence
-PR. Audit record generation remains WP-3.5 work; D-001 and D-002 are unchanged.
+integration suite, or in-game command exercised WP-3.4. Issue #59 closed through its final evidence
+PR; D-001 and D-002 are unchanged.
+
+WP-3.5 audit log merged its normative contract in [PR #235](https://github.com/woxlo1/DeployMC/pull/235)
+at `f4f89a8`, its Java 8 core writer/verifier in [PR #236](https://github.com/woxlo1/DeployMC/pull/236)
+at `d6fd2b8`, its authenticated REST handlers and mutation recorder in
+[PR #237](https://github.com/woxlo1/DeployMC/pull/237) at `e6538f7`, its SecureRandom fixture fix in
+[PR #238](https://github.com/woxlo1/DeployMC/pull/238) at `f085782`, and its Bukkit lifecycle, REST,
+and console wiring in [PR #239](https://github.com/woxlo1/DeployMC/pull/239) at `f500486`, with issue
+#60 closing through this final evidence PR. PR #239 was rebase-merged with four Conventional Commits
+preserved on `main`. All required PR checks and post-merge CI/CodeQL/Scorecard passed; the merged tree
+has 642 Java tests (0 failures, 0 errors, 1 skipped), and all seven toolchains report `PASS`. Audit
+v1 commits `pending` before a privileged mutation and then `success` or `failed`; it uses JCS canonical
+JSON, `sha256:` chain hashes, an integer-only signed 64-bit number profile, a sensitive-detail guard,
+fail-closed writes, rotation continuations, anchor-covered retention, and daily plus clean-shutdown
+anchors. Exact authenticated routes serve query, export, and verify under `audit.read`/`audit.export`;
+`deploymc audit verify` requires `deploymc.command.audit` and always reports the missing off-host
+anchor. `actor.ip` is null because no unverified proxy header is accepted. Cloudflare JWT identities
+remain non-admin-equivalent. Local evidence is server-free, embedded-socket, generated-descriptor, and
+handler-level only; no running server, Bukkit mock, browser, E2E run, full integration suite, or
+in-game command exercised the audit path, and no Web UI consumes the audit routes. D-001 and D-002 are
+unchanged.
 
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
