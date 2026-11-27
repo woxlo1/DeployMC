@@ -35,6 +35,22 @@ class RbacPolicyConfigTest {
   }
 
   @Test
+  void readsRoleRateLimitFromHostConfiguration() throws Exception {
+    String configured =
+        roles("none")
+            .replace(
+                "      - files.read\n",
+                "      - files.read\n    limits:\n      rate-limit-per-minute: 12\n");
+    ConfigView view = load(configured);
+
+    RbacPolicy policy = RbacPolicy.fromConfig(view);
+    RbacEvaluator evaluator = new RbacEvaluator(policy, null);
+
+    assertTrue(policy.valid());
+    assertEquals(12, evaluator.identityRateLimitPerMinute(owner(), 300));
+  }
+
+  @Test
   void invalidReloadDenyAllReplacesThePreviousSnapshot() throws Exception {
     ConfigView valid = load(roles("none"));
     RbacPolicyManager manager = RbacPolicyManager.from(valid);
