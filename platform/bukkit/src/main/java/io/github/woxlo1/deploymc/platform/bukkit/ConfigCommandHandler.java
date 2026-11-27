@@ -1,5 +1,11 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
+import io.github.woxlo1.deploymc.core.audit.AuditActions;
+import io.github.woxlo1.deploymc.core.audit.AuditException;
+import io.github.woxlo1.deploymc.core.audit.AuditRecord;
+import io.github.woxlo1.deploymc.core.audit.AuditResult;
+import io.github.woxlo1.deploymc.core.audit.AuditStore;
+import io.github.woxlo1.deploymc.core.audit.AuditVerificationReport;
 import io.github.woxlo1.deploymc.core.auth.CreatedToken;
 import io.github.woxlo1.deploymc.core.auth.TokenRecord;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
@@ -12,6 +18,7 @@ import io.github.woxlo1.deploymc.core.config.ReloadReport;
 import io.github.woxlo1.deploymc.core.doctor.DoctorReport;
 import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
+import io.github.woxlo1.deploymc.transport.AuditRecorder;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -29,7 +36,7 @@ import java.util.Optional;
 public final class ConfigCommandHandler {
 
   private static final List<String> SUBCOMMANDS =
-      Collections.unmodifiableList(Arrays.asList("status", "reload", "doctor", "token"));
+      Collections.unmodifiableList(Arrays.asList("status", "reload", "doctor", "token", "audit"));
   private static final List<String> TOKEN_ACTIONS =
       Collections.unmodifiableList(Arrays.asList("create", "revoke", "list"));
   private static final int MAX_TOKEN_ID_LENGTH = 64;
@@ -39,15 +46,17 @@ public final class ConfigCommandHandler {
   private final AuthenticationRuntime authentication;
   private final DoctorRuntime doctor;
   private final RbacPolicyManager policies;
+  private final AuditRecorder recorder;
+  private final AuditStore auditStore;
   private final Clock clock;
 
   public ConfigCommandHandler(ConfigManager manager, StartupPlan plan) {
-    this(manager, plan, null, null, null);
+    this(manager, plan, null, null, null, null, null);
   }
 
   public ConfigCommandHandler(
       ConfigManager manager, StartupPlan plan, AuthenticationRuntime authentication) {
-    this(manager, plan, authentication, null, null);
+    this(manager, plan, authentication, null, null, null, null);
   }
 
   public ConfigCommandHandler(
@@ -55,7 +64,7 @@ public final class ConfigCommandHandler {
       StartupPlan plan,
       AuthenticationRuntime authentication,
       DoctorRuntime doctor) {
-    this(manager, plan, authentication, doctor, null);
+    this(manager, plan, authentication, doctor, null, null, null);
   }
 
   public ConfigCommandHandler(
@@ -64,6 +73,17 @@ public final class ConfigCommandHandler {
       AuthenticationRuntime authentication,
       DoctorRuntime doctor,
       RbacPolicyManager policies) {
+    this(manager, plan, authentication, doctor, policies, null, null);
+  }
+
+  public ConfigCommandHandler(
+      ConfigManager manager,
+      StartupPlan plan,
+      AuthenticationRuntime authentication,
+      DoctorRuntime doctor,
+      RbacPolicyManager policies,
+      AuditRecorder recorder,
+      AuditStore auditStore) {
     if (manager == null) {
       throw new IllegalArgumentException("manager");
     }
@@ -75,30 +95,58 @@ public final class ConfigCommandHandler {
     this.authentication = authentication;
     this.doctor = doctor;
     this.policies = policies;
+    this.recorder = recorder;
+    this.auditStore = auditStore;
     this.clock = Clock.systemUTC();
   }
 
   /** Handles one invocation. Always returns {@code true} so Bukkit does not show generic usage. */
   public boolean handle(CommandOutput output, String[] arguments) {
     LocalizedMessages messages = messages(output);
+    String[] args = arguments == null ? new String[0] : arguments;
+    Dispatch dispatch = new Dispatch();
+    AuditRecord pending = beginDispatch(args, dispatch, output, messages);
+    if (recorder != null && pending == null) {
+      return true;
+    }
+    try {
+      handleDispatch(output, args, messages, dispatch);
+      completeDispatch(pending, dispatch, output, messages);
+      return true;
+    } catch (RuntimeException failure) {
+      dispatch.fail("handler-exception");
+      completeDispatch(pending, dispatch, output, messages);
+      throw failure;
+    }
+  }
+
+  private void handleDispatch(
+      CommandOutput output, String[] args, LocalizedMessages messages, Dispatch dispatch) {
     if (!output.hasPermission(CommandPermissions.ROOT)) {
+      dispatch.deny("root-denied");
       output.send(
           messages.format(
               MessageKeys.COMMAND_PERMISSION_DENIED,
               values("permission", CommandPermissions.ROOT)));
-      return true;
+      return;
     }
-    String[] args = arguments == null ? new String[0] : arguments;
-    if (args.length == 0 || !SUBCOMMANDS.contains(args[0])) {
+    if (args.length == 0) {
+      dispatch.fail("missing-subcommand");
       output.send(messages.format(MessageKeys.COMMAND_USAGE));
-      return true;
+      return;
     }
     String subcommand = args[0];
+    if (!SUBCOMMANDS.contains(subcommand)) {
+      dispatch.fail("unknown-subcommand");
+      output.send(messages.format(MessageKeys.COMMAND_USAGE));
+      return;
+    }
     String permission = permissionFor(subcommand);
     if (!output.hasPermission(permission)) {
+      dispatch.deny("subcommand-denied");
       output.send(
           messages.format(MessageKeys.COMMAND_PERMISSION_DENIED, values("permission", permission)));
-      return true;
+      return;
     }
     if ("status".equals(subcommand)) {
       status(output, messages);
@@ -106,10 +154,57 @@ public final class ConfigCommandHandler {
       reload(output, messages);
     } else if ("doctor".equals(subcommand)) {
       doctor(output, messages);
+    } else if ("audit".equals(subcommand)) {
+      audit(output, messages, args, dispatch);
     } else {
       token(output, messages, args);
     }
-    return true;
+  }
+
+  private AuditRecord beginDispatch(
+      String[] args, Dispatch dispatch, CommandOutput output, LocalizedMessages messages) {
+    if (recorder == null) {
+      return null;
+    }
+    try {
+      return recorder.beginSystem(
+          AuditActions.CONSOLE_COMMAND, null, dispatchDetails(args, dispatch));
+    } catch (AuditException failure) {
+      reportAuditFailure(output, messages);
+      return null;
+    }
+  }
+
+  private void completeDispatch(
+      AuditRecord pending, Dispatch dispatch, CommandOutput output, LocalizedMessages messages) {
+    if (pending == null) {
+      return;
+    }
+    try {
+      recorder.complete(pending, dispatch.result, dispatch.reason);
+    } catch (AuditException failure) {
+      reportAuditFailure(output, messages);
+    }
+  }
+
+  private static Map<String, Object> dispatchDetails(String[] args, Dispatch dispatch) {
+    Map<String, Object> details = new LinkedHashMap<String, Object>();
+    if (args.length > 0) {
+      dispatch.subcommand = safeIdentifier(args[0]);
+      details.put("subcommand", dispatch.subcommand);
+    }
+    if (args.length > 1 && "token".equals(dispatch.subcommand)) {
+      dispatch.operation = safeIdentifier(args[1]);
+      details.put("operation", dispatch.operation);
+    }
+    return details;
+  }
+
+  private static String safeIdentifier(String raw) {
+    if (raw == null || !raw.matches("[a-z][a-z0-9-]{0,63}")) {
+      return "invalid";
+    }
+    return raw;
   }
 
   /** Returns permitted subcommands and token actions for tab completion. */
@@ -211,6 +306,12 @@ public final class ConfigCommandHandler {
   }
 
   private void reload(CommandOutput output, LocalizedMessages messages) {
+    AuditRecord pending =
+        beginAction(
+            AuditActions.CONFIG_RELOAD, Collections.<String, Object>emptyMap(), output, messages);
+    if (recorder != null && pending == null) {
+      return;
+    }
     try {
       ReloadReport report = manager.reload();
       if (policies != null) {
@@ -236,6 +337,10 @@ public final class ConfigCommandHandler {
                 MessageKeys.COMMAND_RELOAD_WARNINGS,
                 values("count", Integer.toString(report.warnings().size()))));
       }
+      Map<String, Object> details = new LinkedHashMap<String, Object>();
+      details.put("changed-paths", boundedPaths(report.changedPaths()));
+      details.put("restart-required-paths", boundedPaths(report.restartRequiredPaths()));
+      completeAction(pending, AuditResult.SUCCESS, null, details, output, messages);
     } catch (ConfigException exception) {
       if (policies != null) {
         policies.denyAll();
@@ -244,6 +349,10 @@ public final class ConfigCommandHandler {
           messages.format(
               MessageKeys.COMMAND_RELOAD_FAILED,
               values("error", String.valueOf(exception.getMessage()))));
+      completeAction(pending, AuditResult.FAILED, "reload-failed", null, output, messages);
+    } catch (RuntimeException failure) {
+      completeAction(pending, AuditResult.FAILED, "handler-exception", null, output, messages);
+      throw failure;
     }
   }
 
@@ -256,6 +365,64 @@ public final class ConfigCommandHandler {
     DoctorReport report = doctor.run();
     for (String line : report.renderHuman(messages.locale())) {
       output.send(line);
+    }
+  }
+
+  private void audit(
+      CommandOutput output, LocalizedMessages messages, String[] args, Dispatch dispatch) {
+    if (args.length < 2 || !"verify".equals(args[1])) {
+      dispatch.fail("invalid-arguments");
+      output.send(messages.format(MessageKeys.COMMAND_AUDIT_USAGE));
+      return;
+    }
+    if (auditStore == null) {
+      dispatch.fail("audit-store-unavailable");
+      output.send(messages.format(MessageKeys.COMMAND_UNAVAILABLE));
+      return;
+    }
+    try {
+      AuditVerificationReport report = auditStore.verify();
+      if (!report.ok()) {
+        dispatch.fail("verification-failed");
+      }
+      output.send(messages.format(MessageKeys.COMMAND_AUDIT_VERIFY_TITLE));
+      output.send(
+          messages.format(
+              report.ok()
+                  ? MessageKeys.COMMAND_AUDIT_VERIFY_OK
+                  : MessageKeys.COMMAND_AUDIT_VERIFY_FAILED));
+      output.send(
+          messages.format(
+              MessageKeys.COMMAND_AUDIT_VERIFY_COUNTS,
+              values(
+                  "records",
+                  Long.toString(report.recordsChecked()),
+                  "lastSeq",
+                  Long.toString(report.lastSeq()),
+                  "warnings",
+                  Integer.toString(report.warnings().size()))));
+      if (report.firstFailure() != null) {
+        output.send(
+            messages.format(
+                MessageKeys.COMMAND_AUDIT_VERIFY_FAILURE,
+                values(
+                    "code",
+                    report.firstFailure().code(),
+                    "line",
+                    Integer.toString(report.firstFailure().line()),
+                    "seq",
+                    Long.toString(report.firstFailure().seq()))));
+      }
+      for (String limitation : report.limitations()) {
+        output.send(
+            messages.format(
+                MessageKeys.COMMAND_AUDIT_VERIFY_LIMITATION, values("code", limitation)));
+      }
+    } catch (AuditException failure) {
+      dispatch.fail("verification-error");
+      output.send(
+          messages.format(
+              MessageKeys.COMMAND_AUDIT_VERIFY_FAILED, values("reason", failure.problemCode())));
     }
   }
 
@@ -345,6 +512,14 @@ public final class ConfigCommandHandler {
             ? (int) Math.max(1L, authentication.defaultTokenLifetime().toDays())
             : requestedTtl;
     effectiveTtl = Math.max(1, Math.min(effectiveTtl, maxTtl));
+    Map<String, Object> pendingDetails = new LinkedHashMap<String, Object>();
+    pendingDetails.put("owner", safeIdentifier(owner));
+    pendingDetails.put("ttl-days", Long.valueOf(effectiveTtl));
+    pendingDetails.put("scope-count", Long.valueOf(scopes.size()));
+    AuditRecord pending = beginAction(AuditActions.TOKENS_CREATE, pendingDetails, output, messages);
+    if (recorder != null && pending == null) {
+      return;
+    }
     try {
       CreatedToken created =
           authentication
@@ -378,8 +553,12 @@ public final class ConfigCommandHandler {
                   created.record().owner(),
                   "permissions",
                   effectivePermissions(created.record(), messages))));
+      Map<String, Object> finalDetails = new LinkedHashMap<String, Object>();
+      finalDetails.put("record-id", created.record().id());
+      completeAction(pending, AuditResult.SUCCESS, null, finalDetails, output, messages);
     } catch (TokenStoreException | RuntimeException exception) {
       tokenFailed(output, messages);
+      completeAction(pending, AuditResult.FAILED, "token-create-failed", null, output, messages);
     }
   }
 
@@ -394,17 +573,26 @@ public final class ConfigCommandHandler {
       return;
     }
     String id = args[2];
+    Map<String, Object> details = new LinkedHashMap<String, Object>();
+    details.put("record-id", id);
+    AuditRecord pending = beginAction(AuditActions.TOKENS_REVOKE, details, output, messages);
+    if (recorder != null && pending == null) {
+      return;
+    }
     try {
       store.revoke(id, clock.instant());
       output.send(messages.format(MessageKeys.COMMAND_TOKEN_REVOKED, values("id", id)));
+      completeAction(pending, AuditResult.SUCCESS, null, null, output, messages);
     } catch (TokenStoreException exception) {
       if (exception.reason() == TokenStoreException.Reason.RECORD) {
         output.send(messages.format(MessageKeys.COMMAND_TOKEN_NOT_FOUND, values("id", id)));
       } else {
         tokenFailed(output, messages);
       }
+      completeAction(pending, AuditResult.FAILED, "token-revoke-failed", null, output, messages);
     } catch (RuntimeException exception) {
       tokenFailed(output, messages);
+      completeAction(pending, AuditResult.FAILED, "token-revoke-failed", null, output, messages);
     }
   }
 
@@ -580,6 +768,57 @@ public final class ConfigCommandHandler {
     return result.toString();
   }
 
+  private AuditRecord beginAction(
+      String action,
+      Map<String, Object> details,
+      CommandOutput output,
+      LocalizedMessages messages) {
+    if (recorder == null) {
+      return null;
+    }
+    try {
+      return recorder.beginSystem(action, null, details);
+    } catch (AuditException failure) {
+      reportAuditFailure(output, messages);
+      return null;
+    }
+  }
+
+  private void completeAction(
+      AuditRecord pending,
+      AuditResult result,
+      String reason,
+      Map<String, Object> finalDetails,
+      CommandOutput output,
+      LocalizedMessages messages) {
+    if (pending == null) {
+      return;
+    }
+    try {
+      recorder.complete(pending, result, reason, finalDetails);
+    } catch (AuditException failure) {
+      reportAuditFailure(output, messages);
+    }
+  }
+
+  private static void reportAuditFailure(CommandOutput output, LocalizedMessages messages) {
+    output.send(messages.format(MessageKeys.COMMAND_AUDIT_FAILED));
+  }
+
+  private static List<String> boundedPaths(List<String> paths) {
+    List<String> bounded = new ArrayList<String>();
+    for (String path : paths) {
+      if (bounded.size() >= 32 || path == null) {
+        break;
+      }
+      String candidate = path.length() > 256 ? path.substring(0, 256) : path;
+      if (candidate.matches("[A-Za-z0-9._/-]+")) {
+        bounded.add(candidate);
+      }
+    }
+    return bounded;
+  }
+
   private static String permissionFor(String subcommand) {
     if ("status".equals(subcommand)) {
       return CommandPermissions.STATUS;
@@ -590,7 +829,27 @@ public final class ConfigCommandHandler {
     if ("doctor".equals(subcommand)) {
       return CommandPermissions.DOCTOR;
     }
+    if ("audit".equals(subcommand)) {
+      return CommandPermissions.AUDIT;
+    }
     return CommandPermissions.TOKEN;
+  }
+
+  private static final class Dispatch {
+    private AuditResult result = AuditResult.SUCCESS;
+    private String reason;
+    private String subcommand;
+    private String operation;
+
+    private void deny(String value) {
+      result = AuditResult.DENIED;
+      reason = value;
+    }
+
+    private void fail(String value) {
+      result = AuditResult.FAILED;
+      reason = value;
+    }
   }
 
   private static Map<String, String> values(String... pairs) {

@@ -49,6 +49,8 @@ val generatePluginYml by tasks.registering {
                     "    default: op",
                     "  deploymc.command.token:",
                     "    default: op",
+                    "  deploymc.command.audit:",
+                    "    default: op",
                     "")
                 .joinToString("\n"),
             Charsets.UTF_8)

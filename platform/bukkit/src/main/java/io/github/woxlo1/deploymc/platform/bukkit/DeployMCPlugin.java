@@ -200,7 +200,13 @@ public final class DeployMCPlugin extends JavaPlugin {
       DeployMCCommandExecutor executor =
           new DeployMCCommandExecutor(
               new ConfigCommandHandler(
-                  createdConfigManager, plan, authentication, createdDoctor, policies));
+                  createdConfigManager,
+                  plan,
+                  authentication,
+                  createdDoctor,
+                  policies,
+                  createdFileApi.auditRecorder(),
+                  createdAuditStore));
       command.setExecutor(executor);
       command.setTabCompleter(executor);
 
