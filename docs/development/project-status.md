@@ -28,8 +28,9 @@ CI/CodeQL/Scorecard; its final evidence PR closed issue #58. WP-3.4 merged its n
 PR #232 at `4bd654b`, its RBAC implementation in PR #233 at `ca1d070`, and its final evidence PR
 closed issue #59. WP-3.5 merged its contract in PR #235 at `f4f89a8`, its core implementation in PR
 #236 at `d6fd2b8`, its transport implementation in PR #237 at `e6538f7`, its SecureRandom fix in PR
-#238 at `f085782`, and its host wiring in PR #239 at `f500486`; this final evidence PR closes issue
-#60.
+#238 at `f085782`, and its host wiring in PR #239 at `f500486`; issue #60 closed through its final
+evidence PR. WP-3.6 merged its contract in PR #241 at `1cffb46` and its enforcement in PR #242 at
+`d36db83`; this final evidence PR closes issue #61.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1503,13 +1504,15 @@ implementation at `41b6fee` and `1ba834b`, and its final evidence PR closed the 
 `d075646`. WP-3.3 (issue #58) is complete; PR #228 merged the contract at `72bddd2`, PR #229 merged
 the core lifecycle at `8056492`, PR #230 merged the host and console wiring at `49c544e`, and PR #231
 closed the issue. WP-3.4 (issue #59) is complete; PR #232 merged the contract at `4bd654b` and PR #233
-merged the implementation at `ca1d070`. WP-3.5 (issue #60) is complete with this final evidence PR;
+merged the implementation at `ca1d070`. WP-3.5 (issue #60) is complete;
 PR #235 merged the contract at `f4f89a8`, PR #236 the core at `d6fd2b8`, PR #237 the transport at
-`e6538f7`, PR #238 the SecureRandom fix at `f085782`, and PR #239 the host wiring at `f500486`. The
-next oldest open item is WP-3.6 (issue #61), Web-facing protections. Owner decision D-002 remains
-open, so no real Cloudflare Access verification or plan-specific guide claim is made until the owner
-decides. Work on later items may be prepared in parallel but must not be merged ahead of an earlier
-open issue unless the owner explicitly approves.
+`e6538f7`, PR #238 the SecureRandom fix at `f085782`, and PR #239 the host wiring at `f500486`.
+WP-3.6 (issue #61) is complete with this final evidence PR; PR #241 merged the contract at `1cffb46`
+and PR #242 rebase-merged the enforcement at `d36db83`. The next oldest open item is WP-3.7
+(issue #62), Security documentation and guides. Owner decision D-002 remains open, so no real
+Cloudflare Access verification or plan-specific guide claim is made until the owner decides. Work on
+later items may be prepared in parallel but must not be merged ahead of an earlier open issue unless
+the owner explicitly approves.
 
 ## Release checklist
 
