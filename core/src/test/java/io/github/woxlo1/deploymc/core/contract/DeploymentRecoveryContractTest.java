@@ -346,7 +346,7 @@ class DeploymentRecoveryContractTest {
     assertTrue(sources.size() < 1000, "Source scan must stay bounded");
     String status = normalized("docs/development/implementation-status.md");
     assertTrue(
-        status.contains("there is no RBAC authorization engine, deployment engine, audit log"),
+        status.contains("There is still no deployment engine or Web UI screen"),
         NO_PRODUCT_IMPLEMENTATION);
   }
 
