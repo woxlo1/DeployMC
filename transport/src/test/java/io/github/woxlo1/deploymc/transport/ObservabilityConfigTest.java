@@ -17,8 +17,9 @@ class ObservabilityConfigTest {
     assertEquals("text", defaults.loggingFormat().wireLabel());
     assertFalse(defaults.metricsEnabled());
     assertEquals("server.read", defaults.metricsPermission());
+    assertEquals(300, defaults.addressRateLimitPerMinute());
     assertEquals(300, defaults.identityRateLimitPerMinute());
-    assertEquals(30, defaults.authFailureRateLimitPerMinute());
+    assertEquals(60, defaults.authFailureRateLimitPerMinute());
     assertEquals(4096, defaults.maxRateLimitKeys());
     assertEquals(5_000L, defaults.watchdogIntervalMillis());
     assertEquals(2_000L, defaults.watchdogTimeoutMillis());

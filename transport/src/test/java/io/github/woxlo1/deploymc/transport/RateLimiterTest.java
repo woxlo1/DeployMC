@@ -117,6 +117,35 @@ class RateLimiterTest {
     assertTrue(body.contains("\"retryable\":true"));
   }
 
+  @Test
+  void addressBucketIsIndependentAndDeniesMissingPeer() {
+    MutableClock clock = new MutableClock(1_000_000L);
+    RateLimiter limiter = new RateLimiter(1, 60, 60, 16, clock);
+
+    assertTrue(limiter.tryAddress("198.51.100.7").allowed());
+    assertFalse(limiter.tryAddress("198.51.100.7").allowed());
+    assertTrue(limiter.tryAddress("198.51.100.8").allowed());
+    assertFalse(limiter.tryAddress(null).allowed());
+  }
+
+  @Test
+  void mostConstrainingCombinationUsesLowestRemainingAndShortestRetry() {
+    RateLimitDecision address = RateLimitDecision.allowed(300, 12, 1_800L);
+    RateLimitDecision identity = RateLimitDecision.allowed(50, 3, 1_700L);
+    RateLimitDecision combined = RateLimitDecision.mostConstraining(address, identity);
+
+    assertTrue(combined.allowed());
+    assertEquals(50, combined.limit());
+    assertEquals(3, combined.remaining());
+    assertEquals(1_700L, combined.resetEpochSeconds());
+
+    RateLimitDecision denied = RateLimitDecision.denied(50, 0, 1_700L, 2L);
+    RateLimitDecision combinedDenial = RateLimitDecision.mostConstraining(address, denied);
+    assertFalse(combinedDenial.allowed());
+    assertEquals(0, combinedDenial.remaining());
+    assertEquals(2L, combinedDenial.retryAfterSeconds());
+  }
+
   private static String firstHeader(HttpResponse response, String name) {
     return response.headers().get(name.toLowerCase(java.util.Locale.ROOT)).get(0);
   }
