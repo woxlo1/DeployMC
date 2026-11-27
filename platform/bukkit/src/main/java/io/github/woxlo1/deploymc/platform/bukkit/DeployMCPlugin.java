@@ -1,5 +1,8 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
+import io.github.woxlo1.deploymc.core.audit.AuditConfig;
+import io.github.woxlo1.deploymc.core.audit.AuditException;
+import io.github.woxlo1.deploymc.core.audit.AuditStore;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.auth.TokenStoreException;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
@@ -11,6 +14,7 @@ import io.github.woxlo1.deploymc.core.config.ConfigSchema;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
+import io.github.woxlo1.deploymc.transport.AuditApiHandler;
 import io.github.woxlo1.deploymc.transport.DefaultTransportPolicy;
 import io.github.woxlo1.deploymc.transport.JsonRequestLogger;
 import io.github.woxlo1.deploymc.transport.LoggingFormat;
@@ -40,6 +44,7 @@ public final class DeployMCPlugin extends JavaPlugin {
   private ConfigManager configManager;
   private NettyTransportServer transport;
   private FileApiRuntime fileApi;
+  private AuditStore auditStore;
 
   @Override
   public void onLoad() {
@@ -62,6 +67,7 @@ public final class DeployMCPlugin extends JavaPlugin {
     NettyTransportServer createdTransport = null;
     FileApiRuntime createdFileApi = null;
     DoctorRuntime createdDoctor = null;
+    AuditStore createdAuditStore = null;
     try {
       ConfigManager createdConfigManager =
           new ConfigManager(
@@ -116,16 +122,29 @@ public final class DeployMCPlugin extends JavaPlugin {
             MessageKeys.STARTUP_FILE_API_INVALID_CONFIG,
             Collections.singletonMap("setting", "plugins directory"));
       }
-      createdFileApi =
-          FileApiRuntime.create(
-              view, pluginsDirectory.toPath(), locale, transportConfig.maxBodyBytes());
       RbacPolicyManager policies = RbacPolicyManager.from(view);
       if (!policies.current().valid()) {
         throw new StartupConfigurationException(
             MessageKeys.STARTUP_RBAC_INVALID, Collections.<String, String>emptyMap());
       }
-      RbacEvaluator evaluator =
-          new RbacEvaluator(policies::current, createdFileApi.sandboxResolver());
+      try {
+        createdAuditStore =
+            AuditStore.open(
+                getDataFolder().toPath(), AuditConfig.fromConfig(view), Clock.systemUTC());
+      } catch (AuditException failure) {
+        throw new StartupConfigurationException(
+            MessageKeys.STARTUP_AUDIT_FAILED,
+            Collections.singletonMap("reason", failure.problemCode()));
+      }
+      createdFileApi =
+          FileApiRuntime.create(
+              view,
+              pluginsDirectory.toPath(),
+              locale,
+              transportConfig.maxBodyBytes(),
+              policies,
+              createdAuditStore);
+      RbacEvaluator evaluator = createdFileApi.evaluator();
       createdDoctor =
           DoctorRuntime.create(
               createdConfigManager,
@@ -146,14 +165,16 @@ public final class DeployMCPlugin extends JavaPlugin {
                   createdFileApi.handler(),
                   createdFileApi.snapshotHandler(),
                   new DoctorHandler(createdDoctor, messages, evaluator),
-                  new MeHandler(evaluator, transportMessages)),
+                  new MeHandler(evaluator, transportMessages),
+                  new AuditApiHandler(createdAuditStore, createdFileApi.auditRecorder(), locale)),
               new NoopWebSocketListener(),
               new DefaultTransportPolicy(transportConfig),
               requestLogger,
               authentication.authenticator(),
               transportMessages,
               evaluator,
-              metrics);
+              metrics,
+              createdFileApi.auditRecorder());
       createdTransport.start();
       publishSnapshotStoreGauge(metrics, createdFileApi, messages);
 
@@ -173,7 +194,7 @@ public final class DeployMCPlugin extends JavaPlugin {
       PluginCommand command = getCommand("deploymc");
       if (command == null) {
         getLogger().severe(messages.format(MessageKeys.COMMAND_REGISTRATION_FAILED));
-        disableAfterFailure(created, createdTransport, createdFileApi);
+        disableAfterFailure(created, createdTransport, createdFileApi, createdAuditStore);
         return;
       }
       DeployMCCommandExecutor executor =
@@ -187,9 +208,10 @@ public final class DeployMCPlugin extends JavaPlugin {
       configManager = createdConfigManager;
       transport = createdTransport;
       fileApi = createdFileApi;
+      auditStore = createdAuditStore;
     } catch (StartupConfigurationException exception) {
       getLogger().severe(messages.format(exception.messageKey(), exception.values()));
-      disableAfterFailure(created, createdTransport, createdFileApi);
+      disableAfterFailure(created, createdTransport, createdFileApi, createdAuditStore);
     } catch (TokenStoreException exception) {
       String key;
       switch (exception.reason()) {
@@ -208,16 +230,16 @@ public final class DeployMCPlugin extends JavaPlugin {
           .severe(
               messages.format(
                   key, Collections.singletonMap("detail", String.valueOf(exception.detail()))));
-      disableAfterFailure(created, createdTransport, createdFileApi);
+      disableAfterFailure(created, createdTransport, createdFileApi, createdAuditStore);
     } catch (TransportException exception) {
       Map<String, String> values = Collections.singletonMap("error", exception.error().code());
       getLogger().severe(messages.format(MessageKeys.STARTUP_TRANSPORT_FAILED, values));
-      disableAfterFailure(created, createdTransport, createdFileApi);
+      disableAfterFailure(created, createdTransport, createdFileApi, createdAuditStore);
     } catch (ConfigException | RuntimeException exception) {
       Map<String, String> values =
           java.util.Collections.singletonMap("error", String.valueOf(exception.getMessage()));
       getLogger().severe(fallback.format(MessageKeys.LIFECYCLE_START_FAILED, values));
-      disableAfterFailure(created, createdTransport, createdFileApi);
+      disableAfterFailure(created, createdTransport, createdFileApi, createdAuditStore);
     }
   }
 
@@ -226,6 +248,8 @@ public final class DeployMCPlugin extends JavaPlugin {
     stopTransport();
     closeFileApi(fileApi);
     fileApi = null;
+    closeAuditStore(auditStore);
+    auditStore = null;
     if (adapter != null) {
       adapter.close();
       adapter = null;
@@ -253,9 +277,11 @@ public final class DeployMCPlugin extends JavaPlugin {
   private void disableAfterFailure(
       BukkitPlatformAdapter created,
       NettyTransportServer createdTransport,
-      FileApiRuntime createdFileApi) {
+      FileApiRuntime createdFileApi,
+      AuditStore createdAuditStore) {
     stopTransport(createdTransport);
     closeFileApi(createdFileApi);
+    closeAuditStore(createdAuditStore);
     if (created != null) {
       created.close();
     }
@@ -299,6 +325,21 @@ public final class DeployMCPlugin extends JavaPlugin {
           .severe(
               LocalizedMessages.of(Locale.getDefault())
                   .format(MessageKeys.LIFECYCLE_FILE_API_STOP_FAILED, values));
+    }
+  }
+
+  private void closeAuditStore(AuditStore target) {
+    if (target == null) {
+      return;
+    }
+    try {
+      target.close();
+    } catch (AuditException exception) {
+      Map<String, String> values = Collections.singletonMap("reason", exception.problemCode());
+      getLogger()
+          .severe(
+              LocalizedMessages.of(Locale.getDefault())
+                  .format(MessageKeys.LIFECYCLE_AUDIT_STOP_FAILED, values));
     }
   }
 }

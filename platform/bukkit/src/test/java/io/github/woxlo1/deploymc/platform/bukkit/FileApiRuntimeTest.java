@@ -5,18 +5,31 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.woxlo1.deploymc.core.audit.AuditActions;
+import io.github.woxlo1.deploymc.core.audit.AuditConfig;
+import io.github.woxlo1.deploymc.core.audit.AuditQuery;
+import io.github.woxlo1.deploymc.core.audit.AuditRecord;
+import io.github.woxlo1.deploymc.core.audit.AuditResult;
+import io.github.woxlo1.deploymc.core.audit.AuditStore;
 import io.github.woxlo1.deploymc.core.config.ConfigManager;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.ConfigYamlParser;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
 import io.github.woxlo1.deploymc.core.config.YamlValue;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import io.github.woxlo1.deploymc.transport.HttpRequest;
 import io.github.woxlo1.deploymc.transport.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -48,6 +61,42 @@ class FileApiRuntimeTest {
       assertTrue(containsPath(parse(response), "runtime.txt"));
       assertEquals(
           200, second.snapshotHandler().handle(snapshotListRequest("runtime.txt")).status());
+    }
+  }
+
+  @Test
+  void recordsMutationsAndAutomaticSnapshotsThroughTheAuditStore() throws Exception {
+    ConfigView view = loadConfig();
+    Path dataDirectory = pluginsDirectory.resolve("data");
+    Files.createDirectories(dataDirectory);
+    AuditConfig auditConfig =
+        AuditConfig.of("audit", 1024L * 1024L * 1024L, 365, AuditConfig.FsyncPolicy.RECORD, 1);
+
+    try (AuditStore audit = AuditStore.open(dataDirectory, auditConfig, Clock.systemUTC());
+        FileApiRuntime runtime =
+            FileApiRuntime.create(
+                view,
+                pluginsDirectory,
+                Locale.ENGLISH,
+                2 * 1024 * 1024,
+                RbacPolicyManager.from(view),
+                audit)) {
+      HttpResponse created = runtime.handler().handle(createRequest("audited.txt", "a: 1\n"));
+      assertEquals(201, created.status());
+      String revision = parse(created).get("entry").get("revision").raw().toString();
+      HttpResponse overwritten =
+          runtime.handler().handle(overwriteRequest("audited.txt", "a: 2\n", revision));
+      assertEquals(200, overwritten.status());
+
+      List<AuditRecord> writes = records(audit, AuditActions.FILES_WRITE);
+      assertEquals(4, writes.size());
+      assertEquals(AuditResult.SUCCESS, writes.get(writes.size() - 1).result());
+      List<AuditRecord> snapshots = records(audit, AuditActions.SNAPSHOTS_CREATE);
+      assertEquals(2, snapshots.size());
+      assertEquals(AuditResult.SUCCESS, snapshots.get(1).result());
+      assertEquals("audited.txt", snapshots.get(1).target().path());
+      assertEquals("before-overwrite", snapshots.get(1).details().get("reason"));
+      assertTrue(audit.verify().ok());
     }
   }
 
@@ -105,6 +154,45 @@ class FileApiRuntimeTest {
     Path configFile = pluginsDirectory.resolve("config.yml");
     Files.write(configFile, template.getBytes(StandardCharsets.UTF_8));
     return new ConfigManager(configFile).load();
+  }
+
+  private static HttpRequest createRequest(String path, String content) {
+    String body =
+        "{\"path\":\""
+            + path
+            + "\",\"kind\":\"file\",\"content\":\""
+            + content.replace("\n", "\\n")
+            + "\"}";
+    return new HttpRequest(
+        "req-audit-create",
+        "POST",
+        "/api/v1/files",
+        "",
+        Collections.singletonMap("content-type", Arrays.asList("application/json")),
+        body.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static HttpRequest overwriteRequest(String path, String content, String revision) {
+    Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>();
+    headers.put("content-type", Arrays.asList("application/octet-stream"));
+    headers.put("if-match", Arrays.asList("\"" + revision + "\""));
+    return new HttpRequest(
+        "req-audit-overwrite",
+        "PUT",
+        "/api/v1/files/content",
+        "path=" + path,
+        headers,
+        content.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static List<AuditRecord> records(AuditStore audit, String action) throws Exception {
+    List<AuditRecord> result = new ArrayList<AuditRecord>();
+    for (AuditRecord record : audit.query(AuditQuery.defaults()).items()) {
+      if (action.equals(record.action())) {
+        result.add(record);
+      }
+    }
+    return result;
   }
 
   private static HttpRequest listRequest(String path) {

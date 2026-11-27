@@ -2,6 +2,7 @@ package io.github.woxlo1.deploymc.platform.bukkit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.github.woxlo1.deploymc.transport.AuditApiHandler;
 import io.github.woxlo1.deploymc.transport.HttpHandler;
 import io.github.woxlo1.deploymc.transport.HttpRequest;
 import io.github.woxlo1.deploymc.transport.HttpResponse;
@@ -95,6 +96,33 @@ class DeployMCHttpHandlerTest {
 
     assertEquals(200, response.status());
     assertEquals("{\"me\":true}", new String(response.body(), StandardCharsets.UTF_8));
+  }
+
+  @Test
+  void delegatesExactAuditPathsBeforeTheGeneralApiHandler() throws Exception {
+    HttpHandler api = request -> HttpResponse.json(200, "{\"api\":true}");
+    HttpHandler audit =
+        request -> {
+          if (request.path().endsWith("/other")) {
+            throw new AssertionError("lookalike routes must not reach the audit handler");
+          }
+          return HttpResponse.json(200, "{\"audit\":true}");
+        };
+    DeployMCHttpHandler handler = new DeployMCHttpHandler(api, null, null, null, null, audit);
+
+    for (String path :
+        new String[] {
+          AuditApiHandler.PATH, AuditApiHandler.EXPORT_PATH, AuditApiHandler.VERIFY_PATH
+        }) {
+      assertEquals(
+          "{\"audit\":true}",
+          new String(handler.handle(request(path)).body(), StandardCharsets.UTF_8));
+    }
+    assertEquals(
+        "{\"api\":true}",
+        new String(
+            handler.handle(request(AuditApiHandler.PATH + "/other")).body(),
+            StandardCharsets.UTF_8));
   }
 
   @Test

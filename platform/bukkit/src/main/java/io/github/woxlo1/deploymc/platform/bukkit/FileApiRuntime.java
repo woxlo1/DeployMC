@@ -1,14 +1,19 @@
 package io.github.woxlo1.deploymc.platform.bukkit;
 
+import io.github.woxlo1.deploymc.core.audit.AuditStore;
 import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.files.FileOperationLimits;
 import io.github.woxlo1.deploymc.core.files.FileOperationsService;
+import io.github.woxlo1.deploymc.core.files.SnapshotHook;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
+import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxPolicy;
 import io.github.woxlo1.deploymc.core.sandbox.SandboxResolver;
 import io.github.woxlo1.deploymc.core.snapshot.SnapshotStore;
 import io.github.woxlo1.deploymc.core.snapshot.SnapshotStoreConfig;
 import io.github.woxlo1.deploymc.core.snapshot.SnapshotStoreException;
 import io.github.woxlo1.deploymc.core.validation.ValidatorRegistry;
+import io.github.woxlo1.deploymc.transport.AuditRecorder;
 import io.github.woxlo1.deploymc.transport.FileApiHandler;
 import io.github.woxlo1.deploymc.transport.HttpHandler;
 import io.github.woxlo1.deploymc.transport.SnapshotApiHandler;
@@ -40,22 +45,42 @@ public final class FileApiRuntime implements AutoCloseable {
   private final SnapshotStoreConfig snapshotConfig;
   private final HttpHandler handler;
   private final HttpHandler snapshotHandler;
+  private final RbacEvaluator evaluator;
+  private final AuditRecorder auditRecorder;
 
   private FileApiRuntime(
       SandboxResolver resolver,
       SnapshotStore snapshots,
       SnapshotStoreConfig snapshotConfig,
       HttpHandler handler,
-      HttpHandler snapshotHandler) {
+      HttpHandler snapshotHandler,
+      RbacEvaluator evaluator,
+      AuditRecorder auditRecorder) {
     this.resolver = resolver;
     this.snapshots = snapshots;
     this.snapshotConfig = snapshotConfig;
     this.handler = handler;
     this.snapshotHandler = snapshotHandler;
+    this.evaluator = evaluator;
+    this.auditRecorder = auditRecorder;
   }
 
   public static FileApiRuntime create(
       ConfigView view, Path pluginsDirectory, Locale locale, int maximumBodyBytes) {
+    return create(view, pluginsDirectory, locale, maximumBodyBytes, null, null);
+  }
+
+  /**
+   * Creates host-wired file services. Product wiring supplies both the same policies used by the
+   * transport and an open audit store; the shorter overload is for server-free adapter tests.
+   */
+  public static FileApiRuntime create(
+      ConfigView view,
+      Path pluginsDirectory,
+      Locale locale,
+      int maximumBodyBytes,
+      RbacPolicyManager policies,
+      AuditStore auditStore) {
     Objects.requireNonNull(view, "view");
     Objects.requireNonNull(locale, "locale");
     Path base =
@@ -111,12 +136,23 @@ public final class FileApiRuntime implements AutoCloseable {
     }
     try {
       ValidatorRegistry validators = ValidatorRegistry.withBuiltIns();
-      FileOperationsService files = new FileOperationsService(resolver, limits, opened, validators);
-      FileApiHandler handler =
+      RbacPolicyManager effectivePolicies =
+          policies == null ? RbacPolicyManager.from(view) : policies;
+      RbacEvaluator evaluator = new RbacEvaluator(effectivePolicies::current, resolver);
+      AuditRecorder recorder = auditStore == null ? null : AuditRecorder.of(auditStore, evaluator);
+      SnapshotHook snapshotHook =
+          recorder == null ? opened : new AuditedSnapshotHook(opened, recorder, resolver);
+      FileOperationsService files =
+          new FileOperationsService(resolver, limits, snapshotHook, validators);
+      FileApiHandler fileHandler =
           new FileApiHandler(resolver, files, validators, locale, maximumBodyBytes);
-      SnapshotApiHandler snapshotsHandler =
+      SnapshotApiHandler snapshotHandler =
           new SnapshotApiHandler(resolver, opened, locale, maximumBodyBytes);
-      return new FileApiRuntime(resolver, opened, snapshotConfig, handler, snapshotsHandler);
+      HttpHandler handler = recorder == null ? fileHandler : recorder.wrapMutations(fileHandler);
+      HttpHandler wrappedSnapshots =
+          recorder == null ? snapshotHandler : recorder.wrapMutations(snapshotHandler);
+      return new FileApiRuntime(
+          resolver, opened, snapshotConfig, handler, wrappedSnapshots, evaluator, recorder);
     } catch (RuntimeException failure) {
       try {
         opened.close();
@@ -145,6 +181,14 @@ public final class FileApiRuntime implements AutoCloseable {
 
   public HttpHandler snapshotHandler() {
     return snapshotHandler;
+  }
+
+  public RbacEvaluator evaluator() {
+    return evaluator;
+  }
+
+  public AuditRecorder auditRecorder() {
+    return auditRecorder;
   }
 
   @Override

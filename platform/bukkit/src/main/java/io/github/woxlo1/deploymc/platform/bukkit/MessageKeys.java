@@ -31,6 +31,8 @@ public final class MessageKeys {
   public static final String STARTUP_FILE_API_SNAPSHOT_DIRECTORY =
       "startup.fileApi.snapshotDirectory";
   public static final String LIFECYCLE_FILE_API_STOP_FAILED = "lifecycle.fileApiStopFailed";
+  public static final String STARTUP_AUDIT_FAILED = "startup.audit.failed";
+  public static final String LIFECYCLE_AUDIT_STOP_FAILED = "lifecycle.auditStopFailed";
   public static final String STARTUP_OBSERVABILITY_INVALID_CONFIG =
       "startup.observability.invalidConfig";
   public static final String STARTUP_RBAC_INVALID = "startup.rbac.invalid";
