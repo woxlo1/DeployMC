@@ -101,10 +101,10 @@ class AuthenticationGateTest {
     NettyTransportServer server = newServer(new NoopLogger());
     try {
       server.start();
-      String rejected = firstStatusLine(server.port(), upgradeRequest(null));
+      String rejected = firstStatusLine(server.port(), upgradeRequest(server.port(), null));
       assertEquals("HTTP/1.1 401 Unauthorized", rejected);
 
-      String accepted = firstStatusLine(server.port(), upgradeRequest(TOKEN));
+      String accepted = firstStatusLine(server.port(), upgradeRequest(server.port(), TOKEN));
       assertEquals("HTTP/1.1 101 Switching Protocols", accepted);
     } finally {
       server.stop();
@@ -391,10 +391,11 @@ class AuthenticationGateTest {
     }
   }
 
-  private static String upgradeRequest(String token) {
+  private static String upgradeRequest(int port, String token) {
     StringBuilder request = new StringBuilder();
     request.append("GET /api/v1/ws HTTP/1.1\r\n");
     request.append("Host: 127.0.0.1\r\n");
+    request.append("Origin: http://127.0.0.1:").append(port).append("\r\n");
     request.append("Upgrade: websocket\r\nConnection: Upgrade\r\n");
     request.append("Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n");
     request.append("Sec-WebSocket-Version: 13\r\n");

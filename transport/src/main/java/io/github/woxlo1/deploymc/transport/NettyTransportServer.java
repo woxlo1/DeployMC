@@ -23,6 +23,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -48,6 +50,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -76,11 +79,14 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       AttributeKey.valueOf("deploymc.transport.websocketSession");
   private static final AttributeKey<AuthContext> AUTH_CONTEXT =
       AttributeKey.valueOf("deploymc.transport.authContext");
+  private static final AttributeKey<String> EFFECTIVE_PEER =
+      AttributeKey.valueOf("deploymc.transport.effectivePeer");
+  private static final AttributeKey<RateLimitDecision> RATE_DECISION =
+      AttributeKey.valueOf("deploymc.transport.rateDecision");
 
   private static final int WEBSOCKET_PERMISSION_REVOKED = 4403;
   private static final String PERMISSION_REVOKED_REASON = "rbac.permission-revoked";
   private static final String FORBIDDEN = "forbidden";
-  private static final String OVERSIZED_BODY = "oversized_body";
   private static final String INTERNAL_ERROR = "internal_error";
   private static final String TRANSPORT_ERROR = "transport_error";
   private static final String HEALTHZ = "/healthz";
@@ -105,6 +111,9 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final ObservabilityConfig observability;
   private final MetricsRegistry metrics;
   private final RateLimiter rateLimiter;
+  private final EffectivePeerResolver effectivePeerResolver;
+  private final OriginValidator originValidator;
+  private final AuthenticationLockout authenticationLockout;
   private final MetricsHandler metricsHandler;
   private final AtomicInteger webSocketConnections = new AtomicInteger();
   private final Set<Channel> channels =
@@ -249,12 +258,20 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     this.metrics = Objects.requireNonNull(metrics, "metrics");
     this.gate = new RbacGate(evaluator, observability.metricsPermission());
     this.auditRecorder = Objects.requireNonNull(auditRecorder, "auditRecorder");
+    Clock clock = Clock.systemUTC();
     this.rateLimiter =
         new RateLimiter(
+            observability.addressRateLimitPerMinute(),
             observability.identityRateLimitPerMinute(),
             observability.authFailureRateLimitPerMinute(),
             observability.maxRateLimitKeys(),
-            Clock.systemUTC());
+            clock);
+    this.effectivePeerResolver = new EffectivePeerResolver(config.trustedProxies());
+    this.originValidator = new OriginValidator(config.allowedOrigins(), () -> port);
+    this.authenticationLockout =
+        config.tokenLockoutEnabled()
+            ? new AuthenticationLockout(observability.maxRateLimitKeys(), clock)
+            : null;
     this.metricsHandler =
         new MetricsHandler(metrics, observability.metricsPermission(), evaluator, messages);
   }
@@ -304,7 +321,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
                               config.maxHeaderBytes(),
                               config.maxHeaderBytes(),
                               config.maxHeaderBytes()))
-                      .addLast(new LimitedHttpObjectAggregator(config.maxBodyBytes()))
+                      .addLast(new ResponseHeaderHandler())
+                      .addLast(new LimitedHttpObjectAggregator(config.maxUploadBodyBytes()))
                       .addLast(new ValidationHandler())
                       .addLast(new AuthenticationHandler())
                       .addLast(
@@ -512,6 +530,125 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     }
   }
 
+  private static void applyRateHeaders(HttpHeaders headers, RateLimitDecision decision) {
+    if (decision == null) {
+      return;
+    }
+    headers.set(TransportProblems.RATE_LIMIT_LIMIT, Integer.toString(decision.limit()));
+    headers.set(TransportProblems.RATE_LIMIT_REMAINING, Integer.toString(decision.remaining()));
+    headers.set(TransportProblems.RATE_LIMIT_RESET, Long.toString(decision.resetEpochSeconds()));
+  }
+
+  private String resolveEffectivePeer(ChannelHandlerContext context, FullHttpRequest request) {
+    InetSocketAddress remote =
+        context.channel().remoteAddress() instanceof InetSocketAddress
+            ? (InetSocketAddress) context.channel().remoteAddress()
+            : null;
+    InetAddress address = remote == null ? null : remote.getAddress();
+    String socketPeer = address == null ? null : address.getHostAddress();
+    String resolved = effectivePeerResolver.resolve(socketPeer, copyHeaders(request.headers()));
+    context.channel().attr(EFFECTIVE_PEER).set(resolved);
+    return resolved;
+  }
+
+  private static String effectivePeer(ChannelHandlerContext context) {
+    return context.channel().attr(EFFECTIVE_PEER).get();
+  }
+
+  private RateLimitDecision addressDecision(ChannelHandlerContext context) {
+    RateLimitDecision decision = context.channel().attr(RATE_DECISION).get();
+    if (decision == null) {
+      decision = rateLimiter.tryAddress(null);
+      context.channel().attr(RATE_DECISION).set(decision);
+    }
+    return decision;
+  }
+
+  private RateLimitDecision combineDecision(
+      ChannelHandlerContext context, RateLimitDecision decision) {
+    RateLimitDecision combined =
+        RateLimitDecision.mostConstraining(addressDecision(context), decision);
+    context.channel().attr(RATE_DECISION).set(combined);
+    return combined;
+  }
+
+  private boolean isUploadRequest(FullHttpRequest request) {
+    return "POST".equalsIgnoreCase(request.method().name())
+        && FILES_UPLOAD_PATH.equals(path(request.uri()));
+  }
+
+  private void rejectOrigin(ChannelHandlerContext context, FullHttpRequest request) {
+    String id = requestId(context);
+    if (isWebSocketUpgrade(request)) {
+      logger.websocketRejected(REDACTED, TransportProblems.REQUEST_ORIGIN_REJECTED_CODE);
+    } else {
+      logger.rejected(id, TransportProblems.REQUEST_ORIGIN_REJECTED_CODE);
+    }
+    ReferenceCountUtil.release(request);
+    writeResponse(context, TransportProblems.originRejected(id, messages));
+  }
+
+  private void rejectTooLarge(ChannelHandlerContext context, FullHttpRequest request) {
+    String id = requestId(context);
+    if (isWebSocketUpgrade(request)) {
+      logger.websocketRejected(REDACTED, TransportProblems.REQUEST_TOO_LARGE_CODE);
+    } else {
+      logger.rejected(id, TransportProblems.REQUEST_TOO_LARGE_CODE);
+    }
+    ReferenceCountUtil.release(request);
+    writeResponse(context, TransportProblems.tooLarge(id, messages));
+  }
+
+  private void rejectLocked(
+      ChannelHandlerContext context,
+      FullHttpRequest request,
+      EndpointClass endpoint,
+      long retryAfterSeconds) {
+    String id = requestId(context);
+    String code = TransportProblems.LOCKED_OUT_CODE;
+    if (isWebSocketUpgrade(request)) {
+      logger.websocketRejected(REDACTED, code);
+    } else {
+      logger.rejected(id, code);
+    }
+    HttpResponse response =
+        denyAndRespond(
+            id,
+            request,
+            null,
+            endpoint,
+            code,
+            TransportProblems.lockedOut(id, retryAfterSeconds, messages));
+    ReferenceCountUtil.release(request);
+    writeResponse(context, response);
+  }
+
+  private void shed(
+      ChannelHandlerContext context,
+      FullHttpRequest request,
+      RateLimitDecision decision,
+      ShedScope scope,
+      Identity identity,
+      EndpointClass endpoint) {
+    metrics.recordShed(scope);
+    String id = requestId(context);
+    if (isWebSocketUpgrade(request)) {
+      logger.websocketRejected(REDACTED, TransportProblems.RATE_LIMITED_CODE);
+    } else {
+      logger.rejected(id, TransportProblems.RATE_LIMITED_CODE);
+    }
+    HttpResponse response =
+        denyAndRespond(
+            id,
+            request,
+            identity,
+            endpoint,
+            TransportProblems.RATE_LIMITED_CODE,
+            TransportProblems.rateLimited(decision, id, messages));
+    ReferenceCountUtil.release(request);
+    writeResponse(context, response);
+  }
+
   private HttpRequest toInternal(FullHttpRequest request, String id, AuthContext context) {
     String uri = request.uri();
     int queryIndex = uri.indexOf('?');
@@ -532,10 +669,17 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   }
 
   private static Map<String, List<String>> copyHeaders(FullHttpRequest request) {
+    return copyHeaders(request.headers());
+  }
+
+  private static Map<String, List<String>> copyHeaders(HttpHeaders source) {
     Map<String, List<String>> headers = new HashMap<>();
-    for (String name : request.headers().names()) {
+    if (source == null) {
+      return headers;
+    }
+    for (String name : source.names()) {
       List<String> values = new ArrayList<>();
-      for (String value : request.headers().getAll(name)) {
+      for (String value : source.getAll(name)) {
         values.add(value);
       }
       headers.put(name.toLowerCase(Locale.ROOT), values);
@@ -544,7 +688,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   }
 
   private boolean isWebSocketUpgrade(FullHttpRequest request) {
-    return request.uri().equals(config.webSocketPath())
+    return request != null
+        && request.uri().equals(config.webSocketPath())
         && request.headers().contains(HttpHeaderNames.UPGRADE);
   }
 
@@ -730,6 +875,20 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     return id == null ? UUID.randomUUID().toString() : id;
   }
 
+  private final class ResponseHeaderHandler extends ChannelOutboundHandlerAdapter {
+
+    @Override
+    public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) {
+      if (message instanceof FullHttpResponse) {
+        FullHttpResponse response = (FullHttpResponse) message;
+        applySecurityHeaders(response.headers());
+        RateLimitDecision decision = context.channel().attr(RATE_DECISION).get();
+        applyRateHeaders(response.headers(), decision);
+      }
+      context.write(message, promise);
+    }
+  }
+
   private final class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
 
     @Override
@@ -783,14 +942,35 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       FullHttpRequest request = (FullHttpRequest) message;
       String id = UUID.randomUUID().toString();
       context.channel().attr(REQUEST_ID).set(id);
+
+      String peer = resolveEffectivePeer(context, request);
+      RateLimitDecision address = rateLimiter.tryAddress(peer);
+      context.channel().attr(RATE_DECISION).set(address);
+      if (!address.allowed()) {
+        shed(context, request, address, ShedScope.ADDRESS, null, classify(path(request.uri())));
+        return;
+      }
+
       String host = request.headers().get(HttpHeaderNames.HOST);
       if (!policy.allowHost(host)) {
         rejectRequest(context, request, id, HttpResponseStatus.FORBIDDEN.code(), FORBIDDEN);
         return;
       }
-      String origin = request.headers().get(HttpHeaderNames.ORIGIN);
-      if (!policy.allowOrigin(origin)) {
-        rejectRequest(context, request, id, HttpResponseStatus.FORBIDDEN.code(), FORBIDDEN);
+      List<String> origins = request.headers().getAll(HttpHeaderNames.ORIGIN);
+      boolean upgrade = isWebSocketUpgrade(request);
+      boolean originAllowed =
+          upgrade
+              ? originValidator.allowsUpgrade(origins)
+              : origins.isEmpty()
+                  || (origins.size() == 1 && originValidator.allows(origins.get(0)));
+      if (!originAllowed) {
+        rejectOrigin(context, request);
+        return;
+      }
+      int bodyLimit =
+          isUploadRequest(request) ? config.maxUploadBodyBytes() : config.maxBodyBytes();
+      if (request.content().readableBytes() > bodyLimit) {
+        rejectTooLarge(context, request);
         return;
       }
       context.fireChannelRead(message);
@@ -800,10 +980,8 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
       String id = requestId(context);
       if (cause instanceof TooLongFrameException) {
-        logger.rejected(id, OVERSIZED_BODY);
-        writeResponse(
-            context,
-            HttpResponse.error(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.code(), OVERSIZED_BODY));
+        logger.rejected(id, TransportProblems.REQUEST_TOO_LARGE_CODE);
+        writeResponse(context, TransportProblems.tooLarge(id, messages));
         return;
       }
       logger.rejected(id, TRANSPORT_ERROR);
@@ -844,6 +1022,11 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         return;
       }
       EndpointClass endpoint = classify(requestPath);
+      String peer = effectivePeer(context);
+      if (authenticationLockout != null && authenticationLockout.isLocked(peer)) {
+        rejectLocked(context, request, endpoint, authenticationLockout.retryAfterSeconds(peer));
+        return;
+      }
       AuthenticationResult result;
       try {
         result = authenticationFilter.filter(toAuthenticationRequest(request, id));
@@ -852,9 +1035,13 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
       }
       if (result.authenticated()) {
         Identity identity = result.identity();
-        RateLimitDecision limit = rateLimiter.tryIdentity(identity.id(), endpoint);
-        if (!limit.allowed()) {
-          shed(context, request, limit, ShedScope.IDENTITY, identity, endpoint);
+        if (authenticationLockout != null) {
+          authenticationLockout.recordSuccess(peer);
+        }
+        RateLimitDecision identityLimit = rateLimiter.tryIdentity(identity.id(), endpoint);
+        RateLimitDecision combined = combineDecision(context, identityLimit);
+        if (!identityLimit.allowed()) {
+          shed(context, request, combined, ShedScope.IDENTITY, identity, endpoint);
           return;
         }
         AuthContext authContext = authenticationFilter.context(id, result);
@@ -875,21 +1062,25 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         context.fireChannelRead(message);
         return;
       }
-      rejectAuthentication(context, request, endpoint, result.failure());
+      rejectAuthentication(context, request, endpoint, result.failure(), peer);
     }
 
     private void rejectAuthentication(
         ChannelHandlerContext context,
         FullHttpRequest request,
         EndpointClass endpoint,
-        AuthenticationFailure failure) {
+        AuthenticationFailure failure,
+        String peer) {
       AuthenticationFailure reason = failure == null ? AuthenticationFailure.REQUIRED : failure;
       metrics.recordAuthFailure(AuthFailureReason.from(reason));
-      String remoteKey = String.valueOf(context.channel().remoteAddress());
-      RateLimitDecision decision = rateLimiter.tryAuthFailure(remoteKey);
-      if (!decision.allowed()) {
-        shed(context, request, decision, ShedScope.AUTH_FAILURE, null, endpoint);
+      RateLimitDecision failureLimit = rateLimiter.tryAuthFailure(peer);
+      RateLimitDecision combined = combineDecision(context, failureLimit);
+      if (!failureLimit.allowed()) {
+        shed(context, request, combined, ShedScope.AUTH_FAILURE, null, endpoint);
         return;
+      }
+      if (authenticationLockout != null) {
+        authenticationLockout.recordFailure(peer);
       }
       String id = requestId(context);
       if (isWebSocketUpgrade(request)) {
@@ -927,32 +1118,6 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
               endpoint,
               code,
               TransportProblems.authorizationDenied(id, code, messages));
-      ReferenceCountUtil.release(request);
-      writeResponse(context, response);
-    }
-
-    private void shed(
-        ChannelHandlerContext context,
-        FullHttpRequest request,
-        RateLimitDecision decision,
-        ShedScope scope,
-        Identity identity,
-        EndpointClass endpoint) {
-      metrics.recordShed(scope);
-      String id = requestId(context);
-      if (isWebSocketUpgrade(request)) {
-        logger.websocketRejected(REDACTED, TransportProblems.RATE_LIMITED_CODE);
-      } else {
-        logger.rejected(id, TransportProblems.RATE_LIMITED_CODE);
-      }
-      HttpResponse response =
-          denyAndRespond(
-              id,
-              request,
-              identity,
-              endpoint,
-              TransportProblems.RATE_LIMITED_CODE,
-              TransportProblems.rateLimited(decision, id, messages));
       ReferenceCountUtil.release(request);
       writeResponse(context, response);
     }
@@ -1109,10 +1274,10 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
 
     @Override
     protected void handleOversizedMessage(ChannelHandlerContext context, HttpMessage oversized) {
-      logger.rejected(requestId(context), OVERSIZED_BODY);
-      writeResponse(
-          context,
-          HttpResponse.error(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE.code(), OVERSIZED_BODY));
+      String id = requestId(context);
+      logger.rejected(id, TransportProblems.REQUEST_TOO_LARGE_CODE);
+      ReferenceCountUtil.release(oversized);
+      writeResponse(context, TransportProblems.tooLarge(id, messages));
     }
   }
 

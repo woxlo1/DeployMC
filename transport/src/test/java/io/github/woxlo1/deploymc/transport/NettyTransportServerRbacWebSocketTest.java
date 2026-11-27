@@ -131,6 +131,9 @@ class NettyTransportServerRbacWebSocketTest {
     output.write(
         ("GET /api/v1/ws HTTP/1.1\r\n"
                 + "Host: 127.0.0.1\r\n"
+                + "Origin: http://127.0.0.1:"
+                + port
+                + "\r\n"
                 + "Upgrade: websocket\r\n"
                 + "Connection: Upgrade\r\n"
                 + "Sec-WebSocket-Key: "

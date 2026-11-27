@@ -168,6 +168,9 @@ class AuthenticationFrameworkTest {
               server.port(),
               "GET /api/v1/ws HTTP/1.1\r\n"
                   + "Host: 127.0.0.1\r\n"
+                  + "Origin: http://127.0.0.1:"
+                  + server.port()
+                  + "\r\n"
                   + "Upgrade: websocket\r\nConnection: Upgrade\r\n"
                   + "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
                   + "Sec-WebSocket-Version: 13\r\n"

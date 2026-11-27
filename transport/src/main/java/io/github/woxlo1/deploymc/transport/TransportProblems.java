@@ -9,6 +9,7 @@ import java.util.Objects;
 final class TransportProblems {
 
   static final String RATE_LIMITED_CODE = "auth.rate-limited";
+  static final String LOCKED_OUT_CODE = "auth.locked-out";
   static final String SERVER_BUSY_CODE = "server.busy";
   static final String METRICS_FORBIDDEN_CODE = "metrics.forbidden";
   static final String AUTHORIZATION_DENIED_CODE = AuthorizationDeniedException.DEFAULT_CODE;
@@ -19,6 +20,8 @@ final class TransportProblems {
   static final String AUDIT_WRITE_FAILED_CODE = AuditException.Code.WRITE_FAILED.problemCode();
   static final String AUDIT_EXPORT_LIMIT_CODE = AuditException.Code.EXPORT_LIMIT.problemCode();
   static final String REQUEST_INVALID_CODE = "request.invalid";
+  static final String REQUEST_ORIGIN_REJECTED_CODE = "request.origin-rejected";
+  static final String REQUEST_TOO_LARGE_CODE = "request.too-large";
   static final String REQUEST_INVALID_CURSOR_CODE = "request.invalid-cursor";
   static final String RETRY_AFTER = "Retry-After";
   static final String RATE_LIMIT_LIMIT = "RateLimit-Limit";
@@ -45,6 +48,42 @@ final class TransportProblems {
         .withHeader(RATE_LIMIT_LIMIT, Integer.toString(decision.limit()))
         .withHeader(RATE_LIMIT_REMAINING, Integer.toString(decision.remaining()))
         .withHeader(RATE_LIMIT_RESET, Long.toString(decision.resetEpochSeconds()));
+  }
+
+  static HttpResponse lockedOut(
+      String requestId, long retryAfterSeconds, TransportMessages messages) {
+    HttpResponse response =
+        problem(
+            429,
+            LOCKED_OUT_CODE,
+            MessageKeys.AUTH_LOCKED_OUT_TITLE,
+            MessageKeys.AUTH_LOCKED_OUT_DETAIL,
+            requestId,
+            messages,
+            true);
+    return response.withHeader(RETRY_AFTER, Long.toString(Math.max(1L, retryAfterSeconds)));
+  }
+
+  static HttpResponse originRejected(String requestId, TransportMessages messages) {
+    return problem(
+        403,
+        REQUEST_ORIGIN_REJECTED_CODE,
+        MessageKeys.REQUEST_ORIGIN_REJECTED_TITLE,
+        MessageKeys.REQUEST_ORIGIN_REJECTED_DETAIL,
+        requestId,
+        messages,
+        false);
+  }
+
+  static HttpResponse tooLarge(String requestId, TransportMessages messages) {
+    return problem(
+        413,
+        REQUEST_TOO_LARGE_CODE,
+        MessageKeys.REQUEST_TOO_LARGE_TITLE,
+        MessageKeys.REQUEST_TOO_LARGE_DETAIL,
+        requestId,
+        messages,
+        false);
   }
 
   static HttpResponse serverBusy(String requestId, TransportMessages messages) {
