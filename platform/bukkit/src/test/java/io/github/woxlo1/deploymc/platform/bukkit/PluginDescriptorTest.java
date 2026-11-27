@@ -65,7 +65,8 @@ class PluginDescriptorTest {
             CommandPermissions.STATUS,
             CommandPermissions.RELOAD,
             CommandPermissions.DOCTOR,
-            CommandPermissions.TOKEN);
+            CommandPermissions.TOKEN,
+            CommandPermissions.AUDIT);
 
     for (String permission : permissions) {
       assertTrue(

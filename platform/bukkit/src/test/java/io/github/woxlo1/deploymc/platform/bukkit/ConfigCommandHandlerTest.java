@@ -6,6 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.woxlo1.deploymc.api.PlatformInfo;
 import io.github.woxlo1.deploymc.core.PlatformCapabilities;
+import io.github.woxlo1.deploymc.core.audit.AuditActions;
+import io.github.woxlo1.deploymc.core.audit.AuditConfig;
+import io.github.woxlo1.deploymc.core.audit.AuditQuery;
+import io.github.woxlo1.deploymc.core.audit.AuditRecord;
+import io.github.woxlo1.deploymc.core.audit.AuditResult;
+import io.github.woxlo1.deploymc.core.audit.AuditStore;
+import io.github.woxlo1.deploymc.core.audit.AuditVerificationReport;
 import io.github.woxlo1.deploymc.core.auth.TokenRecord;
 import io.github.woxlo1.deploymc.core.auth.TokenStore;
 import io.github.woxlo1.deploymc.core.auth.cloudflare.CloudflareConfig;
@@ -15,7 +22,9 @@ import io.github.woxlo1.deploymc.core.config.ConfigView;
 import io.github.woxlo1.deploymc.core.config.DefaultConfigWriter;
 import io.github.woxlo1.deploymc.core.doctor.DoctorMessages;
 import io.github.woxlo1.deploymc.core.doctor.DoctorService;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import io.github.woxlo1.deploymc.core.rbac.RbacPolicyManager;
+import io.github.woxlo1.deploymc.transport.AuditRecorder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -586,6 +595,116 @@ class ConfigCommandHandlerTest {
   }
 
   @Test
+  void deniedConsoleCommandIsAuditedWithoutRunningTheAction() throws Exception {
+    Path data = temporaryDirectory.resolve("audit-denied");
+    Files.createDirectories(data);
+    try (AuditStore audit = openAudit(data)) {
+      ConfigCommandHandler audited = auditedHandler(audit, null);
+      RecordingOutput output = new RecordingOutput(false);
+
+      audited.handle(output, new String[] {"reload"});
+
+      assertEquals(
+          Collections.singletonList(
+              english(
+                  MessageKeys.COMMAND_PERMISSION_DENIED,
+                  values("permission", CommandPermissions.ROOT))),
+          output.messages);
+      List<AuditRecord> commands = records(audit, AuditActions.CONSOLE_COMMAND);
+      assertEquals(2, commands.size());
+      assertEquals(AuditResult.DENIED, commands.get(commands.size() - 1).result());
+      assertEquals("root-denied", commands.get(commands.size() - 1).reason());
+      assertTrue(records(audit, AuditActions.CONFIG_RELOAD).isEmpty());
+    }
+  }
+
+  @Test
+  void reloadIsAuditedWithBoundedPathDetails() throws Exception {
+    Files.write(
+        configFile,
+        ownersConfig()
+            .replace("language: en", "language: ja")
+            .replace("port: 8080", "port: 9090")
+            .getBytes(StandardCharsets.UTF_8));
+    Path data = temporaryDirectory.resolve("audit-reload");
+    Files.createDirectories(data);
+    try (AuditStore audit = openAudit(data)) {
+      ConfigCommandHandler audited = auditedHandler(audit, null);
+      RecordingOutput output = operatorOutput(false);
+
+      audited.handle(output, new String[] {"reload"});
+
+      List<AuditRecord> reloads = records(audit, AuditActions.CONFIG_RELOAD);
+      assertEquals(2, reloads.size());
+      AuditRecord finalReload = reloads.get(reloads.size() - 1);
+      assertEquals(AuditResult.SUCCESS, finalReload.result());
+      Object changed = finalReload.details().get("changed-paths");
+      assertTrue(changed instanceof List, "changed-paths must be a bounded list");
+      assertTrue(((List<?>) changed).contains("language"));
+      assertTrue(((List<?>) changed).contains("bind.port"));
+      List<AuditRecord> commands = records(audit, AuditActions.CONSOLE_COMMAND);
+      assertEquals(AuditResult.SUCCESS, commands.get(commands.size() - 1).result());
+      assertTrue(audit.verify().ok());
+    }
+  }
+
+  @Test
+  void tokenCreateAndRevokeAreAuditedWithoutRecordingSecrets() throws Exception {
+    TokenStore store = TokenStore.load(temporaryDirectory.resolve("tokens-audit.d"));
+    AuthenticationRuntime authentication =
+        AuthenticationRuntime.create(
+            store, Clock.systemUTC(), new SecureRandom(), Duration.ofDays(30));
+    Path data = temporaryDirectory.resolve("audit-tokens");
+    Files.createDirectories(data);
+    try (AuditStore audit = openAudit(data)) {
+      ConfigCommandHandler audited = auditedHandler(audit, authentication);
+      RecordingOutput console = operatorOutput(true);
+
+      audited.handle(console, new String[] {"token", "create", "ci runner", "--owner=alice"});
+      String id = store.records().get(0).id();
+      String token = tokenFrom(console);
+      audited.handle(console, new String[] {"token", "revoke", id});
+
+      List<AuditRecord> creates = records(audit, AuditActions.TOKENS_CREATE);
+      List<AuditRecord> revokes = records(audit, AuditActions.TOKENS_REVOKE);
+      assertEquals(2, creates.size());
+      assertEquals(2, revokes.size());
+      AuditRecord finalCreate = creates.get(creates.size() - 1);
+      AuditRecord finalRevoke = revokes.get(revokes.size() - 1);
+      assertEquals(AuditResult.SUCCESS, finalCreate.result());
+      assertEquals(AuditResult.SUCCESS, finalRevoke.result());
+      assertEquals(id, finalCreate.details().get("record-id"));
+      assertEquals(id, finalRevoke.details().get("record-id"));
+      String exported = audit.export(Collections.<String, String>emptyMap());
+      assertFalse(exported.contains(token));
+      assertFalse(exported.contains("ci runner"));
+    }
+  }
+
+  @Test
+  void auditVerifyReportsIntegrityAndKnownLimitations() throws Exception {
+    Path data = temporaryDirectory.resolve("audit-verify");
+    Files.createDirectories(data);
+    try (AuditStore audit = openAudit(data)) {
+      ConfigCommandHandler audited = auditedHandler(audit, null);
+      RecordingOutput output = operatorOutput(false);
+
+      audited.handle(output, new String[] {"audit", "verify"});
+
+      assertTrue(output.messages.contains(english(MessageKeys.COMMAND_AUDIT_VERIFY_TITLE)));
+      assertTrue(output.messages.contains(english(MessageKeys.COMMAND_AUDIT_VERIFY_OK)));
+      assertTrue(containsMessage(output, "Records checked:"));
+      assertTrue(
+          output.messages.contains(
+              english(
+                  MessageKeys.COMMAND_AUDIT_VERIFY_LIMITATION,
+                  values("code", AuditVerificationReport.LIMITATION_NO_OFFHOST_ANCHOR))));
+      List<AuditRecord> commands = records(audit, AuditActions.CONSOLE_COMMAND);
+      assertEquals(AuditResult.SUCCESS, commands.get(commands.size() - 1).result());
+    }
+  }
+
+  @Test
   void completionOnlyReturnsPermittedSubcommands() {
     RecordingOutput limited =
         new RecordingOutput(false, CommandPermissions.ROOT, CommandPermissions.STATUS);
@@ -621,6 +740,31 @@ class ConfigCommandHandlerTest {
         authentication,
         null,
         policies);
+  }
+
+  private ConfigCommandHandler auditedHandler(
+      AuditStore audit, AuthenticationRuntime authentication) {
+    StartupPlan plan = StartupPlan.fromConfig(manager.current().get(), "0.1.0-test");
+    AuditRecorder recorder = AuditRecorder.of(audit, new RbacEvaluator(policies::current, null));
+    return new ConfigCommandHandler(
+        manager, plan, authentication, doctorRuntime(plan), policies, recorder, audit);
+  }
+
+  private static AuditStore openAudit(Path directory) throws Exception {
+    return AuditStore.open(
+        directory,
+        AuditConfig.of("audit", 8L * 1024L * 1024L, 30, AuditConfig.FsyncPolicy.RECORD, 1),
+        Clock.systemUTC());
+  }
+
+  private static List<AuditRecord> records(AuditStore audit, String action) throws Exception {
+    List<AuditRecord> result = new ArrayList<AuditRecord>();
+    for (AuditRecord record : audit.query(AuditQuery.defaults()).items()) {
+      if (action.equals(record.action())) {
+        result.add(record);
+      }
+    }
+    return result;
   }
 
   private static String tokenFrom(RecordingOutput output) {
@@ -679,7 +823,8 @@ class ConfigCommandHandlerTest {
         CommandPermissions.STATUS,
         CommandPermissions.RELOAD,
         CommandPermissions.DOCTOR,
-        CommandPermissions.TOKEN);
+        CommandPermissions.TOKEN,
+        CommandPermissions.AUDIT);
   }
 
   private static boolean containsMessage(RecordingOutput output, String fragment) {

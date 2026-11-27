@@ -42,7 +42,7 @@ localized `lifecycle.startFailed` message and the plugin disables itself.
 
 ## `/deploymc` commands
 
-The generated `plugin.yml` registers `/deploymc` behind `deploymc.command.use` and declares five
+The generated `plugin.yml` registers `/deploymc` behind `deploymc.command.use` and declares six
 operator-only permission nodes:
 
 | Permission | Command |
@@ -52,6 +52,7 @@ operator-only permission nodes:
 | `deploymc.command.reload` | `reload` |
 | `deploymc.command.doctor` | `doctor` |
 | `deploymc.command.token` | `token` |
+| `deploymc.command.audit` | `audit` |
 
 All permission identifiers, subcommand names, and configuration keys are stable identifiers and are
 never localized. The response text is localized from English and Japanese Bukkit resource bundles;
@@ -66,8 +67,14 @@ the catalog selected for a command follows the active configuration's `language`
   support-tier verdict.
 - `token` is console-only. `token create [label]` provisions a host-stored token and prints the secret
   once. It never prints a stored hash or accepts a token supplied by an API request.
+- `audit verify` checks the local hash chain and reports counts, the first stable failure code when
+  present, and known limitations. It does not off-host anchor the log and never prints sealed record
+  contents or absolute host paths.
 
-Tab completion offers only subcommands for which the sender holds the matching permission.
+Command dispatch and the `reload`, token create, and token revoke mutations are recorded through the
+host audit store. If a mandatory audit write fails, the command is refused with a localized error
+before the action runs. Tab completion offers only subcommands for which the sender holds the
+matching permission.
 
 ## Safe reload
 

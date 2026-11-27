@@ -8,6 +8,7 @@ public final class CommandPermissions {
   public static final String RELOAD = "deploymc.command.reload";
   public static final String DOCTOR = "deploymc.command.doctor";
   public static final String TOKEN = "deploymc.command.token";
+  public static final String AUDIT = "deploymc.command.audit";
 
   private CommandPermissions() {}
 }

@@ -49,6 +49,14 @@ public final class MessageKeys {
   public static final String COMMAND_PERMISSION_DENIED = "command.permissionDenied";
   public static final String COMMAND_CONSOLE_ONLY = "command.consoleOnly";
   public static final String COMMAND_UNAVAILABLE = "command.unavailable";
+  public static final String COMMAND_AUDIT_FAILED = "command.audit.failed";
+  public static final String COMMAND_AUDIT_USAGE = "command.audit.usage";
+  public static final String COMMAND_AUDIT_VERIFY_TITLE = "command.audit.verify.title";
+  public static final String COMMAND_AUDIT_VERIFY_OK = "command.audit.verify.ok";
+  public static final String COMMAND_AUDIT_VERIFY_FAILED = "command.audit.verify.failed";
+  public static final String COMMAND_AUDIT_VERIFY_COUNTS = "command.audit.verify.counts";
+  public static final String COMMAND_AUDIT_VERIFY_FAILURE = "command.audit.verify.failure";
+  public static final String COMMAND_AUDIT_VERIFY_LIMITATION = "command.audit.verify.limitation";
   public static final String COMMAND_STATUS_TITLE = "command.status.title";
   public static final String COMMAND_STATUS_VERSION = "command.status.version";
   public static final String COMMAND_STATUS_CONFIG_VERSION = "command.status.configVersion";
