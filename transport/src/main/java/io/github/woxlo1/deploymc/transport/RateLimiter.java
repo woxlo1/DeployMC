@@ -65,11 +65,21 @@ public final class RateLimiter {
 
   /** Checks the bucket keyed by (identity id, endpoint class). */
   public synchronized RateLimitDecision tryIdentity(String identityId, EndpointClass endpoint) {
-    if (isBlank(identityId) || endpoint == null) {
+    return tryIdentity(identityId, endpoint, identityPerMinute);
+  }
+
+  /**
+   * Checks the identity bucket with a role-derived budget that can only lower the global budget.
+   */
+  public synchronized RateLimitDecision tryIdentity(
+      String identityId, EndpointClass endpoint, int limitOverride) {
+    if (isBlank(identityId) || endpoint == null || limitOverride < 1) {
       return denyClosed(identityPerMinute, clock.millis());
     }
-    String key = hash("identity", identityId + '\u0000' + endpoint.wireLabel());
-    return consume(identityBuckets, key, identityPerMinute, clock.millis());
+    int effectiveLimit = Math.min(identityPerMinute, limitOverride);
+    String key =
+        hash("identity", identityId + '\u0000' + endpoint.wireLabel() + '\u0000' + effectiveLimit);
+    return consume(identityBuckets, key, effectiveLimit, clock.millis());
   }
 
   /** Checks the auth-failure bucket keyed by the effective peer address. */

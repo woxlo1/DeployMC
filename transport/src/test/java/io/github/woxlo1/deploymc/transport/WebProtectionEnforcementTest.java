@@ -8,6 +8,7 @@ import io.github.woxlo1.deploymc.core.auth.AuthenticationFailure;
 import io.github.woxlo1.deploymc.core.auth.AuthenticationResult;
 import io.github.woxlo1.deploymc.core.auth.Authenticator;
 import io.github.woxlo1.deploymc.core.auth.Identity;
+import io.github.woxlo1.deploymc.core.rbac.RbacEvaluator;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -141,6 +142,39 @@ class WebProtectionEnforcementTest {
   }
 
   @Test
+  void lowersTheIdentityBudgetFromRolePolicyWithoutRaisingTheGlobalBudget() throws Exception {
+    ObservabilityConfig observability =
+        ObservabilityConfig.builder()
+            .addressRateLimitPerMinute(100)
+            .identityRateLimitPerMinute(3)
+            .build();
+    TransportConfig config =
+        TransportConfig.builder(HttpBindConfig.of("127.0.0.1", 0, false))
+            .observability(observability)
+            .build();
+    NettyTransportServer server =
+        newServer(
+            config,
+            request -> authenticated("limited-actor"),
+            request -> HttpResponse.status(200),
+            RbacTestSupport.rateLimited(1));
+    try {
+      server.start();
+      String first = raw(server.port(), getRequest("/api/v1/server", tokenHeader()));
+      String second = raw(server.port(), getRequest("/api/v1/server", tokenHeader()));
+
+      assertTrue(first.startsWith("HTTP/1.1 200"), first);
+      assertTrue(second.startsWith("HTTP/1.1 429"), second);
+      assertTrue(second.contains("\"code\":\"auth.rate-limited\""), second);
+      assertTrue(
+          second.toLowerCase(Locale.ROOT).contains("ratelimit-limit: 1"),
+          "the role budget was not applied to the identity bucket: " + second);
+    } finally {
+      server.stop();
+    }
+  }
+
+  @Test
   void locksTokenModePeersAfterFiveFailuresWithoutCheckingFurtherCredentials() throws Exception {
     AtomicInteger attempts = new AtomicInteger();
     Authenticator authenticator =
@@ -184,6 +218,14 @@ class WebProtectionEnforcementTest {
 
   private static NettyTransportServer newServer(
       TransportConfig config, Authenticator authenticator, HttpHandler handler) {
+    return newServer(config, authenticator, handler, RbacTestSupport.permitAll());
+  }
+
+  private static NettyTransportServer newServer(
+      TransportConfig config,
+      Authenticator authenticator,
+      HttpHandler handler,
+      RbacEvaluator evaluator) {
     return new NettyTransportServer(
         config,
         handler,
@@ -192,7 +234,7 @@ class WebProtectionEnforcementTest {
         new NoopLogger(),
         authenticator,
         TransportMessages.of(Locale.ENGLISH),
-        RbacTestSupport.permitAll(),
+        evaluator,
         new MetricsRegistry());
   }
 
