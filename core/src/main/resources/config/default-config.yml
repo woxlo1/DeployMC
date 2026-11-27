@@ -23,9 +23,14 @@ bind:
   port: 8080                   # restart only
   allow-non-loopback: false    # restart only
 
-  # CIDRs whose forwarded headers are trusted. Empty trusts the direct peer
-  # only. Restart only.
+  # IP addresses or CIDRs whose forwarded headers are trusted. Empty trusts
+  # the direct peer only, except a loopback tunnel terminator. Restart only.
   trusted-proxies: []
+
+  # Additional browser origins for WebSocket upgrades. Loopback origins for
+  # the configured port are always allowed. A tunneled public UI must list
+  # its exact origin here. Restart only.
+  allowed-origins: []
 
 auth:
   # token, cloudflare, and local-onetime are implemented. Restart only.
@@ -137,7 +142,12 @@ audit:
   max-batch-records: 1         # hot-reloadable; used by the batch policy
 
 limits:
-  rate-limit-per-minute: 300   # hot-reloadable; role limits can lower it
+  rate-limit-per-minute: 300   # hot-reloadable; identity and per-IP request budget
+  # Failed token authentications per effective peer and minute. Hot-reloadable.
+  auth-failure-rate-limit-per-minute: 60
+  # Non-upload request body limit; uploads use sandbox.max-upload-size-mb.
+  # Restart only.
+  request-body-limit-kb: 1024
   max-websocket-connections: 50 # restart only
 
 observability:

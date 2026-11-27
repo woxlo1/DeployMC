@@ -16,8 +16,12 @@ bind:
   address: 127.0.0.1
   port: 8080
   allow-non-loopback: false
-  # CIDRs whose X-Forwarded-For / CF-Connecting-IP headers are believed.
+  # IP addresses or CIDRs whose Forwarded / X-Forwarded-For / CF-Connecting-IP
+  # headers are believed. Loopback tunnel terminators are trusted by default.
   trusted-proxies: []
+  # Exact browser origins allowed for WebSocket upgrades. A tunneled public UI
+  # must list its origin here; loopback origins for the port are implicit.
+  allowed-origins: []
 
 auth:
   # `token` accepts host-provisioned API tokens. `cloudflare` verifies the
@@ -120,6 +124,8 @@ audit:
 
 limits:
   rate-limit-per-minute: 300
+  auth-failure-rate-limit-per-minute: 60
+  request-body-limit-kb: 1024
   max-websocket-connections: 50
 
 observability:
