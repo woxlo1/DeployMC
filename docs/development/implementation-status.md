@@ -49,7 +49,10 @@ issue #59. WP-3.5 merged its contract in [PR #235](https://github.com/woxlo1/Dep
 `d6fd2b8`, its transport implementation in [PR #237](https://github.com/woxlo1/DeployMC/pull/237) at
 `e6538f7`, its SecureRandom fixture fix in [PR #238](https://github.com/woxlo1/DeployMC/pull/238) at
 `f085782`, and its host wiring in [PR #239](https://github.com/woxlo1/DeployMC/pull/239) at
-`f500486`; this final evidence PR closes issue #60.
+`f500486`; issue #60 closed through its final evidence PR. WP-3.6 merged its normative contract in
+[PR #241](https://github.com/woxlo1/DeployMC/pull/241) at `1cffb46` and its product enforcement in
+[PR #242](https://github.com/woxlo1/DeployMC/pull/242) at `d36db83`; this final evidence PR closes
+issue #61.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -339,6 +342,53 @@ exercised WP-3.5. The audit REST routes are authenticated but are not consumed b
 Web UI, browser, or in-game command. No off-host anchor or cross-implementation parity claim is made.
 This final evidence PR records the consolidated result and closes issue #60.
 
+## WP-3.6 Web-facing protections (issue #61)
+
+WP-3.6 enforces the normative contract in `specification/security/web-protections.md` inside the
+embedded transport and host startup. Only a loopback or explicitly configured literal IP/CIDR peer
+may contribute an effective client address from `Forwarded`, then `X-Forwarded-For`, then
+`CF-Connecting-IP`; malformed values and untrusted peers fall back to the socket peer. The effective
+peer is used only for per-IP rate limiting, authentication-failure counting, and token-mode lockout.
+It never establishes identity, permits a `Host` or `Origin`, sets audit `actor.ip`, or appears in raw
+diagnostics. Three bounded buckets limit requests per effective peer, requests per authenticated
+identity, and authentication failures; a role limit may only lower the identity budget. Every
+evaluated response carries redacted `RateLimit-*` headers describing the most constraining bucket.
+Token mode locks out an effective peer after five failures with bounded doubling backoff; the
+`local-onetime` and `cloudflare` modes keep their existing behavior. A WebSocket upgrade must carry
+exactly one allowlisted `Origin`; a present-but-disallowed HTTP `Origin` is rejected while an absent
+HTTP `Origin` remains valid for bearer clients. Endpoint-specific body limits, WebSocket frame and
+queue bounds, and localized `auth.rate-limited`, `auth.locked-out`, `request.origin-rejected`, and
+`request.too-large` Problem Details complete the enforcement. V1 has no cookie session or CSRF
+token, and no doctor check count changed.
+
+The normative contract merged in [PR #241](https://github.com/woxlo1/DeployMC/pull/241) at `1cffb46`
+as three Conventional Commits (`024d9d2`, `b11f2ee`, `1cffb46`).
+[PR #242](https://github.com/woxlo1/DeployMC/pull/242) was rebase-merged at `d36db83` on
+`2026-11-27T10:16:41Z` with six Conventional Commits (`c515cea`, `ebb039c`, `a39cb92`, `56bf68a`,
+`aa25b15`, `d36db83`) preserved on `main`.
+
+| Command or evidence | Result |
+|---|---|
+| `git fetch origin main` | Success; implementation base `1cffb46`, final evidence base `d36db83` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Exit 0, no output after message-only rewrites; the first run found over-long body lines |
+| `node tools/build/verify-all.cjs` | `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| `git diff --check` | Exit 0, no output |
+| `.\gradlew.bat :core:test :transport:test :platform:bukkit:test --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` before the implementation PR |
+| Merged-tree JUnit XML | 670 Java tests, 0 failures, 0 errors, 1 skipped symlink test; 28 net tests above the 642-test WP-3.5 baseline |
+| PR required checks | 18/18 required checks passed for PR #242; PR #241 required checks also passed; no failures or pending checks |
+| Japanese verification and post-merge evidence | [PR #241 verification](https://github.com/woxlo1/DeployMC/pull/241#issuecomment-7214690300), [PR #241 checks](https://github.com/woxlo1/DeployMC/pull/241#issuecomment-7214768385), [PR #241 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/241#issuecomment-7214839028), [PR #242 verification](https://github.com/woxlo1/DeployMC/pull/242#issuecomment-7215684505), [PR #242 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/242#issuecomment-7215783210) |
+| Post-merge CI at `1cffb46` / `d36db83` | [45974364127](https://github.com/woxlo1/DeployMC/actions/runs/45974364127) and [45980733862](https://github.com/woxlo1/DeployMC/actions/runs/45980733862), both `success` |
+| Post-merge CodeQL at `1cffb46` / `d36db83` | [45974364016](https://github.com/woxlo1/DeployMC/actions/runs/45974364016) and [45980733910](https://github.com/woxlo1/DeployMC/actions/runs/45980733910), both `success` |
+| Post-merge Scorecard at `1cffb46` / `d36db83` | [45974364095](https://github.com/woxlo1/DeployMC/actions/runs/45974364095) and [45980733847](https://github.com/woxlo1/DeployMC/actions/runs/45980733847), both `success` |
+
+Local evidence is server-free, embedded-socket, generated-descriptor, and handler-level only. No
+running Minecraft server, Bukkit mock, browser, E2E run, full integration suite, or in-game command
+exercised WP-3.6. No Web UI consumes these protections, the doctor check count is unchanged, and no
+running reverse proxy or tunnel was configured. Audit `actor.ip` remains null, Cloudflare JWT
+identities remain non-admin-equivalent, and D-001 and D-002 are unchanged. This final evidence PR
+records the consolidated result and closes issue #61.
+
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
 The seven spikes required by PART 40.3 are recorded in
@@ -546,9 +596,10 @@ contract now has a Java 8 `core.validation` implementation with bounded YAML, JS
 properties validators, a deterministic registry, and a fail-closed save-time gate wired into
 `core.files`. The WP-2.6 file/validation adapter calls the registry for the validate endpoint and the
 save gate on writes, but no running server or UI consumes it. WP-3.1 provides the authentication
-boundary and a uniform 403 denial path; WP-3.4 adds the RBAC engine and WP-3.5 adds the fail-closed
-audit store and console verification. There is still no deployment engine or Web UI screen, and the
-packaged Web UI has not been rendered in a browser.
+boundary and a uniform 403 denial path; WP-3.4 adds the RBAC engine, WP-3.5 adds the fail-closed
+audit store and console verification, and WP-3.6 adds bounded transport protections for effective
+peers, rate limits, Origin checks, body limits, and token-mode lockout. There is still no deployment
+engine or Web UI screen, and the packaged Web UI has not been rendered in a browser.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -560,7 +611,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Area | What is verified | How |
 |---|---|---|
 | Java build | Multi-project Gradle build, JDK 21 toolchain, `--release 8`, class-file version check | `.\gradlew.bat build verifyJava8` |
-| Java unit tests | 642 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, request-boundary authentication, provisioner, auth gate, RBAC, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, snapshot REST adapter, audit store/routes/recorder, doctor, observability, and self-protection cases | Gradle `test` tasks; JUnit XML: 642 tests, 0 failures, 0 errors, 1 skipped |
+| Java unit tests | 670 tests across all modules, including fake SPI, Bukkit, standalone, transport, static asset, configuration, command, i18n runtime, token store, authenticator, request-boundary authentication, provisioner, auth gate, RBAC, web protections, sandbox resolver/corpus/fuzz/manifest, file operation, snapshot store, diff engine, validation, file/validation REST adapter, snapshot REST adapter, audit store/routes/recorder, doctor, observability, and self-protection cases | Gradle `test` tasks; JUnit XML: 670 tests, 0 failures, 0 errors, 1 skipped |
 | Core value objects | `SemanticVersion`, `PlatformCapabilities`, `CapabilityKeys`, `CapabilityDefinition`, `CapabilityCatalog`, SPI value types | Compile and unit tests |
 | SPI interfaces | `PlatformAdapter`, `PlatformScheduler`, `ConsoleBridge`, `ServerController`, `PluginInspector`, `MessageSink`, and value types | Compile and fake-platform tests |
 | Bukkit adapter | Generated `plugin.yml` with `/deploymc` and operator-only permissions, `JavaPlugin` entry point, config-driven startup, SPI bridge, version detection, startup banner, capability map, task cleanup, localized command handler, tab completion, per-sender i18n, console-only token creation, audit lifecycle/mutation/console wiring, and transport start/stop wiring | `.\gradlew.bat :platform:bukkit:test`; 99 Bukkit tests, 0 failures, plus the WP-1.8 real-server smoke below. In-game commands are still not exercised |
@@ -594,6 +645,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-3.2 Cloudflare Access verifier | RS256-only `kid`-keyed JWT verification, bounded JWKS cache with ETag revalidation and bounded stale-while-error, fail-closed unavailability, closed diagnostics, host startup wiring, 401/503 problem mapping, and a redacted 14th doctor check | 11 committed JWT vectors through the product verifier, cache/rotation/staleness tests, transport and Bukkit wiring tests, full build reporting 516 tests with 0 failures, 0 errors, 1 skipped; all-toolchain verification and post-merge CI/CodeQL/Scorecard passed; no real Cloudflare tenant, running server, or in-game command |
 | WP-3.3 token and one-time-token modes | Normative token record/command/one-time contract; SHA-256 token storage with scopes, revocation, last-used persistence, fail-closed metadata writes and closed auth mappings; loopback-only in-memory one-time runtime with bounded TTL and attempts; console create/revoke/list with TTL clamping and tab completion | Specification checker 19 tests; server-free core, transport, and Bukkit command tests; merged tree reports 544 Java tests with 0 failures, 0 errors, 1 skipped; all 18 required checks for each of PR #228, #229, and #230 plus post-merge CI/CodeQL/Scorecard passed; no running server or in-game command |
 | WP-3.4 RBAC engine | Closed 23-permission registry, immutable policy snapshots with sandbox path scopes, owner-derived token scope narrowing, reserved `local-onetime` identity, centralized REST/WebSocket gate, authenticated `/api/v1/me`, redacted 15th doctor check, and console `--owner`; invalid reload denies all and WebSocket permission loss closes with 4403 | Contract PR #232 at `4bd654b`; implementation PR #233 at `ca1d070`; this final evidence PR; server-free core/transport/Bukkit tests, 599 Java tests, all-toolchain verification, i18n, all 18 required checks, post-merge CI/CodeQL/Scorecard, and CI Paper smoke on Ubuntu/Windows; no local running server or in-game command |
+| WP-3.6 web protections | Trusted-peer effective address parsing with bounded forwarded chains, per-peer/per-identity/auth-failure buckets, role-lowered identity budgets, redacted rate headers, token-mode lockout, exact WebSocket Origin checks, endpoint body limits, and localized Problem Details | Contract PR #241 at `1cffb46`; implementation PR #242 rebase-merged at `d36db83` with six Conventional Commits; this final evidence PR; 6 effective-peer, 5 Origin, 3 lockout, 3 config, 10 rate-limit, and 6 embedded-socket enforcement tests plus core role-limit tests; 670 Java tests in the merged tree; all-toolchain verification; 18/18 required checks; post-merge CI/CodeQL/Scorecard; no running server or Web UI consumer |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |
@@ -1185,7 +1237,7 @@ The following are documented as intended behavior. They are **not** code.
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
 | Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
 | REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Auth gate, health, file/validation, snapshot, doctor, opt-in metrics, and audit query/export/verify handlers implemented; deployment and console resource handlers are not |
-| WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Upgrade authentication and frame limits implemented; the AsyncAPI event protocol and application handlers are not |
+| WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Upgrade authentication, exact Origin checks, and frame limits implemented; the AsyncAPI event protocol and application handlers are not |
 | RBAC and threat model | [Threat model](../../specification/security/threat-model.md), [RBAC contract](../../specification/security/rbac.md) | RBAC is implemented with no implicit admin equivalence; the threat model remains a draft |
 | Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, fail-closed observability adapter, and `/deploymc` commands |
 | Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
@@ -1215,6 +1267,8 @@ The following are documented as intended behavior. They are **not** code.
 - Contract tests that check a running implementation against the API skeletons.
 - Web UI screens (file tree, editor, diff, deployment view, console, audit); the PART 36 doctor
   panel exists and is build-verified only.
+- Running-server, tunnel, or Web UI consumption of the WP-3.6 protections. The embedded transport
+  enforces them in server-free tests; no browser, tunnel terminator, or reverse proxy exercised them.
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
 - GitHub Action, examples, documentation site.
 - Tier 1/2/3 entries and the full integration suite; the v1 smoke harness exists but intentionally earns no tier.
@@ -1231,7 +1285,7 @@ The following are documented as intended behavior. They are **not** code.
 | `.github/` | Issue forms, PR template, CODEOWNERS, Dependabot config, labels TSV, seven workflows including scheduled sandbox fuzzing |
 | `api/` | `DeployMCService`, `ServerInfo`, `PlatformInfo`, `CapabilityState` value objects |
 | `core/` | Version and capability value objects, capability catalog, SPI interfaces and value types, validated configuration loader and migration manager, host-provisioned token authentication, canonical sandbox resolver with localized rejection catalogs, sandboxed file operations service with revisions, atomic commits, and a host-wired validation gate, bounded content validators, and a byte-preserving YAML scalar editor; fake adapter in test sources |
-| `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, classpath-only static asset handler with 12 tests, authentication/health gate with 4 tests, and localized 401 responses |
+| `transport/` | `HttpBindConfig`, internal transport interfaces, limits/config, policy, logging, Netty HTTP/WebSocket server with 11 integration tests, classpath-only static asset handler with 12 tests, authentication/health gate with 4 tests, bounded effective-peer/Origin/rate/lockout web protections, and localized 401 responses |
 | `platform/bukkit/` | Compile-only Bukkit adapter, generated descriptor, catalog-backed startup, token-aware startup and console token creation, and server-free tests |
 | `platform/standalone/` | Build placeholder with configuration value object |
 | `plugin/` | Shadow aggregator with mandatory relocations, final-JAR verifier, CI size report, descriptor, adapter classes, message catalog, relocated Netty/SnakeYAML, and `deploymc-web/` assets |
