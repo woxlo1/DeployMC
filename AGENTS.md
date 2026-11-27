@@ -220,6 +220,18 @@ handler-level only; no running server, Bukkit mock, browser, E2E run, full integ
 in-game command exercised the audit path, and no Web UI consumes the audit routes. D-001 and D-002 are
 unchanged.
 
+WP-3.6 web protections merged its normative contract in
+[PR #241](https://github.com/woxlo1/DeployMC/pull/241) at `1cffb46` and its product enforcement in
+[PR #242](https://github.com/woxlo1/DeployMC/pull/242) at `d36db83`, with issue #61 closing through
+this final evidence PR. PR #242 was rebase-merged with six Conventional Commits preserved on `main`.
+It adds trusted-proxy effective-peer resolution, exact WebSocket Origin checks, three bounded rate
+buckets with role-lowered identity budgets, token-mode lockout, endpoint body limits, and localized
+rejections with redacted headers. All required PR checks and post-merge CI/CodeQL/Scorecard passed;
+the merged tree has 670 Java tests (0 failures, 0 errors, 1 skipped), and all seven toolchains report
+`PASS`. Evidence is server-free and embedded-socket only; no running server, Bukkit mock, browser, E2E
+run, full integration suite, or in-game command exercised it, and no Web UI consumes the protections.
+D-001 and D-002 are unchanged.
+
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41

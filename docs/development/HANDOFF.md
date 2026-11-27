@@ -5,7 +5,20 @@ Last updated: 2026-11-27. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## What was just done
 
-- Issue #60 WP-3.5 audit log is complete with this final evidence PR. PR #235 merged the normative
+- Issue #61 WP-3.6 Web-facing protections is complete with this final evidence PR. PR #241 merged the
+  normative contract at `1cffb46` as three Conventional Commits, and PR #242 was rebase-merged at
+  `d36db83` on `2026-11-27T10:16:41Z` with six Conventional Commits preserved on `main`. The embedded
+  transport now resolves an effective peer only from trusted literal IP/CIDR peers, validates exact
+  WebSocket Origins, evaluates bounded per-peer/per-identity/auth-failure buckets with redacted rate
+  headers, enforces endpoint body and WebSocket limits, and locks out token-mode peers after repeated
+  failures with bounded backoff. Role limits may lower but never raise the identity budget. All 18
+  required checks passed for PR #242, and post-merge CI, CodeQL, and Scorecard passed at both merge
+  commits. The merged tree reports 670 Java tests with 0 failures, 0 errors, and 1 skipped, with all
+  seven toolchains passing. Evidence is server-free and embedded-socket only; no running server,
+  Bukkit mock, browser, E2E run, full integration suite, or in-game command exercised the protections.
+  No Web UI consumes them, the doctor check count is unchanged, and audit `actor.ip` remains null.
+  D-001 and D-002 are unchanged.
+- Issue #60 WP-3.5 audit log is complete with its final evidence PR. PR #235 merged the normative
   contract at `f4f89a8`; PR #236 merged the Java 8 writer, reader, bounded query, verifier, rotation,
   retention, and deterministic tests at `d6fd2b8`; PR #237 merged the authenticated query/export/
   verify routes, mutation recorder, localized transport messages, and RBAC permissions at `e6538f7`;
@@ -549,19 +562,22 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   `feature/rbac-59-final-evidence` was temporary for that final evidence update.
   `spec/audit-60-contract` and `feature/audit-60-core` remain after PRs #235 and #236;
   `feature/audit-60-transport`, `security/secure-random-tests`, and `feature/audit-60-host` were
-  deleted after their merges. `docs/audit-60-final-evidence` is temporary for this final evidence
-  update. Evidence is recorded in the status pages and pull-request comments.
+  deleted after their merges. `docs/audit-60-final-evidence` was temporary for the WP-3.5 final
+  evidence update. `spec/web-protections-61-contract` and `feature/web-protections-61-enforcement`
+  were retained until PRs #241 and #242 merged. `docs/web-protections-61-evidence` is temporary for
+  this final evidence update. Evidence is recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 62 immediately before this final evidence PR merges on 2026-11-27; issue #60 closes
-  on merge, leaving 61. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 61 immediately before this final evidence PR merges on 2026-11-27; issue #61 closes
+  on merge, leaving 60. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks local implementation of WP-3.6 Web-facing protections. WP-3.2 through WP-3.5 are
-  complete; D-002 must still be resolved before real Cloudflare Access verification or plan-specific
-  guide claims. Stored token scopes are enforced as a narrowing filter by WP-3.4 RBAC, and WP-3.5
-  records privileged mutations and denials without an off-host anchor.
+- Nothing blocks local implementation of WP-3.7 Security documentation and guides. WP-3.2 through
+  WP-3.6 are complete; D-002 must still be resolved before real Cloudflare Access verification or
+  plan-specific guide claims. Stored token scopes are enforced as a narrowing filter by WP-3.4 RBAC,
+  WP-3.5 records privileged mutations and denials without an off-host anchor, and WP-3.6 enforces
+  transport protections without a running-server or browser consumer.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
   branches #23-#39.
@@ -569,10 +585,10 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 ## Exact next steps
 
 1. Merge this final evidence PR, wait for the required post-merge workflows, post the Japanese
-   post-merge evidence comment, and confirm issue #60 is closed as completed.
-2. Start WP-3.6 (issue #61), Web-facing protections. Do not claim real Cloudflare compatibility until
-   D-002 is resolved. Later work may be prepared in parallel but must not merge ahead of an earlier
-   open issue without owner approval.
+   post-merge evidence comment, and confirm issue #61 is closed as completed.
+2. Start WP-3.7 (issue #62), Security documentation and guides. Do not claim real Cloudflare
+   compatibility until D-002 is resolved. Later work may be prepared in parallel but must not merge
+   ahead of an earlier open issue without owner approval.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
