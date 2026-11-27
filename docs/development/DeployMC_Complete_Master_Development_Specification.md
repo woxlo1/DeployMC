@@ -1545,6 +1545,7 @@ Each WP lists: **Goal**, **Tasks**, **Deliverables**, **Verification**. Treat th
 
 ### WP-3.6 Web-facing protections
 - Tasks: rate limiting (per identity and per IP, token-bucket, documented headers); brute-force lockouts for token mode; CSRF defenses for any cookie-based session; WebSocket Origin checks; security headers; request-size limits per endpoint class; trusted-proxy configuration for forwarded headers (default: trust none except loopback tunnel).
+- Normative contract: `specification/security/web-protections.md`. The selected v1 policy keeps bearer-only REST access, emits rate-limit headers on every evaluated response, locks token mode out by effective peer address, requires an allowlisted Origin for WebSocket upgrades, applies 1 MiB non-upload and 64 MiB upload body bounds, and uses forwarded headers only for per-IP limiting and lockout. Forwarded headers never establish identity or change `actor.ip` in the WP-3.5 audit log.
 
 ### WP-3.7 Security documentation and guides
 - Tasks: finalize threat model; `examples/cloudflare-tunnel/` with `cloudflared` config, step-by-step Access application/policy setup, service-token creation for CI, and a **verification checklist** ("how to prove the port is not reachable except through the tunnel"); each Cloudflare detail re-verified against current official docs with citation links and the access date.

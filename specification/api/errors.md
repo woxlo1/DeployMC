@@ -1,14 +1,16 @@
 # Error Code Catalog
 
-> **Status: updated 2026-11-21.** This catalog defines the structure and the stable
+> **Status: updated 2026-11-27.** This catalog defines the structure and the stable
 > codes referenced by the API specification. Authentication and file-operation codes have
 > implementations and are mapped to REST Problem Details by the WP-2.6 file/validation adapters;
 > snapshot codes are produced by the WP-2.3 store and mapped by the WP-2.6 snapshot adapters, diff
 > codes are produced by the Java 8 `core.diff` engine and mapped by the snapshot diff route, and
 > validation codes are produced by the Java 8 `core.validation` engine.
 > The `rbac.*` codes below are implemented by the WP-3.4 product evaluator; reason-to-code
-> mapping is defined in `specification/security/rbac.md`. The `audit.*` codes are normative
-> for WP-3.5 and must not be returned until the audit writer and REST routes are merged.
+> mapping is defined in `specification/security/rbac.md`. The `audit.*` codes are produced by the
+> merged WP-3.5 writer and REST routes. The WP-3.6 codes marked **reserved** are normative for
+> `specification/security/web-protections.md` and must not be returned until the enforcement is
+> implemented.
 > D-008 is resolved: every structural budget failure is the top-level `validation.limit-exceeded`
 > Problem with a format-specific issue code in `errors[]`. Codes are added with the feature
 > that produces them; an unused code stays out of the table.
@@ -101,13 +103,15 @@ an implementation that lacks the feature.
 | `auth.expired` | 401 | no | The credential expired. Obtain a new one. |
 | `auth.not-yet-valid` | 401 | no | `nbf`/`iat` is in the future beyond the allowed clock skew. |
 | `auth.jwks-unavailable` | 503 | yes | No valid cached signing key exists and the JWKS endpoint is unreachable. Fail closed. |
-| `auth.rate-limited` | 429 | yes | Too many failed authentication attempts from this identity or source. |
+| `auth.rate-limited` | 429 | yes | A per-identity, per-IP, or authentication-failure token bucket is exhausted. |
+| `auth.locked-out` | 429 | yes | **Reserved for WP-3.6.** Token-mode authentication is temporarily blocked for this effective peer. |
 | `auth.one-time-consumed` | 401 | no | The local one-time token was already used. |
 | `auth.one-time-expired` | 401 | no | The local one-time token expired. |
 
 `auth.revoked` applies only to persistent host API tokens. The two `auth.one-time-*`
 codes apply only to `local-onetime` and never identify a specific token or attempt count
-in the response.
+in the response. `auth.locked-out` applies only to token mode and never identifies the peer or
+discloses the remaining failure count; `local-onetime` keeps its own consumed and expired codes.
 
 ### Request and transport
 
@@ -115,7 +119,9 @@ in the response.
 |---|---|---|---|
 | `request.invalid` | 400 | no | The request body or parameters fail validation. |
 | `request.unsupported-media-type` | 415 | no | The `Content-Type` is not supported for this operation. |
-| `request.too-large` | 413 | no | The body exceeds the configured limit. |
+| `request.too-large` | 413 | no | The body or header exceeds the configured endpoint-class limit. |
+| `request.origin-rejected` | 403 | no | **Reserved for WP-3.6.** A WebSocket upgrade is missing or has a non-allowlisted Origin. |
+| `request.csrf-required` | 403 | no | **Reserved.** A future cookie-session state change lacks a valid CSRF token; v1 has no cookie sessions. |
 | `request.invalid-cursor` | 400 | no | The pagination cursor is malformed or no longer valid. |
 | `request.precondition-required` | 428 | no | A destructive write omitted `If-Match`. |
 | `request.timeout` | 408 | yes | The operation exceeded its deadline. |

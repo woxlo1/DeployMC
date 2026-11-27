@@ -1,25 +1,26 @@
 # Specification skeletons
 
-> **Status: 2026-11-25.** These documents define normative contracts. Only the features
+> **Status: 2026-11-27.** These documents define normative contracts. Only the features
 > explicitly marked as implemented below have running code. A skeleton is normative for
 > design work, not evidence that a feature works.
 
 | Document | Defines | Implementation status |
 |---|---|---|
-| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Auth gate, health, server info, file/validation, and snapshot adapters implemented; audit routes are normative for issue #60; the remaining resource handlers are not |
+| [api/openapi.yaml](api/openapi.yaml) | REST API skeleton: health, server info, shared Problem errors, pagination, ETag, and security components | Auth gate, health, server info, file/validation, snapshot, and audit adapters implemented; the remaining resource handlers are not |
 | [api/asyncapi.yaml](api/asyncapi.yaml) | WebSocket envelope, channels, subscribe/unsubscribe/ping, and event schemas | Upgrade authentication implemented; event protocol is not |
-| [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Auth, file, snapshot, diff, and validation codes have Java implementations and are mapped to REST Problem Details by the file/validation and snapshot adapters |
+| [api/errors.md](api/errors.md) | Stable error-code catalog and stability rules | Auth, file, snapshot, diff, validation, RBAC, and audit codes have Java implementations; WP-3.6 codes are marked reserved |
 | [config/config.schema.json](config/config.schema.json) | JSON Schema for the host-controlled `config.yml` | Structural validation implemented |
 | [config/example.config.yaml](config/example.config.yaml) | Complete schema-valid example | Example only |
 | [files/file-operations.md](files/file-operations.md) | Sandboxed file operations, revisions, atomic writes, limits, and snapshot boundary | Core service and authenticated REST adapters implemented; running-server smoke and UI not exercised |
 | [snapshot/snapshot-store.md](snapshot/snapshot-store.md) | Content-addressed history format, metadata, retention, restore, GC, verify/repair, and locking | Java 8 `core.snapshot` and six authenticated REST routes implemented; running-server smoke and UI not exercised |
 | [diff/diff-engine.md](diff/diff-engine.md) | Bounded line, word, YAML/JSON semantic, and JAR metadata diff contract | Java 8 `core.diff` and the snapshot diff REST route implemented; running-server smoke and UI not exercised |
 | [validation/content-validation.md](validation/content-validation.md) | WP-2.5 validator, registry, save-time gate, validation result, and comment-preserving YAML edit contract | Java 8 `core.validation`, the `core.files` gate, and the authenticated REST adapter implemented; running-server smoke and UI not exercised |
-| [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification, fail-closed write policy, and query contract | Normative contract for issue #60; no writer until the implementation PR |
+| [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification, fail-closed write policy, and query contract | Java 8 writer, verifier, REST routes, and Bukkit host wiring implemented; no off-host anchor |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
 | [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |
-| [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | WP-3.3 implemented; WP-3.4 owner and scope enforcement normative but not yet implemented |
-| [security/rbac.md](security/rbac.md) | Closed permission registry, role/path evaluation, token owner intersection, explain mode, and reload behavior | Normative contract for issue #59; no product evaluator until the implementation PR is merged |
+| [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | WP-3.3 lifecycle and WP-3.4 owner/scope narrowing implemented |
+| [security/rbac.md](security/rbac.md) | Closed permission registry, role/path evaluation, token owner intersection, explain mode, and reload behavior | Java 8 evaluator and REST/WebSocket enforcement implemented |
+| [security/web-protections.md](security/web-protections.md) | Rate limits, token-mode lockout, WebSocket Origin, security headers, endpoint-size bounds, CSRF policy, and trusted proxies | Normative contract for issue #61; enforcement not claimed until implementation PRs merge |
 
 ## How these documents are checked
 
