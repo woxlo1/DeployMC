@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-26 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-27 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
 implementation). GitHub merge evidence below was verified against `main` through `267d690` after
 PR #215. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
@@ -25,8 +25,11 @@ checks and post-merge CI/CodeQL/Scorecard; its final evidence PR closed issue #5
 normative contract in PR #228 at `72bddd2`, its core token lifecycle in PR #229 at `8056492`, and its
 host and console wiring in PR #230 at `49c544e`, with passing required checks and post-merge
 CI/CodeQL/Scorecard; its final evidence PR closed issue #58. WP-3.4 merged its normative contract in
-PR #232 at `4bd654b`, its RBAC implementation in PR #233 at `ca1d070`, and this final evidence PR
-closes issue #59.
+PR #232 at `4bd654b`, its RBAC implementation in PR #233 at `ca1d070`, and its final evidence PR
+closed issue #59. WP-3.5 merged its contract in PR #235 at `f4f89a8`, its core implementation in PR
+#236 at `d6fd2b8`, its transport implementation in PR #237 at `e6538f7`, its SecureRandom fix in PR
+#238 at `f085782`, and its host wiring in PR #239 at `f500486`; this final evidence PR closes issue
+#60.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -1160,7 +1163,45 @@ run passed all 18 required checks, including both Paper smoke entries.
 Local evidence is server-free, embedded-socket, and server-free command-output testing only. CI
 compatibility jobs did run the pinned Paper smoke on Ubuntu and Windows at `ca1d070`, but no local
 running Minecraft server, Bukkit mock, browser, E2E run, full integration suite, or in-game command
-exercised WP-3.4. Audit record generation remains WP-3.5 work; D-001 and D-002 are unchanged.
+exercised WP-3.4. D-001 and D-002 are unchanged.
+
+## WP-3.5 audit log (issue #60)
+
+WP-3.5 is complete. PR #235 merged the normative audit contract at `f4f89a8`; PR #236 merged the
+Java 8 writer, reader, bounded query, verifier, rotation, retention, and deterministic tests at
+`d6fd2b8`; PR #237 merged the authenticated query/export/verify routes, mutation recorder, localized
+transport messages, and RBAC
+permissions at `e6538f7`; PR #238 replaced generated test randomness with `SecureRandom` at
+`f085782`; and PR #239 rebase-merged the Bukkit startup/shutdown, REST, automatic snapshot, and
+console wiring at `f500486` on `2026-11-27T07:42:55Z` with four Conventional Commits preserved.
+Audit v1 uses JCS canonical JSON, `sha256:` chain hashes, an integer-only signed 64-bit number
+profile, fail-closed pending/success/failed records, a sensitive-detail guard, rotation continuations,
+anchor-covered retention, and daily plus clean-shutdown anchors. `deploymc audit verify` reports only
+counts, stable failure codes, and known limitations; `actor.ip` is always null because no unverified
+proxy header is accepted. Off-host anchoring is absent and always reported as a known limitation.
+Cloudflare JWT identities remain non-admin-equivalent; D-001 and D-002 are unchanged.
+
+| Evidence | Result |
+|---|---|
+| Local `git fetch origin main` | PASS; final evidence base `951a14a` |
+| Local `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | PASS |
+| Local `node tools/build/verify-all.cjs` | PASS for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| Local `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | PASS, `BUILD SUCCESSFUL` |
+| Local `git diff --check` | PASS, no output |
+| Local `.\gradlew.bat :platform:bukkit:test --console=plain --no-configuration-cache` | PASS, `BUILD SUCCESSFUL` |
+| Merged-tree JUnit XML | 642 tests, 0 failures, 0 errors, 1 skipped symlink test; 43 net tests above the WP-3.4 baseline |
+| PR required checks | All required checks passed for PRs #235-#239; PR #239 rollup recorded 20 successes and 0 failures |
+| Japanese pre-merge verification | [PR #239 verification](https://github.com/woxlo1/DeployMC/pull/239#issuecomment-7212703892), [all-checks confirmation](https://github.com/woxlo1/DeployMC/pull/239#issuecomment-7212743191) |
+| Japanese post-merge evidence | [PR #239 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/239#issuecomment-7212827252) |
+| Post-merge CI at `f500486` | [45960367805](https://github.com/woxlo1/DeployMC/actions/runs/45960367805), success |
+| Post-merge CodeQL at `f500486` | [45960367723](https://github.com/woxlo1/DeployMC/actions/runs/45960367723), success |
+| Post-merge Scorecard at `f500486` | [45960367672](https://github.com/woxlo1/DeployMC/actions/runs/45960367672), success |
+
+Local evidence is server-free, embedded-socket, generated-descriptor, and handler-level only. No
+running Minecraft server, Bukkit mock, browser, E2E run, full integration suite, or in-game command
+exercised WP-3.5. The audit REST routes are not consumed by a running server, Web UI, browser, or
+in-game command, and no off-host anchor or cross-implementation parity is claimed. This final
+evidence PR closes issue #60.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -1422,15 +1463,15 @@ matrix remains empty and `softwareName` is still `Unknown`.
   on a server.
 - The WP-1.5 command surface and WP-1.6 per-sender message path still have server-free tests only;
   the smoke run does not execute `/deploymc` in-game.
-- `auth.mode: token` and `cloudflare` are implemented; `local-onetime` still refuses startup.
-  Cloudflare mode is fixture-verified only, and real Cloudflare compatibility remains unclaimed until
-  D-002 is resolved.
-- Every token is admin-equivalent until 0.4.0; the RBAC engine and path scopes do not exist yet.
-  WP-3.1 only establishes the authenticated context and uniform 403 denial path.
-- WP-3.1 has server-free unit and embedded-socket evidence only; no running server, browser, E2E run,
-  full integration suite, or in-game command exercised the final auth boundary. WP-3.2 adds only
-  server-free, embedded-socket, and localhost-mock-JWKS evidence; the REST doctor route remains
-  host-only because Cloudflare JWT identities are not admin-equivalent.
+- `auth.mode: token`, `local-onetime`, and `cloudflare` are implemented. Cloudflare mode is
+  fixture-verified only, and real Cloudflare compatibility remains unclaimed until D-002 is resolved.
+- The RBAC engine and sandbox-resolved path scopes exist, and no token is implicitly
+  admin-equivalent. Cloudflare JWT identities remain non-admin-equivalent, so the REST doctor route
+  stays host-only.
+- WP-3.1 through WP-3.5 have server-free, embedded-socket, generated-descriptor, and handler-level
+  evidence only; no running server, Bukkit mock, browser, E2E run, full integration suite, or in-game
+  command exercised those paths. The audit REST routes are not consumed by a running server, Web UI,
+  browser, or in-game command, and the audit log has no off-host anchor.
 - Per-sender locale detection is feature-detected at runtime; `players.locale` stays `UNKNOWN` until
   real-server verification. See [plugin messages](../i18n/plugin-messages.md).
 - The support-tier matrix is empty; the v1 smoke harness records real Paper evidence but earns no
@@ -1461,12 +1502,14 @@ implementation at `41b6fee` and `1ba834b`, and its final evidence PR closed the 
 #57) is complete; PR #224 merged its core verifier at `d4a1576` and PR #226 merged its wiring at
 `d075646`. WP-3.3 (issue #58) is complete; PR #228 merged the contract at `72bddd2`, PR #229 merged
 the core lifecycle at `8056492`, PR #230 merged the host and console wiring at `49c544e`, and PR #231
-closed the issue. WP-3.4 (issue #59) is complete with this final evidence PR; PR #232 merged the
-contract at `4bd654b` and PR #233 merged the implementation at `ca1d070`. The next oldest open item is
-WP-3.5 (issue #60), the audit log. Owner decision D-002 remains open, so no real Cloudflare Access
-verification or plan-specific guide claim is made until the owner decides. Work on later items may be
-prepared in parallel but must not be merged ahead of an earlier open issue unless the owner explicitly
-approves.
+closed the issue. WP-3.4 (issue #59) is complete; PR #232 merged the contract at `4bd654b` and PR #233
+merged the implementation at `ca1d070`. WP-3.5 (issue #60) is complete with this final evidence PR;
+PR #235 merged the contract at `f4f89a8`, PR #236 the core at `d6fd2b8`, PR #237 the transport at
+`e6538f7`, PR #238 the SecureRandom fix at `f085782`, and PR #239 the host wiring at `f500486`. The
+next oldest open item is WP-3.6 (issue #61), Web-facing protections. Owner decision D-002 remains
+open, so no real Cloudflare Access verification or plan-specific guide claim is made until the owner
+decides. Work on later items may be prepared in parallel but must not be merged ahead of an earlier
+open issue unless the owner explicitly approves.
 
 ## Release checklist
 
