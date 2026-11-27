@@ -10,32 +10,57 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Bounded, continuously refilling token buckets for identity and authentication-failure budgets.
- * Raw identifiers are hashed before use as map keys and are never logged or exported.
+ * Bounded, continuously refilling token buckets for effective-peer, identity, and
+ * authentication-failure budgets. Raw identifiers are hashed before use as map keys and are never
+ * logged or exported.
  */
 public final class RateLimiter {
 
   private static final long WINDOW_MILLIS = 60_000L;
 
+  private final int addressPerMinute;
   private final int identityPerMinute;
   private final int authFailurePerMinute;
   private final int maxKeys;
   private final Clock clock;
+  private final Map<String, Bucket> addressBuckets;
   private final Map<String, Bucket> identityBuckets;
   private final Map<String, Bucket> authFailureBuckets;
 
+  /** Compatibility constructor that gives the address and identity buckets the same budget. */
   public RateLimiter(int identityPerMinute, int authFailurePerMinute, int maxKeys, Clock clock) {
+    this(identityPerMinute, identityPerMinute, authFailurePerMinute, maxKeys, clock);
+  }
+
+  public RateLimiter(
+      int addressPerMinute,
+      int identityPerMinute,
+      int authFailurePerMinute,
+      int maxKeys,
+      Clock clock) {
+    requirePositive(addressPerMinute, "addressPerMinute");
     requirePositive(identityPerMinute, "identityPerMinute");
     requirePositive(authFailurePerMinute, "authFailurePerMinute");
     if (maxKeys < 16 || maxKeys > 100_000) {
       throw new IllegalArgumentException("maxKeys must be between 16 and 100000");
     }
+    this.addressPerMinute = addressPerMinute;
     this.identityPerMinute = identityPerMinute;
     this.authFailurePerMinute = authFailurePerMinute;
     this.maxKeys = maxKeys;
     this.clock = Objects.requireNonNull(clock, "clock");
+    this.addressBuckets = new LinkedHashMap<String, Bucket>(maxKeys, 0.75f, true);
     this.identityBuckets = new LinkedHashMap<String, Bucket>(maxKeys, 0.75f, true);
     this.authFailureBuckets = new LinkedHashMap<String, Bucket>(maxKeys, 0.75f, true);
+  }
+
+  /** Checks the request bucket keyed by the canonical effective peer address. */
+  public synchronized RateLimitDecision tryAddress(String effectivePeer) {
+    if (isBlank(effectivePeer)) {
+      return denyClosed(addressPerMinute, clock.millis());
+    }
+    String key = hash("address", effectivePeer);
+    return consume(addressBuckets, key, addressPerMinute, clock.millis());
   }
 
   /** Checks the bucket keyed by (identity id, endpoint class). */
@@ -47,20 +72,21 @@ public final class RateLimiter {
     return consume(identityBuckets, key, identityPerMinute, clock.millis());
   }
 
-  /** Checks the auth-failure bucket keyed by the remote address and a fixed scope. */
-  public synchronized RateLimitDecision tryAuthFailure(String remoteAddress) {
-    if (isBlank(remoteAddress)) {
+  /** Checks the auth-failure bucket keyed by the effective peer address. */
+  public synchronized RateLimitDecision tryAuthFailure(String effectivePeer) {
+    if (isBlank(effectivePeer)) {
       return denyClosed(authFailurePerMinute, clock.millis());
     }
-    String key = hash("auth-failure", remoteAddress);
+    String key = hash("auth-failure", effectivePeer);
     return consume(authFailureBuckets, key, authFailurePerMinute, clock.millis());
   }
 
   /** Removes buckets that have been idle for a full window. Returns the number removed. */
   public synchronized int prune() {
     long now = clock.millis();
-    int removed = prune(identityBuckets, now) + prune(authFailureBuckets, now);
-    return removed;
+    return prune(addressBuckets, now)
+        + prune(identityBuckets, now)
+        + prune(authFailureBuckets, now);
   }
 
   private RateLimitDecision consume(

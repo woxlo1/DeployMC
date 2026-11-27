@@ -18,6 +18,7 @@ public final class TransportConfig {
   private final HttpBindConfig bind;
   private final int maxHeaderBytes;
   private final int maxBodyBytes;
+  private final int maxUploadBodyBytes;
   private final int maxConnections;
   private final int workerThreads;
   private final int idleTimeoutMillis;
@@ -30,12 +31,15 @@ public final class TransportConfig {
   private final ObservabilityConfig observability;
   private final Set<String> allowedHosts;
   private final Set<String> allowedOrigins;
+  private final Set<String> trustedProxies;
+  private final boolean tokenLockoutEnabled;
   private final String webSocketPath;
 
   private TransportConfig(Builder builder) {
     this.bind = builder.bind;
     this.maxHeaderBytes = builder.maxHeaderBytes;
     this.maxBodyBytes = builder.maxBodyBytes;
+    this.maxUploadBodyBytes = builder.maxUploadBodyBytes;
     this.maxConnections = builder.maxConnections;
     this.workerThreads = builder.workerThreads;
     this.idleTimeoutMillis = builder.idleTimeoutMillis;
@@ -52,6 +56,8 @@ public final class TransportConfig {
     hosts.addAll(builder.allowedHosts);
     this.allowedHosts = Collections.unmodifiableSet(hosts);
     this.allowedOrigins = Collections.unmodifiableSet(new LinkedHashSet<>(builder.allowedOrigins));
+    this.trustedProxies = Collections.unmodifiableSet(new LinkedHashSet<>(builder.trustedProxies));
+    this.tokenLockoutEnabled = builder.tokenLockoutEnabled;
   }
 
   public static Builder builder(HttpBindConfig bind) {
@@ -68,6 +74,10 @@ public final class TransportConfig {
 
   public int maxBodyBytes() {
     return maxBodyBytes;
+  }
+
+  public int maxUploadBodyBytes() {
+    return maxUploadBodyBytes;
   }
 
   public int maxConnections() {
@@ -118,6 +128,14 @@ public final class TransportConfig {
     return allowedOrigins;
   }
 
+  public Set<String> trustedProxies() {
+    return trustedProxies;
+  }
+
+  public boolean tokenLockoutEnabled() {
+    return tokenLockoutEnabled;
+  }
+
   public String webSocketPath() {
     return webSocketPath;
   }
@@ -127,7 +145,8 @@ public final class TransportConfig {
 
     private final HttpBindConfig bind;
     private int maxHeaderBytes = 8 * 1024;
-    private int maxBodyBytes = 2 * 1024 * 1024;
+    private int maxBodyBytes = 1024 * 1024;
+    private int maxUploadBodyBytes = 64 * 1024 * 1024;
     private int maxConnections = 200;
     private int workerThreads = 4;
     private int idleTimeoutMillis = 10_000;
@@ -141,6 +160,8 @@ public final class TransportConfig {
     private String webSocketPath = "/api/v1/ws";
     private Collection<String> allowedHosts = Collections.emptySet();
     private Collection<String> allowedOrigins = Collections.emptySet();
+    private Collection<String> trustedProxies = Collections.emptySet();
+    private boolean tokenLockoutEnabled = false;
 
     private Builder(HttpBindConfig bind) {
       this.bind = Objects.requireNonNull(bind, "bind");
@@ -153,6 +174,11 @@ public final class TransportConfig {
 
     public Builder maxBodyBytes(int value) {
       this.maxBodyBytes = value;
+      return this;
+    }
+
+    public Builder maxUploadBodyBytes(int value) {
+      this.maxUploadBodyBytes = value;
       return this;
     }
 
@@ -221,9 +247,20 @@ public final class TransportConfig {
       return this;
     }
 
+    public Builder trustedProxies(Collection<String> values) {
+      this.trustedProxies = clean(values, "trustedProxies");
+      return this;
+    }
+
+    public Builder tokenLockoutEnabled(boolean value) {
+      this.tokenLockoutEnabled = value;
+      return this;
+    }
+
     public TransportConfig build() {
       requireRange(maxHeaderBytes, 512, 1024 * 1024, "maxHeaderBytes");
       requireRange(maxBodyBytes, 1024, 64 * 1024 * 1024, "maxBodyBytes");
+      requireRange(maxUploadBodyBytes, 1024, 64 * 1024 * 1024, "maxUploadBodyBytes");
       requireRange(maxConnections, 1, 10_000, "maxConnections");
       requireRange(workerThreads, 1, 64, "workerThreads");
       requireRange(idleTimeoutMillis, 1_000, 10 * 60 * 1000, "idleTimeoutMillis");
@@ -237,6 +274,8 @@ public final class TransportConfig {
         throw new IllegalArgumentException(
             "webSocketPath must be an absolute path without a trailing slash");
       }
+      new OriginValidator(allowedOrigins, () -> bind.port());
+      new EffectivePeerResolver(trustedProxies);
       return new TransportConfig(this);
     }
 

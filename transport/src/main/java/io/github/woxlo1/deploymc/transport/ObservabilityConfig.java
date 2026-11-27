@@ -8,6 +8,7 @@ public final class ObservabilityConfig {
   private final LoggingFormat loggingFormat;
   private final boolean metricsEnabled;
   private final String metricsPermission;
+  private final int addressRateLimitPerMinute;
   private final int identityRateLimitPerMinute;
   private final int authFailureRateLimitPerMinute;
   private final int maxRateLimitKeys;
@@ -18,6 +19,7 @@ public final class ObservabilityConfig {
     this.loggingFormat = builder.loggingFormat;
     this.metricsEnabled = builder.metricsEnabled;
     this.metricsPermission = requirePermission(builder.metricsPermission);
+    this.addressRateLimitPerMinute = builder.addressRateLimitPerMinute;
     this.identityRateLimitPerMinute = builder.identityRateLimitPerMinute;
     this.authFailureRateLimitPerMinute = builder.authFailureRateLimitPerMinute;
     this.maxRateLimitKeys = builder.maxRateLimitKeys;
@@ -46,6 +48,10 @@ public final class ObservabilityConfig {
 
   public String metricsPermission() {
     return metricsPermission;
+  }
+
+  public int addressRateLimitPerMinute() {
+    return addressRateLimitPerMinute;
   }
 
   public int identityRateLimitPerMinute() {
@@ -81,6 +87,7 @@ public final class ObservabilityConfig {
   }
 
   private void validate() {
+    requireRange(addressRateLimitPerMinute, 1, 100_000, "addressRateLimitPerMinute");
     requireRange(identityRateLimitPerMinute, 1, 100_000, "identityRateLimitPerMinute");
     requireRange(authFailureRateLimitPerMinute, 1, 100_000, "authFailureRateLimitPerMinute");
     requireRange(maxRateLimitKeys, 16, 100_000, "maxRateLimitKeys");
@@ -103,8 +110,9 @@ public final class ObservabilityConfig {
     private LoggingFormat loggingFormat = LoggingFormat.TEXT;
     private boolean metricsEnabled = false;
     private String metricsPermission = "server.read";
+    private int addressRateLimitPerMinute = 300;
     private int identityRateLimitPerMinute = 300;
-    private int authFailureRateLimitPerMinute = 30;
+    private int authFailureRateLimitPerMinute = 60;
     private int maxRateLimitKeys = 4096;
     private long watchdogIntervalMillis = 5_000L;
     private long watchdogTimeoutMillis = 2_000L;
@@ -123,6 +131,11 @@ public final class ObservabilityConfig {
 
     public Builder metricsPermission(String value) {
       this.metricsPermission = value;
+      return this;
+    }
+
+    public Builder addressRateLimitPerMinute(int value) {
+      this.addressRateLimitPerMinute = value;
       return this;
     }
 
