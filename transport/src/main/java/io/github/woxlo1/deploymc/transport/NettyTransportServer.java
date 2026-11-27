@@ -107,6 +107,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
   private final AuthenticationFilter authenticationFilter;
   private final TransportMessages messages;
   private final RbacGate gate;
+  private final RbacEvaluator identityPolicy;
   private final AuditRecorder auditRecorder;
   private final ObservabilityConfig observability;
   private final MetricsRegistry metrics;
@@ -257,6 +258,7 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
     this.observability = config.observability();
     this.metrics = Objects.requireNonNull(metrics, "metrics");
     this.gate = new RbacGate(evaluator, observability.metricsPermission());
+    this.identityPolicy = evaluator;
     this.auditRecorder = Objects.requireNonNull(auditRecorder, "auditRecorder");
     Clock clock = Clock.systemUTC();
     this.rateLimiter =
@@ -1038,7 +1040,13 @@ public final class NettyTransportServer implements HttpTransport, WebSocketTrans
         if (authenticationLockout != null) {
           authenticationLockout.recordSuccess(peer);
         }
-        RateLimitDecision identityLimit = rateLimiter.tryIdentity(identity.id(), endpoint);
+        int identityBudget =
+            identityPolicy == null
+                ? observability.identityRateLimitPerMinute()
+                : identityPolicy.identityRateLimitPerMinute(
+                    identity, observability.identityRateLimitPerMinute());
+        RateLimitDecision identityLimit =
+            rateLimiter.tryIdentity(identity.id(), endpoint, identityBudget);
         RateLimitDecision combined = combineDecision(context, identityLimit);
         if (!identityLimit.allowed()) {
           shed(context, request, combined, ShedScope.IDENTITY, identity, endpoint);

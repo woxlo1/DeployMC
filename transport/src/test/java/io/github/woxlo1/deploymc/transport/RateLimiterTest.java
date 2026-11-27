@@ -129,6 +129,21 @@ class RateLimiterTest {
   }
 
   @Test
+  void roleOverrideCanOnlyLowerTheIdentityBudget() {
+    RateLimiter limiter = new RateLimiter(60, 60, 60, 16, new MutableClock(0L));
+
+    assertTrue(limiter.tryIdentity("identity", EndpointClass.SERVER, 2).allowed());
+    assertTrue(limiter.tryIdentity("identity", EndpointClass.SERVER, 2).allowed());
+    RateLimitDecision lowered = limiter.tryIdentity("identity", EndpointClass.SERVER, 2);
+    assertFalse(lowered.allowed());
+    assertEquals(2, lowered.limit());
+
+    RateLimitDecision raised = limiter.tryIdentity("identity", EndpointClass.SERVER, 120);
+    assertTrue(raised.allowed());
+    assertEquals(60, raised.limit(), "a role override must never raise the global budget");
+  }
+
+  @Test
   void mostConstrainingCombinationUsesLowestRemainingAndShortestRetry() {
     RateLimitDecision address = RateLimitDecision.allowed(300, 12, 1_800L);
     RateLimitDecision identity = RateLimitDecision.allowed(50, 3, 1_700L);

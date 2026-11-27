@@ -27,6 +27,20 @@ final class RbacTestSupport {
     return new RbacEvaluator(RbacPolicy.denyAll(), null);
   }
 
+  static RbacEvaluator rateLimited(int rateLimitPerMinute) {
+    RolePolicy role =
+        new RolePolicy(
+            "rate-limited",
+            true,
+            Collections.<String>emptyList(),
+            PathScope.wholeSandbox(Collections.<String>emptyList()),
+            rateLimitPerMinute);
+    Map<String, RolePolicy> roles = new LinkedHashMap<String, RolePolicy>();
+    roles.put("rate-limited", role);
+    return new RbacEvaluator(
+        RbacPolicy.of(roles, Collections.<String, List<String>>emptyMap(), "rate-limited"), null);
+  }
+
   private static RbacEvaluator evaluator(boolean wildcard, List<String> permissions) {
     RolePolicy role =
         new RolePolicy(
