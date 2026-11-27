@@ -14,9 +14,22 @@ public final class RolePolicy {
   private final boolean wildcard;
   private final Set<String> permissions;
   private final PathScope pathScope;
+  private final int rateLimitPerMinute;
 
   public RolePolicy(
       String name, boolean wildcard, Collection<String> permissions, PathScope pathScope) {
+    this(name, wildcard, permissions, pathScope, 0);
+  }
+
+  public RolePolicy(
+      String name,
+      boolean wildcard,
+      Collection<String> permissions,
+      PathScope pathScope,
+      int rateLimitPerMinute) {
+    if (rateLimitPerMinute < 0 || rateLimitPerMinute > 100_000) {
+      throw new IllegalArgumentException("rateLimitPerMinute must be between 0 and 100000");
+    }
     this.name = Objects.requireNonNull(name, "name");
     this.wildcard = wildcard;
     Set<String> unique = new LinkedHashSet<String>();
@@ -29,6 +42,7 @@ public final class RolePolicy {
     }
     this.permissions = Collections.unmodifiableSet(unique);
     this.pathScope = Objects.requireNonNull(pathScope, "pathScope");
+    this.rateLimitPerMinute = rateLimitPerMinute;
   }
 
   public String name() {
@@ -49,5 +63,10 @@ public final class RolePolicy {
 
   public PathScope pathScope() {
     return pathScope;
+  }
+
+  /** Configured role request budget, or {@code 0} when the role does not set one. */
+  public int rateLimitPerMinute() {
+    return rateLimitPerMinute;
   }
 }

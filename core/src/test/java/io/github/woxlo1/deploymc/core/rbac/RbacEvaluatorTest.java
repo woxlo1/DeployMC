@@ -117,6 +117,34 @@ class RbacEvaluatorTest {
   }
 
   @Test
+  void roleLimitsLowerTheIdentityBudgetButNeverRaiseIt() {
+    Map<String, RolePolicy> roles = new LinkedHashMap<String, RolePolicy>();
+    roles.put(
+        "limited",
+        new RolePolicy(
+            "limited",
+            false,
+            Collections.singletonList("files.read"),
+            PathScope.wholeSandbox(Collections.<String>emptyList()),
+            12));
+    roles.put(
+        "unlimited",
+        new RolePolicy(
+            "unlimited",
+            false,
+            Collections.singletonList("files.read"),
+            PathScope.wholeSandbox(Collections.<String>emptyList())));
+    Map<String, List<String>> users = new LinkedHashMap<String, List<String>>();
+    users.put("limited-user", Arrays.asList("limited", "unlimited"));
+    users.put("normal-user", Collections.singletonList("unlimited"));
+    RbacEvaluator evaluator = evaluator(RbacPolicy.of(roles, users, "none"));
+
+    assertEquals(12, evaluator.identityRateLimitPerMinute(user("limited-user"), 300));
+    assertEquals(5, evaluator.identityRateLimitPerMinute(user("limited-user"), 5));
+    assertEquals(300, evaluator.identityRateLimitPerMinute(user("normal-user"), 300));
+  }
+
+  @Test
   void reasonsMapToStableProblemCodes() {
     assertEquals("rbac.denied", DecisionReason.NO_ROLE.problemCode());
     assertEquals("rbac.denied", DecisionReason.NOT_GRANTED.problemCode());

@@ -87,7 +87,12 @@ public final class RbacPolicy {
           }
           roles.put(
               entry.getKey(),
-              new RolePolicy(entry.getKey(), wildcard, permissions, readPathScope(role)));
+              new RolePolicy(
+                  entry.getKey(),
+                  wildcard,
+                  permissions,
+                  readPathScope(role),
+                  readRateLimitPerMinute(role)));
         }
       }
       Map<String, List<String>> users = new LinkedHashMap<String, List<String>>();
@@ -173,6 +178,29 @@ public final class RbacPolicy {
       throw new IllegalArgumentException("expected mapping");
     }
     return (Map<String, Object>) value;
+  }
+
+  private static int readRateLimitPerMinute(Map<String, Object> role) {
+    Object limitsValue = role.get("limits");
+    if (limitsValue == null) {
+      return 0;
+    }
+    Map<String, Object> limits = asMap(limitsValue);
+    Object value = limits.get("rate-limit-per-minute");
+    if (value == null) {
+      return 0;
+    }
+    if (!(value instanceof Integer)
+        && !(value instanceof Long)
+        && !(value instanceof Short)
+        && !(value instanceof Byte)) {
+      throw new IllegalArgumentException("expected integer rate limit");
+    }
+    long parsed = ((Number) value).longValue();
+    if (parsed < 1L || parsed > 100_000L) {
+      throw new IllegalArgumentException("rate limit out of range");
+    }
+    return (int) parsed;
   }
 
   private static PathScope readPathScope(Map<String, Object> role) {

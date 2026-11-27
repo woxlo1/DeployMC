@@ -52,6 +52,21 @@ public final class RbacEvaluator {
     return policy().rolesFor(identityKey(identity));
   }
 
+  /** Effective identity request budget; role limits may only lower the host-wide budget. */
+  public int identityRateLimitPerMinute(Identity identity, int globalLimitPerMinute) {
+    int global = globalLimitPerMinute < 1 ? 1 : globalLimitPerMinute;
+    int effective = global;
+    RbacPolicy policy = policySource.get();
+    for (String name : policy.rolesFor(identityKey(identity))) {
+      RolePolicy role = policy.role(name);
+      if (role == null || role.rateLimitPerMinute() <= 0) {
+        continue;
+      }
+      effective = Math.min(effective, Math.min(global, role.rateLimitPerMinute()));
+    }
+    return effective;
+  }
+
   private static Supplier<RbacPolicy> fixedPolicy(final RbacPolicy policy) {
     return new Supplier<RbacPolicy>() {
       @Override
