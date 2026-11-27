@@ -99,7 +99,7 @@ class NettyTransportServerObservabilityTest {
       first = openUpgrade(server.port());
       awaitWebSocketGauge(registry, 1);
 
-      String second = rawRequest(server.port(), upgradeRequest());
+      String second = rawRequest(server.port(), upgradeRequest(server.port()));
       assertTrue(second.startsWith("HTTP/1.1 503"), second);
       assertTrue(second.contains("server.busy"), second);
       assertTrue(second.toLowerCase(Locale.ROOT).contains("retry-after: 1"), second);
@@ -183,16 +183,19 @@ class NettyTransportServerObservabilityTest {
     Socket socket = new Socket("127.0.0.1", port);
     socket.setSoTimeout(5_000);
     OutputStream output = socket.getOutputStream();
-    output.write(upgradeRequest().getBytes(StandardCharsets.UTF_8));
+    output.write(upgradeRequest(port).getBytes(StandardCharsets.UTF_8));
     output.flush();
     String headers = readHeaders(socket.getInputStream());
     assertTrue(headers.startsWith("HTTP/1.1 101"), headers);
     return socket;
   }
 
-  private static String upgradeRequest() {
+  private static String upgradeRequest(int port) {
     return "GET /api/v1/ws HTTP/1.1\r\n"
         + "Host: 127.0.0.1\r\n"
+        + "Origin: http://127.0.0.1:"
+        + port
+        + "\r\n"
         + "Upgrade: websocket\r\n"
         + "Connection: Upgrade\r\n"
         + "Sec-WebSocket-Key: "

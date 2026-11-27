@@ -163,7 +163,8 @@ class NettyTransportServerTest {
           "POST /api/v1/me HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 2048\r\n\r\n";
       String response = rawRequest(server.port(), request, body);
       assertTrue(response.startsWith("HTTP/1.1 413"), response);
-      assertTrue(response.contains("oversized_body"), response);
+      assertTrue(response.contains("\"code\":\"request.too-large\""), response);
+      assertTrue(response.toLowerCase(Locale.ROOT).contains("ratelimit-limit:"), response);
     } finally {
       server.stop();
     }

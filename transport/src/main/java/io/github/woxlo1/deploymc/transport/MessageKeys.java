@@ -16,6 +16,8 @@ public final class MessageKeys {
   public static final String WATCHDOG_STALL = "transport.watchdog.stall";
   public static final String AUTH_RATE_LIMITED_TITLE = "problem.auth.rate-limited.title";
   public static final String AUTH_RATE_LIMITED_DETAIL = "problem.auth.rate-limited.detail";
+  public static final String AUTH_LOCKED_OUT_TITLE = "problem.auth.locked-out.title";
+  public static final String AUTH_LOCKED_OUT_DETAIL = "problem.auth.locked-out.detail";
   public static final String SERVER_BUSY_TITLE = "problem.server.busy.title";
   public static final String SERVER_BUSY_DETAIL = "problem.server.busy.detail";
   public static final String METRICS_FORBIDDEN_TITLE = "problem.metrics.forbidden.title";
@@ -52,6 +54,10 @@ public final class MessageKeys {
 
   public static final String REQUEST_INVALID_TITLE = "problem.request.invalid.title";
   public static final String REQUEST_INVALID_DETAIL = "problem.request.invalid.detail";
+  public static final String REQUEST_ORIGIN_REJECTED_TITLE =
+      "problem.request.origin-rejected.title";
+  public static final String REQUEST_ORIGIN_REJECTED_DETAIL =
+      "problem.request.origin-rejected.detail";
   public static final String REQUEST_UNSUPPORTED_MEDIA_TYPE_TITLE =
       "problem.request.unsupported-media-type.title";
   public static final String REQUEST_UNSUPPORTED_MEDIA_TYPE_DETAIL =
