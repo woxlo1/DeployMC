@@ -61,11 +61,27 @@ public final class AuditStore implements AutoCloseable {
   /** Commits the final record after a privileged state change, even when it failed. */
   public AuditRecord complete(AuditRecord pending, AuditResult result, String reason)
       throws AuditException {
+    return complete(pending, result, reason, Collections.<String, Object>emptyMap());
+  }
+
+  /**
+   * Commits a final record with additional outcome details.
+   *
+   * <p>Pending details are retained and final details are merged on top. Sensitive final details
+   * are rejected before hashing by the same guard used for every record.
+   */
+  public AuditRecord complete(
+      AuditRecord pending, AuditResult result, String reason, Map<String, Object> finalDetails)
+      throws AuditException {
     if (pending == null || pending.result() != AuditResult.PENDING) {
       throw AuditException.invalid("final audit record has no pending predecessor");
     }
     if (result == null || result == AuditResult.PENDING) {
       throw AuditException.invalid("final audit result is invalid");
+    }
+    Map<String, Object> details = new LinkedHashMap<String, Object>(pending.details());
+    if (finalDetails != null) {
+      details.putAll(finalDetails);
     }
     AuditEvent event =
         AuditEvent.builder()
@@ -77,7 +93,7 @@ public final class AuditStore implements AutoCloseable {
             .reason(reason)
             .requestId(pending.requestId())
             .deploymentId(pending.deploymentId())
-            .details(new LinkedHashMap<String, Object>(pending.details()))
+            .details(details)
             .build();
     return writer.append(event);
   }

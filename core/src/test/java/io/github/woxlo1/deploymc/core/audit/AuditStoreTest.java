@@ -56,6 +56,23 @@ class AuditStoreTest {
   }
 
   @Test
+  void completionMergesFinalDetailsIntoThePendingRecord() throws Exception {
+    try (AuditStore store =
+        new AuditStore(tempDir.resolve("audit"), AuditConfig.defaults(), CLOCK)) {
+      AuditRecord pending = store.begin(event(AuditResult.PENDING, "req-details", 1L));
+      Map<String, Object> finalDetails = new LinkedHashMap<String, Object>();
+      finalDetails.put("changed-paths", Arrays.asList("language", "bind.port"));
+
+      AuditRecord finalRecord = store.complete(pending, AuditResult.SUCCESS, null, finalDetails);
+
+      assertEquals(
+          Arrays.asList("language", "bind.port"), finalRecord.details().get("changed-paths"));
+      assertEquals(Long.valueOf(1L), finalRecord.details().get("bytes"));
+      assertTrue(store.verify().ok());
+    }
+  }
+
+  @Test
   void cleanCloseAppendsACoveringAnchor() throws Exception {
     Path directory = tempDir.resolve("audit");
     AuditConfig config = AuditConfig.defaults();
