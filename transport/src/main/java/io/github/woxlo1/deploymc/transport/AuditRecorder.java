@@ -37,6 +37,19 @@ public final class AuditRecorder {
     return new AuditRecorder(null, null);
   }
 
+  /**
+   * Wraps a privileged HTTP handler so pending and final records surround the mutation.
+   *
+   * <p>Host wiring always supplies a real store, so an audit write failure blocks the mutation.
+   */
+  public HttpHandler wrapMutations(HttpHandler delegate) {
+    Objects.requireNonNull(delegate, "delegate");
+    if (store == null) {
+      return delegate;
+    }
+    return new AuditMutationHandler(delegate, this);
+  }
+
   /** Verified identity information for one authenticated request. */
   public AuditActor actor(HttpRequest request) {
     if (store == null) {
@@ -67,10 +80,34 @@ public final class AuditRecorder {
   /** Commits the final record after a privileged state change. */
   public void complete(AuditRecord pending, AuditResult result, String reason)
       throws AuditException {
+    complete(pending, result, reason, null);
+  }
+
+  /** Commits a final record with additional outcome details merged over the pending details. */
+  public void complete(
+      AuditRecord pending, AuditResult result, String reason, Map<String, Object> finalDetails)
+      throws AuditException {
     if (store == null || pending == null) {
       return;
     }
-    store.complete(pending, result, reason);
+    store.complete(pending, result, reason, finalDetails);
+  }
+
+  /** Begins a host-initiated mutation whose actor is the local system. */
+  public AuditRecord beginSystem(String action, AuditTarget target, Map<String, Object> details)
+      throws AuditException {
+    if (store == null) {
+      return null;
+    }
+    return store.begin(
+        AuditEvent.builder()
+            .timestamp(java.time.Clock.systemUTC().instant())
+            .actor(AuditActor.system())
+            .action(action)
+            .target(target)
+            .result(AuditResult.PENDING)
+            .details(details == null ? Collections.<String, Object>emptyMap() : details)
+            .build());
   }
 
   /** Records an audit-route access after response work, without returned row bodies. */
