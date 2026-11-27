@@ -10,6 +10,7 @@ import io.github.woxlo1.deploymc.transport.HttpBindConfig;
 import io.github.woxlo1.deploymc.transport.LoggingFormat;
 import io.github.woxlo1.deploymc.transport.TransportConfig;
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -22,12 +23,20 @@ class HostObservabilityConfigTest {
   @Test
   void usesFailClosedDefaultsWhenObservabilityKeysAreAbsent() {
     HostObservabilityConfig host = HostObservabilityConfig.from(emptyView());
+    TransportConfig transport = host.transportConfig(BIND);
 
     assertEquals(LoggingFormat.TEXT, host.observability().loggingFormat());
     assertFalse(host.observability().metricsEnabled());
     assertEquals("server.read", host.observability().metricsPermission());
+    assertEquals(300, host.observability().addressRateLimitPerMinute());
     assertEquals(300, host.observability().identityRateLimitPerMinute());
+    assertEquals(60, host.observability().authFailureRateLimitPerMinute());
     assertEquals(50, host.maxWebSocketConnections());
+    assertEquals(1024 * 1024, transport.maxBodyBytes());
+    assertEquals(64 * 1024 * 1024, transport.maxUploadBodyBytes());
+    assertTrue(transport.trustedProxies().isEmpty());
+    assertTrue(transport.allowedOrigins().isEmpty());
+    assertFalse(transport.tokenLockoutEnabled());
   }
 
   @Test
@@ -37,16 +46,30 @@ class HostObservabilityConfigTest {
     set(values, "observability.metrics.enabled", Boolean.TRUE);
     set(values, "observability.metrics.permission", "server.read");
     set(values, "limits.rate-limit-per-minute", Integer.valueOf(120));
+    set(values, "limits.auth-failure-rate-limit-per-minute", Integer.valueOf(12));
+    set(values, "limits.request-body-limit-kb", Integer.valueOf(2048));
     set(values, "limits.max-websocket-connections", Integer.valueOf(25));
+    set(values, "sandbox.max-upload-size-mb", Integer.valueOf(128));
+    set(values, "bind.trusted-proxies", Arrays.asList("192.0.2.8/32"));
+    set(values, "bind.allowed-origins", Arrays.asList("https://admin.example.invalid"));
 
     HostObservabilityConfig host = HostObservabilityConfig.from(view(values));
-    TransportConfig transport = host.transportConfig(BIND);
+    TransportConfig transport = host.transportConfig(BIND, true);
 
     assertEquals(LoggingFormat.JSON, host.observability().loggingFormat());
     assertTrue(host.observability().metricsEnabled());
     assertEquals("server.read", host.observability().metricsPermission());
+    assertEquals(120, host.observability().addressRateLimitPerMinute());
     assertEquals(120, host.observability().identityRateLimitPerMinute());
+    assertEquals(12, host.observability().authFailureRateLimitPerMinute());
     assertEquals(25, transport.maxWebSocketConnections());
+    assertEquals(2048 * 1024, transport.maxBodyBytes());
+    assertEquals(64 * 1024 * 1024, transport.maxUploadBodyBytes());
+    assertEquals(1, transport.trustedProxies().size());
+    assertTrue(transport.trustedProxies().contains("192.0.2.8/32"));
+    assertEquals(1, transport.allowedOrigins().size());
+    assertTrue(transport.allowedOrigins().contains("https://admin.example.invalid"));
+    assertTrue(transport.tokenLockoutEnabled());
     assertEquals(host.observability(), transport.observability());
     assertEquals(BIND, transport.bind());
   }
@@ -63,9 +86,26 @@ class HostObservabilityConfigTest {
       {"limits.rate-limit-per-minute", Integer.valueOf(100001)},
       {"limits.rate-limit-per-minute", Double.valueOf(300.5)},
       {"limits.rate-limit-per-minute", "300"},
+      {"limits.auth-failure-rate-limit-per-minute", Integer.valueOf(0)},
+      {"limits.auth-failure-rate-limit-per-minute", Integer.valueOf(100001)},
+      {"limits.auth-failure-rate-limit-per-minute", "60"},
+      {"limits.request-body-limit-kb", Integer.valueOf(0)},
+      {"limits.request-body-limit-kb", Integer.valueOf(16385)},
+      {"limits.request-body-limit-kb", "1024"},
       {"limits.max-websocket-connections", Integer.valueOf(0)},
       {"limits.max-websocket-connections", Integer.valueOf(10001)},
-      {"limits.max-websocket-connections", Boolean.TRUE}
+      {"limits.max-websocket-connections", Boolean.TRUE},
+      {"sandbox.max-upload-size-mb", Integer.valueOf(0)},
+      {"sandbox.max-upload-size-mb", Integer.valueOf(4097)},
+      {"sandbox.max-upload-size-mb", "64"},
+      {"bind.trusted-proxies", "192.0.2.8"},
+      {"bind.trusted-proxies", Arrays.asList(Integer.valueOf(1))},
+      {"bind.trusted-proxies", Arrays.asList("proxy.example.invalid")},
+      {"bind.trusted-proxies", Arrays.asList("192.0.2.0/0.5")},
+      {"bind.allowed-origins", "https://admin.example.invalid"},
+      {"bind.allowed-origins", Arrays.asList(Integer.valueOf(1))},
+      {"bind.allowed-origins", Arrays.asList("https://*.example.invalid")},
+      {"bind.allowed-origins", Arrays.asList("https://example.invalid/path")}
     };
     for (Object[] invalid : invalidValues) {
       String setting = (String) invalid[0];

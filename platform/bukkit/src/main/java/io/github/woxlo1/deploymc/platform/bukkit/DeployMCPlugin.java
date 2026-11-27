@@ -115,7 +115,8 @@ public final class DeployMCPlugin extends JavaPlugin {
       TransportMessages transportMessages = TransportMessages.of(locale);
       HostObservabilityConfig observability = HostObservabilityConfig.from(view);
       RequestLogger requestLogger = requestLogger(observability, transportMessages);
-      TransportConfig transportConfig = observability.transportConfig(plan.bind());
+      TransportConfig transportConfig =
+          observability.transportConfig(plan.bind(), plan.tokenMode());
       File pluginsDirectory = getDataFolder().getParentFile();
       if (pluginsDirectory == null) {
         throw new StartupConfigurationException(
@@ -141,7 +142,7 @@ public final class DeployMCPlugin extends JavaPlugin {
               view,
               pluginsDirectory.toPath(),
               locale,
-              transportConfig.maxBodyBytes(),
+              transportConfig.maxUploadBodyBytes(),
               policies,
               createdAuditStore);
       RbacEvaluator evaluator = createdFileApi.evaluator();

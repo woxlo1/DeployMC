@@ -37,6 +37,19 @@ public final class EffectivePeerResolver {
     this.trustedNetworks = Collections.unmodifiableList(networks);
   }
 
+  /** True when the value is a literal IP address or CIDR block accepted as a trusted proxy. */
+  public static boolean isWellFormedTrustedProxy(String value) {
+    if (value == null || value.trim().isEmpty()) {
+      return false;
+    }
+    try {
+      Network.parse(value.trim());
+      return true;
+    } catch (IllegalArgumentException invalid) {
+      return false;
+    }
+  }
+
   /**
    * Returns the canonical effective peer, or {@code null} for a missing or malformed socket peer.
    */
