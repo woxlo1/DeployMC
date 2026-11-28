@@ -96,8 +96,9 @@ Default expectations for every phase:
 - Tokens are stored hashed, compared in constant time, and redacted from logs.
 - All file access goes through the sandbox resolver.
 
-The [threat model](specification/security/threat-model.md) exists as a draft. A separate hardening
-checklist does not exist yet; this policy will link to it when it does.
+The [threat model](specification/security/threat-model.md) is finalized for the v1 security model.
+Operators should also read the [administrator security guide](docs/guides/security.md) and the
+[secure deployment contract](specification/security/secure-deployment.md).
 
 ## Safe harbor
 
@@ -108,7 +109,8 @@ testing against servers or accounts you do not own or have explicit permission t
 
 ## Hardening guidance for operators
 
-Until a release exists, there is nothing to harden in production. When releases begin, read the
-security model, keep DeployMC bound to loopback behind Cloudflare Tunnel and Access, grant the minimum
-roles, keep snapshots enabled, and review the audit log. Never expose the plugin directory through a
+Before any production use, follow the [administrator security guide](docs/guides/security.md).
+Keep DeployMC bound to loopback behind Cloudflare Tunnel and Access, grant the minimum roles,
+keep snapshots enabled, and review the audit log. Treat the Cloudflare example as unverified until
+its checklist has been completed on the real setup. Never expose the plugin directory through a
 second channel such as SFTP or a web file manager.

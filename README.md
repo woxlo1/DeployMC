@@ -67,7 +67,9 @@ the [platform SPI](docs/architecture/platform-spi.md),
 [threading model](docs/architecture/threading-model.md), and
 [API layering](docs/architecture/api-layering.md). Significant decisions are recorded as
 [architecture decision records](docs/adr/README.md), and the security posture is described in the
-[draft threat model](specification/security/threat-model.md).
+[finalized threat model](specification/security/threat-model.md). Operators should start with the
+[security guide](docs/guides/security.md) and the
+[secure deployment contract](specification/security/secure-deployment.md).
 
 Normative specification skeletons live under [`specification/`](specification/): the
 [REST API](specification/api/openapi.yaml), [WebSocket API](specification/api/asyncapi.yaml),
