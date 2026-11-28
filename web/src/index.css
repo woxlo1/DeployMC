@@ -567,6 +567,286 @@ button {
   font-size: var(--dm-font-size-sm);
 }
 
+.file-explorer {
+  display: grid;
+  gap: var(--dm-space-3);
+  margin-bottom: var(--dm-space-5);
+}
+
+.file-explorer > h3 {
+  margin: 0;
+  font-size: var(--dm-font-size-base);
+}
+
+.file-explorer__gate {
+  padding: var(--dm-space-3);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-sm);
+  background-color: var(--dm-color-surface-alt);
+  color: var(--dm-color-muted);
+}
+
+.file-explorer__gate p {
+  margin: 0 0 var(--dm-space-2);
+}
+
+.file-explorer__toolbar,
+.file-explorer__selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dm-space-2);
+}
+
+.file-explorer__search,
+.file-explorer__upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dm-space-2);
+}
+
+.file-explorer__search input[type='search'] {
+  width: min(18rem, 100%);
+  padding: var(--dm-space-2);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-sm);
+  background-color: var(--dm-color-surface);
+  color: var(--dm-color-text);
+}
+
+.file-explorer__toolbar button,
+.file-explorer__selection button,
+.file-explorer__error button,
+.file-explorer__uploads button,
+.file-explorer__menu button,
+.file-explorer__dialog-actions button {
+  padding: var(--dm-space-2) var(--dm-space-3);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-sm);
+  background-color: var(--dm-color-surface-alt);
+  color: var(--dm-color-text);
+  cursor: pointer;
+}
+
+.file-explorer__toolbar button:disabled,
+.file-explorer__selection button:disabled,
+.file-explorer__menu button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.file-explorer__breadcrumbs,
+.file-explorer__search-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dm-space-1);
+  margin: 0;
+  color: var(--dm-color-muted);
+  font-size: var(--dm-font-size-sm);
+}
+
+.file-explorer__breadcrumbs button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dm-color-accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.file-explorer__notice,
+.file-explorer__hint,
+.file-explorer__state p {
+  margin: 0;
+}
+
+.file-explorer__notice,
+.file-explorer__error {
+  color: var(--dm-color-danger);
+}
+
+.file-explorer__hint,
+.file-explorer__search-summary {
+  color: var(--dm-color-muted);
+  font-size: var(--dm-font-size-sm);
+}
+
+.file-explorer__viewport {
+  position: relative;
+  height: min(28rem, 55vh);
+  overflow: auto;
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-md);
+  background-color: var(--dm-color-surface-alt);
+}
+
+.file-explorer__spacer {
+  position: relative;
+  min-width: 42rem;
+}
+
+.file-explorer__state {
+  position: sticky;
+  left: var(--dm-space-4);
+  z-index: 1;
+  padding: var(--dm-space-4);
+  color: var(--dm-color-muted);
+}
+
+.file-explorer__row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--dm-space-2);
+  padding: 0 var(--dm-space-3);
+  border-bottom: 0.0625rem solid var(--dm-color-border);
+  background-color: var(--dm-color-surface);
+  cursor: grab;
+}
+
+.file-explorer__row[data-selected='true'] {
+  background-color: color-mix(in srgb, var(--dm-color-accent) 14%, var(--dm-color-surface));
+}
+
+.file-explorer__row:focus-visible {
+  outline: 0.125rem solid var(--dm-color-focus);
+  outline-offset: -0.125rem;
+}
+
+.file-explorer__indent {
+  flex: 0 0 auto;
+}
+
+.file-explorer__icon {
+  flex: 0 0 1.5rem;
+  color: var(--dm-color-accent);
+  text-align: center;
+}
+
+.file-explorer__icon--directory {
+  color: var(--dm-color-warning);
+}
+
+.file-explorer__icon--jar {
+  color: var(--dm-color-success);
+}
+
+.file-explorer__name {
+  flex: 1 1 12rem;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-explorer__meta {
+  flex: 0 0 11rem;
+  overflow: hidden;
+  color: var(--dm-color-muted);
+  font-size: var(--dm-font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-explorer__restriction {
+  display: grid;
+  flex: 0 0 16rem;
+  font-size: var(--dm-font-size-sm);
+}
+
+.file-explorer__restriction strong {
+  color: var(--dm-color-warning);
+}
+
+.file-explorer__restriction span {
+  color: var(--dm-color-muted);
+}
+
+.file-explorer__uploads,
+.file-explorer__menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file-explorer__uploads li,
+.file-explorer__menu {
+  display: grid;
+  gap: var(--dm-space-1);
+  padding: var(--dm-space-2);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-sm);
+  background-color: var(--dm-color-surface);
+}
+
+.file-explorer__uploads li[data-phase='failed'] {
+  border-color: var(--dm-color-danger);
+}
+
+.file-explorer__uploads li[data-phase='done'] {
+  border-color: var(--dm-color-success);
+}
+
+.file-explorer__menu {
+  position: fixed;
+  z-index: 30;
+  width: min(14rem, calc(100vw - 2 * var(--dm-space-4)));
+  box-shadow: var(--dm-shadow-md);
+}
+
+.file-explorer__menu button {
+  text-align: left;
+}
+
+.file-explorer__dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--dm-space-4);
+  background-color: rgb(10 15 25 / 55%);
+}
+
+.file-explorer__dialog {
+  width: min(30rem, 100%);
+  display: grid;
+  gap: var(--dm-space-3);
+  padding: var(--dm-space-5);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-md);
+  background-color: var(--dm-color-surface);
+  box-shadow: var(--dm-shadow-md);
+}
+
+.file-explorer__dialog h4,
+.file-explorer__dialog p {
+  margin: 0;
+}
+
+.file-explorer__dialog label {
+  display: grid;
+  gap: var(--dm-space-1);
+}
+
+.file-explorer__dialog input {
+  padding: var(--dm-space-2);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-sm);
+  background-color: var(--dm-color-surface);
+  color: var(--dm-color-text);
+}
+
+.file-explorer__dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dm-space-2);
+}
+
 @keyframes dm-spin {
   to {
     transform: rotate(360deg);

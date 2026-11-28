@@ -12,6 +12,7 @@ import { useToast } from '../toast/context';
 import { DoctorPanel } from './DoctorPanel';
 import { ErrorBoundary } from './ErrorBoundary';
 import { EventStatus } from './EventStatus';
+import { FileExplorer } from './FileExplorer';
 import { IdentityPanel } from './IdentityPanel';
 import { PlaceholderView } from './PlaceholderView';
 import { ShortcutHelpDialog } from './ShortcutHelpDialog';
@@ -223,6 +224,7 @@ export function AppShell({ locale, theme, t, onLocaleChange, onThemeChange }: Ap
                 </p>
               ) : undefined}
               {location.route.id === 'identity' ? <IdentityPanel t={t} /> : undefined}
+              {location.route.id === 'files' ? <FileExplorer t={t} /> : undefined}
               {location.route.id === 'console' ? (
                 <EventStatus
                   t={t}
