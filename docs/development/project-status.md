@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-27 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-28 (Phase 1 WP-1.4, both WP-1.5 stages, WP-1.6-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages, and the merged snapshot REST adapter
 implementation). GitHub merge evidence below was verified against `main` through `267d690` after
 PR #215. All PART 35 fixtures are merged with local and post-merge evidence; issue #115 is complete.
@@ -30,7 +30,8 @@ closed issue #59. WP-3.5 merged its contract in PR #235 at `f4f89a8`, its core i
 #236 at `d6fd2b8`, its transport implementation in PR #237 at `e6538f7`, its SecureRandom fix in PR
 #238 at `f085782`, and its host wiring in PR #239 at `f500486`; issue #60 closed through its final
 evidence PR. WP-3.6 merged its contract in PR #241 at `1cffb46` and its enforcement in PR #242 at
-`d36db83`; this final evidence PR closes issue #61.
+`d36db83`; its final evidence PR closed issue #61. WP-3.7 merged its security documentation in PR
+#244 at `0c6d70b` with five Conventional Commits; this final evidence PR closes issue #62.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -83,7 +84,9 @@ under Part 39.3.
   and category 3-5 work registered as issues #42-#130. WP-2.4 (issue #53, milestone `0.3.0`) and
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
-  category 3-5 work remains open. Issue #115 (PART 35 fixtures) is complete: stage 1 merged the
+  category 3-5 work remains open. WP-3.7 (issue #62, milestone `0.4.0`) documentation merged in PR
+   #244 at `0c6d70b`; its final evidence closes the issue without tagging or publishing a release.
+   Issue #115 (PART 35 fixtures) is complete: stage 1 merged the
   coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; PRs #175-#178
   added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
   `a03435`. PR #179 recorded catch-up evidence, PR #180 added the dependency fixture, PR #181
@@ -1507,12 +1510,15 @@ closed the issue. WP-3.4 (issue #59) is complete; PR #232 merged the contract at
 merged the implementation at `ca1d070`. WP-3.5 (issue #60) is complete;
 PR #235 merged the contract at `f4f89a8`, PR #236 the core at `d6fd2b8`, PR #237 the transport at
 `e6538f7`, PR #238 the SecureRandom fix at `f085782`, and PR #239 the host wiring at `f500486`.
-WP-3.6 (issue #61) is complete with this final evidence PR; PR #241 merged the contract at `1cffb46`
-and PR #242 rebase-merged the enforcement at `d36db83`. The next oldest open item is WP-3.7
-(issue #62), Security documentation and guides. Owner decision D-002 remains open, so no real
-Cloudflare Access verification or plan-specific guide claim is made until the owner decides. Work on
-later items may be prepared in parallel but must not be merged ahead of an earlier open issue unless
-the owner explicitly approves.
+WP-3.6 (issue #61) is complete; PR #241 merged the contract at `1cffb46` and PR #242 rebase-merged
+the enforcement at `d36db83`. WP-3.7 (issue #62), Security documentation and guides, is complete with
+this final evidence PR; PR #244 rebase-merged the documentation at `0c6d70b` with five Conventional
+Commits. The threat model is finalized for v1, and the Cloudflare Tunnel guide records official sources
+with an access date, but every deployment-specific check is `NOT RUN`. The next oldest open item is
+WP-4.1 (issue #63), Web UI shell. Owner decision D-002 remains open, so no real Cloudflare Access
+verification or plan-specific guide claim is made until the owner decides. Work on later items may be
+prepared in parallel but must not be merged ahead of an earlier open issue unless the owner
+explicitly approves.
 
 ## Release checklist
 
@@ -1534,7 +1540,10 @@ thirteen gates into the release PR and attach evidence to every item:
 13. Post-release: reopen the next milestone, update project status and HANDOFF, monitor closely.
 
 No release has been prepared. Policy, automation, and signing are tracked in #127, #128, and #129;
-the v1 evidence bundle is #130. This page records the gates, not their completion.
+the v1 evidence bundle is #130. This page records the gates, not their completion. The master
+specification names `v0.4.0` as the WP-3.7 release target, but `git tag --list` and
+`gh release list --limit 10` returned no output on 2026-11-28: no tag or GitHub Release exists, and
+the open release gates prevent a truthful `v0.4.0` release claim.
 
 ## Mandatory milestone consistency audit (PART 39.3)
 

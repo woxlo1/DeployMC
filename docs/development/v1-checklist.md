@@ -4,7 +4,7 @@ This checklist comes from Part 17 of the
 [master specification](DeployMC_Complete_Master_Development_Specification.md). A box may be checked
 only when the criterion is verified and an evidence link is attached. DeployMC is **not** v1.0.0
 until every box is checked or the owner explicitly accepts a documented gap in the release notes.
-All boxes remain unchecked (2026-11-21, pre-alpha); partial evidence is noted where a work package
+All boxes remain unchecked (2026-11-28, pre-alpha); partial evidence is noted where a work package
 has landed.
 
 ## 17.1 Functionality
@@ -12,8 +12,8 @@ has landed.
 - [ ] Sandboxed file explorer/editor with server-side validation, optimistic concurrency, and
       protected paths. Partial: PR #153 (`SandboxResolver`) and PR #155 (`core.files` with revisions,
       atomic writes, and a fail-closed snapshot boundary) are merged and #50-#51 are closed. WP-2.5
-      now has a normative validator contract and ADR-0016, but no validator code or save-time gate.
-      No REST file endpoint or Web UI explorer exists yet (#54-#55, #63-#65).
+      WP-2.5 has a normative validator contract, ADR-0016, a Java 8 validator, and a save-time gate.
+      Authenticated REST file/validation adapters exist; no Web UI explorer exists yet (#63-#65).
 - [ ] Snapshots with diff and one-click restore, retention, and integrity verification.
       Partial: PR #158 (contract) and PR #159 (`core.snapshot`) are merged and #52 is closed. The
       store has retention, verify/repair, GC, and reversible restore primitives. WP-2.4 merged its
@@ -24,8 +24,9 @@ has landed.
 - [ ] Real-time console with filtering, commands, backpressure, and audit. Evidence: not yet;
       #81-#86.
 - [ ] Authentication in `cloudflare`, `token`, and `local-onetime` modes; RBAC with path scopes;
-      audit log. Partial: `token` mode merged in PR #149 and observed in the PR #151 smoke; the other
-      modes refuse startup. RBAC and audit are not implemented (#56-#62).
+      audit log. Partial: all three modes, RBAC, and audit have implementations and server-free
+      evidence (#56-#62 are closed), but no running server, browser, E2E run, full integration suite,
+      or in-game command exercised them. Real Cloudflare compatibility remains unverified under D-002.
 - [ ] Public API v1 (REST, WebSocket, webhooks) fully specified, versioned, and conformance-tested.
       Evidence: not yet; skeletons only, #87-#89.
 - [ ] Java API module, TypeScript/Python/Java clients, CLI, and GitHub Action released.
@@ -47,12 +48,15 @@ has landed.
 ## 17.3 Security
 
 - [ ] Threat model complete and reviewed; all security test suites green on Linux and Windows.
-      Evidence: [draft threat model](../../specification/security/threat-model.md); #106, #116.
+      Evidence: [finalized v1 threat model](../../specification/security/threat-model.md) and the
+      [secure-deployment contract](../../specification/security/secure-deployment.md) from #62; server-free
+      evidence only, with D-001/D-002 limits. Running security review remains #106; suites #116.
 - [ ] No known unresolved critical/high issues; dependency audit clean or documented.
       Evidence: not yet; #121-#123.
 - [ ] Signed releases, SBOM, provenance; `SECURITY.md` process exercised at least once in a drill.
       Evidence: not yet; #128, #130.
-- [ ] Verified fail-closed behavior in all auth failure modes. Evidence: not yet; #56-#62.
+- [ ] Verified fail-closed behavior in all auth failure modes. Partial: #56-#62 closed with
+      server-free and embedded-socket tests; no running-server failure drill or browser E2E run.
 
 ## 17.4 Quality and Performance
 

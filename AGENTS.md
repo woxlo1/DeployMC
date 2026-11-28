@@ -65,7 +65,7 @@ CLI, and Python skeletons exist and are verified, along with the localization
 tooling, core project documents, and Japanese README. Build/test, lint, i18n, CodeQL, dependency
 review, Scorecard, and two compatibility jobs run in CI, and branch protection with required checks
 is enforced on `main`.
-Architecture documents, the ADR set, a threat-model draft, support-matrix design,
+Architecture documents, the ADR set, a finalized v1 threat model, support-matrix design,
 implementation-status page, REST/AsyncAPI/configuration specifications, and GitHub community forms
 exist. WP-1.8 added a pinned Paper smoke harness; passing results at merge commit `839b789` on Ubuntu
 and Windows recorded plugin enable, the localized banner, authenticated `/api/v1/server`, a
@@ -223,7 +223,7 @@ unchanged.
 WP-3.6 web protections merged its normative contract in
 [PR #241](https://github.com/woxlo1/DeployMC/pull/241) at `1cffb46` and its product enforcement in
 [PR #242](https://github.com/woxlo1/DeployMC/pull/242) at `d36db83`, with issue #61 closing through
-this final evidence PR. PR #242 was rebase-merged with six Conventional Commits preserved on `main`.
+its final evidence PR. PR #242 was rebase-merged with six Conventional Commits preserved on `main`.
 It adds trusted-proxy effective-peer resolution, exact WebSocket Origin checks, three bounded rate
 buckets with role-lowered identity budgets, token-mode lockout, endpoint body limits, and localized
 rejections with redacted headers. All required PR checks and post-merge CI/CodeQL/Scorecard passed;
@@ -231,6 +231,17 @@ the merged tree has 670 Java tests (0 failures, 0 errors, 1 skipped), and all se
 `PASS`. Evidence is server-free and embedded-socket only; no running server, Bukkit mock, browser, E2E
 run, full integration suite, or in-game command exercised it, and no Web UI consumes the protections.
 D-001 and D-002 are unchanged.
+
+WP-3.7 security documentation merged in [PR #244](https://github.com/woxlo1/DeployMC/pull/244) at
+`0c6d70b` with five Conventional Commits preserved on `main`. It adds the normative secure-deployment
+contract, finalizes the v1 threat model against evidence through WP-3.6, and adds the administrator
+hardening guide plus a placeholder-only Cloudflare Tunnel example with official sources, an access
+date, and a seven-check verification checklist. All checklist rows are `NOT RUN`; this is verified
+documentation, not verified deployment. No product code, CI gate, runtime string, i18n key, doctor
+check, Cloudflare account, tunnel, running server, browser, E2E run, or full integration suite was
+used. All 18 required PR checks and post-merge CI/CodeQL/Scorecard passed, and all seven local
+toolchains report `PASS`. The master specification targets `v0.4.0`, but no tag or GitHub Release
+exists and release gates #127-#130 remain open. D-001 and D-002 are unchanged.
 
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,

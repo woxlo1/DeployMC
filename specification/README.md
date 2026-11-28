@@ -1,6 +1,6 @@
 # Specification skeletons
 
-> **Status: 2026-11-27.** These documents define normative contracts. Only the features
+> **Status: 2026-11-28.** These documents define normative contracts. Only the features
 > explicitly marked as implemented below have running code. A skeleton is normative for
 > design work, not evidence that a feature works.
 
@@ -21,7 +21,7 @@
 | [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | WP-3.3 lifecycle and WP-3.4 owner/scope narrowing implemented |
 | [security/rbac.md](security/rbac.md) | Closed permission registry, role/path evaluation, token owner intersection, explain mode, and reload behavior | Java 8 evaluator and REST/WebSocket enforcement implemented |
 | [security/web-protections.md](security/web-protections.md) | Rate limits, token-mode lockout, WebSocket Origin, security headers, endpoint-size bounds, CSRF policy, and trusted proxies | Java 8 enforcement implemented; server-free evidence only |
-| [security/secure-deployment.md](security/secure-deployment.md) | WP-3.7 secure-deployment contract: threat model finalization, Cloudflare Tunnel example, verified sources, Access/CI tokens, verification checklist, and hardening checklist | Normative contract for issue #62; guides not claimed until documentation PRs merge |
+| [security/secure-deployment.md](security/secure-deployment.md) | WP-3.7 secure-deployment contract: threat model finalization, Cloudflare Tunnel example, verified sources, Access/CI tokens, verification checklist, and hardening checklist | Merged documentation; guides and checklist are available, but all Cloudflare checks are `NOT RUN` and real compatibility is unverified under D-002 |
 
 ## How these documents are checked
 
