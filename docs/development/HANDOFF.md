@@ -5,7 +5,21 @@ Last updated: 2026-11-28. Read [AGENTS.md](../../AGENTS.md) first, then this fil
 
 ## What was just done
 
-- Issue #63 WP-4.1 Web UI shell is complete with this final evidence PR. PR #246 rebase-merged three
+- Issue #64 WP-4.2 API client and state is complete with this final evidence PR. PR #248
+  rebase-merged six Conventional Commits at `eda9ceb` on `2026-11-28T05:52:12Z`, preserving
+  `e2e5268`, `8353b4e`, `13c41d7`, `1da3f5d`, `0d116c2`, and `eda9ceb` on `main`. It generates REST
+  operations/types from OpenAPI and WebSocket constants from AsyncAPI, enforces drift in spec lint,
+  and adds a bounded REST client, strict verified identity display, in-memory-only bearer state with
+  401 clearing, an opaque-identity-scoped query cache, a conflict notice, and a WebSocket client with
+  envelope validation, id de-duplication, per-connection gap detection, bounded backoff, and
+  resubscription. All 98 Web tests in 17 files pass, spec reports 30 passing tests, and all seven
+  toolchains, 18/18 required PR checks, and post-merge CI/CodeQL/Scorecard passed. Evidence is
+  server-free and jsdom/fake-socket only: no browser, running server, real WebSocket endpoint, E2E,
+  full integration suite, or in-game command consumed these surfaces, and no product event publisher
+  or live screen consumes the new client. Native browser WebSockets cannot set `Authorization`, so no
+  token is put in URLs or subprotocols. New Japanese strings are an AI-assisted draft. D-001 and
+  D-002 are unchanged, and no `v0.5.0` tag or release is claimed while gates #127-#130 remain open.
+- Issue #63 WP-4.1 Web UI shell is complete. PR #246 rebase-merged three
   Conventional Commits at `1b16590` on `2026-11-28T04:31:45Z`, preserving `f325b68`, `e48f20c`, and
   `1b16590` on `main`. The shell adds hash-compatible routes for all 11 inventory screens with
   `?state=loading|empty|error` previews, a sidebar/header/content/status layout on design tokens,
@@ -549,11 +563,12 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 
 ## In flight
 
-- This final evidence pull request for issue #63 is not yet merged. It carries `Closes #63`; the issue
-  closes when the PR merges. PR #246 implementation evidence, Japanese verification and post-merge
+- This final evidence pull request for issue #64 is not yet merged. It carries `Closes #64`; the issue
+  closes when the PR merges. PR #248 implementation evidence, Japanese verification and post-merge
   comments, and passing PR checks and post-merge CI/CodeQL/Scorecard runs are recorded in the status
-  pages. The `feature/wp41-web-shell-evidence-63` branch is temporary for this evidence update.
-  No Dependabot PR was changed by this work.
+  pages. The `feature/wp42-api-client-64-impl` branch was retained until PR #248 merged, and
+  `docs/wp42-final-evidence-64` is temporary for this evidence update. No Dependabot PR was changed
+  by this work.
 - No issue #121 PRs remain in flight. PR #215 was rebase-merged at `267d690`; Japanese verification
   and post-merge evidence comments are recorded. All required checks and post-merge CI/CodeQL/
   Scorecard passed, and issue #121 closed at `2026-11-24T07:55:44Z`. No dependency PR was merged or
@@ -591,22 +606,25 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   the WP-3.6 final evidence update. `spec/security-docs-62-contract` was retained until PR #244
   merged; `docs/security-docs-62-evidence` was temporary for the WP-3.7 final evidence update.
   `feature/web-ui-shell-63-impl` was retained until PR #246 merged;
-  `feature/wp41-web-shell-evidence-63` is temporary for this final evidence update. Evidence is
-  recorded in the status pages and pull-request comments.
+  `feature/wp41-web-shell-evidence-63` was temporary for the WP-4.1 final evidence update.
+  `feature/wp42-api-client-64-impl` was retained until PR #248 merged;
+  `docs/wp42-final-evidence-64` is temporary for this final evidence update. Evidence is recorded in
+  the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 59 immediately before this final evidence PR merges on 2026-11-28; issue #63 closes
-  on merge, leaving 58. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 58 immediately before this final evidence PR merges on 2026-11-28; issue #64 closes
+  on merge, leaving 57. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks local implementation of WP-4.2 API client and state. WP-3.2 through WP-3.7 and
-  WP-4.1 are complete; D-002 must still be resolved before real Cloudflare Access verification or
+- Nothing blocks local implementation of WP-4.3 File explorer. WP-3.2 through WP-3.7, WP-4.1, and
+  WP-4.2 are complete; D-002 must still be resolved before real Cloudflare Access verification or
   plan-specific guide claims, and release gates #127-#130 block a truthful `v0.4.0` tag or GitHub
   Release. Stored token scopes are enforced as a narrowing filter by WP-3.4 RBAC, WP-3.5 records
   privileged mutations and denials without an off-host anchor, WP-3.6 enforces transport protections
-  without a running-server consumer, WP-3.7 documents deployment checks that have not been run, and
-  WP-4.1 renders a shell that no browser has exercised and whose only API-connected screen is Doctor.
+  without a running-server consumer, WP-3.7 documents deployment checks that have not been run,
+  WP-4.1 renders a shell that no browser has exercised, and WP-4.2 provides client/state modules that
+  no live screen or product event publisher consumes.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
   branches #23-#39.
@@ -614,11 +632,11 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 ## Exact next steps
 
 1. Merge this final evidence PR, wait for the required post-merge workflows, post the Japanese
-   post-merge evidence comment, and confirm issue #63 is closed as completed.
-2. Start WP-4.2 (issue #64), API client and state. Do not claim real Cloudflare compatibility until
-   D-002 is resolved, and do not tag or publish `v0.4.0` until release gates #127-#130 are satisfied.
-   Later work may be prepared in parallel but must not merge ahead of an earlier open issue without
-   owner approval.
+   post-merge evidence comment, and confirm issue #64 is closed as completed.
+2. Start WP-4.3 (issue #65), File explorer. Do not claim real Cloudflare compatibility until D-002 is
+   resolved, and do not tag or publish `v0.4.0` until release gates #127-#130 are satisfied. Later work
+   may be prepared in parallel but must not merge ahead of an earlier open issue without owner
+   approval.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 
