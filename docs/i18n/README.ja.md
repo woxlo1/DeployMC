@@ -70,7 +70,8 @@ DeployMC は、プラグインディレクトリだけを対象にした、狭�
 [スレッドモデル](../architecture/threading-model.md)、
 [API の階層](../architecture/api-layering.md) の各文書があります。重要な決定は
 [アーキテクチャ決定記録（ADR）](../adr/README.md) に残し、セキュリティ上の立場は
-[脅威モデルの草案](../../specification/security/threat-model.md) に記載しています。
+[確定した脅威モデル](../../specification/security/threat-model.md) に記載しています。
+運用者向けの確認事項は[セキュリティガイド](../../docs/guides/security.md) にあります。
 
 仕様の骨組みは [`specification/`](../../specification/) にあり、
 [REST API](../../specification/api/openapi.yaml)、
