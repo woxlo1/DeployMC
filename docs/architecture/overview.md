@@ -219,6 +219,7 @@ thread is named and joined or terminated.
 - [Deployment state machine](deployment-state-machine.md)
 - [Threading model](threading-model.md)
 - [API layering](api-layering.md)
+- [Web API client and state](web-client-state.md)
 - [Architecture decision records](../adr/README.md)
 - [Threat model](../../specification/security/threat-model.md)
 - [Support matrix design](../compatibility/support-matrix.md)
