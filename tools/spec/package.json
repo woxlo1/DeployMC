@@ -14,9 +14,13 @@
     "lint:asyncapi": "node check-asyncapi.cjs ../../specification/api/asyncapi.yaml",
     "lint:config": "node check-config.cjs ../../specification/config/example.config.yaml",
     "lint:state-machine": "node check-state-machine.cjs",
-    "generate:web-client": "node generate-web-client.cjs ../../specification/api/openapi.yaml ../../web/src/api/generated.ts",
-    "check:web-client": "node generate-web-client.cjs ../../specification/api/openapi.yaml ../../web/src/api/generated.ts --check",
-    "test": "node --test test/check-asyncapi.test.cjs test/check-config.test.cjs test/check-state-machine.test.cjs test/generate-web-client.test.cjs"
+    "generate:web-client": "npm run generate:web-client:rest && npm run generate:web-client:events",
+    "generate:web-client:rest": "node generate-web-client.cjs ../../specification/api/openapi.yaml ../../web/src/api/generated.ts",
+    "generate:web-client:events": "node generate-web-events.cjs ../../specification/api/asyncapi.yaml ../../web/src/api/generated-events.ts",
+    "check:web-client": "npm run check:web-client:rest && npm run check:web-client:events",
+    "check:web-client:rest": "node generate-web-client.cjs ../../specification/api/openapi.yaml ../../web/src/api/generated.ts --check",
+    "check:web-client:events": "node generate-web-events.cjs ../../specification/api/asyncapi.yaml ../../web/src/api/generated-events.ts --check",
+    "test": "node --test test/check-asyncapi.test.cjs test/check-config.test.cjs test/check-state-machine.test.cjs test/generate-web-client.test.cjs test/generate-web-events.test.cjs"
   },
   "devDependencies": {
     "@asyncapi/parser": "3.6.6",

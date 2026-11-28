@@ -22,22 +22,27 @@ npm test
 | `lint:config` | local script using `ajv` and `yaml` | `specification/config/example.config.yaml` against `config.schema.json` |
 | `lint:state-machine` | local script using `yaml` | the normative YAML block in `specification/deployment/state-machine.md` |
 
-`npm test` runs `node:test` cases for the local checkers and the Web client generator, including
+`npm test` runs `node:test` cases for the local checkers and both Web generators, including
 negative cases such as an invalid or empty AsyncAPI document, an undefined role reference, an
 illegal deployment transition, and stale generated output.
 
 ## Web client generation
 
-`npm run generate:web-client` reads `specification/api/openapi.yaml` and writes
-`web/src/api/generated.ts`. The generated module contains the API version, a SHA-256 of the source
-document, operation descriptors derived from paths and parameters, and TypeScript types for the
-component schemas. `npm run check:web-client` regenerates in memory and fails on drift; the main
+`npm run generate:web-client` reads both API specifications and writes two modules:
+
+| Source | Output | Contents |
+|---|---|---|
+| `specification/api/openapi.yaml` | `web/src/api/generated.ts` | API version, source digest, operation descriptors, parameter metadata, component schema types, success-schema map, and permission registry |
+| `specification/api/asyncapi.yaml` | `web/src/api/generated-events.ts` | WebSocket endpoint, protocol version, subscribed channels, control message types, and server event types |
+
+`npm run check:web-client` regenerates both modules in memory and fails on drift; the main
 `npm run lint` script includes it so CI fails when a specification change is not regenerated.
 
-The generator intentionally covers the subset of OpenAPI 3.1 used by this repository. It rejects
-unknown `$ref` targets and duplicate operation ids instead of guessing. It does not invent runtime
-behavior, authentication state, or response validation; those live in `web/src/api/client.ts`.
-The generated file is excluded from Prettier because its formatting is owned by the generator.
+The generators intentionally cover the subset of OpenAPI 3.1 and AsyncAPI 3.1 used by this
+repository. They reject unknown `$ref` targets, duplicate operation ids, and missing event schema
+constants instead of guessing. They do not invent runtime behavior, authentication state, or
+response validation; those live in `web/src/api/client.ts` and `web/src/events/socket.ts`.
+Generated files are excluded from Prettier because their formatting is owned by the generators.
 
 All paths are resolved from this file's location, so the commands also work when invoked
 as `npm run lint --prefix tools/spec` from the repository root (the form used in CI).
