@@ -17,10 +17,11 @@
 | [validation/content-validation.md](validation/content-validation.md) | WP-2.5 validator, registry, save-time gate, validation result, and comment-preserving YAML edit contract | Java 8 `core.validation`, the `core.files` gate, and the authenticated REST adapter implemented; running-server smoke and UI not exercised |
 | [audit/audit-log-format.md](audit/audit-log-format.md) | JSON Lines audit record, hash chain, rotation, verification, fail-closed write policy, and query contract | Java 8 writer, verifier, REST routes, and Bukkit host wiring implemented; no off-host anchor |
 | [deployment/state-machine.md](deployment/state-machine.md) | Normative deployment transition data and invariants | No engine |
-| [security/threat-model.md](security/threat-model.md) | Threat model draft | Draft |
+| [security/threat-model.md](security/threat-model.md) | Finalized v1 threat model: assets, actors, boundaries, attack paths, evidence, and residual risks | Finalized documentation; server-free evidence only, with D-001/D-002 limits |
 | [security/token-records.md](security/token-records.md) | Host-provisioned token record format and creation | WP-3.3 lifecycle and WP-3.4 owner/scope narrowing implemented |
 | [security/rbac.md](security/rbac.md) | Closed permission registry, role/path evaluation, token owner intersection, explain mode, and reload behavior | Java 8 evaluator and REST/WebSocket enforcement implemented |
-| [security/web-protections.md](security/web-protections.md) | Rate limits, token-mode lockout, WebSocket Origin, security headers, endpoint-size bounds, CSRF policy, and trusted proxies | Normative contract for issue #61; enforcement not claimed until implementation PRs merge |
+| [security/web-protections.md](security/web-protections.md) | Rate limits, token-mode lockout, WebSocket Origin, security headers, endpoint-size bounds, CSRF policy, and trusted proxies | Java 8 enforcement implemented; server-free evidence only |
+| [security/secure-deployment.md](security/secure-deployment.md) | WP-3.7 secure-deployment contract: threat model finalization, Cloudflare Tunnel example, verified sources, Access/CI tokens, verification checklist, and hardening checklist | Normative contract for issue #62; guides not claimed until documentation PRs merge |
 
 ## How these documents are checked
 
