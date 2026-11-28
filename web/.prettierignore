@@ -1,3 +1,5 @@
 dist/
 coverage/
 pnpm-lock.yaml
+# Produced from specification/api/openapi.yaml by tools/spec/generate-web-client.cjs.
+src/api/generated.ts

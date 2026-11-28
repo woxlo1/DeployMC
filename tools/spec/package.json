@@ -9,12 +9,14 @@
     "node": ">=20"
   },
   "scripts": {
-    "lint": "npm run lint:openapi && npm run lint:asyncapi && npm run lint:config && npm run lint:state-machine",
+    "lint": "npm run lint:openapi && npm run lint:asyncapi && npm run lint:config && npm run lint:state-machine && npm run check:web-client",
     "lint:openapi": "redocly lint ../../specification/api/openapi.yaml --config redocly.yaml",
     "lint:asyncapi": "node check-asyncapi.cjs ../../specification/api/asyncapi.yaml",
     "lint:config": "node check-config.cjs ../../specification/config/example.config.yaml",
     "lint:state-machine": "node check-state-machine.cjs",
-    "test": "node --test test/check-asyncapi.test.cjs test/check-config.test.cjs test/check-state-machine.test.cjs"
+    "generate:web-client": "node generate-web-client.cjs ../../specification/api/openapi.yaml ../../web/src/api/generated.ts",
+    "check:web-client": "node generate-web-client.cjs ../../specification/api/openapi.yaml ../../web/src/api/generated.ts --check",
+    "test": "node --test test/check-asyncapi.test.cjs test/check-config.test.cjs test/check-state-machine.test.cjs test/generate-web-client.test.cjs"
   },
   "devDependencies": {
     "@asyncapi/parser": "3.6.6",
