@@ -161,11 +161,13 @@ const INVALID_REPORT_CASES: readonly InvalidReportCase[] = [
 ];
 
 function mockResponse(payload: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
+  return new Response(JSON.stringify(payload), {
     status,
-    json: vi.fn().mockResolvedValue(payload),
-  } as unknown as Response;
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Request-Id': 'req_doctor_panel',
+    },
+  });
 }
 
 function renderApp() {
@@ -237,7 +239,7 @@ describe('doctor panel', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, init] = vi.mocked(fetch).mock.calls[0]!;
     expect(url).toBe(ENDPOINT);
-    expect(init?.headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }));
+    expect((init?.headers as Headers).get('Authorization')).toBe(`Bearer ${TOKEN}`);
 
     expect(document.body.textContent).not.toContain(TOKEN);
     expect(setItem.mock.calls.map((args) => args.join('=')).join('\n')).not.toContain(TOKEN);

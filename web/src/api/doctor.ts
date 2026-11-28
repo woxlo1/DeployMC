@@ -1,9 +1,11 @@
 /**
- * Typed client for the redacted doctor report endpoint.
+ * Typed access to the generated `getDoctorReport` operation.
  *
  * The bearer token is a call argument only. It is never read from or written to browser storage,
  * cookies, the URL, or logs, and it is never included in an error message.
  */
+import { ApiRequestError, apiClient } from './client';
+
 export const DOCTOR_ENDPOINT = '/api/v1/server/doctor' as const;
 
 export type DoctorStatus = 'PASS' | 'WARN' | 'FAIL';
@@ -184,42 +186,28 @@ export async function fetchDoctorReport(
   token: string,
   signal?: AbortSignal,
 ): Promise<DoctorReport> {
-  let response: Response;
   try {
-    response = await fetch(DOCTOR_ENDPOINT, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      cache: 'no-store',
-      referrerPolicy: 'no-referrer',
-      ...(signal === undefined ? {} : { signal }),
+    const response = await apiClient.request<DoctorReport>('getDoctorReport', {
+      token,
+      signal,
+      validator: (value): value is DoctorReport => parseReport(value) !== null,
     });
+    if (response.data === null) {
+      throw new DoctorRequestError('invalid-response');
+    }
+    return response.data;
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (error instanceof DoctorRequestError) {
       throw error;
+    }
+    if (error instanceof ApiRequestError) {
+      if (error.reason === 'unauthorized') {
+        throw new DoctorRequestError('unauthorized');
+      }
+      if (error.reason === 'invalid-response') {
+        throw new DoctorRequestError('invalid-response');
+      }
     }
     throw new DoctorRequestError('request-failed');
   }
-
-  if (response.status === 401) {
-    throw new DoctorRequestError('unauthorized');
-  }
-  if (!response.ok) {
-    throw new DoctorRequestError('request-failed');
-  }
-
-  let payload: unknown;
-  try {
-    payload = await response.json();
-  } catch {
-    throw new DoctorRequestError('invalid-response');
-  }
-
-  const report = parseReport(payload);
-  if (report === null || (token.length > 0 && JSON.stringify(report).includes(token))) {
-    throw new DoctorRequestError('invalid-response');
-  }
-  return report;
 }
