@@ -255,6 +255,18 @@ in-game command rendered the shell, and only the Doctor panel is API-connected. 
 an AI-assisted draft. D-001 and D-002 are unchanged; Phase 4 targets `v0.5.0`, but no release is
 claimed while gates #127-#130 remain open.
 
+WP-4.2 API client and state merged its implementation in [PR #248](https://github.com/woxlo1/DeployMC/pull/248)
+at `eda9ceb` with six Conventional Commits preserved by rebase merge, with issue #64 closed by its
+final evidence PR. It generates REST operations and types from OpenAPI and WebSocket constants from
+AsyncAPI, enforces drift in spec lint, and adds a bounded REST client, in-memory-only bearer identity,
+identity-scoped query cache, conflict notice, and reconnecting WebSocket client. All 98 Web tests in
+17 files pass and all seven toolchains, 18/18 required PR checks, and post-merge CI/CodeQL/Scorecard
+passed. Evidence is server-free and jsdom/fake-socket only: no browser, running server, real WebSocket
+endpoint, E2E run, full integration suite, or in-game command consumed these surfaces. Native browser
+WebSockets cannot set `Authorization`, so the client adds no token to URLs or subprotocols; no product
+event publisher consumes it. Japanese strings are an AI-assisted draft. D-001 and D-002 are unchanged;
+Phase 4 targets `v0.5.0`, but no release is claimed while gates #127-#130 remain open.
+
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41

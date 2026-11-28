@@ -56,7 +56,10 @@ issue #61. WP-3.7 merged its security documentation in
 [PR #244](https://github.com/woxlo1/DeployMC/pull/244) at `0c6d70b` with five Conventional Commits;
 its final evidence PR closed issue #62. WP-4.1 added the Web UI shell in
 [PR #246](https://github.com/woxlo1/DeployMC/pull/246), rebase-merged at `1b16590` with three
-Conventional Commits preserved on `main`; this final evidence PR closes issue #63.
+Conventional Commits preserved on `main`; its final evidence PR closed issue #63. WP-4.2 added the
+API client and state in [PR #248](https://github.com/woxlo1/DeployMC/pull/248), rebase-merged at
+`eda9ceb` with six Conventional Commits preserved on `main`; this final evidence PR closes issue
+#64.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -466,8 +469,54 @@ or in-game command exercised the shell. The product API connection remains limit
 authenticated, redacted Doctor panel at `#/doctor`; the other screens are honest shell placeholders
 without live data. Japanese shell strings are an AI-assisted draft pending native review. D-001 and
 D-002 are unchanged. The master specification targets `v0.5.0` for Phase 4, but no tag or GitHub
-Release is claimed and release gates #127-#130 remain open. This final evidence PR records the
-consolidated evidence and closes issue #63.
+Release is claimed and release gates #127-#130 remain open. The WP-4.1 evidence PR closed issue #63.
+
+## WP-4.2 API client and state (issue #64)
+
+WP-4.2 wires the Web client to the normative API contracts without adding a runtime dependency.
+`tools/spec/generate-web-client.cjs` generates `web/src/api/generated.ts` from
+`specification/api/openapi.yaml`; `tools/spec/generate-web-events.cjs` generates
+`web/src/api/generated-events.ts` from `specification/api/asyncapi.yaml`. Both generated files are
+checked in, excluded from Prettier, and checked for drift by `npm run check:web-client` in spec lint.
+The REST client accepts only generated operation ids, serializes declared parameters, sends the
+bearer token only in `Authorization`, handles ETags and conditional responses, and maps failures to
+stable reasons without server prose or tokens. Strict `/api/v1/me` parsing exposes only a bounded,
+verified identity snapshot. A `401` clears the in-memory token, identity, toast state, and the query
+cache for that opaque identity scope; no token material is used as a cache key or persisted to
+browser storage. `ConflictNotice` shows only a current ETag and request id with reload, retry, and
+dismiss actions and never replays a stale write automatically.
+
+The WebSocket client uses the generated endpoint, protocol version, channels, and event types. It
+validates bounded envelopes, de-duplicates ids across reconnects, detects sequence gaps per
+connection as the AsyncAPI defines sequence, resubscribes on every successful open, and applies
+bounded backoff with a bounded attempt count. Native browser WebSockets cannot set `Authorization`;
+the client therefore puts no token in the URL or a subprotocol and exposes a socket-factory hook for
+an authenticated host socket. `EventStatus` renders connection state, last event type and sequence,
+gap warnings, and invalid-envelope warnings without rendering payload data.
+
+| Command or evidence | Result |
+|---|---|
+| Implementation PR | [#248](https://github.com/woxlo1/DeployMC/pull/248) rebase-merged at `eda9ceb` on `2026-11-28T05:52:12Z`; six Conventional Commits remain individually on `main`: `e2e5268`, `8353b4e`, `13c41d7`, `1da3f5d`, `0d116c2`, `eda9ceb` |
+| `git fetch origin main` | Success; implementation base `0c3d717`, final evidence base `eda9ceb` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Exit 0 for all six commits after message-only rewrites; the first run found over-long body lines |
+| `node tools/build/verify-all.cjs` | `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL in 1s`, 74 tasks up-to-date, exit 0 |
+| `git diff --check` | Exit 0, no output |
+| Merged-tree toolchain detail | Web 17 test files / 98 tests, spec 30 tests, i18n 7 tests, CLI 4 tests, Python 13 tests, compatibility suites; `pnpm typecheck`, `pnpm lint`, and `pnpm format:check` passed; `npm run lint` confirmed both generated modules current; `node tools/i18n/check` reported 0 errors and 0 warnings with 138 keys |
+| Generated source digests | OpenAPI SHA-256 `c8dd943ee5ed2a19df38c299aa5c24cd506e1535e8418c8056a9ed17c95940ab`; AsyncAPI SHA-256 `323d1ae8d5d22d91946b1c59d5ba9725115d3692b6a3c15026a7df4f3a51ef77` |
+| PR required checks | 18/18 required check-runs passed at `2026-11-28T05:50:19Z`; CodeQL and `action-semantic-pull-request` also passed; no failed or pending check |
+| Japanese verification and post-merge evidence | [PR #248 verification](https://github.com/woxlo1/DeployMC/pull/248#issuecomment-7234921994) and [PR #248 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/248#issuecomment-7234977649) |
+| Post-merge CI at `eda9ceb` | [46114032831](https://github.com/woxlo1/DeployMC/actions/runs/46114032831), `success` at `2026-11-28T05:54:41Z`; all Web, Java, CLI, Python, Spec, i18n, and Compatibility jobs passed on their hosts |
+| Post-merge CodeQL at `eda9ceb` | [46114032857](https://github.com/woxlo1/DeployMC/actions/runs/46114032857), `success` at `2026-11-28T05:55:14Z` |
+| Post-merge Scorecard at `eda9ceb` | [46114032862](https://github.com/woxlo1/DeployMC/actions/runs/46114032862), `success` at `2026-11-28T05:52:48Z` |
+
+Evidence is server-free and jsdom/fake-socket only. No product server event publisher, file editor,
+deployment screen, running server, browser, real WebSocket endpoint, E2E run, full integration suite,
+or in-game command consumed these surfaces. The Doctor panel remains the only API-connected screen.
+New Japanese catalog strings are an AI-assisted draft pending native review. D-001 and D-002 are
+unchanged. The master specification targets `v0.5.0` for Phase 4, but no tag or GitHub Release is
+claimed and release gates #127-#130 remain open. This final evidence PR records the consolidated
+evidence and closes issue #64.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -679,9 +728,11 @@ save gate on writes, but no running server or UI consumes it. WP-3.1 provides th
 boundary and a uniform 403 denial path; WP-3.4 adds the RBAC engine, WP-3.5 adds the fail-closed
 audit store and console verification, and WP-3.6 adds bounded transport protections for effective
 peers, rate limits, Origin checks, body limits, and token-mode lockout. WP-4.1 adds a hash-routed
-Web shell with loading/empty/error states for every inventory screen, but only the Doctor panel is
-API-connected and the packaged Web UI has not been rendered in a browser. There is still no
-deployment engine.
+Web shell with loading/empty/error states for every inventory screen, and WP-4.2 adds generated
+REST/WebSocket clients with in-memory auth and cache state. Only the Doctor panel is API-connected,
+no live screen consumes the new client state, no product event publisher emits to the WebSocket
+client, and the packaged Web UI has not been rendered in a browser. There is still no deployment
+engine.
 The WP-1.5 command surface, WP-1.6
 message runtime, and WP-1.9 token command still have only server-free tests beyond the smoke path.
 
@@ -700,7 +751,7 @@ These were actually run, not just written. Commands are the ones documented in
 | Distribution JAR | Shadow JAR contains the generated descriptor, entry point, message catalogs, 230 relocated SnakeYAML classes, relocated Netty, configuration schema and default template, and `deploymc-web/` assets with precompressed variants; no Spigot, unrelocated Netty/YAML, or multi-release entries | ZIP entry inspection of `plugin/build/libs/DeployMC-0.1.0-SNAPSHOT.jar` |
 | Plugin JAR verification | `:plugin:verifyPluginJar` fails on out-of-namespace classes, malformed or manifest-less multi-release entries, missing versioned bases, duplicate entries/classes, service entries outside the namespace, or common-path bytecode above major 52; CI reports the size | Production JAR plus 12 positive/negative fixture JARs |
 | Embedded transport | Netty 4.1.141.Final HTTP/WebSocket lifecycle, limits, Host/Origin hooks, request IDs, redacted logging, security headers, graceful shutdown, bounded WebSocket queues, static asset delivery, and a fail-closed token gate with health exceptions | `NettyTransportServerTest`: 11 tests; `StaticAssetHandlerTest`: 12 tests; `AuthenticationGateTest`: 5 tests; 0 failures |
-| Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (14 tests), `pnpm build` |
+| Web build | React 18 + TypeScript 5.7 + Vite 6 build, lint, format, Vitest, and gzip/Brotli precompression | `pnpm lint`, `pnpm format:check`, `pnpm test` (98 tests in 17 files), `pnpm build` |
 | CLI skeleton | Rust 2021 workspace with `clap`; format, clippy, tests, build | `cargo fmt --check`, `cargo clippy`, `cargo test`, `cargo build` |
 | Python SDK skeleton | `pyproject.toml`, ruff, format, mypy strict, pytest | `ruff check`, `ruff format --check`, `mypy`, `pytest` |
 | i18n checker | ICU subset parser, placeholder/plural validation, catalog drift status | `node --test tools/i18n/test/check.test.cjs`, `tools/i18n/check` |
@@ -730,6 +781,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-3.6 web protections | Trusted-peer effective address parsing with bounded forwarded chains, per-peer/per-identity/auth-failure buckets, role-lowered identity budgets, redacted rate headers, token-mode lockout, exact WebSocket Origin checks, endpoint body limits, and localized Problem Details | Contract PR #241 at `1cffb46`; implementation PR #242 rebase-merged at `d36db83` with six Conventional Commits; this final evidence PR; 6 effective-peer, 5 Origin, 3 lockout, 3 config, 10 rate-limit, and 6 embedded-socket enforcement tests plus core role-limit tests; 670 Java tests in the merged tree; all-toolchain verification; 18/18 required checks; post-merge CI/CodeQL/Scorecard; no running server or Web UI consumer |
 | WP-3.7 security documentation | Finalized v1 threat model, normative secure-deployment contract, Cloudflare Tunnel example with official sources and placeholder-only config, administrator hardening guide, and seven-check readiness checklist | Implementation PR #244 rebase-merged at `0c6d70b` with five Conventional Commits; 18/18 required checks; post-merge CI/CodeQL/Scorecard passed; all seven local toolchains `PASS`; no Cloudflare or running-server verification |
 | WP-4.1 Web UI shell | Hash routes for all 11 inventory screens with loading/empty/error previews and an invalid-route view, sidebar/header/content/status layout, light/dark/system design tokens, shortcut framework with focus-trapped help, catalog-key-only toasts, and a redacted error boundary with `req_…` ids | Implementation PR #246 rebase-merged at `1b16590` with three Conventional Commits; 62 Web tests in 10 files; lint, format, build, all seven toolchains `PASS`, 19/19 PR checks and post-merge CI/CodeQL/Scorecard passed; jsdom-only, no browser rendering, Doctor panel is the only API-connected screen |
+| WP-4.2 API client and state | Generated OpenAPI/AsyncAPI modules with spec-lint drift checks, generated-operation REST client, strict identity parsing, identity-scoped bounded query cache, in-memory bearer state with 401 clearing, conflict notice, and reconnect/gap-aware WebSocket client | Implementation PR #248 rebase-merged at `eda9ceb` with six Conventional Commits; 98 Web tests in 17 files; spec 30 tests; lint, format, all seven toolchains `PASS`, 18/18 required PR checks and post-merge CI/CodeQL/Scorecard passed; jsdom/fake-socket only, no live consumer |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |
@@ -1352,7 +1404,10 @@ The following are documented as intended behavior. They are **not** code.
 - Product Web UI screens backed by live API data. The WP-4.1 shell provides hash routes and
   loading/empty/error states for all 11 inventory screens, and the PART 36 doctor panel is the only
   API-connected screen; file tree, editor, diff, deployment, console, audit, and the remaining
-  screens are still placeholders. The packaged UI has not been rendered in a browser.
+  screens are still placeholders. WP-4.2 adds reusable REST/WebSocket client and state modules, but
+  no live screen consumes the query cache or conflict notice, no product event publisher feeds the
+  WebSocket client, and no real upgrade endpoint established an authenticated socket. The packaged UI
+  has not been rendered in a browser.
 - Running-server, tunnel, or Web UI consumption of the WP-3.6 protections. The embedded transport
   enforces them in server-free tests; no browser, tunnel terminator, or reverse proxy exercised them.
 - CLI commands beyond the skeleton; Python SDK client; TypeScript and Java SDKs.
@@ -1377,7 +1432,7 @@ The following are documented as intended behavior. They are **not** code.
 | `plugin/` | Shadow aggregator with mandatory relocations, final-JAR verifier, CI size report, descriptor, adapter classes, message catalog, relocated Netty/SnakeYAML, and `deploymc-web/` assets |
 | `buildSrc/` | Java implementations of `PluginJarVerifierTask`, `PluginJarSizeTask`, and `PluginJarFixturesTask` for configuration-cache compatibility and reproducible fixtures |
 | `docs/research/` | Naming, competitive, license, Bukkit descriptor, transport spike, and SnakeYAML 2.7 evidence; no hands-on server tests |
-| `web/` | Hash-routed React 18 shell with sidebar/header/content/status layout, light/dark/system design tokens, shortcuts, catalog-key toasts, redacted error boundary, and localized states for all 11 inventory screens; 62 jsdom tests and gzip/Brotli precompression; only the doctor panel is API-connected and no browser has rendered it |
+| `web/` | Hash-routed React 18 shell with sidebar/header/content/status layout, light/dark/system design tokens, shortcuts, catalog-key toasts, redacted error boundary, and localized states for all 11 inventory screens; checked-in generated REST/AsyncAPI client modules, bounded REST client, identity-scoped cache, conflict notice, and reconnecting WebSocket client; 98 jsdom tests and gzip/Brotli precompression; only the doctor panel is API-connected and no browser has rendered it |
 | `cli/` | Buildable Rust workspace; no HTTP client |
 | `sdk/python/` | Buildable package skeleton; no API client |
 | `sdk/typescript/`, `sdk/java/` | Not created |

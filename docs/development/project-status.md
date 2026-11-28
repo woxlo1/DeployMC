@@ -32,8 +32,9 @@ closed issue #59. WP-3.5 merged its contract in PR #235 at `f4f89a8`, its core i
 evidence PR. WP-3.6 merged its contract in PR #241 at `1cffb46` and its enforcement in PR #242 at
 `d36db83`; its final evidence PR closed issue #61. WP-3.7 merged its security documentation in PR
 #244 at `0c6d70b` with five Conventional Commits; its final evidence PR closed issue #62. WP-4.1
-merged its Web UI shell implementation in PR #246 at `1b16590` with three Conventional Commits;
-this final evidence PR closes issue #63.
+merged its Web UI shell implementation in PR #246 at `1b16590` with three Conventional Commits; its
+final evidence PR closed issue #63. WP-4.2 merged its API client implementation in PR #248 at
+`eda9ceb` with six Conventional Commits; this final evidence PR closes issue #64.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -88,8 +89,10 @@ under Part 39.3.
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
   category 3-5 work remains open. WP-3.7 (issue #62, milestone `0.4.0`) documentation merged in PR
    #244 at `0c6d70b`; its final evidence closed the issue without tagging or publishing a release.
-   WP-4.1 (issue #63, milestone `0.5.0`) merged the Web UI shell in PR #246 at `1b16590`; this final
-   evidence closes the issue without claiming a release.
+   WP-4.1 (issue #63, milestone `0.5.0`) merged the Web UI shell in PR #246 at `1b16590`; its final
+   evidence closed the issue without claiming a release. WP-4.2 (issue #64, milestone `0.5.0`) merged
+   the API client and state in PR #248 at `eda9ceb`; this final evidence closes the issue without
+   claiming a release.
    Issue #115 (PART 35 fixtures) is complete: stage 1 merged the
   coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; PRs #175-#178
   added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
@@ -1240,8 +1243,44 @@ screen; all other screens are honest placeholders until later work packages conn
 Evidence is server-free and jsdom-only. No running server, browser, E2E run, full integration suite,
 or in-game command exercised the shell. The `?state=` previews are a rendering contract, not live
 data. Japanese shell strings are an AI-assisted draft pending native review. D-001 and D-002 are
-unchanged, and no `v0.5.0` tag or GitHub Release is claimed while gates #127-#130 remain open. This
-final evidence PR closes issue #63.
+unchanged, and no `v0.5.0` tag or GitHub Release is claimed while gates #127-#130 remain open. The
+WP-4.1 evidence PR closed issue #63.
+
+## WP-4.2 API client and state (issue #64)
+
+WP-4.2 is complete. PR #248 rebase-merged the API client and state at `eda9ceb` on
+`2026-11-28T05:52:12Z`, preserving six Conventional Commits on `main`: `e2e5268`, `8353b4e`,
+`13c41d7`, `1da3f5d`, `0d116c2`, and `eda9ceb`. It generates REST operations/types from OpenAPI and
+WebSocket constants from AsyncAPI, checks both generated modules for drift in spec lint, and adds a
+bounded REST client, strict `/api/v1/me` identity parsing, an in-memory bearer token with 401
+clearing, an opaque-identity-scoped query cache, an optimistic-concurrency conflict notice, and a
+WebSocket client with envelope validation, id de-duplication, per-connection gap detection, bounded
+backoff, and resubscription.
+
+| Evidence | Result |
+|---|---|
+| Local `git fetch origin main` | PASS; implementation base `0c3d717`, final evidence base `eda9ceb` |
+| Local `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | PASS for all six commits after message-only rewrites of two over-long body lines |
+| Local `node tools/build/verify-all.cjs` | PASS for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| Local `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | PASS, `BUILD SUCCESSFUL in 1s`, 74 tasks up-to-date |
+| Local `git diff --check` | PASS, no output |
+| Web and spec detail | `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, and `pnpm test -- --reporter=dot` (17 files / 98 tests) passed; spec `npm test` reported `pass 30`, `fail 0`, and `npm run lint` confirmed both generated modules current |
+| i18n detail | `node tools/i18n/check` reported 0 errors, 0 warnings with 138 keys; `node --test tools/i18n/test/check.test.cjs` passed 7 tests |
+| PR required checks | 18/18 required check-runs passed for PR #248 at `2026-11-28T05:50:19Z`; CodeQL and `action-semantic-pull-request` also passed, with no failed or pending check |
+| Japanese pre-merge verification | [PR #248 verification](https://github.com/woxlo1/DeployMC/pull/248#issuecomment-7234921994) |
+| Japanese post-merge evidence | [PR #248 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/248#issuecomment-7234977649) |
+| Post-merge CI at `eda9ceb` | [46114032831](https://github.com/woxlo1/DeployMC/actions/runs/46114032831), `success` at `2026-11-28T05:54:41Z` |
+| Post-merge CodeQL at `eda9ceb` | [46114032857](https://github.com/woxlo1/DeployMC/actions/runs/46114032857), `success` at `2026-11-28T05:55:14Z` |
+| Post-merge Scorecard at `eda9ceb` | [46114032862](https://github.com/woxlo1/DeployMC/actions/runs/46114032862), `success` at `2026-11-28T05:52:48Z` |
+
+Evidence is server-free and jsdom/fake-socket only. No product event publisher, file editor,
+deployment screen, running server, browser, real WebSocket endpoint, E2E run, full integration suite,
+or in-game command consumed these surfaces. Bearer tokens remain in React memory and are never put in
+browser storage, URLs, subprotocols, or logs. Native browser WebSockets cannot set `Authorization`,
+so an authenticated host socket must be supplied through the factory hook; no real upgrade endpoint
+was exercised. New Japanese catalog strings are an AI-assisted draft pending native review. D-001 and
+D-002 are unchanged, and no `v0.5.0` tag or GitHub Release is claimed while gates #127-#130 remain
+open. This final evidence PR closes issue #64.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -1547,13 +1586,14 @@ merged the implementation at `ca1d070`. WP-3.5 (issue #60) is complete;
 PR #235 merged the contract at `f4f89a8`, PR #236 the core at `d6fd2b8`, PR #237 the transport at
 `e6538f7`, PR #238 the SecureRandom fix at `f085782`, and PR #239 the host wiring at `f500486`.
 WP-3.6 (issue #61) is complete; PR #241 merged the contract at `1cffb46` and PR #242 rebase-merged
-the enforcement at `d36db83`. WP-3.7 (issue #62), Security documentation and guides, is complete with
-this final evidence PR; PR #244 rebase-merged the documentation at `0c6d70b` with five Conventional
-Commits. The threat model is finalized for v1, and the Cloudflare Tunnel guide records official sources
-with an access date, but every deployment-specific check is `NOT RUN`. WP-4.1 (issue #63), Web UI
-shell, is complete with this final evidence PR; PR #246 rebase-merged the shell at `1b16590` with
-three Conventional Commits. The next oldest open item is WP-4.2 (issue #64), API client and state.
-Owner decision D-002 remains open, so no real Cloudflare Access verification or plan-specific guide
+the enforcement at `d36db83`. WP-3.7 (issue #62), Security documentation and guides, is complete;
+PR #244 rebase-merged the documentation at `0c6d70b` with five Conventional Commits. The threat model
+is finalized for v1, and the Cloudflare Tunnel guide records official sources with an access date,
+but every deployment-specific check is `NOT RUN`. WP-4.1 (issue #63), Web UI shell, is complete;
+PR #246 rebase-merged the shell at `1b16590` with three Conventional Commits. WP-4.2 (issue #64),
+API client and state, is complete with this final evidence PR; PR #248 rebase-merged the client at
+`eda9ceb` with six Conventional Commits. The next oldest open item is WP-4.3 (issue #65), File
+explorer. Owner decision D-002 remains open, so no real Cloudflare Access verification or plan-specific guide
 claim is made until the owner decides. Work on later items may be
 prepared in parallel but must not be merged ahead of an earlier open issue unless the owner
 explicitly approves.
