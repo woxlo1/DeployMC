@@ -7,7 +7,7 @@ risks are accepted; see [v1-checklist.md](v1-checklist.md).
 
 | ID | Risk | Likelihood | Impact | Mitigation direction | Owner | Status |
 |---|---|---|---|---|---|---|
-| R1 | JAR deploy abused for code execution by a compromised account | Medium | Critical | Cloudflare Access with MFA, RBAC, approval workflow, hash allowlists, audit, rate limits, explicit documentation of limits | Maintainer / owner | Open; design only |
+| R1 | JAR deploy abused for code execution by a compromised account | Medium | Critical | Cloudflare Access with MFA, RBAC, audit, rate limits, explicit documentation of limits | Maintainer / owner | Open; controls implemented, no running-server verification |
 | R2 | Cloudflare misconfiguration exposes the port | Medium | Critical | Loopback default, JWT verification rather than header trust, doctor checks, tunnel verification checklist | Maintainer | Documentation and checklist added for WP-3.7; real Cloudflare compatibility remains blocked by D-002 |
 | R3 | Classloader/library conflicts with other plugins | High | High | Minimal dependencies, mandatory relocation, JAR verification task, matrix tests with conflicting plugins | Maintainer | Partially addressed: Netty and SnakeYAML 2.7 are relocated and the final JAR is verified in `check`; real-server conflicting-library test remains in #48 |
 | R4 | Legacy versions behave differently | High | High | Feature detection, capability reporting, tiered claims, harness evidence | Maintainer | Open; #48, #98 |

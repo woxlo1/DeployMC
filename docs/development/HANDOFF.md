@@ -1,11 +1,23 @@
 # Handoff
 
-Last updated: 2026-11-27. Read [AGENTS.md](../../AGENTS.md) first, then this file and
+Last updated: 2026-11-28. Read [AGENTS.md](../../AGENTS.md) first, then this file and
 [project status](project-status.md).
 
 ## What was just done
 
-- Issue #61 WP-3.6 Web-facing protections is complete with this final evidence PR. PR #241 merged the
+- Issue #62 WP-3.7 Security documentation and guides is complete with this final evidence PR. PR #244
+  rebase-merged five Conventional Commits at `0c6d70b` on `2026-11-28T03:28:41Z`, preserving
+  `99c0279`, `db7409d`, `c173f30`, `4ad405c`, and `0c6d70b` on `main`. It adds a normative
+  secure-deployment contract, finalizes the v1 threat model, adds a placeholder-only Cloudflare Tunnel
+  guide with official sources and an access date, and adds the administrator hardening guide. All
+  seven deployment checklist rows are `NOT RUN`; the guide is verified documentation, not verified
+  deployment. All 18 required PR checks passed, and post-merge CI, CodeQL, and Scorecard succeeded;
+  local verification reported 7/7 toolchains `PASS` and `BUILD SUCCESSFUL` for Spotless. No product
+  code, CI gate, runtime string, i18n key, doctor check, Cloudflare account, tunnel, running server,
+  browser, E2E run, or full integration suite was used. The master specification targets `v0.4.0`,
+  but no tag or GitHub Release exists and release gates #127-#130 remain open. D-001 and D-002 are
+  unchanged.
+- Issue #61 WP-3.6 Web-facing protections is complete. PR #241 merged the
   normative contract at `1cffb46` as three Conventional Commits, and PR #242 was rebase-merged at
   `d36db83` on `2026-11-27T10:16:41Z` with six Conventional Commits preserved on `main`. The embedded
   transport now resolves an effective peer only from trusted literal IP/CIDR peers, validates exact
@@ -564,20 +576,23 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
   `feature/audit-60-transport`, `security/secure-random-tests`, and `feature/audit-60-host` were
   deleted after their merges. `docs/audit-60-final-evidence` was temporary for the WP-3.5 final
   evidence update. `spec/web-protections-61-contract` and `feature/web-protections-61-enforcement`
-  were retained until PRs #241 and #242 merged. `docs/web-protections-61-evidence` is temporary for
-  this final evidence update. Evidence is recorded in the status pages and pull-request comments.
+  were retained until PRs #241 and #242 merged. `docs/web-protections-61-evidence` was temporary for
+  the WP-3.6 final evidence update. `spec/security-docs-62-contract` was retained until PR #244
+  merged; `docs/security-docs-62-evidence` is temporary for this final evidence update. Evidence is
+  recorded in the status pages and pull-request comments.
 - 17 open Dependabot PRs (#23-#39) have been triaged individually; no PR was merged, closed, rebased,
   or approved. Do not merge them in bulk. Owner decision D-009 records the pending dispositions.
-- Open issues: 61 immediately before this final evidence PR merges on 2026-11-27; issue #61 closes
-  on merge, leaving 60. Milestones `0.1.0` through `0.10.0` exist.
+- Open issues: 60 immediately before this final evidence PR merges on 2026-11-28; issue #62 closes
+  on merge, leaving 59. Milestones `0.1.0` through `0.10.0` exist.
 
 ## Blocked
 
-- Nothing blocks local implementation of WP-3.7 Security documentation and guides. WP-3.2 through
-  WP-3.6 are complete; D-002 must still be resolved before real Cloudflare Access verification or
-  plan-specific guide claims. Stored token scopes are enforced as a narrowing filter by WP-3.4 RBAC,
-  WP-3.5 records privileged mutations and denials without an off-host anchor, and WP-3.6 enforces
-  transport protections without a running-server or browser consumer.
+- Nothing blocks local implementation of WP-4.1 Web UI shell. WP-3.2 through WP-3.7 are complete;
+  D-002 must still be resolved before real Cloudflare Access verification or plan-specific guide
+  claims, and release gates #127-#130 block a truthful `v0.4.0` tag or GitHub Release. Stored token
+  scopes are enforced as a narrowing filter by WP-3.4 RBAC, WP-3.5 records privileged mutations and
+  denials without an off-host anchor, WP-3.6 enforces transport protections without a running-server
+  or browser consumer, and WP-3.7 documents deployment checks that have not been run.
 - Owner decisions D-001 through D-007 in [decisions pending](decisions-pending.md) affect later
   compatibility, Cloudflare, distribution, and community work. D-009 preserves the Dependabot PR
   branches #23-#39.
@@ -585,10 +600,11 @@ and data stages for issue #115 are merged with evidence, so the issue is complet
 ## Exact next steps
 
 1. Merge this final evidence PR, wait for the required post-merge workflows, post the Japanese
-   post-merge evidence comment, and confirm issue #61 is closed as completed.
-2. Start WP-3.7 (issue #62), Security documentation and guides. Do not claim real Cloudflare
-   compatibility until D-002 is resolved. Later work may be prepared in parallel but must not merge
-   ahead of an earlier open issue without owner approval.
+   post-merge evidence comment, and confirm issue #62 is closed as completed.
+2. Start WP-4.1 (issue #63), Web UI shell. Do not claim real Cloudflare compatibility until D-002 is
+   resolved, and do not tag or publish `v0.4.0` until release gates #127-#130 are satisfied. Later work
+   may be prepared in parallel but must not merge ahead of an earlier open issue without owner
+   approval.
 3. Update project status, implementation status, this handoff, and AGENTS.md at the end of each
    session when repository state changes.
 

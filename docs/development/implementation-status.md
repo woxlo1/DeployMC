@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-11-27 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
+Last updated: 2026-11-28 (Phase 0 WP-0.6/WP-0.2, Phase 1 WP-1.1-WP-1.9, Phase 2 WP-2.1-WP-2.5,
 all merged WP-2.6 specification and adapter stages; issues #47-#55 closed. PR #168 merged the
 file/validation contract at `8970728`, PR #169 merged its adapters at `08fe424`, PR #170 merged the
 snapshot-route contract at `bf82e26`, PR #171 merged its evidence at `88a6541`, and PR #172 merged
@@ -51,8 +51,10 @@ issue #59. WP-3.5 merged its contract in [PR #235](https://github.com/woxlo1/Dep
 `f085782`, and its host wiring in [PR #239](https://github.com/woxlo1/DeployMC/pull/239) at
 `f500486`; issue #60 closed through its final evidence PR. WP-3.6 merged its normative contract in
 [PR #241](https://github.com/woxlo1/DeployMC/pull/241) at `1cffb46` and its product enforcement in
-[PR #242](https://github.com/woxlo1/DeployMC/pull/242) at `d36db83`; this final evidence PR closes
-issue #61.
+[PR #242](https://github.com/woxlo1/DeployMC/pull/242) at `d36db83`; its final evidence PR closed
+issue #61. WP-3.7 merged its security documentation in
+[PR #244](https://github.com/woxlo1/DeployMC/pull/244) at `0c6d70b` with five Conventional Commits;
+this final evidence PR closes issue #62.
 
 This page states what exists in the repository and what does not. It is deliberately blunt:
 no feature is listed as working unless it was built and exercised. The [roadmap](../../ROADMAP.md)
@@ -389,6 +391,46 @@ running reverse proxy or tunnel was configured. Audit `actor.ip` remains null, C
 identities remain non-admin-equivalent, and D-001 and D-002 are unchanged. This final evidence PR
 records the consolidated result and closes issue #61.
 
+## WP-3.7 Security documentation and guides (issue #62)
+
+WP-3.7 completes the security documentation layer without adding product code. The v1 threat model is
+finalized against implemented controls and evidence through WP-3.6, with D-001 and D-002 limits
+kept visible. A normative secure-deployment contract defines the deliverables, source rules,
+topology, readiness checks, and hardening expectations. The Cloudflare Tunnel example uses only
+placeholder hostname and UUID values, records official documentation links with an access date,
+gives step-by-step Access application, policy, and CI service-token setup, and requires seven
+deployment-specific checks. The administrator hardening guide links these documents and states the
+limits of authentication, authorization, snapshots, and audit evidence. No runtime strings, i18n
+keys, doctor checks, CI gates, or product behaviors changed.
+
+Implementation PR [#244](https://github.com/woxlo1/DeployMC/pull/244) was rebase-merged at `0c6d70b`
+on `2026-11-28T03:28:41Z` with five Conventional Commits preserved on `main`: `99c0279`, `db7409d`,
+`c173f30`, `4ad405c`, and `0c6d70b`.
+
+| Command or evidence | Result |
+|---|---|
+| `git fetch origin main` | Success; implementation base `50dae8f`, final evidence base `0c6d70b` |
+| `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | Exit 0 after message-only rewrites; the first run found over-long body lines |
+| `node tools/build/verify-all.cjs` | `PASS` for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | `BUILD SUCCESSFUL` |
+| `git diff --check` | Exit 0, no output |
+| Merged-tree toolchain detail | Web 39 tests, CLI 4 tests, Python 13 tests, Spec 22 tests, i18n 7 tests, compatibility 15 + 6 + 4 + 6 + 4 + 4 + 7 tests; Java build, `verifyJava8`, and plugin JAR verification passed |
+| PR required checks | 18/18 required checks passed for PR #244 at `2026-11-28T03:28:18Z`; CodeQL and `action-semantic-pull-request` also passed |
+| Japanese verification and post-merge evidence | [PR #244 verification](https://github.com/woxlo1/DeployMC/pull/244#issuecomment-7233101081) and [PR #244 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/244#issuecomment-7233159973) |
+| Post-merge CI at `0c6d70b` | [46103035053](https://github.com/woxlo1/DeployMC/actions/runs/46103035053), `success`; Paper smoke passed on Ubuntu and Windows |
+| Post-merge CodeQL at `0c6d70b` | [46103035118](https://github.com/woxlo1/DeployMC/actions/runs/46103035118), `success` |
+| Post-merge Scorecard at `0c6d70b` | [46103035150](https://github.com/woxlo1/DeployMC/actions/runs/46103035150), `success` |
+| Release status | `git tag --list` and `gh release list --limit 10` returned no output on 2026-11-28; no `v0.4.0` tag or GitHub Release exists |
+
+All seven Cloudflare checklist rows are `NOT RUN`. The guide is verified documentation, not verified
+deployment; no Cloudflare account, tunnel, running server, browser, E2E run, or full integration
+suite was used. D-001 still blocks hosting-specific restart, update-folder, and version evidence.
+D-002 still blocks real Cloudflare compatibility and plan-specific claims. `auth.tunnel` remains
+`implemented: false`, Cloudflare JWT identities are not admin-equivalent, and audit `actor.ip`
+remains null. The master specification names `v0.4.0` as the WP-3.7 release target, but release
+gates #127-#130 remain open, so this final evidence PR does not tag or publish a release. It records
+the consolidated evidence and closes issue #62.
+
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
 The seven spikes required by PART 40.3 are recorded in
@@ -646,6 +688,7 @@ These were actually run, not just written. Commands are the ones documented in
 | WP-3.3 token and one-time-token modes | Normative token record/command/one-time contract; SHA-256 token storage with scopes, revocation, last-used persistence, fail-closed metadata writes and closed auth mappings; loopback-only in-memory one-time runtime with bounded TTL and attempts; console create/revoke/list with TTL clamping and tab completion | Specification checker 19 tests; server-free core, transport, and Bukkit command tests; merged tree reports 544 Java tests with 0 failures, 0 errors, 1 skipped; all 18 required checks for each of PR #228, #229, and #230 plus post-merge CI/CodeQL/Scorecard passed; no running server or in-game command |
 | WP-3.4 RBAC engine | Closed 23-permission registry, immutable policy snapshots with sandbox path scopes, owner-derived token scope narrowing, reserved `local-onetime` identity, centralized REST/WebSocket gate, authenticated `/api/v1/me`, redacted 15th doctor check, and console `--owner`; invalid reload denies all and WebSocket permission loss closes with 4403 | Contract PR #232 at `4bd654b`; implementation PR #233 at `ca1d070`; this final evidence PR; server-free core/transport/Bukkit tests, 599 Java tests, all-toolchain verification, i18n, all 18 required checks, post-merge CI/CodeQL/Scorecard, and CI Paper smoke on Ubuntu/Windows; no local running server or in-game command |
 | WP-3.6 web protections | Trusted-peer effective address parsing with bounded forwarded chains, per-peer/per-identity/auth-failure buckets, role-lowered identity budgets, redacted rate headers, token-mode lockout, exact WebSocket Origin checks, endpoint body limits, and localized Problem Details | Contract PR #241 at `1cffb46`; implementation PR #242 rebase-merged at `d36db83` with six Conventional Commits; this final evidence PR; 6 effective-peer, 5 Origin, 3 lockout, 3 config, 10 rate-limit, and 6 embedded-socket enforcement tests plus core role-limit tests; 670 Java tests in the merged tree; all-toolchain verification; 18/18 required checks; post-merge CI/CodeQL/Scorecard; no running server or Web UI consumer |
+| WP-3.7 security documentation | Finalized v1 threat model, normative secure-deployment contract, Cloudflare Tunnel example with official sources and placeholder-only config, administrator hardening guide, and seven-check readiness checklist | Implementation PR #244 rebase-merged at `0c6d70b` with five Conventional Commits; 18/18 required checks; post-merge CI/CodeQL/Scorecard passed; all seven local toolchains `PASS`; no Cloudflare or running-server verification |
 | WP-1.8 compatibility harness | Official pinned Paper download with checksum verification, Java 25 headless start, host-provisioned token, authenticated `/api/v1/server`, conflicting Netty fixture, before/after-disable thread dumps, logs, and clean teardown | 14 offline harness tests, `node tools/build/verify-all.cjs`, a real local Paper 26.3 build 256 smoke run, and passing CI smoke entries on Ubuntu and Windows at `839b789`; no support tier |
 | PART 35 fixture stage 1 | Test-only `DeployMCTestA` plugin with stable identity, generated 1.0.0/1.1.0 descriptors and configs, enable/config/`/dmctest` signals, and Java 8 bytecode | Targeted clean build produced both JARs; ZIP descriptor/config and class major 52 inspected; CI-style `build verifyJava8` stored a configuration cache entry after the descriptor tasks were made cache-safe; PR #174 merged at `bdcd64a` with post-merge CI/CodeQL/Scorecard pass; no running server or harness use |
 | PART 35 broken-enable fixture | Test-only `DeployMCTestBrokenEnable` plugin that saves its config and throws during `onEnable` with stable test signals | Targeted clean build produced the JAR; ZIP descriptor/config and class major 52 inspected; PR #176 merged at `7c2100e` with post-merge CI/CodeQL/Scorecard pass; no running server, harness, or rollback execution |
@@ -1235,10 +1278,10 @@ The following are documented as intended behavior. They are **not** code.
 | Deployment state machine | [Deployment state machine](../architecture/deployment-state-machine.md), [ADR-0008](../adr/ADR-0008-deployment-state-machine.md) | Narrative only |
 | Threading model | [Threading model](../architecture/threading-model.md) | Documents only |
 | API layering | [API layering](../architecture/api-layering.md) | Documents only |
-| Threat model | [Threat model](../../specification/security/threat-model.md) | Draft |
+| Threat model | [Threat model](../../specification/security/threat-model.md) | Finalized v1 model; server-free evidence only, with D-001/D-002 limits |
 | REST API | [OpenAPI skeleton](../../specification/api/openapi.yaml), [error codes](../../specification/api/errors.md) | Auth gate, health, file/validation, snapshot, doctor, opt-in metrics, and audit query/export/verify handlers implemented; deployment and console resource handlers are not |
 | WebSocket API | [AsyncAPI skeleton](../../specification/api/asyncapi.yaml) | Upgrade authentication, exact Origin checks, and frame limits implemented; the AsyncAPI event protocol and application handlers are not |
-| RBAC and threat model | [Threat model](../../specification/security/threat-model.md), [RBAC contract](../../specification/security/rbac.md) | RBAC is implemented with no implicit admin equivalence; the threat model remains a draft |
+| RBAC and threat model | [Threat model](../../specification/security/threat-model.md), [RBAC contract](../../specification/security/rbac.md) | RBAC is implemented with no implicit admin equivalence; the threat model is finalized for v1 with server-free evidence only |
 | Configuration | [JSON Schema](../../specification/config/config.schema.json), [example](../../specification/config/example.config.yaml), [loader guide](../configuration.md) | Schema, example, tested `core` loader, Bukkit startup wiring, fail-closed observability adapter, and `/deploymc` commands |
 | Deployment state machine | [Formal state machine](../../specification/deployment/state-machine.md) | Normative transition data and checks; no engine |
 | Support matrix | [Support matrix](../compatibility/support-matrix.md) | Tier matrix empty; v1 smoke harness built, including conflict and thread-dump checks |
@@ -1298,7 +1341,7 @@ The following are documented as intended behavior. They are **not** code.
 | `tools/build/` | One-command local verification for all seven toolchains; Windows path workarounds |
 | `tools/i18n/` | Working checker and tests |
 | `tools/spec/` | Working specification linter and checker tests |
-| `specification/` | REST, WebSocket, error, config, audit, deployment, and content-validation contracts; threat model draft |
+| `specification/` | REST, WebSocket, error, config, audit, deployment, content-validation, security, and observability contracts; finalized v1 threat model |
 | `tests/` | Standalone ADR-0003 transport spike build, v1 compatibility harness with 15 offline tests, conflicting-library and wrong-platform fixture plugins, deterministic sandbox corpus generator with 2,736 reject and 29 allow payloads plus a versioned per-OS manifest, deterministic JWT vector generator with a localhost mock JWKS server, manifest-pinned hostile archive, YAML, and log corpus generators, PART 35 coverage map, and source-built versioned healthy plugin emitting 1.0.0/1.1.0 JARs |
 
 ## How to verify this page

@@ -19,8 +19,8 @@ Phase 0 is in progress. Verified today:
 - Message-catalog checker, generated translation status, and an AI-assisted Japanese README.
 - Core project documents in this repository.
 - CI, lint, CodeQL, dependency-review, and Scorecard workflows, plus enforced branch protection.
-- Architecture documents, ADR-0001 through ADR-0014, a threat-model draft, and the support-matrix
-  design.
+- Architecture documents, ADR-0001 through ADR-0014, a finalized v1 threat model, and the
+  support-matrix design.
 - Source-linked naming, competitive, and license research in `docs/research/`.
 
 Issue forms and community automation, the REST/AsyncAPI/configuration specification skeletons, the
