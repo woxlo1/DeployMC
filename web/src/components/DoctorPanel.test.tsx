@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DoctorCheck, DoctorReport } from '../api/doctor';
 import { App } from '../App';
+import { routeHash } from '../app/routes';
 
 const TOKEN = 'doctor-fake-token-4d2c';
 const ENDPOINT = '/api/v1/server/doctor';
@@ -189,6 +190,7 @@ describe('doctor panel', () => {
     window.localStorage.clear();
     window.sessionStorage.clear();
     document.documentElement.lang = 'en';
+    window.location.hash = routeHash('doctor');
     consoleCalls.length = 0;
     for (const method of ['log', 'debug', 'info', 'warn', 'error'] as const) {
       vi.spyOn(console, method).mockImplementation((...args: unknown[]) => {
