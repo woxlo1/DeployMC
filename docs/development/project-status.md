@@ -31,7 +31,9 @@ closed issue #59. WP-3.5 merged its contract in PR #235 at `f4f89a8`, its core i
 #238 at `f085782`, and its host wiring in PR #239 at `f500486`; issue #60 closed through its final
 evidence PR. WP-3.6 merged its contract in PR #241 at `1cffb46` and its enforcement in PR #242 at
 `d36db83`; its final evidence PR closed issue #61. WP-3.7 merged its security documentation in PR
-#244 at `0c6d70b` with five Conventional Commits; this final evidence PR closes issue #62.
+#244 at `0c6d70b` with five Conventional Commits; its final evidence PR closed issue #62. WP-4.1
+merged its Web UI shell implementation in PR #246 at `1b16590` with three Conventional Commits;
+this final evidence PR closes issue #63.
 
 This is the session-level status page. For per-component facts use
 [implementation status](implementation-status.md); for intended design use the
@@ -85,7 +87,9 @@ under Part 39.3.
   WP-2.5 (issue #54) are complete through their engines and save-time gate. WP-2.6 (#55) has merged
   file/validation adapters and all six snapshot routes; issue #55 is closed as completed, and
   category 3-5 work remains open. WP-3.7 (issue #62, milestone `0.4.0`) documentation merged in PR
-   #244 at `0c6d70b`; its final evidence closes the issue without tagging or publishing a release.
+   #244 at `0c6d70b`; its final evidence closed the issue without tagging or publishing a release.
+   WP-4.1 (issue #63, milestone `0.5.0`) merged the Web UI shell in PR #246 at `1b16590`; this final
+   evidence closes the issue without claiming a release.
    Issue #115 (PART 35 fixtures) is complete: stage 1 merged the
   coverage map and a source-built versioned healthy plugin in PR #174 at `bdcd64a`; PRs #175-#178
   added documentation evidence, broken-enable, broken-descriptor, and slow-enable fixtures through
@@ -1204,8 +1208,40 @@ Cloudflare JWT identities remain non-admin-equivalent; D-001 and D-002 are uncha
 Local evidence is server-free, embedded-socket, generated-descriptor, and handler-level only. No
 running Minecraft server, Bukkit mock, browser, E2E run, full integration suite, or in-game command
 exercised WP-3.5. The audit REST routes are not consumed by a running server, Web UI, browser, or
-in-game command, and no off-host anchor or cross-implementation parity is claimed. This final
-evidence PR closes issue #60.
+in-game command, and no off-host anchor or cross-implementation parity is claimed. Issue #60 is
+closed.
+
+## WP-4.1 Web UI shell (issue #63)
+
+WP-4.1 is complete. PR #246 rebase-merged the Web UI shell at `1b16590` on
+`2026-11-28T04:31:45Z`, preserving three Conventional Commits on `main`: `f325b68`, `e48f20c`, and
+`1b16590`. The shell adds hash-compatible routes for all 11 screens in the Web UI screen inventory,
+sidebar/header/content/status layout on design tokens, light/dark/system themes, a keyboard-shortcut
+framework with a focus-trapped help dialog, catalog-key-only global toasts, a redacted error boundary
+with generated `req_…` ids, and loading/empty/error states for every view through
+`?state=loading|empty|error`. The existing authenticated Doctor panel remains the only API-connected
+screen; all other screens are honest placeholders until later work packages connect API clients.
+
+| Evidence | Result |
+|---|---|
+| Local `git fetch origin main` | PASS; implementation base `fae61ed`, final evidence base `1b16590` |
+| Local `npx --yes @commitlint/cli --config commitlint.config.cjs --from origin/main --to HEAD` | PASS after message-only rewrites of two over-long commit body lines |
+| Local `node tools/build/verify-all.cjs` | PASS for `web`, `java`, `cli`, `python`, `spec`, `i18n`, and `compat`; exit 0 |
+| Local `.\gradlew.bat spotlessCheck --console=plain --no-configuration-cache` | PASS, `BUILD SUCCESSFUL` |
+| Local `git diff --check` | PASS, no output |
+| Web detail | `pnpm lint`, `pnpm format:check`, `pnpm test -- --reporter=dot` (10 files / 62 tests), and `pnpm build` passed; `node tools/i18n/check --write-status` reported 0 errors and 0 warnings |
+| PR required checks | 19/19 check-runs passed for PR #246 at `2026-11-28T04:31:17Z` |
+| Japanese pre-merge verification | [PR #246 verification](https://github.com/woxlo1/DeployMC/pull/246#issuecomment-7234093987) |
+| Japanese post-merge evidence | [PR #246 post-merge evidence](https://github.com/woxlo1/DeployMC/pull/246#issuecomment-7234131714) |
+| Post-merge CI at `1b16590` | [46107969310](https://github.com/woxlo1/DeployMC/actions/runs/46107969310), success |
+| Post-merge CodeQL at `1b16590` | [46107969337](https://github.com/woxlo1/DeployMC/actions/runs/46107969337), success |
+| Post-merge Scorecard at `1b16590` | [46107969324](https://github.com/woxlo1/DeployMC/actions/runs/46107969324), success |
+
+Evidence is server-free and jsdom-only. No running server, browser, E2E run, full integration suite,
+or in-game command exercised the shell. The `?state=` previews are a rendering contract, not live
+data. Japanese shell strings are an AI-assisted draft pending native review. D-001 and D-002 are
+unchanged, and no `v0.5.0` tag or GitHub Release is claimed while gates #127-#130 remain open. This
+final evidence PR closes issue #63.
 
 ## PART 40.3 early risk-reduction spikes (issue #118)
 
@@ -1514,9 +1550,11 @@ WP-3.6 (issue #61) is complete; PR #241 merged the contract at `1cffb46` and PR 
 the enforcement at `d36db83`. WP-3.7 (issue #62), Security documentation and guides, is complete with
 this final evidence PR; PR #244 rebase-merged the documentation at `0c6d70b` with five Conventional
 Commits. The threat model is finalized for v1, and the Cloudflare Tunnel guide records official sources
-with an access date, but every deployment-specific check is `NOT RUN`. The next oldest open item is
-WP-4.1 (issue #63), Web UI shell. Owner decision D-002 remains open, so no real Cloudflare Access
-verification or plan-specific guide claim is made until the owner decides. Work on later items may be
+with an access date, but every deployment-specific check is `NOT RUN`. WP-4.1 (issue #63), Web UI
+shell, is complete with this final evidence PR; PR #246 rebase-merged the shell at `1b16590` with
+three Conventional Commits. The next oldest open item is WP-4.2 (issue #64), API client and state.
+Owner decision D-002 remains open, so no real Cloudflare Access verification or plan-specific guide
+claim is made until the owner decides. Work on later items may be
 prepared in parallel but must not be merged ahead of an earlier open issue unless the owner
 explicitly approves.
 

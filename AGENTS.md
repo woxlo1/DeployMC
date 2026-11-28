@@ -243,6 +243,18 @@ used. All 18 required PR checks and post-merge CI/CodeQL/Scorecard passed, and a
 toolchains report `PASS`. The master specification targets `v0.4.0`, but no tag or GitHub Release
 exists and release gates #127-#130 remain open. D-001 and D-002 are unchanged.
 
+WP-4.1 Web UI shell merged its implementation in [PR #246](https://github.com/woxlo1/DeployMC/pull/246)
+at `1b16590` with three Conventional Commits preserved by rebase merge, with issue #63 closed by its
+final evidence PR. It adds hash-compatible routes for all 11 inventory screens with
+`?state=loading|empty|error` previews, a sidebar/header/content/status layout on design tokens,
+light/dark/system themes, a keyboard-shortcut framework with a focus-trapped help dialog,
+catalog-key-only global toasts, and a redacted error boundary with generated `req_…` ids. All 62 Web
+tests pass and all seven toolchains, 19/19 PR checks, and post-merge CI/CodeQL/Scorecard passed.
+Evidence is server-free and jsdom-only: no browser, running server, E2E, full integration suite, or
+in-game command rendered the shell, and only the Doctor panel is API-connected. Japanese strings are
+an AI-assisted draft. D-001 and D-002 are unchanged; Phase 4 targets `v0.5.0`, but no release is
+claimed while gates #127-#130 remain open.
+
 PART 40.3 early risk-reduction spikes were merged in PR #210 at `a998f7e` under `docs/research/spikes/`,
 with a reproducible Windows replacement probe. The records distinguish observed output, source verification,
 and `NOT RUN` work; no support tier is claimed. Issue #118 closed at `2026-11-23T11:04:06Z`. PART 41
