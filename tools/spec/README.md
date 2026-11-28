@@ -1,7 +1,7 @@
 # Specification tools
 
-This package checks the DeployMC specification skeletons. It validates documents; it does
-not generate code and does not run a server.
+This package checks the DeployMC specification skeletons and generates the narrow Web client
+surface from the OpenAPI document. It does not run a server.
 
 ## Commands
 
@@ -22,9 +22,22 @@ npm test
 | `lint:config` | local script using `ajv` and `yaml` | `specification/config/example.config.yaml` against `config.schema.json` |
 | `lint:state-machine` | local script using `yaml` | the normative YAML block in `specification/deployment/state-machine.md` |
 
-`npm test` runs `node:test` cases for the three local checkers, including negative cases such
-as an invalid or empty AsyncAPI document, an undefined role reference, and an illegal deployment
-transition.
+`npm test` runs `node:test` cases for the local checkers and the Web client generator, including
+negative cases such as an invalid or empty AsyncAPI document, an undefined role reference, an
+illegal deployment transition, and stale generated output.
+
+## Web client generation
+
+`npm run generate:web-client` reads `specification/api/openapi.yaml` and writes
+`web/src/api/generated.ts`. The generated module contains the API version, a SHA-256 of the source
+document, operation descriptors derived from paths and parameters, and TypeScript types for the
+component schemas. `npm run check:web-client` regenerates in memory and fails on drift; the main
+`npm run lint` script includes it so CI fails when a specification change is not regenerated.
+
+The generator intentionally covers the subset of OpenAPI 3.1 used by this repository. It rejects
+unknown `$ref` targets and duplicate operation ids instead of guessing. It does not invent runtime
+behavior, authentication state, or response validation; those live in `web/src/api/client.ts`.
+The generated file is excluded from Prettier because its formatting is owned by the generator.
 
 All paths are resolved from this file's location, so the commands also work when invoked
 as `npm run lint --prefix tools/spec` from the repository root (the form used in CI).
@@ -60,5 +73,6 @@ official parser directly; the CLI plugin manager and its bundled `npm` dependenc
 installed. The parser's Spectral dependency emits a Node `punycode` deprecation warning; it does
 not affect the result.
 
-Status: this tooling is new in WP-0.5. It checks specification consistency only. It is not
-a contract test against an implementation, because no transport server exists yet.
+Status: this tooling checks specification consistency and generates the Web client surface. It is
+not a contract test against a running implementation; server-free tests remain the verification
+boundary in local CI.
