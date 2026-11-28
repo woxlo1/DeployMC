@@ -458,6 +458,115 @@ button {
   font-size: var(--dm-font-size-sm);
 }
 
+.shell__auth {
+  margin: var(--dm-space-1) 0 0;
+  color: var(--dm-color-muted);
+  font-size: var(--dm-font-size-sm);
+}
+
+.shell__auth[data-auth-status='authenticated'] {
+  color: var(--dm-color-success);
+}
+
+.shell__auth[data-auth-status='unauthorized'],
+.shell__auth[data-auth-status='error'] {
+  color: var(--dm-color-danger);
+}
+
+.app__panel {
+  display: grid;
+  gap: var(--dm-space-3);
+  margin-bottom: var(--dm-space-5);
+  padding: var(--dm-space-4);
+  border: 0.0625rem solid var(--dm-color-border);
+  border-radius: var(--dm-radius-md);
+  background-color: var(--dm-color-surface-alt);
+}
+
+.app__panel h2 {
+  margin: 0;
+  font-size: var(--dm-font-size-base);
+}
+
+.identity__form,
+.events__actions,
+.conflict__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dm-space-2);
+}
+
+.identity__form input,
+.events__channels input {
+  accent-color: var(--dm-color-accent);
+}
+
+.identity__help {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--dm-color-muted);
+  font-size: var(--dm-font-size-sm);
+}
+
+.identity__details,
+.events__details {
+  display: grid;
+  gap: var(--dm-space-2);
+  margin: 0;
+}
+
+.identity__details div,
+.events__details div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dm-space-2);
+}
+
+.identity__details dt,
+.events__details dt {
+  min-width: 10rem;
+  color: var(--dm-color-muted);
+}
+
+.identity__details dd,
+.events__details dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.conflict {
+  border-color: var(--dm-color-danger);
+}
+
+.conflict p,
+.events__status,
+.events__gap,
+.events__invalid {
+  margin: 0;
+}
+
+.events__gap,
+.events__invalid {
+  color: var(--dm-color-warning);
+}
+
+.events__channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dm-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.events__channels legend {
+  flex-basis: 100%;
+  padding: 0;
+  color: var(--dm-color-muted);
+  font-size: var(--dm-font-size-sm);
+}
+
 @keyframes dm-spin {
   to {
     transform: rotate(360deg);

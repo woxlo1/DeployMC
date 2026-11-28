@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { applyTheme, persistThemeMode, readThemeMode, type ThemeMode } from './app/theme';
+import { AuthProvider } from './auth/AuthProvider';
 import { AppShell } from './components/AppShell';
 import { ToastProvider } from './components/ToastProvider';
 import { createTranslator, detectLocale, isLocale, type Locale } from './i18n';
@@ -56,13 +57,15 @@ export function App() {
 
   return (
     <ToastProvider t={t}>
-      <AppShell
-        locale={locale}
-        theme={theme}
-        t={t}
-        onLocaleChange={setLocale}
-        onThemeChange={setTheme}
-      />
+      <AuthProvider>
+        <AppShell
+          locale={locale}
+          theme={theme}
+          t={t}
+          onLocaleChange={setLocale}
+          onThemeChange={setTheme}
+        />
+      </AuthProvider>
     </ToastProvider>
   );
 }

@@ -2,13 +2,17 @@ import { useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createRequestId } from '../app/requestId';
 import { ROUTES, routeHash, type RouteId } from '../app/routes';
 import { isThemeMode, THEME_MODES, type ThemeMode } from '../app/theme';
+import { useAuth } from '../auth/store';
+import { authStatusLabelKey } from '../auth/status';
 import { useHashLocation } from '../hooks/useHashLocation';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { isLocale, SUPPORTED_LOCALES, type Locale, type Translator } from '../i18n';
-import { SHELL_KEYS } from '../i18n/keys';
+import { AUTH_KEYS, SHELL_KEYS } from '../i18n/keys';
 import { useToast } from '../toast/context';
 import { DoctorPanel } from './DoctorPanel';
 import { ErrorBoundary } from './ErrorBoundary';
+import { EventStatus } from './EventStatus';
+import { IdentityPanel } from './IdentityPanel';
 import { PlaceholderView } from './PlaceholderView';
 import { ShortcutHelpDialog } from './ShortcutHelpDialog';
 
@@ -34,6 +38,7 @@ interface AppShellProps {
 export function AppShell({ locale, theme, t, onLocaleChange, onThemeChange }: AppShellProps) {
   const location = useHashLocation();
   const toast = useToast();
+  const auth = useAuth();
   const mainRef = useRef<HTMLElement>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -108,6 +113,7 @@ export function AppShell({ locale, theme, t, onLocaleChange, onThemeChange }: Ap
 
   const activeRouteLabel =
     location.route === null ? t(SHELL_KEYS.routeInvalidTitle) : t(location.route.labelKey);
+  const authStatusValues = auth.identity === null ? undefined : { id: auth.identity.identity.id };
 
   return (
     <div className="shell">
@@ -119,6 +125,13 @@ export function AppShell({ locale, theme, t, onLocaleChange, onThemeChange }: Ap
         <div className="shell__identity">
           <h1>{t(SHELL_KEYS.appTitle)}</h1>
           <p className="shell__tagline">{t(SHELL_KEYS.appTagline)}</p>
+          <p
+            className="shell__auth"
+            data-auth-status={auth.status}
+            aria-label={t(AUTH_KEYS.headerLabel)}
+          >
+            {t(authStatusLabelKey(auth.status), authStatusValues)}
+          </p>
         </div>
         <div className="shell__controls">
           <label className="shell__control">
@@ -208,6 +221,17 @@ export function AppShell({ locale, theme, t, onLocaleChange, onThemeChange }: Ap
                 <p className="dashboard-summary__count">
                   {t(SHELL_KEYS.appPluginsCount, { count: 3 })}
                 </p>
+              ) : undefined}
+              {location.route.id === 'identity' ? <IdentityPanel t={t} /> : undefined}
+              {location.route.id === 'console' ? (
+                <EventStatus
+                  t={t}
+                  onFatal={(code) => {
+                    if (code === 4401) {
+                      auth.reportUnauthorized();
+                    }
+                  }}
+                />
               ) : undefined}
               {location.route.id === 'doctor' ? <DoctorPanel locale={locale} t={t} /> : undefined}
             </PlaceholderView>

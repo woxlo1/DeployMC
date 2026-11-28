@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useAuth } from '../auth/store';
 import {
   DoctorRequestError,
   fetchDoctorReport,
@@ -188,6 +189,7 @@ function ReportView({
 
 /** Doctor panel. The bearer token exists only while the user types and during one request. */
 export function DoctorPanel({ locale, t }: DoctorPanelProps) {
+  const auth = useAuth();
   const [token, setToken] = useState('');
   const [report, setReport] = useState<DoctorReport | null>(null);
   const [errorCode, setErrorCode] = useState<DoctorErrorCode | null>(null);
@@ -224,9 +226,12 @@ export function DoctorPanel({ locale, t }: DoctorPanelProps) {
       if (controller.signal.aborted) {
         return;
       }
-      setErrorCode(
-        error instanceof DoctorRequestError ? error.code : ('request-failed' as DoctorErrorCode),
-      );
+      const code =
+        error instanceof DoctorRequestError ? error.code : ('request-failed' as DoctorErrorCode);
+      if (code === 'unauthorized') {
+        auth.reportUnauthorized();
+      }
+      setErrorCode(code);
     } finally {
       if (controllerRef.current === controller) {
         controllerRef.current = null;
