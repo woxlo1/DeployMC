@@ -1,0 +1,12 @@
+# Example locally-managed Cloudflare Tunnel configuration for DeployMC.
+# All values are placeholders. This file contains no credentials or real hostnames.
+# Source and access date: examples/cloudflare-tunnel/sources.md (verified 2026-11-27).
+
+tunnel: 00000000-0000-0000-0000-000000000000
+credentials-file: /etc/cloudflared/00000000-0000-0000-0000-000000000000.json
+
+ingress:
+  - hostname: deploymc.example.com
+    service: http://127.0.0.1:8080
+  # Required catch-all rule. Never omit it.
+  - service: http_status:404
