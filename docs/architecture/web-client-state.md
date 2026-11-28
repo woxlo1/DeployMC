@@ -1,9 +1,9 @@
 # Web API Client and State
 
-> **Status: WP-4.2 implementation note (2026-11-28).** This document records the Web
+> **Status: WP-4.3 implementation note (2026-11-28).** This document records the Web
 > client boundaries that are implemented in `web/src/`. Evidence is server-free and
-> jsdom-only: no running server, browser, E2E run, full integration suite, or in-game
-> command has exercised these paths.
+> jsdom/fetch-mock only: no running server, browser, E2E run, full integration suite, or
+> in-game command has exercised these paths.
 
 ## Sources of truth
 
@@ -67,8 +67,41 @@ still goes through the server gate.
 `ConflictNotice` renders only the stable current ETag and request id supplied by a
 mapped `409`/`412` error. It never renders server prose, file paths, or credentials. Its
 actions are `reload`, `retry`, and `dismiss`; there is no automatic replay of a stale
-write. The component is currently a reusable surface: no file editor or deployment
-screen applies it yet.
+write. The file explorer applies it to rename and move conflicts. No deployment screen
+applies it yet.
+
+## File explorer
+
+`web/src/api/files.ts` is the only boundary between the explorer and the generated file
+operations. It validates every user-supplied name and sandbox-relative path locally,
+rejects control characters, traversal segments, absolute/drive/backslash forms, encoded
+dots, and reserved names, and parses every response before it reaches React state.
+Directory reads are cached under the opaque identity scope; mutations invalidate that
+scope's cached listings and explanation responses. The bearer token is passed per call
+and is never retained by the boundary.
+
+`FileExplorer` renders the `files` route inside `PlaceholderView`, preserving the shared
+`?state=loading|empty|error` preview contract. Directory children are fetched lazily one
+level at a time from `listFiles`; `buildTreeRows` produces a deterministic, cycle-safe row
+order, and `virtualWindow` limits mounted rows with four rows of overscan. Search uses a
+bounded `listFiles` read of the first four directory levels, keeps the first 200 matching
+basenames, and never walks the host file system. Breadcrumbs are rebuilt only from
+validated path segments.
+
+The verified identity's permissions gate create, edit, delete, and upload controls.
+Because `FileEntry` carries no restriction flags, protected/readonly badges and reasons
+come from the server-authoritative `getCurrentIdentity` explain mode for `files.write`
+and a bounded set of closed reason codes. This is presentation only; every mutation is
+still authorized by the server. Rename and drag-and-drop move send the current ETag as
+`If-Match` and route conflicts through `ConflictNotice`. Delete confirms first and, for a
+directory, fetches its bounded entry count before requesting recursive deletion with
+that count.
+
+Uploads accept the toolbar picker or a drop onto a directory. `uploadEntry` reports a
+real local `FileReader` percentage while reading, then an indeterminate sending phase;
+native `fetch` does not expose upload progress, so no network percentage is synthesized.
+Each upload has an `AbortController`, a bounded progress list, and cancellation on
+unmount. Names are validated before an upload path is constructed.
 
 ## WebSocket client
 
@@ -91,5 +124,9 @@ shows connection state, last event type, sequence, gap, and invalid-envelope war
 Server-free Vitest and jsdom tests cover generated-client drift, REST request shaping,
 identity parsing, cache behavior, auth clearing, conflict rendering, envelope parsing,
 reconnect/backoff, resubscription, gap detection, and UI status. The fake socket is an
-in-memory test double. No product server event publisher, running server, browser,
-E2E run, full integration suite, or in-game command has consumed this client.
+in-memory test double. WP-4.3 adds fetch-mocked tests for path/name validation, strict
+file response parsing, lazy tree row ordering and cycle handling, bounded virtual
+windows, selection modifiers, identity gating, explanation badges, create/rename/delete,
+confirmed drag-and-drop moves, and upload state/progress. No product server event
+publisher, running server, browser, E2E run, full integration suite, or in-game command
+has consumed this client or the file explorer.

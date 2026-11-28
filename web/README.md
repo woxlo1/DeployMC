@@ -20,8 +20,9 @@ pnpm build
 
 The UI uses hash routes such as `#/dashboard` and `#/files`, so static hosting needs no rewrite
 rules. All screens from the Web UI screen inventory are present in the sidebar. The doctor screen
-hosts the existing authenticated, redacted diagnostics panel; other screens are shell placeholders
-until their work packages connect real API clients.
+hosts the existing authenticated, redacted diagnostics panel and the files screen hosts the
+authenticated file explorer. Other screens are shell placeholders until their work packages connect
+real API clients.
 
 Every screen accepts a view-state preview query for shell verification:
 
@@ -29,8 +30,26 @@ Every screen accepts a view-state preview query for shell verification:
 - `#/files?state=empty` (the default when the query is absent or invalid)
 - `#/files?state=error`
 
-This is a rendering contract only. It does not fetch data and does not imply that a product API is
-connected.
+For `files`, the preview is rendered by the shared shell while the explorer host remains mounted.
+Without a verified token and `files.read`, no directory listing is requested; with them, the
+explorer may fetch from the authenticated file API even while a preview state is present. This query
+is a rendering contract, not a simulated API response.
+
+## File explorer
+
+The files screen provides a bounded, sandbox-relative tree. Directories load lazily one level at a
+time; rows are virtualized for scrolling. Filename search is limited to the first 200 matching names
+within the first four directory levels. Selection supports click, Ctrl/Cmd-click, and Shift-click
+ranges. The context menu offers create, rename, and delete; delete and move require confirmation.
+Rename and move send the current ETag as `If-Match`, and a stale write opens the shared conflict
+notice instead of replaying automatically.
+
+Files can be uploaded with the toolbar picker or by dropping files onto a directory. Progress shows
+a real local `FileReader` percentage followed by an indeterminate sending phase; native `fetch` does
+not expose an upload percentage, so no network percentage is invented. Uploads can be canceled.
+Permission gates and protected/readonly badges are derived from the verified identity and the
+server's `GET /api/v1/me?explain=` decision. The UI never constructs an absolute path, `..`, or a
+backslash path from user input.
 
 ## Theme and keyboard shortcuts
 
